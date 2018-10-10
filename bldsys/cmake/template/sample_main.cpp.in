@@ -1,0 +1,30 @@
+// Generated file by CMake. Don't edit.
+
+#include "platform/platform.h"
+
+#include "@TARGET_NAME@.h"
+
+#if defined(VK_USE_PLATFORM_ANDROID_KHR)
+#	include "platform/android/android_platform.h"
+void android_main(android_app *state)
+{
+	vkb::AndroidPlatform platform{state};
+#elif defined(VK_USE_PLATFORM_WIN32_KHR)
+#	include "platform/windows/windows_platform.h"
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                     PSTR lpCmdLine, INT nCmdShow)
+{
+	vkb::WindowsPlatform platform{hInstance, hPrevInstance,
+	                              lpCmdLine, nCmdShow};
+#else
+#	include "platform/linux/linux_platform.h"
+int main(int argc, char *argv[])
+{
+	vkb::LinuxPlatform platform{argc, argv};
+#endif
+	if (platform.initialise(create_@TARGET_NAME@()))
+	{
+		platform.main_loop();
+	}
+	platform.terminate();
+}

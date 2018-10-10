@@ -1,0 +1,28 @@
+// Generated file by CMake. Don't edit.
+#pragma once
+
+#include <functional>
+#include <memory>
+#include <unordered_map>
+#include <vector>
+
+#include "platform/application.h"
+
+@SAMPLE_INCLUDE_FILES@
+
+using SampleCreateFunc = std::function<std::unique_ptr<vkb::Application>()>;
+
+struct SampleInfo
+{
+	std::string id;
+	std::string name;
+	std::string description;
+};
+
+const std::vector<SampleInfo> sample_list = {
+@SAMPLE_INFO_LIST@
+};
+
+const std::unordered_map<std::string, SampleCreateFunc> sample_create_functions = {
+@SAMPLE_NAME_FUNC_PAIRS@
+};

@@ -1,0 +1,59 @@
+stages:
+  - CppCheck
+  - Build
+
+ClangFormat:
+  stage: CppCheck
+  image: $DOCKER_REGISTRY/docker/cpp-code-check/linux:latest
+  tags:
+    - linux
+    - docker
+  script:
+    - git clang-format -v --diff origin/develop
+
+ClangTidy:
+  stage: CppCheck
+  image: $DOCKER_REGISTRY/docker/cpp-code-check/linux:latest
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  tags:
+    - linux
+    - docker
+  script:
+    - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -H. -Bbuild
+    - python3 /usr/local/bin/run-clang-tidy.py -p build -clang-tidy-binary=clang-tidy-8 -header-filter=.*,-third_party -checks=-*,google-*,-google-runtime-references -quiet framework samples app
+
+Linux:
+  stage: Build
+  image: $DOCKER_REGISTRY/docker/vulkan-cookbook/linux:latest
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  tags:
+    - linux
+    - docker
+  script:
+    - cmake -H. -Bbuild
+    - cmake --build build --target vulkan_best_practice --config Release
+
+Windows:
+  stage: Build
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  tags:
+    - windows
+    - shell
+  script:
+    - cmake -H. -Bbuild
+    - cmake --build build --target vulkan_best_practice --config Release
+
+Android:
+  stage: Build
+  image: $DOCKER_REGISTRY/docker/vulkan-cookbook/linux-android:latest
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  tags:
+    - linux
+    - docker
+  script:
+    - cmake -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake -H. -Bbuild
+    - cmake --build build --target vulkan_best_practice --config Release
