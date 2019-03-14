@@ -3,7 +3,7 @@
 	url = https://github.com/zeux/volk
 [submodule "third_party/glm"]
 	path = third_party/glm
-	url = git://github.com/g-truc/glm
+	url = https://github.com/g-truc/glm
 [submodule "third_party/stb"]
 	path = third_party/stb
 	url = https://github.com/nothings/stb
@@ -15,19 +15,19 @@
 	url = https://github.com/syoyo/tinygltf
 [submodule "third_party/vulkan"]
 	path = third_party/vulkan
-	url = https://github.com/KhronosGroup/Vulkan-Docs.git
+	url = https://github.com/KhronosGroup/Vulkan-Docs
 [submodule "third_party/glfw"]
 	path = third_party/glfw
-	url = https://github.com/glfw/glfw.git
+	url = https://github.com/glfw/glfw
 [submodule "third_party/glslang"]
 	path = third_party/glslang
-	url = https://github.com/KhronosGroup/glslang.git
+	url = https://github.com/KhronosGroup/glslang
 [submodule "third_party/spirv-cross"]
 	path = third_party/spirv-cross
-	url = https://github.com/KhronosGroup/SPIRV-Cross.git
+	url = https://github.com/KhronosGroup/SPIRV-Cross
 [submodule "third_party/hwcpipe"]
 	path = third_party/hwcpipe
-	url = https://github.com/ARM-software/HWCPipe.git
+	url = https://github.com/ARM-software/HWCPipe
 [submodule "third_party/vma"]
 	path = third_party/vma
-	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
