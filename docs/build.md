@@ -63,7 +63,7 @@ Generate a build project for each sample so that they can be run separately
 
 # 3D models
 
-Before you build the project make sure you download the 3D models this project uses. Download zip file located [here](https://github.com/Arm-Software/projectrelease.zip "Models") and extract it into `vulkan_best_practice_for_mobile_developers/assets` folder. You should now have a `scenes` folder containing all the 3D scenes the project uses.
+Before you build the project make sure you download the 3D models this project uses. Download zip file located [here](https://github.com/ARM-software/vulkan_best_practice_for_mobile_developers/releases/download/v1.0.0/scenes.zip "Models") and extract it into `vulkan_best_practice_for_mobile_developers/assets` folder. You should now have a `scenes` folder containing all the 3D scenes the project uses.
 
 # Windows
 
