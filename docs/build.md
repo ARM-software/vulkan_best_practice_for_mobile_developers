@@ -172,7 +172,7 @@ adb install build/outputs/apk/debug/vulkan_best_practice-debug.apk
 `Step 2.` Run the command below in the root directory of the project.
 
 ```
-cmake -G "Unix Makefiles" -H. -Bbuild/android -DCMAKE_TOOCHAIN_FILE=bldsys/toolchain/android_gradle.cmake
+cmake -G "Unix Makefiles" -H. -Bbuild/android -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake
 ```
 
 `Step 3.` Build the project using the command below
