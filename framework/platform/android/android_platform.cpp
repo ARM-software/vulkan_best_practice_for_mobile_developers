@@ -409,7 +409,7 @@ void AndroidPlatform::main_loop()
 
 		last_time = current_time;
 
-		if (app->window && active_app->is_focus())
+		if (app->window && active_app->is_focused())
 		{
 			active_app->update(delta_time);
 		}

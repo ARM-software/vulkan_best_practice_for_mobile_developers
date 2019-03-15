@@ -76,7 +76,7 @@ void Application::set_focus(bool flag)
 	focus = flag;
 }
 
-bool Application::is_focus() const
+bool Application::is_focused() const
 {
 	return focus;
 }

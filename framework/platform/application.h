@@ -68,7 +68,7 @@ class Application
 	/**
 	 * @return True if window is in focus, false otherwise
 	 */
-	bool is_focus() const;
+	bool is_focused() const;
 
   private:
 	/// The name of the app
