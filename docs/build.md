@@ -25,6 +25,7 @@
 # Contents <!-- omit in toc -->
 
 - [CMake Options](#cmake-options)
+- [Performance data](#performance-data)
 - [3D models](#3d-models)
 - [Windows](#windows)
   - [Dependencies](#dependencies)
@@ -36,7 +37,7 @@
   - [Dependencies](#dependencies-2)
   - [Build with Gradle](#build-with-gradle)
   - [Build with CMake](#build-with-cmake-2)
-  - [Performance data](#performance-data)
+
 
 
 # CMake Options
@@ -61,6 +62,20 @@ Generate a build project for each sample so that they can be run separately
 
 **Default:** `OFF`
 
+# Performance data
+
+In order for performance data to be displayed, profiling needs to be enabled on the device. Some devices may disable it by default.
+
+Profiling can be enabled via adb:
+
+```
+adb shell setprop security.perf_harden 0
+```
+
+> Performance data is captured using HWCPipe.
+> For details on this project and how to integrate it in your pipeline,
+> visit: https://github.com/ARM-software/HWCPipe
+
 # 3D models
 
 Before you build the project make sure you download the 3D models this project uses. Download zip file located [here](https://github.com/ARM-software/vulkan_best_practice_for_mobile_developers/releases/download/v1.0.0/scenes.zip "Models") and extract it into `vulkan_best_practice_for_mobile_developers/assets` folder. You should now have a `scenes` folder containing all the 3D scenes the project uses.
@@ -71,6 +86,8 @@ Before you build the project make sure you download the 3D models this project u
 
 - CMake v3.6
 - Visual Studio 2015/2017
+- [CMake Options](#cmake-options)
+- [3D models](#3d-models)
 
 ## Build with CMake
 
@@ -101,6 +118,8 @@ vulkan_best_practice\bin\debug\AMD64\Release\vulkan_best_practice.exe
 
 - CMake v3.6
 - C++ Compiler (Clang or gcc)
+- [CMake Options](#cmake-options)
+- [3D models](#3d-models)
 
 ```
 sudo apt-get install cmake g++ xorg-dev libglu1-mesa-dev
@@ -136,6 +155,9 @@ For all dependencies set the following environment variables.
 - Android NDK r18+ `ANDROID_NDK_ROOT=<WORK_DIR>/android-ndk`
 - Android SDK `ANDROID_HOME=<WORK_DIR>/android-sdk`
 - Gradle 4+ `GRADLE_HOME=<WORK_DIR>/gradle`
+- [CMake Options](#cmake-options)
+- [Performance data](#performance-data)
+- [3D models](#3d-models)
 
 ## Build with Gradle
 
@@ -185,17 +207,3 @@ cmake --build build/android --config Release --target vulkan_best_practice_packa
 cd build/android/vulkan_best_practice_package
 adb install build/outputs/apk/debug/vulkan_best_practice-debug.apk
 ```
-
-## Performance data
-
-In order for performance data to be displayed, profiling needs to be enabled on the device. Some devices may disable it by default.
-
-Profiling can be enabled via adb:
-
-```
-adb shell setprop security.perf_harden 0
-```
-
-> Performance data is captured using HWCPipe.
-> For details on this project and how to integrate it in your pipeline,
-> visit: https://github.com/ARM-software/HWCPipe
