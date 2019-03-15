@@ -44,7 +44,7 @@ The Vulkan Best Practice for Mobile Developers is collection of resources to hel
 - Create tutorials that explain the implementation of best-practices and include performance analysis guides
 - Create a framework that can be used as reference material and also as a sandbox for advanced experimentation with Vulkan
 
-> **Disclaimer:** This project covers advanced vulkan concepts. If you are new to Vulkan here are a few links to get you started:
+> **Disclaimer:** This project covers advanced Vulkan concepts. If you are new to Vulkan here are a few links to get you started:
 > - [Beginners Guide to Vulkan](https://www.khronos.org/blog/beginners-guide-to-vulkan)
 > - [Get Started in Vulkan](https://vulkan-tutorial.com/)
 
