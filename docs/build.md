@@ -157,8 +157,8 @@ For all dependencies set the following environment variables.
 - Android SDK `ANDROID_HOME=<WORK_DIR>/android-sdk`
 - Gradle 4+ `GRADLE_HOME=<WORK_DIR>/gradle`
 - [CMake Options](#cmake-options)
-- [Performance data](#performance-data)
 - [3D models](#3d-models)
+- [Performance data](#performance-data)
 
 ## Build with Gradle
 
