@@ -114,3 +114,7 @@ Models downloaded from Morgan McGuire's [Computer Graphics Archive](https://casu
 ### Trademarks
 
 Vulkan is a registered trademark of the Khronos Group Inc.
+
+## Contributions
+
+All contributions are accepted under the same [LICENSE](LICENSE).
