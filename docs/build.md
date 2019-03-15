@@ -25,8 +25,8 @@
 # Contents <!-- omit in toc -->
 
 - [CMake Options](#cmake-options)
-- [Performance data](#performance-data)
 - [3D models](#3d-models)
+- [Performance data](#performance-data)
 - [Windows](#windows)
   - [Dependencies](#dependencies)
   - [Build with CMake](#build-with-cmake)
@@ -62,6 +62,11 @@ Generate a build project for each sample so that they can be run separately
 
 **Default:** `OFF`
 
+# 3D models
+
+Before you build the project make sure you download the 3D models this project uses. Download zip file located [here](https://github.com/ARM-software/vulkan_best_practice_for_mobile_developers/releases/download/v1.0.0/scenes.zip "Models") and extract it into `vulkan_best_practice_for_mobile_developers/assets` folder. You should now have a `scenes` folder containing all the 3D scenes the project uses.
+
+
 # Performance data
 
 In order for performance data to be displayed, profiling needs to be enabled on the device. Some devices may disable it by default.
@@ -75,10 +80,6 @@ adb shell setprop security.perf_harden 0
 > Performance data is captured using HWCPipe.
 > For details on this project and how to integrate it in your pipeline,
 > visit: https://github.com/ARM-software/HWCPipe
-
-# 3D models
-
-Before you build the project make sure you download the 3D models this project uses. Download zip file located [here](https://github.com/ARM-software/vulkan_best_practice_for_mobile_developers/releases/download/v1.0.0/scenes.zip "Models") and extract it into `vulkan_best_practice_for_mobile_developers/assets` folder. You should now have a `scenes` folder containing all the 3D scenes the project uses.
 
 # Windows
 
@@ -164,7 +165,7 @@ For all dependencies set the following environment variables.
 `Step 1.` Generate the gradle project using the internal script by running the following command  
 ##### Windows  <!-- omit in toc -->
 ```
-bldsys\scripts\generate_android_gradle.bat
+bldsys/scripts/generate_android_gradle.bat
 ```
 ##### Linux  <!-- omit in toc -->
 
@@ -204,6 +205,6 @@ cmake --build build/android --config Release --target vulkan_best_practice_packa
 ```
 `Step 4.` You can now run the apk on a connected device
 ```
-cd build/android/vulkan_best_practice_package
+cd build/android/vulkan_best_practice/vulkan_best_practice_package
 adb install build/outputs/apk/debug/vulkan_best_practice-debug.apk
 ```
