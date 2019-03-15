@@ -24,7 +24,7 @@ set(SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 function(generate_sample_entrypoint)
     set(options)
-    set(oneValueArgs NAME OUTPUT_DIR)
+    set(oneValueArgs ID NAME OUTPUT_DIR)
     set(multiValueArgs)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -133,7 +133,8 @@ function(add_sample_project)
 
         # create entrypoint file for sample
         generate_sample_entrypoint(
-            NAME ${TARGET_ID}
+            ID ${TARGET_ID}
+            NAME ${TARGET_NAME}
             OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
         # create list of project files (objects + entrypoint file)
