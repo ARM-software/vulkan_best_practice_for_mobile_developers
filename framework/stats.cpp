@@ -42,7 +42,8 @@ Stats::Stats(Profiler &profiler, const std::set<StatIndex> &enabled_stats, const
     l2_ext_read_beats(buffers_size, 0),
     l2_ext_write_beats(buffers_size, 0),
     frame_times(buffers_size, 0),
-    profiler(profiler)
+    profiler(profiler),
+    available_stats({StatIndex::frame_times})
 {
 	assert(buffers_size >= 2 && "Buffers size should be greater than 2");
 }
