@@ -53,6 +53,10 @@ void window_size_callback(GLFWwindow *window, int width, int height)
 
 void window_focus_callback(GLFWwindow *window, int focused)
 {
+	if (auto platform = reinterpret_cast<GlfwPlatform *>(glfwGetWindowUserPointer(window)))
+	{
+		platform->get_app().set_focus(focused ? true : false);
+	}
 }
 
 inline KeyCode translate_key_code(int key)
@@ -328,7 +332,10 @@ void GlfwPlatform::main_loop()
 
 		last_time = current_time;
 
-		active_app->update(delta_time);
+		if (active_app->is_focus())
+		{
+			active_app->update(delta_time);
+		}
 
 		float elapsed_time = std::chrono::duration<float>(current_time - start_time).count();
 

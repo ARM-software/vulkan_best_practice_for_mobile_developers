@@ -249,6 +249,16 @@ void on_app_cmd(android_app *app, int32_t cmd)
 			platform->get_app().resize(width, height);
 			break;
 		}
+		case APP_CMD_GAINED_FOCUS:
+		{
+			platform->get_app().set_focus(true);
+			break;
+		}
+		case APP_CMD_LOST_FOCUS:
+		{
+			platform->get_app().set_focus(false);
+			break;
+		}
 		case APP_CMD_TERM_WINDOW:
 		{
 			platform->get_app().finish();
@@ -399,7 +409,7 @@ void AndroidPlatform::main_loop()
 
 		last_time = current_time;
 
-		if (app->window)
+		if (app->window && active_app->is_focus())
 		{
 			active_app->update(delta_time);
 		}

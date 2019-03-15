@@ -71,4 +71,14 @@ Configuration &Application::get_configuration()
 	return configuration;
 }
 
+void Application::set_focus(bool flag)
+{
+	focus = flag;
+}
+
+bool Application::is_focus() const
+{
+	return focus;
+}
+
 }        // namespace vkb

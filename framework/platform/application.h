@@ -59,11 +59,27 @@ class Application
 
 	Configuration &get_configuration();
 
+	/**
+	 * @brief Change focus state
+	 * @praram flag Current focus state of window
+	 */
+	void set_focus(bool flag);
+
+	/**
+	 * @return True if window is in focus, false otherwise
+	 */
+	bool is_focus() const;
+
   private:
 	/// The name of the app
 	std::string name{};
 
 	/// The configurations of the sample
 	Configuration configuration{};
+
+	/**
+	 * @brief Focus state of application
+	 */
+	bool focus{true};
 };
 }        // namespace vkb
