@@ -32,7 +32,8 @@ generate_samples_header(
 
 # generate entrypoint file (main function with per platform support)
 generate_sample_entrypoint(
-    NAME sample_controller
+    ID sample_controller
+    NAME "Vulkan Best Practice Samples"
     OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 # create list of project files (header + source)

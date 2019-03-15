@@ -123,11 +123,6 @@ inline const SampleCreateFunc &get_sample_create_func(const std::string &sample_
 }
 }        // namespace
 
-SampleController::SampleController()
-{
-	set_name("Vulkan Best Practice Samples");
-}
-
 bool SampleController::prepare(Platform &platform)
 {
 	this->platform = &platform;

@@ -31,7 +31,7 @@ namespace vkb
 class SampleController : public Application
 {
   public:
-	SampleController();
+	virtual ~SampleController() = default;
 
 	virtual bool prepare(Platform &platform) override;
 
