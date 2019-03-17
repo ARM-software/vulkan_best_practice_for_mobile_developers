@@ -49,6 +49,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/transform.hpp>
+#include <glm/gtx/hash.hpp>
 
 template <class T>
 using ShaderStageMap = std::map<VkShaderStageFlagBits, T>;
@@ -66,7 +67,7 @@ template <class T>
 inline void hash_combine(size_t &seed, const T &v)
 {
 	std::hash<T> hasher;
-	seed ^= hasher(v) << 11;
+	glm::detail::hash_combine(seed, hasher(v));
 }
 
 /**
