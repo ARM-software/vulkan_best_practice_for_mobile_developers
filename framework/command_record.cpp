@@ -192,7 +192,7 @@ void CommandRecord::push_constants(uint32_t offset, const std::vector<uint8_t> &
 	}
 	else
 	{
-		LOGW("Push constant range [%d, %d] not found", offset, values.size());
+		LOGW("Push constant range [%d, %lu] not found", offset, values.size());
 	}
 }
 
