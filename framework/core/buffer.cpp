@@ -38,10 +38,12 @@ Buffer::Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usag
 	memory_info.usage = memory_usage;
 	memory_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
+    VmaAllocationInfo allocInfo{};
 	auto result = vmaCreateBuffer(device.get_memory_allocator(),
 	                              &buffer_info, &memory_info,
 	                              &handle, &memory,
-	                              nullptr);
+	                              &allocInfo);
+    mapped_data = (uint8_t*)allocInfo.pMappedData;
 
 	if (result != VK_SUCCESS)
 	{
@@ -89,27 +91,11 @@ VmaAllocation Buffer::get_memory() const
 
 uint8_t *Buffer::map()
 {
-	if (!mapped_data)
-	{
-		// Map once
-		auto result = vmaMapMemory(device.get_memory_allocator(), memory, reinterpret_cast<void **>(&mapped_data));
-
-		if (result != VK_SUCCESS)
-		{
-			throw VulkanException{result, "Cannot map memory"};
-		}
-	}
-
 	return mapped_data;
 }
 
 void Buffer::unmap()
 {
-	if (mapped_data)
-	{
-		vmaUnmapMemory(device.get_memory_allocator(), memory);
-		mapped_data = nullptr;
-	}
 }
 
 VkDeviceSize Buffer::get_size() const
