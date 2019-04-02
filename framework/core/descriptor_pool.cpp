@@ -27,7 +27,7 @@ namespace vkb
 {
 DescriptorPool::DescriptorPool(Device &                   device,
                                const DescriptorSetLayout &descriptor_set_layout,
-                               std::uint32_t              pool_size) :
+                               uint32_t                   pool_size) :
     device{device},
     descriptor_set_layout{&descriptor_set_layout}
 {

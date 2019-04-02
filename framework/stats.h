@@ -60,6 +60,7 @@ class Stats
   public:
 	/**
 	 * @brief Constructs a Stats object
+	 * @param profiler
 	 * @param enabled_stats Set of stats to be collected
 	 * @param buffer_size Size of the circular buffers
 	 */

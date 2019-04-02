@@ -370,7 +370,7 @@ void GlfwPlatform::close() const
 }
 
 /// @brief It calculates the dpi factor using the density from GLFW physical size
-/// @url https://www.glfw.org/docs/latest/monitor_guide.html#monitor_size
+/// <a href="https://www.glfw.org/docs/latest/monitor_guide.html#monitor_size">GLFW docs for dpi</a>
 float GlfwPlatform::get_dpi_factor() const
 {
 	auto primary_monitor = glfwGetPrimaryMonitor();
