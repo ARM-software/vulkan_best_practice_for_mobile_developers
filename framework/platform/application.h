@@ -61,7 +61,7 @@ class Application
 
 	/**
 	 * @brief Change focus state
-	 * @praram flag Current focus state of window
+	 * @param flag Current focus state of window
 	 */
 	void set_focus(bool flag);
 
