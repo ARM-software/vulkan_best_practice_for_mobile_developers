@@ -86,7 +86,7 @@ adb shell setprop security.perf_harden 0
 ## Dependencies
 
 - CMake v3.6
-- Visual Studio 2015/2017
+- Visual Studio 2017
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
 
@@ -118,7 +118,7 @@ vulkan_best_practice\bin\debug\AMD64\Release\vulkan_best_practice.exe
 ## Dependencies
 
 - CMake v3.6
-- C++ Compiler (Clang or gcc)
+- C++14 Compiler (tested on GCC 7.3)
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
 
