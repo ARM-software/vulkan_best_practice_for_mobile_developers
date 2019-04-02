@@ -51,13 +51,6 @@ class Buffer : public NonCopyable
 	void update(const std::vector<uint8_t> &data);
 
   private:
-	/// @brief Maps the GPU memory to host memory
-	/// @return A pointer to the memory visible by the host
-	uint8_t *map();
-
-	/// @brief Unmaps memory between GPU and CPU
-	void unmap();
-
 	Device &device;
 
 	VkBuffer handle{VK_NULL_HANDLE};
