@@ -38,10 +38,12 @@ Buffer::Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usag
 	memory_info.usage = memory_usage;
 	memory_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
+    VmaAllocationInfo alloc_info{};
 	auto result = vmaCreateBuffer(device.get_memory_allocator(),
 	                              &buffer_info, &memory_info,
 	                              &handle, &memory,
-	                              nullptr);
+	                              &alloc_info);
+    mapped_data = (uint8_t*)alloc_info.pMappedData;
 
 	if (result != VK_SUCCESS)
 	{
@@ -64,8 +66,6 @@ Buffer::Buffer(Buffer &&other) :
 
 Buffer::~Buffer()
 {
-	unmap();
-
 	if (handle != VK_NULL_HANDLE && memory != VK_NULL_HANDLE)
 	{
 		vmaDestroyBuffer(device.get_memory_allocator(), handle, memory);
@@ -87,31 +87,6 @@ VmaAllocation Buffer::get_memory() const
 	return memory;
 }
 
-uint8_t *Buffer::map()
-{
-	if (!mapped_data)
-	{
-		// Map once
-		auto result = vmaMapMemory(device.get_memory_allocator(), memory, reinterpret_cast<void **>(&mapped_data));
-
-		if (result != VK_SUCCESS)
-		{
-			throw VulkanException{result, "Cannot map memory"};
-		}
-	}
-
-	return mapped_data;
-}
-
-void Buffer::unmap()
-{
-	if (mapped_data)
-	{
-		vmaUnmapMemory(device.get_memory_allocator(), memory);
-		mapped_data = nullptr;
-	}
-}
-
 VkDeviceSize Buffer::get_size() const
 {
 	return size;
@@ -119,7 +94,7 @@ VkDeviceSize Buffer::get_size() const
 
 void Buffer::update(const std::vector<uint8_t> &data)
 {
-	std::copy(std::begin(data), std::end(data), map());
+	std::copy(std::begin(data), std::end(data), mapped_data);
 }
 }        // namespace core
 }        // namespace vkb

@@ -93,7 +93,6 @@ Image::Image(Device &              device,
 
 	VmaAllocationCreateInfo memory_info{};
 	memory_info.usage = memory_usage;
-	memory_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
 	if (image_usage & VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT)
 	{
