@@ -67,9 +67,9 @@ bool SwapchainImages::prepare(vkb::Platform &platform)
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
-	auto camera_node = add_free_camera("main_camera");
+	auto& camera_node = add_free_camera("main_camera");
 
-	camera = camera_node->get_component<vkb::sg::Camera>();
+	camera = &camera_node.get_component<vkb::sg::Camera>();
 
 	gui = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor());
 

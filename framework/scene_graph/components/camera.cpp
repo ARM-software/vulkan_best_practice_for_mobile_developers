@@ -38,16 +38,21 @@ std::type_index Camera::get_type()
 
 glm::mat4 Camera::get_view()
 {
-	auto transform = node->get_component<Transform>();
-	return glm::inverse(transform->get_world_matrix());
+	if (!node)
+	{
+		throw std::runtime_error{"Camera component is not attached to a node"};
+	}
+
+	auto &transform = node->get_component<Transform>();
+	return glm::inverse(transform.get_world_matrix());
 }
 
-void Camera::set_node(std::shared_ptr<Node> node)
+void Camera::set_node(Node &n)
 {
-	this->node = node;
+	node = &n;
 }
 
-std::shared_ptr<Node> Camera::get_node()
+Node *Camera::get_node()
 {
 	return node;
 }

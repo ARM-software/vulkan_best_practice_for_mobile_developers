@@ -45,7 +45,7 @@ class FreeCamera : public Script
 
 	static const uint32_t TRANSLATION_MOVE_SPEED;
 
-	FreeCamera(std::shared_ptr<Node> node);
+	FreeCamera(Node& node);
 
 	virtual ~FreeCamera() = default;
 

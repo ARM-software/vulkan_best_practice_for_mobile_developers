@@ -319,7 +319,7 @@ void VulkanSample::draw_gui()
 {
 }
 
-std::shared_ptr<sg::Node> VulkanSample::add_free_camera(const std::string &node_name)
+sg::Node &VulkanSample::add_free_camera(const std::string &node_name)
 {
 	auto camera_node = scene.find_node(node_name);
 
@@ -340,12 +340,13 @@ std::shared_ptr<sg::Node> VulkanSample::add_free_camera(const std::string &node_
 		throw std::runtime_error("No camera component found for `" + node_name + "` node.");
 	}
 
-	auto free_camera = std::make_shared<vkb::sg::FreeCamera>(camera_node);
-	scene.add_component(free_camera);
+	auto free_camera = std::make_unique<vkb::sg::FreeCamera>(*camera_node);
+	camera_node->set_component(*free_camera);
 
-	camera_node->set_component(free_camera);
+	// Store component
+	scene.add_component(std::move(free_camera));
 
-	return camera_node;
+	return *camera_node;
 }
 
 void VulkanSample::load_scene(const std::string &path)

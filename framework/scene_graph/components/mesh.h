@@ -42,18 +42,18 @@ class Mesh : public Component
 
 	virtual std::type_index get_type() override;
 
-	void add_submesh(std::shared_ptr<SubMesh> submesh);
+	void add_submesh(SubMesh& submesh);
 
-	const std::vector<std::shared_ptr<SubMesh>> &get_submeshes();
+	const std::vector<SubMesh*> &get_submeshes() const;
 
-	void add_node(std::shared_ptr<Node> node);
+	void add_node(Node& node);
 
-	const std::vector<std::shared_ptr<Node>> &get_nodes();
+	const std::vector<Node*> &get_nodes() const;
 
   private:
-	std::vector<std::shared_ptr<SubMesh>> submeshes;
+	std::vector<SubMesh*> submeshes;
 
-	std::vector<std::shared_ptr<Node>> nodes;
+	std::vector<Node*> nodes;
 };
 }        // namespace sg
 }        // namespace vkb

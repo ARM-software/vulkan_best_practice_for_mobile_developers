@@ -32,25 +32,23 @@ std::type_index Texture::get_type()
 {
 	return typeid(Texture);
 }
-void Texture::set_image(std::shared_ptr<Image> image)
+
+void Texture::set_image(Image &i)
 {
-	if (image)
-	{
-		this->image = image;
-	}
+	image = &i;
 }
-std::shared_ptr<Image> Texture::get_image()
+
+Image *Texture::get_image()
 {
 	return image;
 }
-void Texture::set_sampler(std::shared_ptr<Sampler> sampler)
+
+void Texture::set_sampler(Sampler &s)
 {
-	if (sampler)
-	{
-		this->sampler = sampler;
-	}
+	sampler = &s;
 }
-std::shared_ptr<Sampler> Texture::get_sampler()
+
+Sampler *Texture::get_sampler()
 {
 	return sampler;
 }

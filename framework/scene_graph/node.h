@@ -26,12 +26,13 @@
 #include <unordered_map>
 #include <vector>
 
+#include "scene_graph/components/transform.h"
+
 namespace vkb
 {
 namespace sg
 {
 class Component;
-class Transform;
 
 /// @brief A leaf of the tree structure which can have children and a single parent.
 class Node
@@ -43,23 +44,28 @@ class Node
 
 	const std::string &get_name() const;
 
-	void set_parent(std::shared_ptr<Node> parent);
-
-	std::shared_ptr<Node> get_parent();
-
-	void add_child(std::shared_ptr<Node> child);
-
-	const std::vector<std::shared_ptr<Node>> &get_children();
-
-	void set_component(std::shared_ptr<Component> component);
-
-	template <class T>
-	inline std::shared_ptr<T> get_component()
+	Transform &get_transform()
 	{
-		return std::dynamic_pointer_cast<T>(get_component(typeid(T)));
+		return transform;
 	}
 
-	std::shared_ptr<Component> get_component(std::type_index typeIndex);
+	void set_parent(Node &parent);
+
+	Node *get_parent() const;
+
+	void add_child(Node &child);
+
+	const std::vector<Node *> &get_children() const;
+
+	void set_component(Component &component);
+
+	template <class T>
+	inline T &get_component()
+	{
+		return dynamic_cast<T &>(get_component(typeid(T)));
+	}
+
+	Component &get_component(const std::type_index index);
 
 	template <class T>
 	bool has_component()
@@ -67,16 +73,18 @@ class Node
 		return has_component(typeid(T));
 	}
 
-	bool has_component(std::type_index index);
+	bool has_component(const std::type_index index);
 
   private:
 	std::string name;
 
-	std::shared_ptr<Node> parent;
+	sg::Transform transform;
 
-	std::vector<std::shared_ptr<Node>> children;
+	Node *parent{nullptr};
 
-	std::unordered_map<std::type_index, std::shared_ptr<Component>> components;
+	std::vector<Node *> children;
+
+	std::unordered_map<std::type_index, Component *> components;
 };
 }        // namespace sg
 }        // namespace vkb

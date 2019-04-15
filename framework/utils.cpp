@@ -177,10 +177,10 @@ void draw_scene_meshes(CommandBuffer &command_buffer, PipelineLayout &pipeline_l
 		// draw mesh for each node
 		for (auto &node : mesh->get_nodes())
 		{
-			auto transform = node->get_component<vkb::sg::Transform>();
+			auto &transform = node->get_component<vkb::sg::Transform>();
 
 			// set world matrix of the node
-			command_buffer.push_constants(0, transform->get_world_matrix());
+			command_buffer.push_constants(0, transform.get_world_matrix());
 
 			// draw each submesh of the current mesh
 			for (auto &sub_mesh : mesh->get_submeshes())

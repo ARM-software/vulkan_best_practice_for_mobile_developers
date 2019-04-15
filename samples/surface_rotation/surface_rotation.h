@@ -66,9 +66,9 @@ class SurfaceRotation : public vkb::VulkanSample
 
 	vkb::FragPushConstant fs_push_constant;
 
-	vkb::PipelineLayout *pipeline_layout;
+	vkb::PipelineLayout *pipeline_layout{nullptr};
 
-	std::shared_ptr<vkb::sg::PerspectiveCamera> camera;
+	vkb::sg::PerspectiveCamera* camera{nullptr};
 
 	virtual void draw_gui() override;
 

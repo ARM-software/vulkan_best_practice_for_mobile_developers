@@ -29,8 +29,10 @@ namespace vkb
 namespace sg
 {
 Node::Node(const std::string &name) :
-    name{name}
+    name{name},
+    transform{*this}
 {
+	set_component(transform);
 }
 
 const std::string &Node::get_name() const
@@ -38,62 +40,53 @@ const std::string &Node::get_name() const
 	return name;
 }
 
-void Node::set_parent(std::shared_ptr<Node> parent)
+void Node::set_parent(Node &p)
 {
-	if (parent)
-	{
-		this->parent = parent;
+	parent = &p;
 
-		if (has_component<Transform>())
-		{
-			get_component<Transform>()->invalidate_world_matrix();
-		}
+	if (has_component<Transform>())
+	{
+		get_component<Transform>().invalidate_world_matrix();
 	}
 }
 
-std::shared_ptr<Node> Node::get_parent()
+Node *Node::get_parent() const
 {
 	return parent;
 }
 
-void Node::add_child(std::shared_ptr<Node> child_node)
+void Node::add_child(Node &child)
 {
-	if (child_node)
-	{
-		children.push_back(child_node);
-	}
+	children.push_back(&child);
 }
 
-const std::vector<std::shared_ptr<Node>> &Node::get_children()
+const std::vector<Node *> &Node::get_children() const
 {
 	return children;
 }
 
-void Node::set_component(std::shared_ptr<Component> component)
+void Node::set_component(Component &component)
 {
-	if (component)
+	auto it = components.find(component.get_type());
+	if (it != components.end())
 	{
-		auto attachment_iter = components.find(component->get_type());
-
-		if (attachment_iter != components.end())
-		{
-			attachment_iter->second = component;
-		}
-		else
-		{
-			components.insert(std::make_pair(component->get_type(), component));
-		}
+		it->second = &component;
+	}
+	else
+	{
+		components.insert(std::make_pair(component.get_type(), &component));
 	}
 }
 
-std::shared_ptr<Component> Node::get_component(std::type_index type_index)
+Component &Node::get_component(const std::type_index index)
 {
-	return components.at(type_index);
+	return *components.at(index);
 }
 
-bool Node::has_component(std::type_index type_index)
+bool Node::has_component(const std::type_index index)
 {
-	return (components.count(type_index) ? true : false);
+	return components.count(index) > 0;
 }
+
 }        // namespace sg
 }        // namespace vkb

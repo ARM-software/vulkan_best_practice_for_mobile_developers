@@ -33,28 +33,22 @@ std::type_index Mesh::get_type()
 	return typeid(Mesh);
 }
 
-void Mesh::add_submesh(std::shared_ptr<SubMesh> submesh)
+void Mesh::add_submesh(SubMesh& submesh)
 {
-	if (submesh)
-	{
-		submeshes.push_back(submesh);
-	}
+	submeshes.push_back(&submesh);
 }
 
-const std::vector<std::shared_ptr<SubMesh>> &Mesh::get_submeshes()
+const std::vector<SubMesh*> &Mesh::get_submeshes() const
 {
 	return submeshes;
 }
 
-void Mesh::add_node(std::shared_ptr<Node> node)
+void Mesh::add_node(Node& node)
 {
-	if (node)
-	{
-		nodes.push_back(node);
-	}
+	nodes.push_back(&node);
 }
 
-const std::vector<std::shared_ptr<Node>> &Mesh::get_nodes()
+const std::vector<Node*> &Mesh::get_nodes() const
 {
 	return nodes;
 }

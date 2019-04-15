@@ -69,9 +69,9 @@ bool SurfaceRotation::prepare(vkb::Platform &platform)
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
-	auto camera_node = add_free_camera("main_camera");
+	auto& camera_node = add_free_camera("main_camera");
 
-	camera = std::dynamic_pointer_cast<vkb::sg::PerspectiveCamera>(camera_node->get_component<vkb::sg::Camera>());
+	camera = dynamic_cast<vkb::sg::PerspectiveCamera*>(&camera_node.get_component<vkb::sg::Camera>());
 
 	gui = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor());
 

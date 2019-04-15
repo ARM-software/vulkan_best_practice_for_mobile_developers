@@ -60,7 +60,7 @@ class RenderPassesSample : public vkb::VulkanSample
 	vkb::VertPushConstant vs_push_constant;
 	vkb::FragPushConstant fs_push_constant;
 
-	std::shared_ptr<vkb::sg::PerspectiveCamera> camera;
+	vkb::sg::PerspectiveCamera* camera{nullptr};
 
 	vkb::PipelineLayout *pipeline_layout{nullptr};
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,35 +18,44 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#include "node_animation.h"
 
-#include <memory>
-#include <string>
-#include <typeindex>
-#include <vector>
+#include "scene_graph/components/perspective_camera.h"
+#include "scene_graph/components/transform.h"
+#include "scene_graph/node.h"
+
+#include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/quaternion.hpp>
+
+#include <iostream>
 
 namespace vkb
 {
 namespace sg
 {
-class Node;
-
-/// @brief A generic class which can be used by nodes.
-class Component
+NodeAnimation::NodeAnimation(std::shared_ptr<Node> node, TransformAnimFn animation_fn) :
+    Script{node, ""},
+    animation_fn{animation_fn}
 {
-  public:
-	Component() = default;
+}
 
-	Component(const std::string &name);
+void NodeAnimation::update(float delta_time)
+{
+	if (animation_fn)
+	{
+		animation_fn(get_node()->get_component<Transform>(), delta_time);
+	}
+}
 
-	virtual ~Component() = default;
+void NodeAnimation::set_animation(TransformAnimFn handle)
+{
+	animation_fn = handle;
+}
 
-	const std::string &get_name();
+void NodeAnimation::clear_animation()
+{
+	animation_fn = {};
+}
 
-	virtual std::type_index get_type() = 0;
-
-  private:
-	std::string name;
-};
 }        // namespace sg
 }        // namespace vkb

@@ -32,5 +32,6 @@ std::type_index Material::get_type()
 {
 	return typeid(Material);
 }
+
 }        // namespace sg
 }        // namespace vkb

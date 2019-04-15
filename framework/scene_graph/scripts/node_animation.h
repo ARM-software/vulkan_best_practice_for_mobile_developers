@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,31 +22,38 @@
 
 #include <memory>
 #include <string>
-#include <typeindex>
+#include <typeinfo>
 #include <vector>
+
+#include "common.h"
+#include "scene_graph/components/transform.h"
+#include "scene_graph/script.h"
+
+/**
+ *	@param std::shared_ptr<vkb::sg::Transform> The transform to animate
+ *  @param float The delta time of the frame to scale animations
+ */
+using TransformAnimFn = std::function<void(std::shared_ptr<vkb::sg::Transform>, float)>;
 
 namespace vkb
 {
 namespace sg
 {
-class Node;
-
-/// @brief A generic class which can be used by nodes.
-class Component
+class NodeAnimation : public Script
 {
   public:
-	Component() = default;
+	NodeAnimation(std::shared_ptr<Node> node, TransformAnimFn animation_fn);
 
-	Component(const std::string &name);
+	virtual ~NodeAnimation() = default;
 
-	virtual ~Component() = default;
+	virtual void update(float delta_time) override;
 
-	const std::string &get_name();
+	void set_animation(TransformAnimFn handle);
 
-	virtual std::type_index get_type() = 0;
+	void clear_animation();
 
   private:
-	std::string name;
+	TransformAnimFn animation_fn{};
 };
 }        // namespace sg
 }        // namespace vkb

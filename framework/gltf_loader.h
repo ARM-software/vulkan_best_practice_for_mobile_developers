@@ -65,27 +65,27 @@ class GLTFLoader
 	bool read_scene_from_file(const std::string &file_name, sg::Scene &scene);
 
   protected:
-	virtual std::shared_ptr<sg::Node> parse_node(const tinygltf::Node &gltf_node);
+	virtual std::unique_ptr<sg::Node> parse_node(const tinygltf::Node &gltf_node);
 
-	virtual std::shared_ptr<sg::Camera> parse_camera(const tinygltf::Camera &gltf_camera);
+	virtual std::unique_ptr<sg::Camera> parse_camera(const tinygltf::Camera &gltf_camera);
 
-	virtual std::shared_ptr<sg::Mesh> parse_mesh(const tinygltf::Mesh &gltf_mesh);
+	virtual std::unique_ptr<sg::Mesh> parse_mesh(const tinygltf::Mesh &gltf_mesh);
 
-	virtual std::shared_ptr<sg::SubMesh> parse_primitive(const tinygltf::Primitive &gltf_primitive);
+	virtual std::unique_ptr<sg::SubMesh> parse_primitive(const tinygltf::Primitive &gltf_primitive);
 
-	virtual std::shared_ptr<sg::PBRMaterial> parse_material(const tinygltf::Material &gltf_material);
+	virtual std::unique_ptr<sg::PBRMaterial> parse_material(const tinygltf::Material &gltf_material);
 
-	virtual std::shared_ptr<sg::Image> parse_image(tinygltf::Image &gltf_image);
+	virtual std::unique_ptr<sg::Image> parse_image(tinygltf::Image &gltf_image);
 
-	virtual std::shared_ptr<sg::Sampler> parse_sampler(const tinygltf::Sampler &gltf_sampler);
+	virtual std::unique_ptr<sg::Sampler> parse_sampler(const tinygltf::Sampler &gltf_sampler);
 
-	virtual std::shared_ptr<sg::Texture> parse_texture(const tinygltf::Texture &gltf_texture);
+	virtual std::unique_ptr<sg::Texture> parse_texture(const tinygltf::Texture &gltf_texture);
 
-	virtual std::shared_ptr<sg::PBRMaterial> create_default_material();
+	virtual std::unique_ptr<sg::PBRMaterial> create_default_material();
 
-	virtual std::shared_ptr<sg::Sampler> create_default_sampler();
+	virtual std::unique_ptr<sg::Sampler> create_default_sampler();
 
-	virtual std::shared_ptr<sg::Camera> create_default_camera();
+	virtual std::unique_ptr<sg::Camera> create_default_camera();
 
 	Device &device;
 
@@ -94,6 +94,6 @@ class GLTFLoader
 	std::string model_path;
 
   private:
-	void load_scene(sg::Scene &scene);
+	sg::Scene load_scene();
 };
 }        // namespace vkb

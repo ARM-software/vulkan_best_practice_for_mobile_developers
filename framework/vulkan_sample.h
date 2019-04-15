@@ -24,6 +24,7 @@
 #include "platform/application.h"
 #include "render_context.h"
 #include "scene_graph/scene.h"
+#include "scene_graph/scripts/node_animation.h"
 #include "stats.h"
 
 #include <algorithm>
@@ -97,14 +98,14 @@ class VulkanSample : public Application
 	virtual void draw_gui();
 
 	/**
-	 * @brief Add free camera script to a node with a camera object. 
-	          Fallback to the default_camera if node not found.
+	 * @brief Add free camera script to a node with a camera object.
+	 *        Fallback to the default_camera if node not found.
 	 *
 	 * @param node_name The scene node name
 	 *
 	 * @return Node where the script was attached as component
 	 */
-	std::shared_ptr<sg::Node> add_free_camera(const std::string &node_name);
+	sg::Node &add_free_camera(const std::string &node_name);
 
   private:
 	static constexpr float STATS_VIEW_RESET_TIME{10.0f};        // 10 seconds

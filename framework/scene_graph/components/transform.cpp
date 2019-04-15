@@ -28,12 +28,12 @@ namespace vkb
 {
 namespace sg
 {
-Transform::Transform(std::shared_ptr<Node> node) :
-    node{node}
+Transform::Transform(Node &n) :
+    node{n}
 {
 }
 
-std::shared_ptr<Node> Transform::get_node()
+Node &Transform::get_node()
 {
 	return node;
 }
@@ -116,19 +116,16 @@ void Transform::update_world_transform()
 
 	world_matrix = get_matrix();
 
-	if (node)
+	auto parent = node.get_parent();
+
+	if (parent)
 	{
-		auto parent = node->get_parent();
-
-		if (parent)
-		{
-			auto transform = parent->get_component<Transform>();
-
-			world_matrix = world_matrix * transform->get_world_matrix();
-		}
+		auto &transform = parent->get_component<Transform>();
+		world_matrix    = world_matrix * transform.get_world_matrix();
 	}
 
 	update_world_matrix = false;
 }
+
 }        // namespace sg
 }        // namespace vkb

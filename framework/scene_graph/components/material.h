@@ -44,15 +44,16 @@ class Material : public Component
 
 	virtual std::type_index get_type() override;
 
-	std::shared_ptr<Texture> base_color_texture;
+	Texture *base_color_texture;
 
-	std::shared_ptr<Texture> metallic_roughness_texture;
+	Texture *metallic_roughness_texture;
 
-	std::shared_ptr<Texture> normal_texture;
+	Texture *normal_texture;
 
-	std::shared_ptr<Texture> occlusion_texture;
+	Texture *occlusion_texture;
 
-	std::shared_ptr<Texture> emissive_texture;
+	Texture *emissive_texture;
 };
+
 }        // namespace sg
 }        // namespace vkb

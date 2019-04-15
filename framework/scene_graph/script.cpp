@@ -24,7 +24,7 @@ namespace vkb
 {
 namespace sg
 {
-Script::Script(std::shared_ptr<Node> node, const std::string &name) :
+Script::Script(Node &node, const std::string &name) :
     Component{name},
     node{node}
 {}
@@ -42,9 +42,10 @@ void Script::resize(uint32_t width, uint32_t height)
 {
 }
 
-std::shared_ptr<Node> Script::get_node()
+Node &Script::get_node()
 {
 	return node;
 }
+
 }        // namespace sg
 }        // namespace vkb
