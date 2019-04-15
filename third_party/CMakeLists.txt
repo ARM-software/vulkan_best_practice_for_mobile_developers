@@ -31,7 +31,8 @@ target_compile_definitions(glm INTERFACE
     GLM_FORCE_SWIZZLE 
     GLM_FORCE_RADIANS 
     GLM_FORCE_CTOR_INIT 
-    GLM_ENABLE_EXPERIMENTAL)
+    GLM_ENABLE_EXPERIMENTAL
+    GLM_FORCE_CXX14)
 
 # tinygltf
 add_library(tinygltf INTERFACE)
