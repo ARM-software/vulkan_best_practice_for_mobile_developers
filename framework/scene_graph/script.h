@@ -35,13 +35,13 @@ namespace vkb
 namespace sg
 {
 /**
- * @brief Generic structure to receive platform events. 
+ * @brief Generic structure to receive platform events.
  *        Used for adding game logic to scene graph objects.
  */
 class Script : public Component
 {
   public:
-	Script(std::shared_ptr<Node> node, const std::string &name = "");
+	Script(Node &node, const std::string &name = "");
 
 	virtual ~Script() = default;
 
@@ -53,10 +53,10 @@ class Script : public Component
 
 	virtual void resize(uint32_t width, uint32_t height);
 
-	std::shared_ptr<Node> get_node();
+	Node &get_node();
 
   private:
-	std::shared_ptr<Node> node;
+	Node &node;
 };
 }        // namespace sg
 }        // namespace vkb

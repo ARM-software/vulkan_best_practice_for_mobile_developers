@@ -44,33 +44,41 @@ const std::string &Scene::get_name() const
 	return name;
 }
 
-void Scene::add_child(std::shared_ptr<Node> child)
+void Scene::set_nodes(std::vector<std::unique_ptr<Node>> &&n)
 {
-	if (child)
-	{
-		children.push_back(child);
-	}
+	assert(nodes.empty() && "Scene nodes were already set");
+	nodes = std::move(n);
 }
 
-const std::vector<std::shared_ptr<Node>> &Scene::get_children() const
+void Scene::add_node(std::unique_ptr<Node> &&n)
+{
+	nodes.emplace_back(std::move(n));
+}
+
+void Scene::add_child(Node &child)
+{
+	children.push_back(&child);
+}
+
+const std::vector<Node *> &Scene::get_children() const
 {
 	return children;
 }
 
-void Scene::add_component(std::shared_ptr<Component> component)
+void Scene::add_component(std::unique_ptr<Component> &&component)
 {
 	if (component)
 	{
-		components[component->get_type()].push_back(component);
+		components[component->get_type()].push_back(std::move(component));
 	}
 }
 
-void Scene::set_components(const std::type_index &type_info, const std::vector<std::shared_ptr<Component>> &components)
+void Scene::set_components(const std::type_index &type_info, std::vector<std::unique_ptr<Component>> &&components)
 {
-	this->components[type_info] = components;
+	this->components[type_info] = std::move(components);
 }
 
-const std::vector<std::shared_ptr<Component>> &Scene::get_components(const std::type_index &type_info) const
+const std::vector<std::unique_ptr<Component>> &Scene::get_components(const std::type_index &type_info) const
 {
 	return components.at(type_info);
 }
@@ -80,11 +88,11 @@ bool Scene::has_component(const std::type_index &type_info) const
 	return components.count(type_info) != 0 ? true : false;
 }
 
-std::shared_ptr<Node> Scene::find_node(const std::string &name)
+Node *Scene::find_node(const std::string &name)
 {
 	for (auto root_node : children)
 	{
-		std::queue<std::shared_ptr<sg::Node>> traverse_nodes{};
+		std::queue<sg::Node *> traverse_nodes{};
 		traverse_nodes.push(root_node);
 
 		while (!traverse_nodes.empty())
@@ -104,7 +112,7 @@ std::shared_ptr<Node> Scene::find_node(const std::string &name)
 		}
 	}
 
-	return std::shared_ptr<Node>{};
+	return nullptr;
 }
 }        // namespace sg
 }        // namespace vkb

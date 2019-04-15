@@ -105,25 +105,25 @@ inline VkSamplerAddressMode find_wrap_mode(int wrap)
 	}
 };
 
-inline std::vector<uint8_t> get_attribute_data(const tinygltf::Model *model, std::uint32_t accessorId)
+inline std::vector<uint8_t> get_attribute_data(const tinygltf::Model *model, uint32_t accessorId)
 {
 	auto &accessor   = model->accessors.at(accessorId);
 	auto &bufferView = model->bufferViews.at(accessor.bufferView);
 	auto &buffer     = model->buffers.at(bufferView.buffer);
 
-	std::size_t stride    = accessor.ByteStride(bufferView);
-	std::size_t startByte = accessor.byteOffset + bufferView.byteOffset;
-	std::size_t endByte   = startByte + accessor.count * stride;
+	size_t stride    = accessor.ByteStride(bufferView);
+	size_t startByte = accessor.byteOffset + bufferView.byteOffset;
+	size_t endByte   = startByte + accessor.count * stride;
 
 	return {buffer.data.begin() + startByte, buffer.data.begin() + endByte};
 };
 
-inline std::size_t get_attribute_size(const tinygltf::Model *model, std::uint32_t accessorId)
+inline size_t get_attribute_size(const tinygltf::Model *model, uint32_t accessorId)
 {
 	return model->accessors.at(accessorId).count;
 };
 
-inline std::size_t get_attribute_stride(const tinygltf::Model *model, std::uint32_t accessorId)
+inline size_t get_attribute_stride(const tinygltf::Model *model, uint32_t accessorId)
 {
 	auto &accessor   = model->accessors.at(accessorId);
 	auto &bufferView = model->bufferViews.at(accessor.bufferView);
@@ -131,7 +131,7 @@ inline std::size_t get_attribute_stride(const tinygltf::Model *model, std::uint3
 	return accessor.ByteStride(bufferView);
 };
 
-inline VkFormat get_attribute_format(const tinygltf::Model *model, std::uint32_t accessorId)
+inline VkFormat get_attribute_format(const tinygltf::Model *model, uint32_t accessorId)
 {
 	auto &accessor = model->accessors.at(accessorId);
 
@@ -248,13 +248,13 @@ inline VkFormat get_attribute_format(const tinygltf::Model *model, std::uint32_t
 	return format;
 };
 
-inline std::vector<uint8_t> convert_data(const std::vector<uint8_t> &srcData, std::uint32_t srcStride, std::uint32_t dstStride)
+inline std::vector<uint8_t> convert_data(const std::vector<uint8_t> &srcData, uint32_t srcStride, uint32_t dstStride)
 {
 	auto elem_count = to_u32(srcData.size()) / srcStride;
 
 	std::vector<uint8_t> result(elem_count * dstStride);
 
-	for (std::uint32_t idxSrc = 0, idxDst = 0;
+	for (uint32_t idxSrc = 0, idxDst = 0;
 	     idxSrc < srcData.size() && idxDst < result.size();
 	     idxSrc += srcStride, idxDst += dstStride)
 	{
@@ -340,7 +340,7 @@ bool GLTFLoader::read_scene_from_file(const std::string &file_name, sg::Scene &s
 		LOGI("%s", warn.c_str());
 	}
 
-	std::size_t pos = file_name.find_last_of('/');
+	size_t pos = file_name.find_last_of('/');
 
 	model_path = file_name.substr(0, pos);
 
@@ -349,68 +349,65 @@ bool GLTFLoader::read_scene_from_file(const std::string &file_name, sg::Scene &s
 		model_path.clear();
 	}
 
-	load_scene(scene);
+	scene = load_scene();
 
 	return true;
 }
 
-void GLTFLoader::load_scene(sg::Scene &scene)
+sg::Scene GLTFLoader::load_scene()
 {
-	scene = sg::Scene();
+	auto scene = sg::Scene();
 
 	scene.set_name("gltf_scene");
 
 	ThreadPool thread_pool;
 
-	std::vector<std::shared_ptr<sg::Sampler>> sampler_components(model.samplers.size());
+	// Load samplers
+	std::vector<std::unique_ptr<sg::Sampler>> sampler_components(model.samplers.size());
 
-	for (std::size_t sampler_index = 0; sampler_index < model.samplers.size(); sampler_index++)
+	for (size_t sampler_index = 0; sampler_index < model.samplers.size(); sampler_index++)
 	{
 		thread_pool.run(
-		    [&](std::size_t sampler_index) {
+		    [&](size_t sampler_index) {
 			    auto sampler = parse_sampler(model.samplers.at(sampler_index));
 
-			    sampler_components[sampler_index] = sampler;
+			    sampler_components[sampler_index] = std::move(sampler);
 		    },
 		    sampler_index);
 	}
 
 	thread_pool.wait();
 
-	scene.set_components(sampler_components);
-
-	auto default_sampler = create_default_sampler();
-
-	scene.add_component(default_sampler);
+	scene.set_components(std::move(sampler_components));
 
 	auto start_time = std::chrono::high_resolution_clock::now();
 
-	std::vector<std::shared_ptr<sg::Image>> image_components(model.images.size());
+	// Load images
+	std::vector<std::unique_ptr<sg::Image>> image_components(model.images.size());
 
-	for (std::size_t image_index = 0; image_index < model.images.size(); image_index++)
+	for (size_t image_index = 0; image_index < model.images.size(); image_index++)
 	{
 		thread_pool.run(
-		    [&](std::size_t image_index) {
+		    [&](size_t image_index) {
 			    auto image = parse_image(model.images.at(image_index));
 
 			    LOGI("Loaded gltf image #%zu (%s)", image_index, model.images.at(image_index).uri.c_str());
 
-			    image_components[image_index] = image;
+			    image_components[image_index] = std::move(image);
 		    },
 		    image_index);
 	}
 
 	thread_pool.wait();
 
-	scene.set_components(image_components);
-
+	// Upload images to GPU
 	std::vector<core::Buffer> transient_buffers;
 
 	auto &command_buffer = device.request_command_buffer();
 
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-	for (std::size_t image_index = 0; image_index < image_components.size(); image_index++)
+	for (size_t image_index = 0; image_index < image_components.size(); image_index++)
 	{
 		auto &image      = image_components.at(image_index);
 		auto &gltf_image = model.images.at(image_index);
@@ -435,34 +432,40 @@ void GLTFLoader::load_scene(sg::Scene &scene)
 
 	transient_buffers.clear();
 
+	scene.set_components(std::move(image_components));
+
 	auto end_time = std::chrono::high_resolution_clock::now();
 
 	auto elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
 
 	LOGI("Time spent loading images: %lld seconds.", elapsed_time.count());
 
-	auto images = scene.get_components<sg::Image>();
-
-	auto samplers = scene.get_components<sg::Sampler>();
+	// Load textures
+	auto images          = scene.get_components<sg::Image>();
+	auto samplers        = scene.get_components<sg::Sampler>();
+	auto default_sampler = create_default_sampler();
 
 	for (auto &gltf_texture : model.textures)
 	{
 		auto texture = parse_texture(gltf_texture);
 
-		texture->set_image(images.at(gltf_texture.source));
+		texture->set_image(*images.at(gltf_texture.source));
 
 		if (gltf_texture.sampler < 0)
 		{
-			texture->set_sampler(default_sampler);
+			texture->set_sampler(*default_sampler);
 		}
 		else
 		{
-			texture->set_sampler(samplers.at(gltf_texture.sampler));
+			texture->set_sampler(*samplers.at(gltf_texture.sampler));
 		}
 
-		scene.add_component(texture);
+		scene.add_component(std::move(texture));
 	}
 
+	scene.add_component(std::move(default_sampler));
+
+	// Load materials
 	auto textures = scene.get_components<sg::Texture>();
 
 	for (auto &gltf_material : model.materials)
@@ -497,20 +500,17 @@ void GLTFLoader::load_scene(sg::Scene &scene)
 			}
 		}
 
-		scene.add_component(material);
+		scene.add_component(std::move(material));
 	}
 
 	auto default_material = create_default_material();
 
-	scene.add_component(default_material);
-
+	// Load meshes
 	auto materials = scene.get_components<sg::PBRMaterial>();
 
 	for (auto &gltf_mesh : model.meshes)
 	{
 		auto mesh = parse_mesh(gltf_mesh);
-
-		scene.add_component(mesh);
 
 		for (auto &gltf_primitive : gltf_mesh.primitives)
 		{
@@ -518,34 +518,35 @@ void GLTFLoader::load_scene(sg::Scene &scene)
 
 			if (gltf_primitive.material < 0)
 			{
-				submesh->material = default_material;
+				submesh->material = default_material.get();
 			}
 			else
 			{
 				submesh->material = materials.at(gltf_primitive.material);
 			}
 
-			mesh->add_submesh(submesh);
+			mesh->add_submesh(*submesh);
 
-			scene.add_component(submesh);
+			scene.add_component(std::move(submesh));
 		}
+
+		scene.add_component(std::move(mesh));
 	}
 
+	scene.add_component(std::move(default_material));
+
+	// Load cameras
 	for (auto &gltf_camera : model.cameras)
 	{
 		auto camera = parse_camera(gltf_camera);
-
-		scene.add_component(camera);
+		scene.add_component(std::move(camera));
 	}
 
-	auto default_camera = create_default_camera();
-
-	scene.add_component(default_camera);
-
+	// Load nodes
 	auto meshes  = scene.get_components<sg::Mesh>();
 	auto cameras = scene.get_components<sg::Camera>();
 
-	std::vector<std::shared_ptr<sg::Node>> nodes;
+	std::vector<std::unique_ptr<sg::Node>> nodes;
 
 	for (auto &gltf_node : model.nodes)
 	{
@@ -555,78 +556,78 @@ void GLTFLoader::load_scene(sg::Scene &scene)
 		{
 			auto mesh = meshes.at(gltf_node.mesh);
 
-			node->set_component(mesh);
+			node->set_component(*mesh);
 
-			mesh->add_node(node);
+			mesh->add_node(*node);
 		}
 
 		if (gltf_node.camera >= 0)
 		{
 			auto camera = cameras.at(gltf_node.camera);
 
-			node->set_component(camera);
+			node->set_component(*camera);
 
-			camera->set_node(node);
+			camera->set_node(*node);
 		}
 
-		nodes.push_back(node);
+		nodes.push_back(std::move(node));
 	}
 
-	std::queue<std::pair<std::shared_ptr<sg::Node>, int>> traverse_nodes;
+	// Load scenes
+	std::queue<std::pair<sg::Node &, int>> traverse_nodes;
 
 	for (auto &gltf_scene : model.scenes)
 	{
-		auto root_node = std::make_shared<sg::Node>(gltf_scene.name);
-		auto transform = std::make_shared<sg::Transform>(root_node);
-
-		root_node->set_component(transform);
+		auto root_node = std::make_unique<sg::Node>(gltf_scene.name);
 
 		for (auto node_index : gltf_scene.nodes)
 		{
-			traverse_nodes.push(std::make_pair(root_node, node_index));
+			traverse_nodes.push(std::make_pair(std::ref(*root_node), node_index));
 		}
 
 		while (!traverse_nodes.empty())
 		{
-			auto nodeIter = traverse_nodes.front();
+			auto node_it = traverse_nodes.front();
 			traverse_nodes.pop();
 
-			auto current_node = nodes.at(nodeIter.second);
-			auto root_node    = nodeIter.first;
+			auto &current_node = *nodes.at(node_it.second);
+			auto &root_node    = node_it.first;
 
-			current_node->set_parent(root_node);
-			root_node->add_child(current_node);
+			current_node.set_parent(root_node);
+			root_node.add_child(current_node);
 
-			for (auto child_node_index : model.nodes[nodeIter.second].children)
+			for (auto child_node_index : model.nodes[node_it.second].children)
 			{
-				traverse_nodes.push(std::make_pair(root_node, child_node_index));
+				traverse_nodes.push(std::make_pair(std::ref(root_node), child_node_index));
 			}
 		}
 
-		scene.add_child(root_node);
+		scene.add_child(*root_node);
+		nodes.push_back(std::move(root_node));
 	}
 
-	/* Create node for the default camera */
-	auto camera_node = std::make_shared<sg::Node>("default_camera");
-	scene.add_child(camera_node);
+	// Store nodes into the scene
+	scene.set_nodes(std::move(nodes));
 
-	auto camera_transform = std::make_shared<sg::Transform>(camera_node);
-	scene.add_component(camera_transform);
+	// Create node for the default camera
+	auto camera_node = std::make_unique<sg::Node>("default_camera");
 
-	camera_node->set_component(default_camera);
-	camera_node->set_component(camera_transform);
+	auto default_camera = create_default_camera();
+	default_camera->set_node(*camera_node);
+	camera_node->set_component(*default_camera);
+	scene.add_component(std::move(default_camera));
 
-	default_camera->set_node(camera_node);
+	scene.add_child(*camera_node);
+	scene.add_node(std::move(camera_node));
+
+	return scene;
 }
 
-std::shared_ptr<sg::Node> GLTFLoader::parse_node(const tinygltf::Node &gltf_node)
+std::unique_ptr<sg::Node> GLTFLoader::parse_node(const tinygltf::Node &gltf_node)
 {
-	auto node = std::make_shared<sg::Node>(gltf_node.name);
+	auto node = std::make_unique<sg::Node>(gltf_node.name);
 
-#pragma warning(push)
-#pragma warning(disable : 4244)
-
-	auto transform = std::make_shared<sg::Transform>(node);
+	auto &transform = node->get_component<sg::Transform>();
 
 	if (!gltf_node.translation.empty())
 	{
@@ -634,7 +635,7 @@ std::shared_ptr<sg::Node> GLTFLoader::parse_node(const tinygltf::Node &gltf_node
 
 		std::copy(gltf_node.translation.begin(), gltf_node.translation.end(), glm::value_ptr(translation));
 
-		transform->set_translation(translation);
+		transform.set_translation(translation);
 	}
 
 	if (!gltf_node.rotation.empty())
@@ -643,7 +644,7 @@ std::shared_ptr<sg::Node> GLTFLoader::parse_node(const tinygltf::Node &gltf_node
 
 		std::copy(gltf_node.rotation.begin(), gltf_node.rotation.end(), glm::value_ptr(rotation));
 
-		transform->set_rotation(rotation);
+		transform.set_rotation(rotation);
 	}
 
 	if (!gltf_node.scale.empty())
@@ -652,7 +653,7 @@ std::shared_ptr<sg::Node> GLTFLoader::parse_node(const tinygltf::Node &gltf_node
 
 		std::copy(gltf_node.scale.begin(), gltf_node.scale.end(), glm::value_ptr(scale));
 
-		transform->set_scale(scale);
+		transform.set_scale(scale);
 	}
 
 	if (!gltf_node.matrix.empty())
@@ -661,30 +662,26 @@ std::shared_ptr<sg::Node> GLTFLoader::parse_node(const tinygltf::Node &gltf_node
 
 		std::copy(gltf_node.matrix.begin(), gltf_node.matrix.end(), glm::value_ptr(matrix));
 
-		transform->set_matrix(matrix);
+		transform.set_matrix(matrix);
 	}
-
-#pragma warning(pop)
-
-	node->set_component(transform);
 
 	return node;
 }
 
-std::shared_ptr<sg::Camera> GLTFLoader::parse_camera(const tinygltf::Camera &gltf_camera)
+std::unique_ptr<sg::Camera> GLTFLoader::parse_camera(const tinygltf::Camera &gltf_camera)
 {
-	std::shared_ptr<sg::Camera> camera;
+	std::unique_ptr<sg::Camera> camera;
 
 	if (gltf_camera.type == "perspective")
 	{
-		auto perspective_camera = std::make_shared<sg::PerspectiveCamera>(gltf_camera.name);
+		auto perspective_camera = std::make_unique<sg::PerspectiveCamera>(gltf_camera.name);
 
 		perspective_camera->set_aspect_ratio(gltf_camera.perspective.aspectRatio);
 		perspective_camera->set_field_of_view(gltf_camera.perspective.yfov);
 		perspective_camera->set_near_plane(gltf_camera.perspective.znear);
 		perspective_camera->set_far_plane(gltf_camera.perspective.zfar);
 
-		camera = perspective_camera;
+		camera = std::move(perspective_camera);
 	}
 	else
 	{
@@ -694,16 +691,14 @@ std::shared_ptr<sg::Camera> GLTFLoader::parse_camera(const tinygltf::Camera &glt
 	return camera;
 }
 
-std::shared_ptr<sg::Mesh> GLTFLoader::parse_mesh(const tinygltf::Mesh &gltf_mesh)
+std::unique_ptr<sg::Mesh> GLTFLoader::parse_mesh(const tinygltf::Mesh &gltf_mesh)
 {
-	auto mesh = std::make_shared<sg::Mesh>(gltf_mesh.name);
-
-	return mesh;
+	return std::make_unique<sg::Mesh>(gltf_mesh.name);
 }
 
-std::shared_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primitive &gltf_primitive)
+std::unique_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primitive &gltf_primitive)
 {
-	auto submesh = std::make_shared<sg::SubMesh>();
+	auto submesh = std::make_unique<sg::SubMesh>();
 
 	for (auto &attribute : gltf_primitive.attributes)
 	{
@@ -766,9 +761,9 @@ std::shared_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primiti
 	return submesh;
 }
 
-std::shared_ptr<sg::PBRMaterial> GLTFLoader::parse_material(const tinygltf::Material &gltf_material)
+std::unique_ptr<sg::PBRMaterial> GLTFLoader::parse_material(const tinygltf::Material &gltf_material)
 {
-	auto material = std::make_shared<sg::PBRMaterial>(gltf_material.name);
+	auto material = std::make_unique<sg::PBRMaterial>(gltf_material.name);
 
 	for (auto &gltf_value : gltf_material.values)
 	{
@@ -799,9 +794,9 @@ std::shared_ptr<sg::PBRMaterial> GLTFLoader::parse_material(const tinygltf::Mate
 	return material;
 }
 
-std::shared_ptr<sg::Image> GLTFLoader::parse_image(tinygltf::Image &gltf_image)
+std::unique_ptr<sg::Image> GLTFLoader::parse_image(tinygltf::Image &gltf_image)
 {
-	auto image = std::make_shared<sg::Image>(gltf_image.name);
+	auto image = std::make_unique<sg::Image>(gltf_image.name);
 
 	int width  = gltf_image.width;
 	int height = gltf_image.height;
@@ -845,9 +840,9 @@ std::shared_ptr<sg::Image> GLTFLoader::parse_image(tinygltf::Image &gltf_image)
 	return image;
 }
 
-std::shared_ptr<sg::Sampler> GLTFLoader::parse_sampler(const tinygltf::Sampler &gltf_sampler)
+std::unique_ptr<sg::Sampler> GLTFLoader::parse_sampler(const tinygltf::Sampler &gltf_sampler)
 {
-	auto sampler = std::make_shared<sg::Sampler>(gltf_sampler.name);
+	auto sampler = std::make_unique<sg::Sampler>(gltf_sampler.name);
 
 	VkFilter minFilter = find_min_filter(gltf_sampler.minFilter);
 	VkFilter magFilter = find_mag_filter(gltf_sampler.magFilter);
@@ -871,21 +866,18 @@ std::shared_ptr<sg::Sampler> GLTFLoader::parse_sampler(const tinygltf::Sampler &
 	return sampler;
 }
 
-std::shared_ptr<sg::Texture> GLTFLoader::parse_texture(const tinygltf::Texture &gltf_texture)
+std::unique_ptr<sg::Texture> GLTFLoader::parse_texture(const tinygltf::Texture &gltf_texture)
 {
-	auto texture = std::make_shared<sg::Texture>(gltf_texture.name);
-
-	return texture;
+	return std::make_unique<sg::Texture>(gltf_texture.name);
 }
 
-std::shared_ptr<sg::PBRMaterial> GLTFLoader::create_default_material()
+std::unique_ptr<sg::PBRMaterial> GLTFLoader::create_default_material()
 {
 	tinygltf::Material gltf_material;
-
 	return parse_material(gltf_material);
 }
 
-std::shared_ptr<sg::Sampler> GLTFLoader::create_default_sampler()
+std::unique_ptr<sg::Sampler> GLTFLoader::create_default_sampler()
 {
 	tinygltf::Sampler gltf_sampler;
 
@@ -899,7 +891,7 @@ std::shared_ptr<sg::Sampler> GLTFLoader::create_default_sampler()
 	return parse_sampler(gltf_sampler);
 }
 
-std::shared_ptr<sg::Camera> GLTFLoader::create_default_camera()
+std::unique_ptr<sg::Camera> GLTFLoader::create_default_camera()
 {
 	tinygltf::Camera gltf_camera;
 

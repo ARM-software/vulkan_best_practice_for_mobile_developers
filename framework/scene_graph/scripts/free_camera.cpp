@@ -43,7 +43,7 @@ const float FreeCamera::TRANSLATION_MOVE_STEP = 50.0f;
 
 const uint32_t FreeCamera::TRANSLATION_MOVE_SPEED = 4;
 
-FreeCamera::FreeCamera(std::shared_ptr<Node> node) :
+FreeCamera::FreeCamera(Node &node) :
     Script{node, "FreeCamera"}
 {}
 
@@ -55,17 +55,29 @@ void FreeCamera::update(float delta_time)
 	float mul_translation = speed_multiplier;
 
 	if (key_pressed[KeyCode::W])
+	{
 		delta_translation.z -= TRANSLATION_MOVE_STEP;
+	}
 	if (key_pressed[KeyCode::S])
+	{
 		delta_translation.z += TRANSLATION_MOVE_STEP;
+	}
 	if (key_pressed[KeyCode::A])
+	{
 		delta_translation.x -= TRANSLATION_MOVE_STEP;
+	}
 	if (key_pressed[KeyCode::D])
+	{
 		delta_translation.x += TRANSLATION_MOVE_STEP;
+	}
 	if (key_pressed[KeyCode::LeftControl])
+	{
 		mul_translation *= (1.0f * TRANSLATION_MOVE_SPEED);
+	}
 	if (key_pressed[KeyCode::LeftShift])
+	{
 		mul_translation *= (1.0f / TRANSLATION_MOVE_SPEED);
+	}
 
 	if (mouse_button_pressed[MouseButton::Left] && mouse_button_pressed[MouseButton::Right])
 	{
@@ -100,15 +112,15 @@ void FreeCamera::update(float delta_time)
 	delta_translation *= mul_translation * delta_time;
 	delta_rotation *= delta_time;
 
-	auto transform = get_node()->get_component<Transform>();
+	auto &transform = get_node().get_component<Transform>();
 
 	glm::quat qx = glm::angleAxis(delta_rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
 	glm::quat qy = glm::angleAxis(delta_rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
 
-	glm::quat orientation = glm::normalize(qy * transform->get_rotation() * qx);
+	glm::quat orientation = glm::normalize(qy * transform.get_rotation() * qx);
 
-	transform->set_translation(transform->get_translation() + delta_translation * glm::conjugate(orientation));
-	transform->set_rotation(orientation);
+	transform.set_translation(transform.get_translation() + delta_translation * glm::conjugate(orientation));
+	transform.set_rotation(orientation);
 
 	mouse_move_delta = {};
 	touch_move_delta = {};
@@ -184,12 +196,14 @@ void FreeCamera::input_event(const InputEvent &input_event)
 
 void FreeCamera::resize(uint32_t width, uint32_t height)
 {
-	if (get_node()->has_component<Camera>())
-	{
-		auto camera = std::dynamic_pointer_cast<PerspectiveCamera>(get_node()->get_component<Camera>());
+	auto &node = get_node();
 
-		camera->set_aspect_ratio(static_cast<float>(width) / height);
+	if (node.has_component<Camera>())
+	{
+		auto camera = dynamic_cast<PerspectiveCamera &>(node.get_component<Camera>());
+		camera.set_aspect_ratio(static_cast<float>(width) / height);
 	}
 }
+
 }        // namespace sg
 }        // namespace vkb

@@ -68,7 +68,7 @@ class SubMesh : public Component
 
 	std::unique_ptr<core::Buffer> index_buffer;
 
-	std::shared_ptr<Material> material;
+	Material *material{nullptr};
 };
 }        // namespace sg
 }        // namespace vkb

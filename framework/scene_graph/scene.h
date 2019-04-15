@@ -47,45 +47,51 @@ class Scene
 
 	const std::string &get_name() const;
 
-	void add_child(std::shared_ptr<Node> child);
+	void set_nodes(std::vector<std::unique_ptr<Node>> &&nodes);
 
-	const std::vector<std::shared_ptr<Node>> &get_children() const;
+	void add_node(std::unique_ptr<Node> &&node);
 
-	void add_component(std::shared_ptr<Component> component);
+	void add_child(Node &child);
+
+	const std::vector<Node *> &get_children() const;
+
+	void add_component(std::unique_ptr<Component> &&component);
 
 	/**
 	 * @brief Set list of components for the given type
+	 * @param type_info The type of the component
+	 * @param components The list of components (retained)
 	 */
-	void set_components(const std::type_index &type_info, const std::vector<std::shared_ptr<Component>> &components);
+	void set_components(const std::type_index &type_info, std::vector<std::unique_ptr<Component>> &&components);
 
 	/**
 	 * @brief Set list of components casted from the given template type
 	 */
 	template <class T>
-	void set_components(const std::vector<std::shared_ptr<T>> &components)
+	void set_components(std::vector<std::unique_ptr<T>> &&components)
 	{
-		std::vector<std::shared_ptr<Component>> result(components.size());
+		std::vector<std::unique_ptr<Component>> result(components.size());
 		std::transform(components.begin(), components.end(), result.begin(),
-		               [](std::shared_ptr<T> component) -> std::shared_ptr<Component> {
-			               return std::dynamic_pointer_cast<Component>(component);
+		               [](std::unique_ptr<T> &component) -> std::unique_ptr<Component> {
+			               return std::unique_ptr<Component>(std::move(component));
 		               });
 
-		set_components(typeid(T), result);
+		set_components(typeid(T), std::move(result));
 	}
 
 	/**
-	 * @return List of components casted to the given template type
+	 * @return List of pointers to components casted to the given template type
 	 */
 	template <class T>
-	std::vector<std::shared_ptr<T>> get_components() const
+	std::vector<T *> get_components() const
 	{
-		auto components = get_components(typeid(T));
+		auto &components = get_components(typeid(T));
 
-		std::vector<std::shared_ptr<T>> result(components.size());
+		std::vector<T *> result(components.size());
 
 		std::transform(components.begin(), components.end(), result.begin(),
-		               [](std::shared_ptr<Component> component) -> std::shared_ptr<T> {
-			               return std::dynamic_pointer_cast<T>(component);
+		               [](const std::unique_ptr<Component> &component) -> T * {
+			               return dynamic_cast<T *>(component.get());
 		               });
 
 		return result;
@@ -94,7 +100,7 @@ class Scene
 	/**
 	 * @return List of components for the given type
 	 */
-	const std::vector<std::shared_ptr<Component>> &get_components(const std::type_index &type_info) const;
+	const std::vector<std::unique_ptr<Component>> &get_components(const std::type_index &type_info) const;
 
 	template <class T>
 	bool has_component() const
@@ -104,14 +110,17 @@ class Scene
 
 	bool has_component(const std::type_index &type_info) const;
 
-	std::shared_ptr<Node> find_node(const std::string &name);
+	Node *find_node(const std::string &name);
 
   private:
 	std::string name;
 
-	std::vector<std::shared_ptr<Node>> children;
+	/// List of all the nodes
+	std::vector<std::unique_ptr<Node>> nodes;
 
-	std::unordered_map<std::type_index, std::vector<std::shared_ptr<Component>>> components;
+	std::vector<Node *> children;
+
+	std::unordered_map<std::type_index, std::vector<std::unique_ptr<Component>>> components;
 };
 }        // namespace sg
 }        // namespace vkb

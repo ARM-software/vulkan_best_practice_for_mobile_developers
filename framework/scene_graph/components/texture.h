@@ -44,18 +44,18 @@ class Texture : public Component
 
 	virtual std::type_index get_type() override;
 
-	void set_image(std::shared_ptr<Image> image);
+	void set_image(Image &image);
 
-	std::shared_ptr<Image> get_image();
+	Image *get_image();
 
-	void set_sampler(std::shared_ptr<Sampler> sampler);
+	void set_sampler(Sampler &sampler);
 
-	std::shared_ptr<Sampler> get_sampler();
+	Sampler *get_sampler();
 
   private:
-	std::shared_ptr<Image> image;
+	Image *image;
 
-	std::shared_ptr<Sampler> sampler;
+	Sampler *sampler;
 };
 }        // namespace sg
 }        // namespace vkb

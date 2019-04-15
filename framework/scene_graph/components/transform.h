@@ -37,11 +37,11 @@ class Node;
 class Transform : public Component
 {
   public:
-	Transform(std::shared_ptr<Node> node);
+	Transform(Node &node);
 
 	virtual ~Transform() = default;
 
-	std::shared_ptr<Node> get_node();
+	Node &get_node();
 
 	virtual std::type_index get_type() override;
 
@@ -64,14 +64,14 @@ class Transform : public Component
 	glm::mat4 get_world_matrix();
 
 	/**
-	 * @brief Marks the world transform invalid if any of 
-	 *        the local transform are changed or the parent 
-	 *		  world transform has changed.
+	 * @brief Marks the world transform invalid if any of
+	 *        the local transform are changed or the parent
+	 *        world transform has changed.
 	 */
 	void invalidate_world_matrix();
 
   private:
-	std::shared_ptr<Node> node;
+	Node &node;
 
 	glm::vec3 translation = glm::vec3(0.0, 0.0, 0.0);
 
@@ -85,5 +85,6 @@ class Transform : public Component
 
 	void update_world_transform();
 };
+
 }        // namespace sg
 }        // namespace vkb

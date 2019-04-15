@@ -45,12 +45,12 @@ class Camera : public Component
 
 	glm::mat4 get_view();
 
-	void set_node(std::shared_ptr<Node> node);
+	void set_node(Node &node);
 
-	std::shared_ptr<Node> get_node();
+	Node *get_node();
 
   private:
-	std::shared_ptr<Node> node;
+	Node *node{nullptr};
 };
 }        // namespace sg
 }        // namespace vkb
