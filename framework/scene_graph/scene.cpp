@@ -65,6 +65,16 @@ const std::vector<Node *> &Scene::get_children() const
 	return children;
 }
 
+void Scene::add_component(std::unique_ptr<Component> &&component, Node &node)
+{
+	node.set_component(*component);
+
+	if (component)
+	{
+		components[component->get_type()].push_back(std::move(component));
+	}
+}
+
 void Scene::add_component(std::unique_ptr<Component> &&component)
 {
 	if (component)

@@ -33,7 +33,7 @@
  *	@param std::shared_ptr<vkb::sg::Transform> The transform to animate
  *  @param float The delta time of the frame to scale animations
  */
-using TransformAnimFn = std::function<void(std::shared_ptr<vkb::sg::Transform>, float)>;
+using TransformAnimFn = std::function<void(vkb::sg::Transform &, float)>;
 
 namespace vkb
 {
@@ -42,7 +42,7 @@ namespace sg
 class NodeAnimation : public Script
 {
   public:
-	NodeAnimation(std::shared_ptr<Node> node, TransformAnimFn animation_fn);
+	NodeAnimation(Node &node, TransformAnimFn animation_fn);
 
 	virtual ~NodeAnimation() = default;
 

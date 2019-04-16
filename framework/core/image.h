@@ -41,7 +41,9 @@ class Image : public NonCopyable
 	      VkFormat              format,
 	      VkImageUsageFlags     image_usage,
 	      VmaMemoryUsage        memory_usage,
-	      VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT);
+	      VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT,
+	      uint32_t              mip_levels   = 1,
+	      uint32_t              array_layers = 1);
 
 	Image(Image &&other);
 
@@ -61,6 +63,10 @@ class Image : public NonCopyable
 
 	VkSampleCountFlagBits get_samples() const;
 
+	uint32_t get_mip_levels() const;
+
+	uint32_t get_array_layers() const;
+
   private:
 	Device &device;
 
@@ -75,6 +81,10 @@ class Image : public NonCopyable
 	VkFormat format{};
 
 	VkSampleCountFlagBits samples{};
+
+	uint32_t mip_levels{1};
+
+	uint32_t array_layers{1};
 };
 }        // namespace core
 }        // namespace vkb

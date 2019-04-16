@@ -707,6 +707,11 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primiti
 
 		auto vertex_data = get_attribute_data(&model, attribute.second);
 
+		if (attrib_name == "position")
+		{
+			submesh->vertices_count = to_u32(model.accessors.at(attribute.second).count);
+		}
+
 		core::Buffer buffer{device, vertex_data.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU};
 
 		buffer.update(vertex_data);
