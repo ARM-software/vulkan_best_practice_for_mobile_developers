@@ -34,8 +34,8 @@ ImageView::ImageView(core::Image &image, VkImageViewType view_type, VkFormat for
 		this->format = format = image.get_format();
 	}
 
-	subresource_range.levelCount = 1;
-	subresource_range.layerCount = 1;
+	subresource_range.levelCount = image.get_mip_levels();
+	subresource_range.layerCount = image.get_array_layers();
 
 	if (is_depth_only_format(format))
 	{

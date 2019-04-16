@@ -57,6 +57,8 @@ class Scene
 
 	void add_component(std::unique_ptr<Component> &&component);
 
+	void add_component(std::unique_ptr<Component> &&component, Node &node);
+
 	/**
 	 * @brief Set list of components for the given type
 	 * @param type_info The type of the component

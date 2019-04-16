@@ -74,22 +74,26 @@ Image::Image(Device &              device,
              VkFormat              format,
              VkImageUsageFlags     image_usage,
              VmaMemoryUsage        memory_usage,
-             VkSampleCountFlagBits sample_count) :
+             VkSampleCountFlagBits sample_count,
+             uint32_t              mip_levels,
+             uint32_t              array_layers) :
     device{device},
     type{find_image_type(extent)},
     extent{extent},
     format{format},
-    samples{sample_count}
+    samples{sample_count},
+    mip_levels{mip_levels},
+    array_layers{array_layers}
 {
 	VkImageCreateInfo image_info{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
 
 	image_info.imageType   = type;
 	image_info.format      = format;
 	image_info.extent      = extent;
-	image_info.mipLevels   = 1;
-	image_info.arrayLayers = 1;
 	image_info.samples     = samples;
 	image_info.usage       = image_usage;
+	image_info.mipLevels   = mip_levels;
+	image_info.arrayLayers = array_layers;
 
 	VmaAllocationCreateInfo memory_info{};
 	memory_info.usage = memory_usage;
@@ -174,5 +178,16 @@ VkSampleCountFlagBits Image::get_samples() const
 {
 	return samples;
 }
+
+uint32_t Image::get_mip_levels() const
+{
+	return mip_levels;
+}
+
+uint32_t Image::get_array_layers() const
+{
+	return array_layers;
+}
+
 }        // namespace core
 }        // namespace vkb

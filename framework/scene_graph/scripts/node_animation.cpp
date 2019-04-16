@@ -33,7 +33,7 @@ namespace vkb
 {
 namespace sg
 {
-NodeAnimation::NodeAnimation(std::shared_ptr<Node> node, TransformAnimFn animation_fn) :
+NodeAnimation::NodeAnimation(Node &node, TransformAnimFn animation_fn) :
     Script{node, ""},
     animation_fn{animation_fn}
 {
@@ -43,7 +43,7 @@ void NodeAnimation::update(float delta_time)
 {
 	if (animation_fn)
 	{
-		animation_fn(get_node()->get_component<Transform>(), delta_time);
+		animation_fn(get_node().get_component<Transform>(), delta_time);
 	}
 }
 

@@ -340,11 +340,9 @@ sg::Node &VulkanSample::add_free_camera(const std::string &node_name)
 		throw std::runtime_error("No camera component found for `" + node_name + "` node.");
 	}
 
-	auto free_camera = std::make_unique<vkb::sg::FreeCamera>(*camera_node);
-	camera_node->set_component(*free_camera);
+	auto free_camera_script = std::make_unique<vkb::sg::FreeCamera>(*camera_node);
 
-	// Store component
-	scene.add_component(std::move(free_camera));
+	scene.add_component(std::move(free_camera_script), *camera_node);
 
 	return *camera_node;
 }
