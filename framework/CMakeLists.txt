@@ -234,7 +234,8 @@ target_link_libraries(${PROJECT_NAME}
     vma
     hwcpipe
     spirv-cross-glsl
-    glslang-default-resource-limits)
+    glslang-default-resource-limits
+    spdlog)
 
 # Link platform specific libraries
 if(ANDROID)

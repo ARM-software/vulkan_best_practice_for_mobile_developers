@@ -170,3 +170,5 @@ else()
     
     set_property(TARGET glfw PROPERTY FOLDER "ThirdParty")
 endif()
+
+add_subdirectory(spdlog)

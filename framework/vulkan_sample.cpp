@@ -44,19 +44,19 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
 {
 	if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
 	{
-		LOGE("Validation Layer: Error: %s: %s", layer_prefix, message);
+		LOGE("Validation Layer: Error: {}: {}", layer_prefix, message);
 	}
 	else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
 	{
-		LOGE("Validation Layer: Warning: %s: %s", layer_prefix, message);
+		LOGE("Validation Layer: Warning: {}: {}", layer_prefix, message);
 	}
 	else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
 	{
-		LOGI("Validation Layer: Performance warning: %s: %s", layer_prefix, message);
+		LOGI("Validation Layer: Performance warning: {}: {}", layer_prefix, message);
 	}
 	else
 	{
-		LOGI("Validation Layer: Information: %s: %s", layer_prefix, message);
+		LOGI("Validation Layer: Information: {}: {}", layer_prefix, message);
 	}
 	return VK_FALSE;
 }
@@ -325,7 +325,7 @@ sg::Node &VulkanSample::add_free_camera(const std::string &node_name)
 
 	if (!camera_node)
 	{
-		LOGW("Camera node `%s` not found. Looking for `default_camera` node.", node_name.c_str());
+		LOGW("Camera node `{}` not found. Looking for `default_camera` node.", node_name.c_str());
 
 		camera_node = scene.find_node("default_camera");
 	}
@@ -355,7 +355,7 @@ void VulkanSample::load_scene(const std::string &path)
 
 	if (!status)
 	{
-		LOGE("Cannot load scene: %s", path.c_str());
+		LOGE("Cannot load scene: {}", path.c_str());
 		throw std::runtime_error("Cannot load scene: " + path);
 	}
 }
