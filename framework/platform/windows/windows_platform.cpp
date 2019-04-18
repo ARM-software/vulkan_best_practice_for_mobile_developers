@@ -19,6 +19,7 @@
  */
 
 #include "windows_platform.h"
+#include "common.h"
 
 #include <Windows.h>
 #include <stdexcept>

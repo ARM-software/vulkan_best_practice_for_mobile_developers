@@ -323,21 +323,21 @@ bool GLTFLoader::read_scene_from_file(const std::string &file_name, sg::Scene &s
 
 	if (!importResult)
 	{
-		LOGE("Failed to load gltf file %s.", gltf_file.c_str());
+		LOGE("Failed to load gltf file {}.", gltf_file.c_str());
 
 		return false;
 	}
 
 	if (!err.empty())
 	{
-		LOGE("Error loading gltf model: %s.", err.c_str());
+		LOGE("Error loading gltf model: {}.", err.c_str());
 
 		return false;
 	}
 
 	if (!warn.empty())
 	{
-		LOGI("%s", warn.c_str());
+		LOGI("{}", warn.c_str());
 	}
 
 	size_t pos = file_name.find_last_of('/');
@@ -391,7 +391,7 @@ sg::Scene GLTFLoader::load_scene()
 		    [&](size_t image_index) {
 			    auto image = parse_image(model.images.at(image_index));
 
-			    LOGI("Loaded gltf image #%zu (%s)", image_index, model.images.at(image_index).uri.c_str());
+			    LOGI("Loaded gltf image #{} ({})", image_index, model.images.at(image_index).uri.c_str());
 
 			    image_components[image_index] = std::move(image);
 		    },
@@ -438,7 +438,7 @@ sg::Scene GLTFLoader::load_scene()
 
 	auto elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
 
-	LOGI("Time spent loading images: %lld seconds.", elapsed_time.count());
+	LOGI("Time spent loading images: {} seconds.", elapsed_time.count());
 
 	// Load textures
 	auto images          = scene.get_components<sg::Image>();
@@ -822,7 +822,7 @@ std::unique_ptr<sg::Image> GLTFLoader::parse_image(tinygltf::Image &gltf_image)
 
 			if (!raw_data)
 			{
-				LOGE("Failed to load image %s. Error: %s.", image_file.c_str(), stbi_failure_reason());
+				LOGE("Failed to load image {}. Error: {}.", image_file.c_str(), stbi_failure_reason());
 
 				return {};
 			}
