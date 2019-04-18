@@ -150,7 +150,7 @@ inline T &CacheResource<T>::request_resource(Args &&... args)
 	const char *res_type = typeid(T).name();
 	size_t      res_id   = cache_resources.size();
 
-	LOGI("Building #%zu cache object (%s)", res_id, res_type);
+	LOGI("Building #{} cache object ({})", res_id, res_type);
 
 	try
 	{
@@ -167,7 +167,7 @@ inline T &CacheResource<T>::request_resource(Args &&... args)
 	}
 	catch (const std::exception &e)
 	{
-		LOGE("Creation error for #%zu cache object ( %s )", res_id, res_type);
+		LOGE("Creation error for #{} cache object ( {} )", res_id, res_type);
 		throw e;
 	}
 }

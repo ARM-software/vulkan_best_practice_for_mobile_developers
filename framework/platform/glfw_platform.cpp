@@ -29,13 +29,15 @@
 
 #include <unordered_map>
 
+#include <spdlog/sinks/stdout_color_sinks.h>
+
 namespace vkb
 {
 namespace
 {
 void error_callback(int error, const char *description)
 {
-	LOGE("GLFW Error (code %i): %s", error, description);
+	LOGE("GLFW Error (code {}): {}", error, description);
 }
 
 void window_close_callback(GLFWwindow *window)
@@ -292,6 +294,10 @@ bool GlfwPlatform::initialise(std::unique_ptr<Application> &&app)
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
 	glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, 1);
 
+	auto console = spdlog::stdout_color_mt("console");
+	console->set_pattern(LOGGER_FORMAT);
+	spdlog::set_default_logger(console);
+
 	return Platform::initialise(std::move(app));
 }
 
@@ -341,7 +347,7 @@ void GlfwPlatform::main_loop()
 
 		if (elapsed_time > 2.0)
 		{
-			LOGI("FPS: %.3f", frame_count / elapsed_time);
+			LOGI("FPS: {:.1f}", frame_count / elapsed_time);
 
 			frame_count = 0;
 			start_time  = current_time;

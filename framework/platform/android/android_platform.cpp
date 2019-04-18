@@ -32,6 +32,8 @@
 #include <imgui.h>
 #include <unordered_map>
 
+#include <spdlog/sinks/android_sink.h>
+
 namespace vkb
 {
 namespace
@@ -217,7 +219,7 @@ inline TouchAction translate_touch_action(int action)
 
 void on_content_rect_changed(ANativeActivity *activity, const ARect *rect)
 {
-	LOGI("ContentRectChanged: %p\n", activity);
+	LOGI("ContentRectChanged: {:p}\n", static_cast<void *>(activity));
 	struct android_app *app = reinterpret_cast<struct android_app *>(activity->instance);
 	auto                cmd = APP_CMD_CONTENT_RECT_CHANGED;
 
@@ -225,7 +227,7 @@ void on_content_rect_changed(ANativeActivity *activity, const ARect *rect)
 
 	if (write(app->msgwrite, &cmd, sizeof(cmd)) != sizeof(cmd))
 	{
-		LOGE("Failure writing android_app cmd: %s\n", strerror(errno));
+		LOGE("Failure writing android_app cmd: {}\n", strerror(errno));
 	}
 }
 
@@ -331,6 +333,10 @@ AndroidPlatform::AndroidPlatform(android_app *app) :
 
 bool AndroidPlatform::initialise(std::unique_ptr<Application> &&appplication)
 {
+	auto android_logger = spdlog::android_logger_mt("android", PROJECT_NAME);
+	android_logger->set_pattern(LOGGER_FORMAT);
+	spdlog::set_default_logger(android_logger);
+
 	app->onAppCmd                                  = on_app_cmd;
 	app->onInputEvent                              = on_input_event;
 	app->activity->callbacks->onContentRectChanged = on_content_rect_changed;
@@ -345,7 +351,7 @@ bool AndroidPlatform::initialise(std::unique_ptr<Application> &&appplication)
 	}
 	catch (const std::runtime_error &e)
 	{
-		LOGE("Failed to add instruments to the profiler: %s", e.what());
+		LOGE("Failed to add instruments to the profiler: {}", e.what());
 	}
 
 	assert(appplication && "Appplication is not valid");
@@ -418,7 +424,7 @@ void AndroidPlatform::main_loop()
 
 		if (elapsed_time > 2.0)
 		{
-			LOGI("FPS: %.3f", frame_count / elapsed_time);
+			LOGI("FPS: {:.1f}", frame_count / elapsed_time);
 
 			frame_count = 0;
 			start_time  = current_time;

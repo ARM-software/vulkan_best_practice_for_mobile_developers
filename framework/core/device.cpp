@@ -138,7 +138,7 @@ Device::~Device()
 		VmaStats stats;
 		vmaCalculateStats(memory_allocator, &stats);
 
-		LOGI("Total device memory leaked: %llu bytes.", stats.total.usedBytes);
+		LOGI("Total device memory leaked: {} bytes.", stats.total.usedBytes);
 
 		vmaDestroyAllocator(memory_allocator);
 	}
