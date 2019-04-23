@@ -24,8 +24,6 @@
 #include <string>
 #include <vector>
 
-#include "vulkan/vulkan.h"
-
 #include "application.h"
 #include "common.h"
 #include "profiler.h"
