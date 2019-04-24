@@ -61,7 +61,6 @@ class Gui
 			/**
 			 * @brief Constructs data for the graph
 			 * @param graph_label_format Format of the label
-			 * @param graph_elements Reference to the data to show
 			 * @param scale_factor Any scaling to apply to the data
 			 * @param has_fixed_max Whether the data should have a fixed max value
 			 * @param max_value The maximum value to use
@@ -168,7 +167,6 @@ class Gui
 
 	/**
 	 * @brief Updates the Gui
-	 * @param swapchain_index The swapchain index for the image being rendered
 	 * @param delta_time Time passed since last update
 	 */
 	void update(const float delta_time);
@@ -176,7 +174,6 @@ class Gui
 	/**
 	 * @brief Draws the Gui
 	 * @param command_buffer Command buffer to register draw-commands
-	 * @param frame Frame to render into
 	 */
 	void draw(CommandBuffer &command_buffer);
 

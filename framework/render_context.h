@@ -48,6 +48,11 @@ class RenderContext : public NonCopyable
 
 	void prepare(RenderFrame::CreateFunc render_frame_create_func = RenderFrame::DEFAULT_CREATE_FUNC);
 
+	/**
+	 * @brief begin_frame
+	 * 
+	 * @return VkSemaphore 
+	 */
 	VkSemaphore begin_frame();
 
 	VkSemaphore submit(const Queue &queue, const CommandBuffer &command_buffer, VkSemaphore wait_semaphore, VkPipelineStageFlags wait_pipeline_stage);
@@ -65,9 +70,9 @@ class RenderContext : public NonCopyable
 	void end_frame(VkSemaphore semaphore);
 
 	/**
+	 * @brief An error should be raised if the frame is not active.
+	 * 		  A frame is active after @ref begin_frame has been called.
 	 * @return The current active frame
-	 * An error should be raised if the frame is not active
-	 * A frame is active after @ref begin_frame has been called
 	 */
 	RenderFrame &get_active_frame();
 

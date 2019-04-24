@@ -34,6 +34,7 @@
   - [Supported Platforms](#supported-platforms)
 - [License](#license)
   - [Trademarks](#trademarks)
+- [Contributions](#contributions)
 
 ## Introduction
 
