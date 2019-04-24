@@ -72,12 +72,6 @@ class RenderContext : public NonCopyable
 	RenderFrame &get_active_frame();
 
 	/**
-	 * @brief Requests a command buffer not related to a frame
-	 * @return A command buffer
-	 */
-	CommandBuffer &request_command_buffer();
-
-	/**
 	 * @brief Requests a command buffer to the command pool of the active frame
 	 * A frame should be active at the moment of requesting it
 	 * @return A command buffer related to the current active frame
