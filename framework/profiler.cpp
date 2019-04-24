@@ -30,8 +30,6 @@ Profiler::Profiler(std::vector<std::shared_ptr<Instrument>> &&instruments, const
     instruments_{std::move(instruments)},
     frame_data_ring_buffer_(buffer_size)
 {
-	LOGI("Setting up hardware counters");
-
 	start();
 }
 
