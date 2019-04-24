@@ -434,6 +434,7 @@ void AndroidPlatform::main_loop()
 
 void AndroidPlatform::terminate()
 {
+	spdlog::drop_all();
 }
 
 void AndroidPlatform::close() const
