@@ -160,7 +160,7 @@ inline T &CacheResource<T>::request_resource(Args &&... args)
 
 		if (!res_ins_it.second)
 		{
-			throw std::runtime_error{std::string{"Insertion error for #"} + std::to_string(res_id) + "cache object (" + res_type + ")"};
+			throw std::exception();
 		}
 
 		return res_ins_it.first->second;
