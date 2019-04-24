@@ -21,7 +21,7 @@ ClangFormat:
     - docker
   script:
     - git clang-format -v --diff origin/develop > clang-format-report.txt
-    - if [ $(grep -c 'clang-format did not modify any files' clang-format-report.txt) -eq 0 ]; then cat clang-format-report.txt; exit 1; fi
+    - if [ $(grep -c 'clang-format did not modify any files' clang-format-report.txt) -eq 0  ] && [ $(grep -c 'no modified files to format' clang-format-report.txt) -eq 0  ]; then cat clang-format-report.txt; exit 1; fi
 
 ClangTidy:
   stage: Check
