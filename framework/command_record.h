@@ -110,6 +110,8 @@ struct DescriptorSetBinding
 	uint32_t set_index;
 
 	const DescriptorSet &descriptor_set;
+
+	std::vector<uint32_t> dynamic_offsets;
 };
 
 /**

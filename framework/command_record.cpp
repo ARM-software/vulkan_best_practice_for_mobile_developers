@@ -442,6 +442,8 @@ void CommandRecord::FlushDescriptorState()
 			BindingMap<VkDescriptorBufferInfo> buffer_infos;
 			BindingMap<VkDescriptorImageInfo>  image_infos;
 
+			std::vector<uint32_t> dynamic_offsets;
+
 			// Iterate over all resource bindings
 			for (auto &binding_it : set_it.second.get_resource_bindings())
 			{
@@ -465,7 +467,17 @@ void CommandRecord::FlushDescriptorState()
 					// Get buffer info
 					if (resource_info.is_buffer())
 					{
-						buffer_infos[binding_index][arrayElement] = resource_info.get_buffer_info();
+						VkDescriptorBufferInfo buffer_info = resource_info.get_buffer_info();
+
+						if (binding_info.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC ||
+						    binding_info.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
+						{
+							dynamic_offsets.push_back(buffer_info.offset);
+
+							buffer_info.offset = 0;
+						}
+
+						buffer_infos[binding_index][arrayElement] = buffer_info;
 					}
 					// Get image info
 					else if (resource_info.is_image_only() || resource_info.is_sampler_only() || resource_info.is_image_sampler())
@@ -507,7 +519,7 @@ void CommandRecord::FlushDescriptorState()
 
 			auto &descriptor_set = device.request_descriptor_set(descriptor_set_layout, buffer_infos, image_infos);
 
-			descriptor_set_bindings.push_back({stream.tellp(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, set_it.first, descriptor_set});
+			descriptor_set_bindings.push_back({stream.tellp(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, set_it.first, descriptor_set, dynamic_offsets});
 		}
 	}
 }

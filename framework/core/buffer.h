@@ -48,7 +48,14 @@ class Buffer : public NonCopyable
 
 	/// @brief Updates the content of the buffer
 	/// @brief data Data to upload
-	void update(const std::vector<uint8_t> &data);
+	void update(size_t offset, const std::vector<uint8_t> &data);
+
+	template <class T>
+	void update(size_t offset, const T &value)
+	{
+		update(offset, std::vector<uint8_t>{reinterpret_cast<const uint8_t *>(&value),
+		                                    reinterpret_cast<const uint8_t *>(&value) + sizeof(T)});
+	}
 
   private:
 	Device &device;

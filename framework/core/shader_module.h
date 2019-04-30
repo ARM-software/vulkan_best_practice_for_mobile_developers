@@ -68,6 +68,8 @@ struct ShaderResource
 
 	uint32_t size;
 
+	bool dynamic;
+
 	std::string name;
 };
 
@@ -94,6 +96,8 @@ class ShaderModule : public NonCopyable
 	const std::string &get_info_log() const;
 
 	const std::vector<uint32_t> &get_binary() const;
+
+	void set_resource_dynamic(const std::string &resource_name);
 
   private:
 	Device &device;
