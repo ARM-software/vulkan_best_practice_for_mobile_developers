@@ -46,12 +46,12 @@ void RenderPassesSample::reset_stats_view()
 {
 	if (load.value == VK_ATTACHMENT_LOAD_OP_LOAD)
 	{
-		gui->get_stats_view().reset_max_value(vkb::StatIndex::l2_ext_read_beats);
+		gui->get_stats_view().reset_max_value(vkb::StatIndex::l2_ext_read_bytes);
 	}
 
 	if (store.value == VK_ATTACHMENT_STORE_OP_STORE)
 	{
-		gui->get_stats_view().reset_max_value(vkb::StatIndex::l2_ext_write_beats);
+		gui->get_stats_view().reset_max_value(vkb::StatIndex::l2_ext_write_bytes);
 	}
 }
 
@@ -121,10 +121,9 @@ bool RenderPassesSample::prepare(vkb::Platform &platform)
 
 	device = std::make_unique<vkb::Device>(get_gpu(0), get_surface(), extensions);
 
-	auto enabled_stats = {vkb::StatIndex::l2_ext_read_beats, vkb::StatIndex::l2_ext_write_beats};
+	auto enabled_stats = {vkb::StatIndex::l2_ext_read_bytes, vkb::StatIndex::l2_ext_write_bytes};
 
-	stats = std::make_unique<vkb::Stats>(platform.get_profiler(),
-	                                     enabled_stats);
+	stats = std::make_unique<vkb::Stats>(enabled_stats);
 
 	auto swapchain = std::make_unique<vkb::Swapchain>(*device, get_surface());
 

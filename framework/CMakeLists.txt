@@ -47,7 +47,6 @@ set(FRAMEWORK_FILES
     common.cpp
     utils.cpp
     gui.cpp
-    profiler.cpp
     stats.cpp
     glsl_compiler.cpp
     spirv_reflection.cpp
