@@ -47,11 +47,6 @@ float Platform::get_dpi_factor() const
 	return 1.0;
 }
 
-Profiler &Platform::get_profiler()
-{
-	return profiler;
-}
-
 Application &Platform::get_app() const
 {
 	assert(active_app && "Application is not valid");

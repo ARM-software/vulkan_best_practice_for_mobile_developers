@@ -132,12 +132,12 @@ class Gui
 		    {StatIndex::l2_ext_write_stalls,
 		     {/* label = */ "Ext write stalls: %4.1f M/s",
 		      /* scale_factor = */ float(1e-6)}},
-		    {StatIndex::l2_ext_read_beats,
+		    {StatIndex::l2_ext_read_bytes,
 		     {/* label = */ "Ext read bw: %4.1f MiB/s",
-		      /* scale_factor = */ 16.0f / (1024.0f * 1024.0f)}},
-		    {StatIndex::l2_ext_write_beats,
+		      /* scale_factor = */ 1.0f / (1024.0f * 1024.0f)}},
+		    {StatIndex::l2_ext_write_bytes,
 		     {/* label = */ "Ext write bw: %4.1f MiB/s",
-		      /* scale_factor = */ 16.0f / (1024.0f * 1024.0f)}}};
+		      /* scale_factor = */ 1.0f / (1024.0f * 1024.0f)}}};
 	};
 
 	/**
