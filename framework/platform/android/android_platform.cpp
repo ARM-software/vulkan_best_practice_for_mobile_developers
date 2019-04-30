@@ -25,11 +25,9 @@
 
 #include "vulkan_sample.h"
 
-#include <mali_counter.h>
-#include <pmu_counter.h>
-
 #include <chrono>
 #include <imgui.h>
+#include <unistd.h>
 #include <unordered_map>
 
 #include <spdlog/sinks/android_sink.h>
@@ -341,18 +339,6 @@ bool AndroidPlatform::initialise(std::unique_ptr<Application> &&appplication)
 	app->onInputEvent                              = on_input_event;
 	app->activity->callbacks->onContentRectChanged = on_content_rect_changed;
 	app->userData                                  = this;
-
-	try
-	{
-		auto instruments = std::vector<std::shared_ptr<Instrument>>{
-		    std::make_shared<PMUCounter>(),
-		    std::make_shared<MaliCounter>()};
-		profiler.add_instruments(instruments);
-	}
-	catch (const std::runtime_error &e)
-	{
-		LOGE("Failed to add instruments to the profiler: {}", e.what());
-	}
 
 	assert(appplication && "Appplication is not valid");
 	active_app = std::move(appplication);

@@ -53,8 +53,7 @@ bool SurfaceRotation::prepare(vkb::Platform &platform)
 
 	auto enabled_stats = {vkb::StatIndex::l2_ext_read_stalls, vkb::StatIndex::l2_ext_write_stalls};
 
-	stats = std::make_unique<vkb::Stats>(platform.get_profiler(),
-	                                     enabled_stats);
+	stats = std::make_unique<vkb::Stats>(enabled_stats);
 
 	std::vector<const char *> extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 

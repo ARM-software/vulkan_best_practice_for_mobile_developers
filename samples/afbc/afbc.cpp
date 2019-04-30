@@ -58,8 +58,7 @@ bool AFBCSample::prepare(vkb::Platform &platform)
 	                                                                             /* We want AFBC disabled by default, hence we create swapchain with VK_IMAGE_USAGE_STORAGE_BIT. */
 	                                                                             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT);
 
-	stats = std::make_unique<vkb::Stats>(platform.get_profiler(),
-	                                     std::set<vkb::StatIndex>{vkb::StatIndex::l2_ext_write_beats});
+	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::l2_ext_write_bytes});
 
 	render_context = std::make_unique<vkb::RenderContext>(*device, std::move(swapchain));
 	render_context->prepare();
