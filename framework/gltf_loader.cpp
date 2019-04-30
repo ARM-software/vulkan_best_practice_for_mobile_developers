@@ -413,7 +413,7 @@ sg::Scene GLTFLoader::load_scene()
 		auto &gltf_image = model.images.at(image_index);
 
 		core::Buffer stage_buffer{device, gltf_image.image.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU};
-		stage_buffer.update(gltf_image.image);
+		stage_buffer.update(0, gltf_image.image);
 
 		upload_image(command_buffer, stage_buffer, *image->image, *image->image_view);
 
@@ -714,7 +714,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primiti
 
 		core::Buffer buffer{device, vertex_data.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU};
 
-		buffer.update(vertex_data);
+		buffer.update(0, vertex_data);
 
 		auto pair = std::make_pair(attrib_name, std::move(buffer));
 
@@ -756,7 +756,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primiti
 
 		submesh->index_buffer = std::make_unique<core::Buffer>(device, index_data.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
-		submesh->index_buffer->update(index_data);
+		submesh->index_buffer->update(0, index_data);
 	}
 	else
 	{

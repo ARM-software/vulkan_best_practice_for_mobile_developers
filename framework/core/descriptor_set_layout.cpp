@@ -31,7 +31,7 @@ namespace vkb
 {
 namespace
 {
-inline VkDescriptorType find_descriptor_type(ShaderResourceType resource_type)
+inline VkDescriptorType find_descriptor_type(ShaderResourceType resource_type, bool dynamic)
 {
 	switch (resource_type)
 	{
@@ -51,10 +51,24 @@ inline VkDescriptorType find_descriptor_type(ShaderResourceType resource_type)
 			return VK_DESCRIPTOR_TYPE_SAMPLER;
 			break;
 		case ShaderResourceType::BufferUniform:
-			return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			if (dynamic)
+			{
+				return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+			}
+			else
+			{
+				return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			}
 			break;
 		case ShaderResourceType::BufferStorage:
-			return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+			if (dynamic)
+			{
+				return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+			}
+			else
+			{
+				return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+			}
 			break;
 		default:
 			throw std::runtime_error("No conversion possible for the shader resource type.");
@@ -78,7 +92,7 @@ DescriptorSetLayout::DescriptorSetLayout(Device &device, const std::vector<Shade
 		}
 
 		// Convert from ShaderResourceType to VkDescriptorType.
-		auto descriptor_type = find_descriptor_type(resource.type);
+		auto descriptor_type = find_descriptor_type(resource.type, resource.dynamic);
 
 		// Convert ShaderResource to VkDescriptorSetLayoutBinding
 		VkDescriptorSetLayoutBinding layout_binding{};

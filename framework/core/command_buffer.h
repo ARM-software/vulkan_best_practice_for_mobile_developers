@@ -83,9 +83,9 @@ class CommandBuffer : public NonCopyable
 		                                    reinterpret_cast<const uint8_t *>(&value) + sizeof(T)});
 	}
 
-	void bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t set, uint32_t binding, uint32_t arrayElement);
+	void bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element);
 
-	void bind_image(const ImageView &image_view, VkSampler sampler, uint32_t set, uint32_t binding, uint32_t arrayElement);
+	void bind_image(const ImageView &image_view, VkSampler sampler, uint32_t set, uint32_t binding, uint32_t array_element);
 
 	void bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::Buffer>> &buffers, const std::vector<VkDeviceSize> &offsets);
 
