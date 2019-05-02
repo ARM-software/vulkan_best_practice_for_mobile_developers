@@ -17,32 +17,35 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
- 
+
 cmake_minimum_required(VERSION 3.6)
 
 project(third_party LANGUAGES C CXX)
 
 # glm
 add_library(glm INTERFACE)
+set(GLM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/glm)
+target_sources(glm INTERFACE ${GLM_DIR}/glm/glm.hpp)
+target_include_directories(glm INTERFACE ${GLM_DIR})
 
-target_include_directories(glm INTERFACE "glm")
-
-target_compile_definitions(glm INTERFACE 
-    GLM_FORCE_SWIZZLE 
-    GLM_FORCE_RADIANS 
-    GLM_FORCE_CTOR_INIT 
+target_compile_definitions(glm INTERFACE
+    GLM_FORCE_SWIZZLE
+    GLM_FORCE_RADIANS
+    GLM_FORCE_CTOR_INIT
     GLM_ENABLE_EXPERIMENTAL
     GLM_FORCE_CXX14)
 
 # tinygltf
 add_library(tinygltf INTERFACE)
-
-target_include_directories(tinygltf INTERFACE "tinygltf")
+set(TINYGLTF_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tinygltf)
+target_sources(tinygltf INTERFACE ${TINYGLTF_DIR}/tiny_gltf.h)
+target_include_directories(tinygltf INTERFACE ${TINYGLTF_DIR})
 
 # vulkan
 add_library(vulkan INTERFACE)
-
-target_include_directories(vulkan INTERFACE "vulkan/include")
+set(VULKAN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vulkan/include)
+target_sources(vulkan INTERFACE ${VULKAN_INCLUDE_DIR}/vulkan/vulkan.h)
+target_include_directories(vulkan INTERFACE ${VULKAN_INCLUDE_DIR})
 
 target_compile_definitions(vulkan INTERFACE VK_NO_PROTOTYPES)
 
@@ -57,40 +60,42 @@ elseif(UNIX)
 endif()
 
 add_library(vma INTERFACE)
-
-target_include_directories(vma INTERFACE "vma/src")
-
+set(VMA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vma/src)
+target_sources(vma INTERFACE ${VMA_DIR}/vk_mem_alloc.h)
+target_include_directories(vma INTERFACE ${VMA_DIR})
 target_link_libraries(vma INTERFACE vulkan)
 
 # volk
-set(VOLK_FILES 
-    "volk/volk.c" 
-    "volk/volk.h")
+set(VOLK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/volk")
+set(VOLK_FILES
+    "${VOLK_DIR}/volk.c"
+    "${VOLK_DIR}/volk.h")
 
 add_library(volk STATIC ${VOLK_FILES})
 
 target_link_libraries(volk PUBLIC vulkan)
 
-target_include_directories(volk PUBLIC "volk")
+target_include_directories(volk PUBLIC ${VOLK_DIR})
 
 set_property(TARGET volk PROPERTY FOLDER "ThirdParty")
 
 # imgui
-set(IMGUI_FILES 
-    "imgui/imgui.cpp" 
-    "imgui/imgui_demo.cpp"
-    "imgui/imgui_draw.cpp"
-    "imgui/imgui_widgets.cpp"
-    "imgui/imconfig.h"
-    "imgui/imgui.h"
-    "imgui/imgui_internal.h"
-    "imgui/imstb_rectpack.h"
-    "imgui/imstb_textedit.h"
-    "imgui/imstb_truetype.h")
+set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/imgui")
+set(IMGUI_FILES
+    "${IMGUI_DIR}/imgui.cpp"
+    "${IMGUI_DIR}/imgui_demo.cpp"
+    "${IMGUI_DIR}/imgui_draw.cpp"
+    "${IMGUI_DIR}/imgui_widgets.cpp"
+    "${IMGUI_DIR}/imconfig.h"
+    "${IMGUI_DIR}/imgui.h"
+    "${IMGUI_DIR}/imgui_internal.h"
+    "${IMGUI_DIR}/imstb_rectpack.h"
+    "${IMGUI_DIR}/imstb_textedit.h"
+    "${IMGUI_DIR}/imstb_truetype.h")
 
 add_library(imgui STATIC ${IMGUI_FILES})
 
-target_include_directories(imgui PUBLIC "imgui")
+target_include_directories(imgui PUBLIC ${IMGUI_DIR})
 
 set_property(TARGET imgui PROPERTY FOLDER "ThirdParty")
 
@@ -112,16 +117,16 @@ if (NOT TARGET glslang-default-resource-limits)
     set_property(TARGET glslang-default-resource-limits PROPERTY FOLDER "ThirdParty")
     
     target_include_directories(glslang-default-resource-limits
-                                PUBLIC glslang/StandAlone)
+                                PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glslang/StandAlone)
 endif()
 
 if(NOT MSVC)
-    target_compile_options(glslang PRIVATE 
-        "-Wno-logical-op-parentheses" 
+    target_compile_options(glslang PRIVATE
+        "-Wno-logical-op-parentheses"
         "-Wno-unused-parameter")
-        
-    target_compile_options(SPIRV PRIVATE 
-        "-Wno-logical-op-parentheses" 
+
+    target_compile_options(SPIRV PRIVATE
+        "-Wno-logical-op-parentheses"
         "-Wno-unused-parameter")
 endif()
 

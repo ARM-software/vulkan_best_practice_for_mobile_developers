@@ -39,6 +39,7 @@ endif()
 set(VKB_SAMPLE_ENTRYPOINT OFF CACHE BOOL "Enable create entrypoint project for every sample.")
 set(VKB_ASSETS_SYMLINK OFF CACHE BOOL "Enable create symlink assets folder for every sample.")
 set(VKB_VALIDATION_LAYERS OFF CACHE BOOL "Enable validation layers for every sample.")
+set(VKB_BUILD_SAMPLES ON CACHE BOOL "Enable generation and building of Vulkan best practice samples.")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin/${CMAKE_BUILD_TYPE}/${TARGET_ARCH}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "lib/${CMAKE_BUILD_TYPE}/${TARGET_ARCH}")

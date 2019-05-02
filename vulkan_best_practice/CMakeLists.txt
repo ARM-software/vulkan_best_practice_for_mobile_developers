@@ -40,8 +40,8 @@ generate_sample_entrypoint(
 set(PROJECT_FILES 
     ${CMAKE_CURRENT_BINARY_DIR}/main.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/samples.h
-    sample_controller.h
-    sample_controller.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/sample_controller.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/sample_controller.cpp)
     
 # add object files from samples
 foreach(SAMPLE_ID ${SAMPLE_ID_LIST})
@@ -59,7 +59,7 @@ source_group("\\" FILES ${PROJECT_FILES})
 # select target type based on platform
 if(ANDROID)
     if(CMAKE_VS_NsightTegra_VERSION)
-        list(APPEND PROJECT_FILES android/AndroidManifest.xml)
+        list(APPEND PROJECT_FILES ${CMAKE_CURRENT_SOURCE_DIR}/android/AndroidManifest.xml)
     endif()
 
     add_library(${PROJECT_NAME} SHARED ${PROJECT_FILES})
@@ -71,15 +71,15 @@ target_link_libraries(${PROJECT_NAME} PUBLIC framework)
 
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
-    ${CMAKE_SOURCE_DIR}/samples)
+    ${CMAKE_CURRENT_SOURCE_DIR}/../samples)
 
 if(ANDROID)
     set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-u ANativeActivity_onCreate")
     
     if(CMAKE_VS_NsightTegra_VERSION)
         set_property(TARGET ${PROJECT_NAME} PROPERTY ANDROID_GUI ON)
-        set_property(TARGET ${PROJECT_NAME} PROPERTY ANDROID_ASSETS_DIRECTORIES ${CMAKE_SOURCE_DIR}/assets)
-        set_property(TARGET ${PROJECT_NAME} PROPERTY ANDROID_JAVA_SOURCE_DIR ${CMAKE_SOURCE_DIR}/bldsys/android/java)
+        set_property(TARGET ${PROJECT_NAME} PROPERTY ANDROID_ASSETS_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/../assets)
+        set_property(TARGET ${PROJECT_NAME} PROPERTY ANDROID_JAVA_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../bldsys/android/java)
     endif()
     
     # Add packaging project only if not using CMake's toolchain
@@ -87,7 +87,7 @@ if(ANDROID)
         add_android_package_project(
             NAME ${PROJECT_NAME}_package
             DEPENDS ${PROJECT_NAME}
-            ASSET_DIRS ${CMAKE_SOURCE_DIR}/assets
+            ASSET_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/../assets
             JAVA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android/java
             RES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android/res
             MANIFEST_FILE ${CMAKE_CURRENT_SOURCE_DIR}/android/AndroidManifest.xml)
@@ -96,7 +96,7 @@ else()
     if(${VKB_ASSETS_SYMLINK})
         create_symlink(
             NAME ${PROJECT_NAME}
-            DIR ${CMAKE_SOURCE_DIR}/assets 
+            DIR ${CMAKE_CURRENT_SOURCE_DIR}/../assets
             LINK ${CMAKE_CURRENT_BINARY_DIR}/assets)
     endif()
 endif()
