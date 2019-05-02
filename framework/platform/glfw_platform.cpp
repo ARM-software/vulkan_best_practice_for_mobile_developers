@@ -322,35 +322,11 @@ VkSurfaceKHR GlfwPlatform::create_surface(VkInstance instance)
 
 void GlfwPlatform::main_loop()
 {
-	uint32_t frame_count = 0;
-
-	auto start_time = std::chrono::system_clock::now();
-
-	auto last_time = start_time;
-
 	while (!glfwWindowShouldClose(window))
 	{
-		frame_count++;
-
-		auto current_time = std::chrono::system_clock::now();
-
-		float delta_time = std::chrono::duration<float>(current_time - last_time).count();
-
-		last_time = current_time;
-
 		if (active_app->is_focused())
 		{
-			active_app->update(delta_time);
-		}
-
-		float elapsed_time = std::chrono::duration<float>(current_time - start_time).count();
-
-		if (elapsed_time > 2.0)
-		{
-			LOGI("FPS: {:.1f}", frame_count / elapsed_time);
-
-			frame_count = 0;
-			start_time  = current_time;
+			active_app->step();
 		}
 
 		glfwPollEvents();

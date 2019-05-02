@@ -213,7 +213,7 @@ void SampleController::update(float delta_time)
 {
 	if (active_sample)
 	{
-		active_sample->update(delta_time);
+		active_sample->step();
 	}
 
 	elapsed_time += skipped_first_frame ? delta_time : 0.0f;

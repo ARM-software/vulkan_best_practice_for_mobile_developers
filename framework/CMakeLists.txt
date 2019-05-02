@@ -31,6 +31,7 @@ set(FRAMEWORK_FILES
     glsl_compiler.h
     spirv_reflection.h
     gltf_loader.h
+    debug_info.h
     fence_pool.h
     semaphore_pool.h
     command_record.h
@@ -51,6 +52,7 @@ set(FRAMEWORK_FILES
     glsl_compiler.cpp
     spirv_reflection.cpp
     gltf_loader.cpp
+    debug_info.cpp
     fence_pool.cpp
     semaphore_pool.cpp
     command_record.cpp

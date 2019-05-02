@@ -129,6 +129,9 @@ bool VulkanSample::prepare(Platform &platform)
 		return false;
 	}
 
+	get_debug_info().insert<field::MinMax, float>("fps", fps);
+	get_debug_info().insert<field::MinMax, float>("frame_time", frame_time);
+
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 	auto &android_platform  = dynamic_cast<AndroidPlatform &>(platform);
 	tinygltf::asset_manager = android_platform.get_activity()->assetManager;
@@ -167,6 +170,18 @@ void VulkanSample::update(float delta_time)
 		}
 	}
 
+	get_debug_info().insert<field::Static, std::string>("resolution",
+	                                                    to_string(render_context->get_swapchain().get_extent().width) + "x" +
+	                                                        to_string(render_context->get_swapchain().get_extent().height));
+
+	get_debug_info().insert<field::Static, std::string>("surface_format",
+	                                                    convert_format_to_string(render_context->get_swapchain().get_format()) + " (" +
+	                                                        to_string(vkb::get_bits_per_pixel(render_context->get_swapchain().get_format())) + "bbp)");
+
+	get_debug_info().insert<field::Static, uint32_t>("mesh_count", to_u32(scene.get_components<sg::SubMesh>().size()));
+
+	get_debug_info().insert<field::Static, uint32_t>("texture_count", to_u32(scene.get_components<sg::Texture>().size()));
+
 	VkSemaphore aquired_semaphore = render_context->begin_frame();
 
 	if (aquired_semaphore == VK_NULL_HANDLE)
@@ -199,7 +214,7 @@ void VulkanSample::update(float delta_time)
 	{
 		gui->new_frame();
 
-		gui->show_top_window(get_name(), stats.get());
+		gui->show_top_window(get_name(), stats.get(), &debug_info);
 
 		// Samples can override this
 		draw_gui();
@@ -255,6 +270,8 @@ void VulkanSample::update(float delta_time)
 
 void VulkanSample::resize(uint32_t width, uint32_t height)
 {
+	Application::resize(width, height);
+
 	if (gui)
 	{
 		gui->resize(width, height);
