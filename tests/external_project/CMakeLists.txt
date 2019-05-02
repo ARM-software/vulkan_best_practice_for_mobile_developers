@@ -20,27 +20,14 @@
 
 cmake_minimum_required(VERSION 3.6)
 
-project(vulkan_best_practice)
+project(external_project LANGUAGES C CXX)
 
-# Add path for local cmake scripts
-list(APPEND CMAKE_MODULE_PATH
-    ${CMAKE_CURRENT_SOURCE_DIR}/bldsys/cmake
-    ${CMAKE_CURRENT_SOURCE_DIR}/bldsys/cmake/module)
+set(VKB_BUILD_SAMPLES OFF)
 
-include(utils)
-include(global_options)
-include(sample_helper)
+# Add vkb as subdirectory
+set(VKB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../)
+add_subdirectory(${VKB_DIR} ${CMAKE_CURRENT_BINARY_DIR}/vkb)
 
-# Add third party libraries
-add_subdirectory(third_party)
-
-# Add vulkan framework
-add_subdirectory(framework)
-
-if(VKB_BUILD_SAMPLES)
-    # Add vulkan samples
-    add_subdirectory(samples)
-
-    # Add vulkan app (runs all samples)
-    add_subdirectory(vulkan_best_practice)
+if(NOT TARGET framework)
+	message(FATAL_ERROR "Cannot find target framework")
 endif()

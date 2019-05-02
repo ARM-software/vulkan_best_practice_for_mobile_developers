@@ -1,6 +1,7 @@
 stages:
   - Check
   - Build
+  - Test
 
 Doxygen:
   stage: Check
@@ -69,3 +70,35 @@ Android:
   script:
     - cmake -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake -H. -Bbuild
     - cmake --build build --target vulkan_best_practice --config Release
+
+LinuxExternalProject:
+  stage: Test
+  image: $DOCKER_REGISTRY/docker/vulkan-cookbook/linux:latest
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  tags:
+    - linux
+    - docker
+  script:
+    - cmake -Htests/external_project -Bbuild -DVKB_BUILD_SAMPLES=OFF
+
+WindowsExternalProject:
+  stage: Test
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  tags:
+    - windows
+    - shell
+  script:
+    - cmake -Htests/external_project -Bbuild -DVKB_BUILD_SAMPLES=OFF
+
+AndroidExternalProject:
+  stage: Test
+  image: $DOCKER_REGISTRY/docker/vulkan-cookbook/linux-android:latest
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  tags:
+    - linux
+    - docker
+  script:
+    - cmake -DCMAKE_TOOLCHAIN_FILE=../../bldsys/toolchain/android_gradle.cmake -Htests/external_project -Bbuild -DVKB_BUILD_SAMPLES=OFF
