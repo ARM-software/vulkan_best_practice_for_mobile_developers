@@ -22,6 +22,7 @@
 
 #include <string>
 
+#include "debug_info.h"
 #include "platform/configuration.h"
 #include "platform/input_events.h"
 
@@ -37,6 +38,8 @@ class Application
 	virtual ~Application() = default;
 
 	virtual bool prepare(Platform &platform);
+
+	virtual void step();
 
 	virtual void update(float delta_time) = 0;
 
@@ -69,6 +72,22 @@ class Application
 	 * @return True if window is in focus, false otherwise
 	 */
 	bool is_focused() const;
+
+	DebugInfo &get_debug_info();
+
+  protected:
+	/// The settings of the app
+	DebugInfo debug_info;
+
+	float fps{0.0f};
+
+	float frame_time{0.0f};        // In ms
+
+	uint32_t frame_count{0};
+
+	std::chrono::system_clock::time_point start_time{std::chrono::system_clock::now()};
+
+	std::chrono::system_clock::time_point last_frame_time{std::chrono::system_clock::now()};
 
   private:
 	/// The name of the app

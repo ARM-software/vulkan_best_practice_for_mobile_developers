@@ -25,6 +25,7 @@
 #include <imgui.h>
 
 #include "core/command_buffer.h"
+#include "debug_info.h"
 #include "platform/input_events.h"
 #include "render_context.h"
 #include "stats.h"
@@ -138,6 +139,31 @@ class Gui
 		    {StatIndex::l2_ext_write_bytes,
 		     {/* label = */ "Ext write bw: %4.1f MiB/s",
 		      /* scale_factor = */ 1.0f / (1024.0f * 1024.0f)}}};
+
+		float graph_height{64.0f};
+
+		float top_padding{1.1f};
+	};
+
+	/**
+	 * @brief Helper class for rendering debug statistics in the GUI
+	 */
+	class DebugView
+	{
+	  public:
+		bool active{false};
+
+		const char *title{"Debug Info"};
+
+		ImVec2 window_size{600, 0};
+
+		uint32_t column_width{150};
+
+		float button_padding{5.0f};
+
+		ImVec2 frame_padding{10.0f, 3.0f};
+
+		float round_corners{3.0f};
 	};
 
 	/**
@@ -181,8 +207,9 @@ class Gui
 	 * @brief Shows an overlay top window with app info and maybe stats
 	 * @param app_name Application name
 	 * @param stats Statistics to show (can be null)
+	 * @param debug_info Debug info to show (can be null)
 	 */
-	void show_top_window(const std::string &app_name, const Stats *stats = nullptr);
+	void show_top_window(const std::string &app_name, const Stats *stats = nullptr, DebugInfo *debug_info = nullptr);
 
 	/**
 	 * @brief Shows the ImGui Demo window
@@ -194,6 +221,13 @@ class Gui
 	 * @param app_name Application name
 	 */
 	void show_app_info(const std::string &app_name);
+
+	/**
+	 * @brief Shows a moveable window with debug information
+	 * @param debug_info The object holding the data fields to be displayed
+	 * @param position The absolute position to set
+	 */
+	void show_debug_window(DebugInfo &debug_info, const ImVec2 &position);
 
 	/**
 	 * @brief Shows a child with statistics
@@ -252,6 +286,8 @@ class Gui
 
 	StatsView stats_view;
 
+	DebugView debug_view;
+
 	/// Used to measure duration of input events
 	std::chrono::time_point<std::chrono::high_resolution_clock> press_start;
 
@@ -263,5 +299,4 @@ void Gui::new_frame()
 {
 	ImGui::NewFrame();
 }
-
 }        // namespace vkb

@@ -89,7 +89,7 @@ template <class T>
 inline std::string to_string(const T &value)
 {
 	std::stringstream ss;
-	ss << value;
+	ss << std::fixed << value;
 	return ss.str();
 }
 
@@ -120,6 +120,13 @@ bool is_depth_stencil_format(VkFormat format);
  * @return The bits per pixel of the given format, -1 for invalid formats.
  */
 int32_t get_bits_per_pixel(VkFormat format);
+
+/**
+ * @brief Helper function to convert a VkFormat enum to a string
+ * @param format Vulkan format to convert.
+ * @return The string to return.
+ */
+const std::string convert_format_to_string(VkFormat format);
 
 /**
  * @brief Helper function to read a binary file
