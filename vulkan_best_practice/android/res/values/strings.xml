@@ -24,4 +24,6 @@
 	<string name="app_name">Vulkan Best Practice for Mobile Developers</string>
 	<string name="native_lib_name">vulkan_best_practice</string>
 	<string name="button_demo_mode">Run All Samples</string>
+	<string name="permissions_text">Permission to access files is required to load assets</string>
+	<string name="permissions_button">Grant Permissions</string>
 </resources>
