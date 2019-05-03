@@ -41,4 +41,24 @@
         android:layout_height="match_parent"
         android:layout_centerInParent="true" />
 
+    <TextView
+        android:id="@+id/text_permissions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:padding="50dp"
+        android:visibility="invisible"
+        android:text="@string/permissions_text" />
+
+    <Button
+        android:id="@+id/button_permissions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:layout_alignBottom="@+id/text_permissions"
+        android:visibility="invisible"
+        android:text="@string/permissions_button" />
+
 </RelativeLayout>

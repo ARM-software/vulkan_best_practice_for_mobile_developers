@@ -20,26 +20,36 @@
 
 package com.arm.vulkan_best_practice;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class BPSampleActivity extends AppCompatActivity {
+    private ListView listview;
+    private Button button;
+    private Button button_permissions;
+    private TextView text_permissions;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.bp_sample_activity);
 
-        Button button = findViewById(R.id.button_demo_mode);
+        button = findViewById(R.id.button_demo_mode);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 setArguments(new String[]{});
@@ -57,7 +67,7 @@ public class BPSampleActivity extends AppCompatActivity {
 
         SampleArrayAdapter sample_list_adapter = new SampleArrayAdapter(this, sample_list);
 
-        ListView listview = findViewById(R.id.sample_list);
+        listview = findViewById(R.id.sample_list);
         listview.setAdapter(sample_list_adapter);
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -71,6 +81,15 @@ public class BPSampleActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        button_permissions = findViewById(R.id.button_permissions);
+        button_permissions.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                checkPermissions();
+            }
+        });
+        text_permissions = findViewById(R.id.text_permissions);
+        checkPermissions();
     }
 
     private boolean LoadNativeLibrary(String native_lib_name) {
@@ -94,4 +113,63 @@ public class BPSampleActivity extends AppCompatActivity {
     private native Sample[] getSamples();
 
     private native void setArguments(String []args);
+
+    private static final int RC_READ_EXTERNAL_STORAGE = 1;
+    private static final int RC_WRITE_EXTERNAL_STORAGE = 2;
+
+    private void checkPermissions() {
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(BPSampleActivity.this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    RC_WRITE_EXTERNAL_STORAGE);
+        } else if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(BPSampleActivity.this,
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                    RC_READ_EXTERNAL_STORAGE);
+        } else {
+            showSamples();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String[] permissions, int[] grantResults) {
+        switch (requestCode) {
+            case RC_WRITE_EXTERNAL_STORAGE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                    showPermissionsMessage();
+                    break;
+                }
+            }
+            case RC_READ_EXTERNAL_STORAGE: {
+                if (grantResults.length > 0
+                        && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                    showPermissionsMessage();
+                    break;
+                }
+            }
+            default:
+                showSamples();
+        }
+    }
+
+    public void showPermissionsMessage() {
+        text_permissions.setVisibility(View.VISIBLE);
+        button_permissions.setVisibility(View.VISIBLE);
+        listview.setVisibility(View.INVISIBLE);
+        button.setVisibility(View.INVISIBLE);
+    }
+
+    public void showSamples() {
+        text_permissions.setVisibility(View.INVISIBLE);
+        button_permissions.setVisibility(View.INVISIBLE);
+        listview.setVisibility(View.VISIBLE);
+        button.setVisibility(View.VISIBLE);
+    }
 }
