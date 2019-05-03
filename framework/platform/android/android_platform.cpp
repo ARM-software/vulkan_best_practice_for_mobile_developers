@@ -396,6 +396,7 @@ void AndroidPlatform::main_loop()
 
 void AndroidPlatform::terminate()
 {
+	active_app.reset();
 	spdlog::drop_all();
 }
 
