@@ -201,7 +201,7 @@ void CommandRecord::bind_buffer(const core::Buffer &buffer, VkDeviceSize offset,
 	resource_binding_state.bind_buffer(buffer, offset, range, set, binding, array_element);
 }
 
-void CommandRecord::bind_image(const ImageView &image_view, VkSampler sampler, uint32_t set, uint32_t binding, uint32_t array_element)
+void CommandRecord::bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element)
 {
 	resource_binding_state.bind_image(image_view, sampler, set, binding, array_element);
 }

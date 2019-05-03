@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,18 +20,37 @@
 
 #include "sampler.h"
 
+#include "device.h"
+
 namespace vkb
 {
-namespace sg
+namespace core
 {
-Sampler::Sampler(const std::string &name, core::Sampler &&vk_sampler) :
-    Component{name},
-    vk_sampler{std::move(vk_sampler)}
-{}
-
-std::type_index Sampler::get_type()
+Sampler::Sampler(Device &d, const VkSamplerCreateInfo &info) :
+    device{d}
 {
-	return typeid(Sampler);
+	VK_CHECK(vkCreateSampler(device.get_handle(), &info, nullptr, &handle));
 }
-}        // namespace sg
+
+Sampler::Sampler(Sampler &&other) :
+    device{other.device},
+    handle{other.handle}
+{
+	other.handle = VK_NULL_HANDLE;
+}
+
+Sampler::~Sampler()
+{
+	if (handle != VK_NULL_HANDLE)
+	{
+		vkDestroySampler(device.get_handle(), handle, nullptr);
+	}
+}
+
+VkSampler Sampler::get_handle() const
+{
+	assert(handle != VK_NULL_HANDLE && "Sampler handle is invalid");
+	return handle;
+}
+}        // namespace core
 }        // namespace vkb

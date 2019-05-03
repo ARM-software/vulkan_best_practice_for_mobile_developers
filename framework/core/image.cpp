@@ -75,22 +75,25 @@ Image::Image(Device &              device,
              VkImageUsageFlags     image_usage,
              VmaMemoryUsage        memory_usage,
              VkSampleCountFlagBits sample_count,
-             uint32_t              mip_levels,
-             uint32_t              array_layers) :
+             const uint32_t        mip_levels,
+             const uint32_t        array_layers) :
     device{device},
     type{find_image_type(extent)},
     extent{extent},
     format{format},
-    samples{sample_count},
+    sample_count{sample_count},
     mip_levels{mip_levels},
     array_layers{array_layers}
 {
+	assert(mip_levels > 0 && "Image should have at least one level");
+	assert(array_layers > 0 && "Image should have at least one layer");
+
 	VkImageCreateInfo image_info{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
 
 	image_info.imageType   = type;
 	image_info.format      = format;
 	image_info.extent      = extent;
-	image_info.samples     = samples;
+	image_info.samples     = sample_count;
 	image_info.usage       = image_usage;
 	image_info.mipLevels   = mip_levels;
 	image_info.arrayLayers = array_layers;
@@ -120,8 +123,9 @@ Image::Image(Device &device, VkImage handle, const VkExtent3D &extent, VkFormat 
     type{find_image_type(extent)},
     extent{extent},
     format{format},
-    samples{VK_SAMPLE_COUNT_1_BIT}
-{}
+    sample_count{VK_SAMPLE_COUNT_1_BIT}
+{
+}
 
 Image::Image(Image &&other) :
     device{other.device},
@@ -130,7 +134,9 @@ Image::Image(Image &&other) :
     type{other.type},
     extent{other.extent},
     format{other.format},
-    samples{other.samples}
+    sample_count{other.sample_count},
+    mip_levels{other.mip_levels},
+    array_layers{other.array_layers}
 {
 	other.handle = VK_NULL_HANDLE;
 	other.memory = VK_NULL_HANDLE;
@@ -176,7 +182,7 @@ VkFormat Image::get_format() const
 
 VkSampleCountFlagBits Image::get_samples() const
 {
-	return samples;
+	return sample_count;
 }
 
 uint32_t Image::get_mip_levels() const

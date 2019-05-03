@@ -39,9 +39,11 @@ class Component
 
 	Component(const std::string &name);
 
+	Component(Component &&other) = default;
+
 	virtual ~Component() = default;
 
-	const std::string &get_name();
+	const std::string &get_name() const;
 
 	virtual std::type_index get_type() = 0;
 

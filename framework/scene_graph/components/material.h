@@ -40,19 +40,21 @@ class Material : public Component
   public:
 	Material(const std::string &name);
 
+	Material(Material &&other) = default;
+
 	virtual ~Material() = default;
 
 	virtual std::type_index get_type() override;
 
-	Texture *base_color_texture;
+	Texture *base_color_texture{nullptr};
 
-	Texture *metallic_roughness_texture;
+	Texture *metallic_roughness_texture{nullptr};
 
-	Texture *normal_texture;
+	Texture *normal_texture{nullptr};
 
-	Texture *occlusion_texture;
+	Texture *occlusion_texture{nullptr};
 
-	Texture *emissive_texture;
+	Texture *emissive_texture{nullptr};
 };
 
 }        // namespace sg

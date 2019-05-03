@@ -98,5 +98,6 @@ void Buffer::update(size_t offset, const std::vector<uint8_t> &data)
 {
 	std::copy(std::begin(data), std::end(data), mapped_data + offset);
 }
+
 }        // namespace core
 }        // namespace vkb

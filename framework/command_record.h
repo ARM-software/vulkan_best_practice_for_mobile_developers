@@ -30,6 +30,7 @@
 #include "core/pipeline.h"
 #include "core/pipeline_layout.h"
 #include "core/render_pass.h"
+#include "core/sampler.h"
 #include "graphics_pipeline_state.h"
 #include "render_target.h"
 #include "resource_binding_state.h"
@@ -189,7 +190,7 @@ class CommandRecord
 
 	void bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element);
 
-	void bind_image(const ImageView &image_view, VkSampler sampler, uint32_t set, uint32_t binding, uint32_t array_element);
+	void bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element);
 
 	void bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::Buffer>> &buffers, const std::vector<VkDeviceSize> &offsets);
 

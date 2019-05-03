@@ -80,7 +80,7 @@ class Image : public NonCopyable
 
 	VkFormat format{};
 
-	VkSampleCountFlagBits samples{};
+	VkSampleCountFlagBits sample_count{};
 
 	uint32_t mip_levels{1};
 

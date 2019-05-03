@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "common.h"
+#include "core/sampler.h"
 #include "scene_graph/component.h"
 
 namespace vkb
@@ -35,13 +36,15 @@ namespace sg
 class Sampler : public Component
 {
   public:
-	Sampler(const std::string &name);
+	Sampler(const std::string &name, core::Sampler &&vk_sampler);
+
+	Sampler(Sampler &&other) = default;
 
 	virtual ~Sampler() = default;
 
 	virtual std::type_index get_type() override;
 
-	VkSampler vk_sampler = VK_NULL_HANDLE;
+	core::Sampler vk_sampler;
 };
 }        // namespace sg
 }        // namespace vkb

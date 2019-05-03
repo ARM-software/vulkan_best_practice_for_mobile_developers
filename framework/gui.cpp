@@ -122,7 +122,6 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 		core::Buffer stage_buffer{device, upload_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY};
 		stage_buffer.update(0, {font_data, font_data + upload_size});
 
-		auto &graphics_queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 		auto &command_buffer = device.request_command_buffer();
 
 		FencePool fence_pool{device};
@@ -187,7 +186,8 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 	sampler_info.addressModeV  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_info.addressModeW  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_info.borderColor   = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	VK_CHECK(vkCreateSampler(device.get_handle(), &sampler_info, nullptr, &sampler));
+
+	sampler = std::make_unique<core::Sampler>(device, sampler_info);
 }
 
 void Gui::update(const float delta_time)
@@ -344,7 +344,7 @@ void Gui::draw(CommandBuffer &command_buffer)
 	// Bind pipeline layout
 	command_buffer.bind_pipeline_layout(pipeline_layout);
 
-	command_buffer.bind_image(*font_image_view, sampler, 0, 0, 0);
+	command_buffer.bind_image(*font_image_view, *sampler, 0, 0, 0);
 
 	// Pre-rotation
 	auto      transform      = render_context.get_swapchain().get_transform();
@@ -443,12 +443,6 @@ void Gui::draw(CommandBuffer &command_buffer)
 
 Gui::~Gui()
 {
-	if (sampler)
-	{
-		vkDestroySampler(render_context.get_device().get_handle(), sampler, nullptr);
-		sampler = VK_NULL_HANDLE;
-	}
-
 	ImGui::DestroyContext();
 }
 

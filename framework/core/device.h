@@ -46,11 +46,13 @@ namespace vkb
 class Device : public NonCopyable
 {
   public:
-	Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const std::vector<const char *> extensions = {}, const VkPhysicalDeviceFeatures &features = {});
+	Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const std::vector<const char *> extensions = {});
 
 	~Device();
 
 	VkPhysicalDevice get_physical_device() const;
+
+	const VkPhysicalDeviceFeatures &get_features() const;
 
 	VkDevice get_handle() const;
 
@@ -120,6 +122,8 @@ class Device : public NonCopyable
 
   private:
 	VkPhysicalDevice physical_device{VK_NULL_HANDLE};
+
+	VkPhysicalDeviceFeatures features{};
 
 	VkSurfaceKHR surface{VK_NULL_HANDLE};
 

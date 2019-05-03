@@ -77,7 +77,7 @@ class Application
 
   protected:
 	/// The settings of the app
-	DebugInfo debug_info;
+	DebugInfo debug_info{};
 
 	float fps{0.0f};
 
