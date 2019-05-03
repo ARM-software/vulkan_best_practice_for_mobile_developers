@@ -142,7 +142,7 @@ void CommandBuffer::bind_buffer(const core::Buffer &buffer, VkDeviceSize offset,
 	recorder.bind_buffer(buffer, offset, range, set, binding, array_element);
 }
 
-void CommandBuffer::bind_image(const ImageView &image_view, VkSampler sampler, uint32_t set, uint32_t binding, uint32_t array_element)
+void CommandBuffer::bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element)
 {
 	recorder.bind_image(image_view, sampler, set, binding, array_element);
 }

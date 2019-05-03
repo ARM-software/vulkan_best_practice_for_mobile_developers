@@ -27,18 +27,20 @@
 
 #include "common.h"
 #include "scene_graph/component.h"
+#include "scene_graph/components/sampler.h"
 
 namespace vkb
 {
 namespace sg
 {
 class Image;
-class Sampler;
 
 class Texture : public Component
 {
   public:
 	Texture(const std::string &name);
+
+	Texture(Texture &&other) = default;
 
 	virtual ~Texture() = default;
 
@@ -53,9 +55,9 @@ class Texture : public Component
 	Sampler *get_sampler();
 
   private:
-	Image *image;
+	Image *image{nullptr};
 
-	Sampler *sampler;
+	Sampler *sampler{nullptr};
 };
 }        // namespace sg
 }        // namespace vkb

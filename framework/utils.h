@@ -50,6 +50,13 @@ struct FragPushConstant
 };
 
 /**
+ * @brief Extracts the extension from an uri
+ * @param uri An uniform Resource Identifier
+ * @return The extension
+ */
+std::string get_extension(const std::string &uri);
+
+/**
  * @brief Helper function to create a shader module from a GLSL source file
  *
  * @param device A Vulkan device and an asset manager already set up

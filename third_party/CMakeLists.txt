@@ -33,7 +33,10 @@ target_compile_definitions(glm INTERFACE
     GLM_FORCE_RADIANS
     GLM_FORCE_CTOR_INIT
     GLM_ENABLE_EXPERIMENTAL
-    GLM_FORCE_CXX14)
+)
+if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    target_compile_definitions(glm INTERFACE GLM_FORCE_CXX14)
+endif()
 
 # tinygltf
 add_library(tinygltf INTERFACE)
@@ -50,20 +53,47 @@ target_include_directories(vulkan INTERFACE ${VULKAN_INCLUDE_DIR})
 target_compile_definitions(vulkan INTERFACE VK_NO_PROTOTYPES)
 
 if(ANDROID)
-	target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_ANDROID_KHR)
+    target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_ANDROID_KHR)
 elseif(WIN32)
-	target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_WIN32_KHR)
+    target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_WIN32_KHR)
 elseif(APPLE)
-	target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_MACOS_MVK)
+    target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_MACOS_MVK)
 elseif(UNIX)
-	target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_XCB_KHR)
+    target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_XCB_KHR)
 endif()
 
+# vma
 add_library(vma INTERFACE)
 set(VMA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vma/src)
 target_sources(vma INTERFACE ${VMA_DIR}/vk_mem_alloc.h)
 target_include_directories(vma INTERFACE ${VMA_DIR})
 target_link_libraries(vma INTERFACE vulkan)
+
+# libktx
+set(KTX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ktx)
+
+set(KTX_SOURCES
+    ${KTX_DIR}/lib/texture.c
+    ${KTX_DIR}/lib/hashlist.c
+    ${KTX_DIR}/lib/checkheader.c
+    ${KTX_DIR}/lib/swap.c
+    ${KTX_DIR}/lib/memstream.c
+    ${KTX_DIR}/lib/filestream.c
+)
+
+set(KTX_INCLUDE_DIRS
+    ${KTX_DIR}/include
+    ${KTX_DIR}/lib
+    ${KTX_DIR}/other_include
+)
+
+add_library(ktx ${KTX_SOURCES})
+
+target_include_directories(ktx PUBLIC ${KTX_INCLUDE_DIRS})
+
+target_link_libraries(ktx PUBLIC vulkan)
+
+set_property(TARGET ktx PROPERTY FOLDER "ThirdParty")
 
 # volk
 set(VOLK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/volk")
@@ -151,6 +181,48 @@ set_property(TARGET spirv-cross-util PROPERTY FOLDER "ThirdParty")
 add_subdirectory(hwcpipe)
 
 set_property(TARGET hwcpipe PROPERTY FOLDER "ThirdParty")
+
+# stb
+add_library(stb INTERFACE)
+target_include_directories(stb INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/stb")
+
+# astc
+set(ASTC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/astc)
+set(ASTC_INCLUDE_DIR ${ASTC_DIR}/Source)
+set(ASTC_SOURCE_DIR ${ASTC_DIR}/Source)
+
+set(ASTC_SOURCES
+    ${ASTC_SOURCE_DIR}/astc_image_load_store.cpp
+    ${ASTC_SOURCE_DIR}/astc_pick_best_endpoint_format.cpp
+    ${ASTC_SOURCE_DIR}/astc_color_quantize.cpp
+    ${ASTC_SOURCE_DIR}/astc_weight_align.cpp
+    ${ASTC_SOURCE_DIR}/astc_integer_sequence.cpp
+    ${ASTC_SOURCE_DIR}/astc_ideal_endpoints_and_weights.cpp
+    ${ASTC_SOURCE_DIR}/astc_find_best_partitioning.cpp
+    ${ASTC_SOURCE_DIR}/astc_compress_symbolic.cpp
+    ${ASTC_SOURCE_DIR}/astc_decompress_symbolic.cpp
+    ${ASTC_SOURCE_DIR}/astc_symbolic_physical.cpp
+    ${ASTC_SOURCE_DIR}/astc_toplevel.cpp
+    ${ASTC_SOURCE_DIR}/astc_stb_tga.cpp
+    ${ASTC_SOURCE_DIR}/softfloat.cpp
+    ${ASTC_SOURCE_DIR}/mathlib.cpp
+    ${ASTC_SOURCE_DIR}/astc_quantization.cpp
+    ${ASTC_SOURCE_DIR}/astc_block_sizes2.cpp
+    ${ASTC_SOURCE_DIR}/astc_percentile_tables.cpp
+    ${ASTC_SOURCE_DIR}/astc_averages_and_directions.cpp
+    ${ASTC_SOURCE_DIR}/astc_partition_tables.cpp
+    ${ASTC_SOURCE_DIR}/astc_color_unquantize.cpp
+    ${ASTC_SOURCE_DIR}/astc_encoding_choice_error.cpp
+    ${ASTC_SOURCE_DIR}/astc_kmeans_partitioning.cpp
+    ${ASTC_SOURCE_DIR}/astc_weight_quant_xfer_tables.cpp
+    ${ASTC_SOURCE_DIR}/astc_compute_variance.cpp
+    ${ASTC_SOURCE_DIR}/astc_ktx_dds.cpp
+)
+
+add_library(astc ${ASTC_SOURCES})
+target_include_directories(astc PUBLIC ${ASTC_INCLUDE_DIR})
+target_compile_definitions(astc PRIVATE -D_USE_MATH_DEFINES)
+set_property(TARGET astc PROPERTY FOLDER "ThirdParty")
 
 if(ANDROID)
     # native_app_glue

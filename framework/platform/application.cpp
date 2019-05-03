@@ -25,8 +25,7 @@
 namespace vkb
 {
 Application::Application() :
-    name{"Sample Name"},
-    debug_info{}
+    name{"Sample Name"}
 {
 }
 

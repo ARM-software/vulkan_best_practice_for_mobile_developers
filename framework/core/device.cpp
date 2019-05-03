@@ -28,7 +28,7 @@
 
 namespace vkb
 {
-Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const std::vector<const char *> extensions, const VkPhysicalDeviceFeatures &features) :
+Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const std::vector<const char *> extensions) :
     physical_device{physical_device}
 {
 	// Gpu properties
@@ -55,6 +55,8 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const std
 		queue_create_info.queueCount       = queue_family_property.queueCount;
 		queue_create_info.pQueuePriorities = queue_priorities[queue_family_index].data();
 	}
+
+	vkGetPhysicalDeviceFeatures(physical_device, &features);
 
 	VkDeviceCreateInfo create_info{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
 
@@ -152,6 +154,11 @@ Device::~Device()
 VkPhysicalDevice Device::get_physical_device() const
 {
 	return physical_device;
+}
+
+const VkPhysicalDeviceFeatures &Device::get_features() const
+{
+	return features;
 }
 
 VkDevice Device::get_handle() const

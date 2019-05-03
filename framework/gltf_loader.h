@@ -51,6 +51,7 @@ extern AAssetManager *asset_manager;
 #pragma clang diagnostic pop
 
 #include "core/device.h"
+#include "core/sampler.h"
 
 namespace vkb
 {

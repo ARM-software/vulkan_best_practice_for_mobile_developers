@@ -96,10 +96,12 @@ VkFormat ImageView::get_format() const
 {
 	return format;
 }
+
 VkImageSubresourceRange ImageView::get_subresource_range() const
 {
 	return subresource_range;
 }
+
 VkImageSubresourceLayers ImageView::get_subresource_layers() const
 {
 	VkImageSubresourceLayers subresource{};
@@ -109,4 +111,5 @@ VkImageSubresourceLayers ImageView::get_subresource_layers() const
 	subresource.mipLevel       = subresource_range.baseMipLevel;
 	return subresource;
 }
+
 }        // namespace vkb

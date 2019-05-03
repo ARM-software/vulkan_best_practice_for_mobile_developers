@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,20 +18,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "sampler.h"
+#pragma once
+
+#include "scene_graph/components/image.h"
+
+#include <ktx.h>
 
 namespace vkb
 {
 namespace sg
 {
-Sampler::Sampler(const std::string &name, core::Sampler &&vk_sampler) :
-    Component{name},
-    vk_sampler{std::move(vk_sampler)}
-{}
-
-std::type_index Sampler::get_type()
+class Ktx : public Image
 {
-	return typeid(Sampler);
-}
+  public:
+	Ktx(const std::string &name, const std::vector<uint8_t> &data);
+
+	virtual ~Ktx() = default;
+};
+
 }        // namespace sg
 }        // namespace vkb

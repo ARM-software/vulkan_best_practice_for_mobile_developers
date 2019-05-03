@@ -50,6 +50,7 @@ void Texture::set_sampler(Sampler &s)
 
 Sampler *Texture::get_sampler()
 {
+	assert(sampler && "Texture has no sampler");
 	return sampler;
 }
 }        // namespace sg

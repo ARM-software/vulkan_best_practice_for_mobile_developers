@@ -34,18 +34,82 @@ namespace vkb
 {
 namespace sg
 {
+/**
+ * @param format Vulkan format
+ * @return Whether the vulkan format is ASTC
+ */
+bool is_astc(VkFormat format);
+
+/**
+ * @brief Mipmap information
+ */
+struct Mipmap
+{
+	/// Mipmap level
+	uint32_t level = 0;
+
+	/// Byte offset used for uploading
+	uint32_t offset = 0;
+
+	/// Width depth and height of the mipmap
+	VkExtent3D extent = {0, 0, 0};
+};
+
 class Image : public Component
 {
   public:
-	Image(const std::string &name);
+	Image(const std::string &name, std::vector<uint8_t> &&data = {}, std::vector<Mipmap> &&mipmaps = {{}});
+
+	static std::unique_ptr<Image> load(const std::string &name, const std::string &uri);
 
 	virtual ~Image() = default;
 
 	virtual std::type_index get_type() override;
 
-	std::unique_ptr<core::Image> image;
+	const std::vector<uint8_t> &get_data() const;
 
-	std::unique_ptr<ImageView> image_view;
+	VkFormat get_format() const;
+
+	const VkExtent3D &get_extent() const;
+
+	const std::vector<Mipmap> &get_mipmaps() const;
+
+	void generate_mipmaps();
+
+	void create_vk_image(Device &device);
+
+	const core::Image &get_vk_image() const;
+
+	const ImageView &get_vk_image_view() const;
+
+  protected:
+	std::vector<uint8_t> &get_mut_data();
+
+	void set_data(const uint8_t *raw_data, size_t size);
+
+	void set_format(VkFormat format);
+
+	void set_width(uint32_t width);
+
+	void set_height(uint32_t height);
+
+	void set_depth(uint32_t depth);
+
+	Mipmap &get_mipmap(size_t index);
+
+	std::vector<Mipmap> &get_mut_mipmaps();
+
+  private:
+	std::vector<uint8_t> data;
+
+	VkFormat format{VK_FORMAT_UNDEFINED};
+
+	std::vector<Mipmap> mipmaps{{}};
+
+	std::unique_ptr<core::Image> vk_image;
+
+	std::unique_ptr<ImageView> vk_image_view;
 };
+
 }        // namespace sg
 }        // namespace vkb

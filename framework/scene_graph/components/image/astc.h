@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,20 +18,58 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "sampler.h"
+#pragma once
+
+#include "scene_graph/components/image.h"
+
+#if defined(_WIN32) || defined(_WIN64)
+// Windows.h defines IGNORE, so we must #undef it to avoid clashes with astc header
+#	undef IGNORE
+#endif
+#include <astc_codec_internals.h>
 
 namespace vkb
 {
 namespace sg
 {
-Sampler::Sampler(const std::string &name, core::Sampler &&vk_sampler) :
-    Component{name},
-    vk_sampler{std::move(vk_sampler)}
-{}
-
-std::type_index Sampler::get_type()
+struct BlockDim
 {
-	return typeid(Sampler);
-}
+	uint8_t x;
+	uint8_t y;
+	uint8_t z;
+};
+
+class Astc : public Image
+{
+  public:
+	/**
+	 * @brief Decodes an ASTC image
+	 * @param image Image to decode
+	 */
+	Astc(const Image &image);
+
+	/**
+	 * @brief Decodes ASTC data with an ASTC header
+	 * @param name Name of the component
+	 * @param data ASTC data with header
+	 */
+	Astc(const std::string &name, const std::vector<uint8_t> &data);
+
+	virtual ~Astc() = default;
+
+  private:
+	/**
+	 * @brief Decodes ASTC data
+	 * @param blockdim Dimensions of the block
+	 * @param extent Extent of the image
+	 * @param data Pointer to ASTC image data
+	 */
+	void decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *data);
+
+	/**
+	 * @brief Initializes ASTC library
+	 */
+	void init();
+};
 }        // namespace sg
 }        // namespace vkb

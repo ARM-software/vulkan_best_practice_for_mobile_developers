@@ -25,7 +25,9 @@
 #include <imgui.h>
 
 #include "core/command_buffer.h"
+#include "core/sampler.h"
 #include "debug_info.h"
+
 #include "platform/input_events.h"
 #include "render_context.h"
 #include "stats.h"
@@ -280,7 +282,7 @@ class Gui
 	std::unique_ptr<core::Image> font_image;
 	std::unique_ptr<ImageView>   font_image_view;
 
-	VkSampler sampler{VK_NULL_HANDLE};
+	std::unique_ptr<core::Sampler> sampler{nullptr};
 
 	PipelineLayout &pipeline_layout;
 

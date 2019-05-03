@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,20 +18,45 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "sampler.h"
+#pragma once
+
+#include "common.h"
 
 namespace vkb
 {
-namespace sg
-{
-Sampler::Sampler(const std::string &name, core::Sampler &&vk_sampler) :
-    Component{name},
-    vk_sampler{std::move(vk_sampler)}
-{}
+class Device;
 
-std::type_index Sampler::get_type()
+namespace core
 {
-	return typeid(Sampler);
-}
-}        // namespace sg
+/**
+ * @brief Represents a Vulkan Sampler
+ */
+class Sampler : public NonCopyable
+{
+  public:
+	/**
+	 * @brief Creates a Vulkan Sampler
+	 * @param d The device to use
+	 * @param info Creation details
+	 */
+	Sampler(Device &d, const VkSamplerCreateInfo &info);
+
+	/**
+	 * @brief Move constructs
+	 */
+	Sampler(Sampler &&sampler);
+
+	~Sampler();
+
+	/**
+	 * @return The vulkan sampler handle
+	 */
+	VkSampler get_handle() const;
+
+  private:
+	Device &device;
+
+	VkSampler handle{VK_NULL_HANDLE};
+};
+}        // namespace core
 }        // namespace vkb
