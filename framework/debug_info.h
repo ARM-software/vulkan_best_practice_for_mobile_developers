@@ -39,13 +39,15 @@ struct Base
 	    label{label}
 	{}
 
+	virtual ~Base() = default;
+
 	virtual const std::string to_string() = 0;
 };
 
 /**
  * @brief Static Field Implementation
  *
- *		To be used for values that do not change often.
+ * To be used for values that do not change often.
  */
 template <typename T>
 struct Static : public Base
@@ -57,6 +59,8 @@ struct Static : public Base
 	    value{value}
 	{}
 
+	virtual ~Static() = default;
+
 	const std::string to_string() override
 	{
 		return vkb::to_string(value);
@@ -66,7 +70,7 @@ struct Static : public Base
 /**
  * @brief Dynamic Field Implementation
  *
- *		To be used for values that change frequently.
+ * To be used for values that change frequently.
  */
 template <typename T>
 struct Dynamic : public Base
@@ -78,6 +82,8 @@ struct Dynamic : public Base
 	    value{value}
 	{}
 
+	virtual ~Dynamic() = default;
+
 	const std::string to_string() override
 	{
 		return vkb::to_string(value);
@@ -87,7 +93,7 @@ struct Dynamic : public Base
 /**
  * @brief Vector Field Implementation
  *
- *		To be used for values that have an X, Y and Z value.
+ * To be used for values that have an X, Y and Z value.
  */
 template <typename T>
 struct Vector final : public Static<T>
@@ -104,6 +110,8 @@ struct Vector final : public Static<T>
 	    z{z}
 	{}
 
+	virtual ~Vector() = default;
+
 	const std::string to_string() override
 	{
 		return "x: " + vkb::to_string(x) + "\t" +
@@ -115,7 +123,7 @@ struct Vector final : public Static<T>
 /**
  * @brief MinMax Field Implementation
  *
- *		To be used for numbers that change a lot, keeping track of the high/low values.
+ * To be used for numbers that change a lot, keeping track of the high/low values.
  */
 template <typename T>
 struct MinMax final : public Dynamic<T>
@@ -129,6 +137,8 @@ struct MinMax final : public Dynamic<T>
 	{
 		static_assert(std::is_arithmetic<T>::value, "MinMax must be templated to a numeric type.");
 	}
+
+	virtual ~MinMax() = default;
 
 	const std::string to_string() override
 	{
@@ -146,7 +156,7 @@ struct MinMax final : public Dynamic<T>
 };
 }        // namespace field
 
-/*
+/**
  * @brief Manages the debug information
  */
 class DebugInfo
@@ -157,7 +167,7 @@ class DebugInfo
 	/**
 	 * @brief Constructs and inserts a new field of type C<T>
 	 *
-	 *		Replaces the field if it is of type static.
+	 * Replaces the field if it is of type static.
 	 */
 	template <template <typename> class C, typename T, typename... A>
 	void insert(const std::string &label, A &&... args)
