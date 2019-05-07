@@ -417,7 +417,7 @@ void CommandRecord::FlushDescriptorState()
 		resource_binding_state.clear_dirty();
 
 		// Iterate over all set bindings
-		for (auto set_it : resource_binding_state.get_set_bindings())
+		for (auto &set_it : resource_binding_state.get_set_bindings())
 		{
 			// Skip if set bindings don't have changes
 			if (!set_it.second.is_dirty() && (update_sets.find(set_it.first) == update_sets.end()))
