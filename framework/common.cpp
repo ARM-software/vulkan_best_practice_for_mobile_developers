@@ -578,7 +578,14 @@ std::vector<uint8_t> read_binary_file(const std::string &path)
 		throw std::runtime_error("Failed to load file: " + path);
 	}
 
-	data.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+	// Calculate file size
+	file.seekg(0, std::ios::end);
+	auto file_size = file.tellg();
+	file.seekg(0, std::ios::beg);
+
+	// Make space and read
+	data.resize(file_size);
+	file.read(reinterpret_cast<char *>(&data[0]), file_size);
 #endif
 
 	return data;
