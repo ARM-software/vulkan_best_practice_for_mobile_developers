@@ -80,7 +80,7 @@ Android:
     - docker
   script:
     - cmake -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake -H. -Bbuild
-    - cmake --build build --target vulkan_best_practice --config Release
+    - cmake --build build --target vulkan_best_practice_package --config Release
 
 LinuxExternalProject:
   stage: Test
