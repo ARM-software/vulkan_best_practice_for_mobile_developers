@@ -14,6 +14,17 @@ Doxygen:
     - doxygen docs/doxygen/doxyfile
     - if [ $(stat -c%s doxygen/warnings.txt) -gt 0 ]; then cat doxygen/warnings.txt; exit 1; fi
 
+SnakeCase:
+  stage: Check
+  image: $DOCKER_REGISTRY/docker/snake_case_check/linux:latest
+  tags:
+    - linux
+    - docker
+  script:
+    - git snake-case origin/develop > snake-report.txt
+    - if [ $(grep -c '@@' snake-report.txt) -gt 0 ]; then cat snake-report.txt; exit 1; fi
+  allow_failure: true
+
 ClangFormat:
   stage: Check
   image: $DOCKER_REGISTRY/docker/cpp-code-check/linux:latest
