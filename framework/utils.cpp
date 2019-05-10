@@ -33,9 +33,21 @@
 #include "scene_graph/node.h"
 
 #include <queue>
+#include <stdexcept>
 
 namespace vkb
 {
+std::string get_extension(const std::string &uri)
+{
+	auto dot_pos = uri.find_last_of('.');
+	if (dot_pos == std::string::npos)
+	{
+		throw std::runtime_error{"Uri has no extension"};
+	}
+
+	return uri.substr(dot_pos + 1);
+}
+
 namespace
 {
 VkShaderStageFlagBits find_shader_stage(const std::string &ext)
@@ -71,9 +83,7 @@ VkShaderStageFlagBits find_shader_stage(const std::string &ext)
 
 ShaderModule create_shader_module(Device &device, const char *path)
 {
-	std::string file_ext = path;
-
-	file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
+	auto file_ext = get_extension(path);
 
 	auto shader_stage = find_shader_stage(file_ext);
 
@@ -100,9 +110,9 @@ void draw_scene_submesh(CommandBuffer &command_buffer, PipelineLayout &pipeline_
 	auto &base_color_texture = material->base_color_texture;
 
 	// Bind color texture of material
-	if (base_color_texture && base_color_texture->get_image() && base_color_texture->get_sampler())
+	if (base_color_texture && base_color_texture->get_image())
 	{
-		command_buffer.bind_image(*base_color_texture->get_image()->image_view,
+		command_buffer.bind_image(base_color_texture->get_image()->get_vk_image_view(),
 		                          base_color_texture->get_sampler()->vk_sampler, 0, 0, 0);
 	}
 

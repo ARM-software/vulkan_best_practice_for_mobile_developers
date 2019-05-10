@@ -51,7 +51,7 @@ void ResourceBindingState::bind_buffer(const core::Buffer &buffer, VkDeviceSize 
 	dirty = true;
 }
 
-void ResourceBindingState::bind_image(const ImageView &image_view, VkSampler sampler, uint32_t set, uint32_t binding, uint32_t array_element)
+void ResourceBindingState::bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element)
 {
 	set_bindings[set].bind_image(image_view, sampler, binding, array_element);
 
@@ -67,7 +67,7 @@ VkDescriptorImageInfo ResourceInfo::get_image_info() const
 {
 	VkDescriptorImageInfo image_info{};
 
-	image_info.sampler   = sampler;
+	image_info.sampler   = sampler->get_handle();
 	image_info.imageView = image_view->get_handle();
 
 	return image_info;
@@ -134,11 +134,11 @@ void ResourceInfo::bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, 
 	dirty = true;
 }
 
-void ResourceInfo::bind_image(const ImageView &image_view, VkSampler sampler)
+void ResourceInfo::bind_image(const ImageView &image_view, const core::Sampler &sampler)
 {
 	this->image_view = &image_view;
 
-	this->sampler = sampler;
+	this->sampler = &sampler;
 
 	dirty = true;
 }
@@ -183,7 +183,7 @@ void SetBindings::bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, V
 	dirty = true;
 }
 
-void SetBindings::bind_image(const ImageView &image_view, VkSampler sampler, uint32_t binding, uint32_t array_element)
+void SetBindings::bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t binding, uint32_t array_element)
 {
 	resource_bindings[binding][array_element].bind_image(image_view, sampler);
 

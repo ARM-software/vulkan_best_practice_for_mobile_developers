@@ -23,9 +23,9 @@ cmake_minimum_required(VERSION 3.6)
 project(vulkan_best_practice)
 
 # Add path for local cmake scripts
-list(APPEND CMAKE_MODULE_PATH 
-    ${CMAKE_SOURCE_DIR}/bldsys/cmake
-    ${CMAKE_SOURCE_DIR}/bldsys/cmake/module)
+list(APPEND CMAKE_MODULE_PATH
+    ${CMAKE_CURRENT_SOURCE_DIR}/bldsys/cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/bldsys/cmake/module)
 
 include(utils)
 include(global_options)
@@ -37,8 +37,10 @@ add_subdirectory(third_party)
 # Add vulkan framework
 add_subdirectory(framework)
 
-# Add vulkan samples
-add_subdirectory(samples)
+if(VKB_BUILD_SAMPLES)
+    # Add vulkan samples
+    add_subdirectory(samples)
 
-# Add vulkan app (runs all samples)
-add_subdirectory(vulkan_best_practice)
+    # Add vulkan app (runs all samples)
+    add_subdirectory(vulkan_best_practice)
+endif()

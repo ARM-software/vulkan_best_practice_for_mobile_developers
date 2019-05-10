@@ -30,6 +30,7 @@
 #include "core/pipeline.h"
 #include "core/pipeline_layout.h"
 #include "core/render_pass.h"
+#include "core/sampler.h"
 #include "graphics_pipeline_state.h"
 #include "render_target.h"
 #include "resource_binding_state.h"
@@ -110,8 +111,14 @@ struct DescriptorSetBinding
 	uint32_t set_index;
 
 	const DescriptorSet &descriptor_set;
+
+	std::vector<uint32_t> dynamic_offsets;
 };
 
+/**
+ * @brief Command Type Enum
+ * 
+ */
 enum class CommandType
 {
 	Begin,
@@ -183,36 +190,106 @@ class CommandRecord
 
 	void bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element);
 
-	void bind_image(const ImageView &image_view, VkSampler sampler, uint32_t set, uint32_t binding, uint32_t array_element);
+	void bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element);
 
 	void bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::Buffer>> &buffers, const std::vector<VkDeviceSize> &offsets);
 
 	void bind_index_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkIndexType index_type);
 
+	/**
+	 * @brief Set the viewport state object
+	 * 
+	 * @param state_info 
+	 */
 	void set_viewport_state(const ViewportState &state_info);
 
+	/**
+	 * @brief Set the vertex input state object
+	 * 
+	 * @param state_info 
+	 */
 	void set_vertex_input_state(const VertexInputState &state_info);
 
+	/**
+	 * @brief Set the input assembly state object
+	 * 
+	 * @param state_info 
+	 */
 	void set_input_assembly_state(const InputAssemblyState &state_info);
 
+	/**
+	 * @brief Set the rasterization state object
+	 * 
+	 * @param state_info 
+	 */
 	void set_rasterization_state(const RasterizationState &state_info);
 
+	/**
+	 * @brief Set the multisample state object
+	 * 
+	 * @param state_info 
+	 */
 	void set_multisample_state(const MultisampleState &state_info);
 
+	/**
+	 * @brief Set the depth stencil state object
+	 * 
+	 * @param state_info 
+	 */
 	void set_depth_stencil_state(const DepthStencilState &state_info);
 
+	/**
+	 * @brief Set the color blend state object
+	 * 
+	 * @param state_info 
+	 */
 	void set_color_blend_state(const ColorBlendState &state_info);
 
+	/**
+	 * @brief Set the viewport object
+	 * 
+	 * @param first_viewport 
+	 * @param viewports 
+	 */
 	void set_viewport(uint32_t first_viewport, const std::vector<VkViewport> &viewports);
 
+	/**
+	 * @brief Set the scissor object
+	 * 
+	 * @param first_scissor 
+	 * @param scissors 
+	 */
 	void set_scissor(uint32_t first_scissor, const std::vector<VkRect2D> &scissors);
 
+	/**
+	 * @brief Set the line width object
+	 * 
+	 * @param line_width 
+	 */
 	void set_line_width(float line_width);
 
+	/**
+	 * @brief Set the depth bias object
+	 * 
+	 * @param depth_bias_constant_factor 
+	 * @param depth_bias_clamp 
+	 * @param depth_bias_slope_factor 
+	 */
 	void set_depth_bias(float depth_bias_constant_factor, float depth_bias_clamp, float depth_bias_slope_factor);
 
+	/**
+	 * @brief Set the blend constants object
+	 * 
+	 * @param blend_constants 
+	 */
 	void set_blend_constants(const std::array<float, 4> &blend_constants);
 
+	/**
+	 * @brief Set the depth bounds object
+	 * 
+	 * @param min_depth_bounds 
+	 * @param max_depth_bounds 
+	 */
 	void set_depth_bounds(float min_depth_bounds, float max_depth_bounds);
 
 	void draw(uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance);
@@ -244,8 +321,16 @@ class CommandRecord
 
 	std::unordered_map<uint32_t, DescriptorSetLayout *> descriptor_set_layout_state;
 
+	/**
+	 * @brief Flush the piplines state
+	 * 
+	 */
 	void FlushPipelineState();
 
+	/**
+	 * @brief Flush the descriptor set State
+	 * 
+	 */
 	void FlushDescriptorState();
 };
 }        // namespace vkb

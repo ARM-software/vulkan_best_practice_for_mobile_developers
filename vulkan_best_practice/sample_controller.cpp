@@ -77,29 +77,29 @@ namespace
 {
 inline void print_usage()
 {
-	std::string col_delim(20, '-');
+	std::string col_delim(30, '-');
 
-	LOGI("%s", "Vulkan Best Practice Samples");
+	LOGI("Vulkan Best Practice Samples");
 	LOGI("");
-	LOGI("\t%s", "A collection of samples to demonstrate the Vulkan best practice for mobile developers.");
+	LOGI("\tA collection of samples to demonstrate the Vulkan best practice for mobile developers.");
 	LOGI("");
-	LOGI("%s", "Options:");
+	LOGI("Options:");
 	LOGI("");
-	LOGI("\t help - %s", "Display this usage guide.");
-	LOGI("\t <SAMPLE_ID> - %s", "Run the specific sample.");
+	LOGI("\t help - Display this usage guide.");
+	LOGI("\t <SAMPLE_ID> - Run the specific sample.");
 	LOGI("");
-	LOGI("%s", "Available samples:");
+	LOGI("Available samples:");
 	LOGI("");
-	LOGI("%20s | %20s | %s", "Id", "Name", "Description");
-	LOGI("%s---%s---%s", col_delim.c_str(), col_delim.c_str(), col_delim.c_str());
+	LOGI("{:20s} | {:20s} | {:20s}", "Id", "Name", "Description");
+	LOGI("{}---{}---{}", col_delim.c_str(), col_delim.c_str(), col_delim.c_str());
 
 	for (auto &sample_info : sample_list)
 	{
-		LOGI("%20s | %20s | %s", sample_info.id.c_str(), sample_info.name.c_str(), sample_info.description.c_str());
+		LOGI("{:20s} | {:20s} | {}", sample_info.id.c_str(), sample_info.name.c_str(), sample_info.description.c_str());
 	}
 
 	LOGI("");
-	LOGI("Project home: %s", "https://github.com/ARM-software/vulkan_best_practice_for_mobile_developers");
+	LOGI("Project home: https://github.com/ARM-software/vulkan_best_practice_for_mobile_developers");
 	LOGI("");
 }
 
@@ -213,7 +213,7 @@ void SampleController::update(float delta_time)
 {
 	if (active_sample)
 	{
-		active_sample->update(delta_time);
+		active_sample->step();
 	}
 
 	elapsed_time += skipped_first_frame ? delta_time : 0.0f;

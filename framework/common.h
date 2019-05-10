@@ -47,9 +47,18 @@
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/hash.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/transform.hpp>
-#include <glm/gtx/hash.hpp>
+
+#include <spdlog/spdlog.h>
+
+#define LOGGER_FORMAT "[%^%l%$] %v"
+#define PROJECT_NAME "VulkanBestPractice"
+
+#define LOGI(...) spdlog::info(__VA_ARGS__);
+#define LOGW(...) spdlog::warn(__VA_ARGS__);
+#define LOGE(...) spdlog::error(__VA_ARGS__);
 
 template <class T>
 using ShaderStageMap = std::map<VkShaderStageFlagBits, T>;
@@ -80,7 +89,7 @@ template <class T>
 inline std::string to_string(const T &value)
 {
 	std::stringstream ss;
-	ss << value;
+	ss << std::fixed << value;
 	return ss.str();
 }
 
@@ -111,6 +120,13 @@ bool is_depth_stencil_format(VkFormat format);
  * @return The bits per pixel of the given format, -1 for invalid formats.
  */
 int32_t get_bits_per_pixel(VkFormat format);
+
+/**
+ * @brief Helper function to convert a VkFormat enum to a string
+ * @param format Vulkan format to convert.
+ * @return The string to return.
+ */
+const std::string convert_format_to_string(VkFormat format);
 
 /**
  * @brief Helper function to read a binary file
@@ -199,12 +215,6 @@ class VulkanException : std::runtime_error
 }        // namespace vkb
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
-#	include <android/log.h>
-
-#	define LOGI(...) __android_log_print(ANDROID_LOG_INFO, VKBP_TAG, __VA_ARGS__)
-#	define LOGW(...) __android_log_print(ANDROID_LOG_WARN, VKBP_TAG, __VA_ARGS__)
-#	define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, VKBP_TAG, __VA_ARGS__)
-
 #	include <android/asset_manager_jni.h>
 #	include <android/native_window_jni.h>
 #	include <android_native_app_glue.h>
@@ -215,47 +225,28 @@ class VulkanException : std::runtime_error
 #		include <Windows.h>
 #	endif
 #	include <GLFW/glfw3.h>
-
-#	define LOGI(...)                                  \
-		{                                              \
-			fprintf(stdout, "%s [INFO] : ", VKBP_TAG); \
-			fprintf(stdout, __VA_ARGS__);              \
-			fprintf(stdout, "\n");                     \
-		}
-#	define LOGW(...)                                     \
-		{                                                 \
-			fprintf(stdout, "%s [WARNING] : ", VKBP_TAG); \
-			fprintf(stdout, __VA_ARGS__);                 \
-			fprintf(stdout, "\n");                        \
-		}
-#	define LOGE(...)                                   \
-		{                                               \
-			fprintf(stderr, "%s [ERROR] : ", VKBP_TAG); \
-			fprintf(stderr, __VA_ARGS__);               \
-			fprintf(stderr, "\n");                      \
-		}
 #endif
 
 /// @brief Helper macro to test the result of Vulkan calls which can return an error.
-#define VK_CHECK(x)                                                                     \
-	do                                                                                  \
-	{                                                                                   \
-		VkResult err = x;                                                               \
-		if (err)                                                                        \
-		{                                                                               \
-			LOGE("Detected Vulkan error %d at %s:%d.\n", int(err), __FILE__, __LINE__); \
-			abort();                                                                    \
-		}                                                                               \
+#define VK_CHECK(x)                                                                   \
+	do                                                                                \
+	{                                                                                 \
+		VkResult err = x;                                                             \
+		if (err)                                                                      \
+		{                                                                             \
+			LOGE("Detected Vulkan error {} at {}:{}.", int(err), __FILE__, __LINE__); \
+			abort();                                                                  \
+		}                                                                             \
 	} while (0)
 
-#define ASSERT_VK_HANDLE(handle)                                    \
-	do                                                              \
-	{                                                               \
-		if ((handle) == VK_NULL_HANDLE)                             \
-		{                                                           \
-			LOGE("Handle is NULL at %s:%d.\n", __FILE__, __LINE__); \
-			abort();                                                \
-		}                                                           \
+#define ASSERT_VK_HANDLE(handle)                                  \
+	do                                                            \
+	{                                                             \
+		if ((handle) == VK_NULL_HANDLE)                           \
+		{                                                         \
+			LOGE("Handle is NULL at {}:{}.", __FILE__, __LINE__); \
+			abort();                                              \
+		}                                                         \
 	} while (0)
 
 #if !defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG)

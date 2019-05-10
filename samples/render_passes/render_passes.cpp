@@ -46,12 +46,12 @@ void RenderPassesSample::reset_stats_view()
 {
 	if (load.value == VK_ATTACHMENT_LOAD_OP_LOAD)
 	{
-		gui->get_stats_view().reset_max_value(vkb::StatIndex::l2_ext_read_beats);
+		gui->get_stats_view().reset_max_value(vkb::StatIndex::l2_ext_read_bytes);
 	}
 
 	if (store.value == VK_ATTACHMENT_STORE_OP_STORE)
 	{
-		gui->get_stats_view().reset_max_value(vkb::StatIndex::l2_ext_write_beats);
+		gui->get_stats_view().reset_max_value(vkb::StatIndex::l2_ext_write_bytes);
 	}
 }
 
@@ -63,8 +63,6 @@ void RenderPassesSample::draw_gui()
 		// In portrait, show buttons below heading
 		lines = lines * 2;
 	}
-	// Add a line for resolution, bits per pixel and FPS
-	lines = lines + 1;
 
 	gui->show_options_window(
 	    /* body = */ [this, lines]() {
@@ -97,15 +95,6 @@ void RenderPassesSample::draw_gui()
 
 			    ImGui::PopID();
 		    }
-
-		    std::stringstream info_stream;
-		    info_stream << "Res: " << std::to_string(render_context->get_swapchain().get_extent().width)
-		                << "x" << std::to_string(render_context->get_swapchain().get_extent().height) << ", "
-		                << std::to_string(vkb::get_bits_per_pixel(render_context->get_swapchain().get_format()))
-		                << " bpp, FPS : " << std::fixed << std::setprecision(1) << frame_rate;
-		    auto info_str = info_stream.str();
-
-		    ImGui::Text("%s", info_str.c_str());
 	    },
 	    /* lines = */ lines);
 }
@@ -121,10 +110,9 @@ bool RenderPassesSample::prepare(vkb::Platform &platform)
 
 	device = std::make_unique<vkb::Device>(get_gpu(0), get_surface(), extensions);
 
-	auto enabled_stats = {vkb::StatIndex::l2_ext_read_beats, vkb::StatIndex::l2_ext_write_beats};
+	auto enabled_stats = {vkb::StatIndex::l2_ext_read_bytes, vkb::StatIndex::l2_ext_write_bytes};
 
-	stats = std::make_unique<vkb::Stats>(platform.get_profiler(),
-	                                     enabled_stats);
+	stats = std::make_unique<vkb::Stats>(enabled_stats);
 
 	auto swapchain = std::make_unique<vkb::Swapchain>(*device, get_surface());
 
@@ -140,9 +128,9 @@ bool RenderPassesSample::prepare(vkb::Platform &platform)
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
-	auto& camera_node = add_free_camera("main_camera");
+	auto &camera_node = add_free_camera("main_camera");
 
-	camera = dynamic_cast<vkb::sg::PerspectiveCamera*>(&camera_node.get_component<vkb::sg::Camera>());
+	camera = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
 	gui = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor());
 

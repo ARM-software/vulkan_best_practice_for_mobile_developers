@@ -53,7 +53,7 @@ void DescriptorSet::update(const BindingMap<VkDescriptorBufferInfo> &buffer_info
 		VkDescriptorSetLayoutBinding binding_info;
 		if (!descriptor_set_layout.get_layout_binding(binding, binding_info))
 		{
-			LOGE("Shader layout set does not use buffer binding at #%i", binding);
+			LOGE("Shader layout set does not use buffer binding at #{}", binding);
 
 			continue;
 		}
@@ -86,7 +86,7 @@ void DescriptorSet::update(const BindingMap<VkDescriptorBufferInfo> &buffer_info
 		VkDescriptorSetLayoutBinding binding_info;
 		if (!descriptor_set_layout.get_layout_binding(binding_index, binding_info))
 		{
-			LOGE("Shader layout set does not use image binding at #%i", binding_index);
+			LOGE("Shader layout set does not use image binding at #{}", binding_index);
 
 			continue;
 		}

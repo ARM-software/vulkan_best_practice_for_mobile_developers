@@ -17,80 +17,115 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
- 
+
 cmake_minimum_required(VERSION 3.6)
 
 project(third_party LANGUAGES C CXX)
 
 # glm
 add_library(glm INTERFACE)
+set(GLM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/glm)
+target_sources(glm INTERFACE ${GLM_DIR}/glm/glm.hpp)
+target_include_directories(glm INTERFACE ${GLM_DIR})
 
-target_include_directories(glm INTERFACE "glm")
-
-target_compile_definitions(glm INTERFACE 
-    GLM_FORCE_SWIZZLE 
-    GLM_FORCE_RADIANS 
-    GLM_FORCE_CTOR_INIT 
+target_compile_definitions(glm INTERFACE
+    GLM_FORCE_SWIZZLE
+    GLM_FORCE_RADIANS
+    GLM_FORCE_CTOR_INIT
     GLM_ENABLE_EXPERIMENTAL
-    GLM_FORCE_CXX14)
+)
+if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    target_compile_definitions(glm INTERFACE GLM_FORCE_CXX14)
+endif()
 
 # tinygltf
 add_library(tinygltf INTERFACE)
-
-target_include_directories(tinygltf INTERFACE "tinygltf")
+set(TINYGLTF_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tinygltf)
+target_sources(tinygltf INTERFACE ${TINYGLTF_DIR}/tiny_gltf.h)
+target_include_directories(tinygltf INTERFACE ${TINYGLTF_DIR})
 
 # vulkan
 add_library(vulkan INTERFACE)
-
-target_include_directories(vulkan INTERFACE "vulkan/include")
+set(VULKAN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vulkan/include)
+target_sources(vulkan INTERFACE ${VULKAN_INCLUDE_DIR}/vulkan/vulkan.h)
+target_include_directories(vulkan INTERFACE ${VULKAN_INCLUDE_DIR})
 
 target_compile_definitions(vulkan INTERFACE VK_NO_PROTOTYPES)
 
 if(ANDROID)
-	target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_ANDROID_KHR)
+    target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_ANDROID_KHR)
 elseif(WIN32)
-	target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_WIN32_KHR)
+    target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_WIN32_KHR)
 elseif(APPLE)
-	target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_MACOS_MVK)
+    target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_MACOS_MVK)
 elseif(UNIX)
-	target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_XCB_KHR)
+    target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_XCB_KHR)
 endif()
 
+# vma
 add_library(vma INTERFACE)
-
-target_include_directories(vma INTERFACE "vma/src")
-
+set(VMA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vma/src)
+target_sources(vma INTERFACE ${VMA_DIR}/vk_mem_alloc.h)
+target_include_directories(vma INTERFACE ${VMA_DIR})
 target_link_libraries(vma INTERFACE vulkan)
 
+# libktx
+set(KTX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ktx)
+
+set(KTX_SOURCES
+    ${KTX_DIR}/lib/texture.c
+    ${KTX_DIR}/lib/hashlist.c
+    ${KTX_DIR}/lib/checkheader.c
+    ${KTX_DIR}/lib/swap.c
+    ${KTX_DIR}/lib/memstream.c
+    ${KTX_DIR}/lib/filestream.c
+)
+
+set(KTX_INCLUDE_DIRS
+    ${KTX_DIR}/include
+    ${KTX_DIR}/lib
+    ${KTX_DIR}/other_include
+)
+
+add_library(ktx ${KTX_SOURCES})
+
+target_include_directories(ktx PUBLIC ${KTX_INCLUDE_DIRS})
+
+target_link_libraries(ktx PUBLIC vulkan)
+
+set_property(TARGET ktx PROPERTY FOLDER "ThirdParty")
+
 # volk
-set(VOLK_FILES 
-    "volk/volk.c" 
-    "volk/volk.h")
+set(VOLK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/volk")
+set(VOLK_FILES
+    "${VOLK_DIR}/volk.c"
+    "${VOLK_DIR}/volk.h")
 
 add_library(volk STATIC ${VOLK_FILES})
 
 target_link_libraries(volk PUBLIC vulkan)
 
-target_include_directories(volk PUBLIC "volk")
+target_include_directories(volk PUBLIC ${VOLK_DIR})
 
 set_property(TARGET volk PROPERTY FOLDER "ThirdParty")
 
 # imgui
-set(IMGUI_FILES 
-    "imgui/imgui.cpp" 
-    "imgui/imgui_demo.cpp"
-    "imgui/imgui_draw.cpp"
-    "imgui/imgui_widgets.cpp"
-    "imgui/imconfig.h"
-    "imgui/imgui.h"
-    "imgui/imgui_internal.h"
-    "imgui/imstb_rectpack.h"
-    "imgui/imstb_textedit.h"
-    "imgui/imstb_truetype.h")
+set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/imgui")
+set(IMGUI_FILES
+    "${IMGUI_DIR}/imgui.cpp"
+    "${IMGUI_DIR}/imgui_demo.cpp"
+    "${IMGUI_DIR}/imgui_draw.cpp"
+    "${IMGUI_DIR}/imgui_widgets.cpp"
+    "${IMGUI_DIR}/imconfig.h"
+    "${IMGUI_DIR}/imgui.h"
+    "${IMGUI_DIR}/imgui_internal.h"
+    "${IMGUI_DIR}/imstb_rectpack.h"
+    "${IMGUI_DIR}/imstb_textedit.h"
+    "${IMGUI_DIR}/imstb_truetype.h")
 
 add_library(imgui STATIC ${IMGUI_FILES})
 
-target_include_directories(imgui PUBLIC "imgui")
+target_include_directories(imgui PUBLIC ${IMGUI_DIR})
 
 set_property(TARGET imgui PROPERTY FOLDER "ThirdParty")
 
@@ -112,16 +147,16 @@ if (NOT TARGET glslang-default-resource-limits)
     set_property(TARGET glslang-default-resource-limits PROPERTY FOLDER "ThirdParty")
     
     target_include_directories(glslang-default-resource-limits
-                                PUBLIC glslang/StandAlone)
+                                PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glslang/StandAlone)
 endif()
 
 if(NOT MSVC)
-    target_compile_options(glslang PRIVATE 
-        "-Wno-logical-op-parentheses" 
+    target_compile_options(glslang PRIVATE
+        "-Wno-logical-op-parentheses"
         "-Wno-unused-parameter")
-        
-    target_compile_options(SPIRV PRIVATE 
-        "-Wno-logical-op-parentheses" 
+
+    target_compile_options(SPIRV PRIVATE
+        "-Wno-logical-op-parentheses"
         "-Wno-unused-parameter")
 endif()
 
@@ -147,6 +182,48 @@ add_subdirectory(hwcpipe)
 
 set_property(TARGET hwcpipe PROPERTY FOLDER "ThirdParty")
 
+# stb
+add_library(stb INTERFACE)
+target_include_directories(stb INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/stb")
+
+# astc
+set(ASTC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/astc)
+set(ASTC_INCLUDE_DIR ${ASTC_DIR}/Source)
+set(ASTC_SOURCE_DIR ${ASTC_DIR}/Source)
+
+set(ASTC_SOURCES
+    ${ASTC_SOURCE_DIR}/astc_image_load_store.cpp
+    ${ASTC_SOURCE_DIR}/astc_pick_best_endpoint_format.cpp
+    ${ASTC_SOURCE_DIR}/astc_color_quantize.cpp
+    ${ASTC_SOURCE_DIR}/astc_weight_align.cpp
+    ${ASTC_SOURCE_DIR}/astc_integer_sequence.cpp
+    ${ASTC_SOURCE_DIR}/astc_ideal_endpoints_and_weights.cpp
+    ${ASTC_SOURCE_DIR}/astc_find_best_partitioning.cpp
+    ${ASTC_SOURCE_DIR}/astc_compress_symbolic.cpp
+    ${ASTC_SOURCE_DIR}/astc_decompress_symbolic.cpp
+    ${ASTC_SOURCE_DIR}/astc_symbolic_physical.cpp
+    ${ASTC_SOURCE_DIR}/astc_toplevel.cpp
+    ${ASTC_SOURCE_DIR}/astc_stb_tga.cpp
+    ${ASTC_SOURCE_DIR}/softfloat.cpp
+    ${ASTC_SOURCE_DIR}/mathlib.cpp
+    ${ASTC_SOURCE_DIR}/astc_quantization.cpp
+    ${ASTC_SOURCE_DIR}/astc_block_sizes2.cpp
+    ${ASTC_SOURCE_DIR}/astc_percentile_tables.cpp
+    ${ASTC_SOURCE_DIR}/astc_averages_and_directions.cpp
+    ${ASTC_SOURCE_DIR}/astc_partition_tables.cpp
+    ${ASTC_SOURCE_DIR}/astc_color_unquantize.cpp
+    ${ASTC_SOURCE_DIR}/astc_encoding_choice_error.cpp
+    ${ASTC_SOURCE_DIR}/astc_kmeans_partitioning.cpp
+    ${ASTC_SOURCE_DIR}/astc_weight_quant_xfer_tables.cpp
+    ${ASTC_SOURCE_DIR}/astc_compute_variance.cpp
+    ${ASTC_SOURCE_DIR}/astc_ktx_dds.cpp
+)
+
+add_library(astc ${ASTC_SOURCES})
+target_include_directories(astc PUBLIC ${ASTC_INCLUDE_DIR})
+target_compile_definitions(astc PRIVATE -D_USE_MATH_DEFINES)
+set_property(TARGET astc PROPERTY FOLDER "ThirdParty")
+
 if(ANDROID)
     # native_app_glue
     set(NATIVE_APP_GLUE_DIR "${CMAKE_ANDROID_NDK}/sources/android/native_app_glue")
@@ -170,3 +247,8 @@ else()
     
     set_property(TARGET glfw PROPERTY FOLDER "ThirdParty")
 endif()
+
+# spdlog
+add_subdirectory(spdlog)
+
+set_property(TARGET spdlog_headers_for_ide PROPERTY FOLDER "ThirdParty")

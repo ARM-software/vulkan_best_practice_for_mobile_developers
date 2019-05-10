@@ -298,6 +298,7 @@ inline void read_shader_resource<ShaderResourceType::BufferUniform>(const spirv_
 		shader_resource.name   = resource.name;
 
 		read_resource_size(compiler, resource, shader_resource);
+		read_resource_array_size(compiler, resource, shader_resource);
 		read_resource_decoration<spv::DecorationDescriptorSet>(compiler, resource, shader_resource);
 		read_resource_decoration<spv::DecorationBinding>(compiler, resource, shader_resource);
 
@@ -320,6 +321,7 @@ inline void read_shader_resource<ShaderResourceType::BufferStorage>(const spirv_
 		shader_resource.name   = resource.name;
 
 		read_resource_size(compiler, resource, shader_resource);
+		read_resource_array_size(compiler, resource, shader_resource);
 		read_resource_decoration<spv::DecorationNonReadable>(compiler, resource, shader_resource);
 		read_resource_decoration<spv::DecorationNonWritable>(compiler, resource, shader_resource);
 		read_resource_decoration<spv::DecorationDescriptorSet>(compiler, resource, shader_resource);

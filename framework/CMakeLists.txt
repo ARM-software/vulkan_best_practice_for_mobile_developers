@@ -31,6 +31,7 @@ set(FRAMEWORK_FILES
     glsl_compiler.h
     spirv_reflection.h
     gltf_loader.h
+    debug_info.h
     fence_pool.h
     semaphore_pool.h
     command_record.h
@@ -47,11 +48,11 @@ set(FRAMEWORK_FILES
     common.cpp
     utils.cpp
     gui.cpp
-    profiler.cpp
     stats.cpp
     glsl_compiler.cpp
     spirv_reflection.cpp
     gltf_loader.cpp
+    debug_info.cpp
     fence_pool.cpp
     semaphore_pool.cpp
     command_record.cpp
@@ -91,6 +92,9 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/sub_mesh.h
     scene_graph/components/texture.h
     scene_graph/components/transform.h
+    scene_graph/components/image/astc.h
+    scene_graph/components/image/ktx.h
+    scene_graph/components/image/stb.h
     # Source Files
     scene_graph/components/camera.cpp
     scene_graph/components/perspective_camera.cpp
@@ -101,7 +105,10 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/sampler.cpp
     scene_graph/components/sub_mesh.cpp
     scene_graph/components/texture.cpp
-    scene_graph/components/transform.cpp)
+    scene_graph/components/transform.cpp
+    scene_graph/components/image/astc.cpp
+    scene_graph/components/image/ktx.cpp
+    scene_graph/components/image/stb.cpp)
 
 set(SCENE_GRAPH_SCRIPTS_FILES
     # Header Files
@@ -127,6 +134,7 @@ set(CORE_FILES
     core/buffer.h
     core/image.h
     core/image_view.h
+    core/sampler.h
     core/framebuffer.h
     core/render_pass.h
     # Source Files
@@ -145,6 +153,7 @@ set(CORE_FILES
     core/buffer.cpp
     core/image.cpp
     core/image_view.cpp
+    core/sampler.cpp
     core/framebuffer.cpp
     core/render_pass.cpp)
 
@@ -204,7 +213,7 @@ source_group("scene_graph\\scripts\\" FILES ${SCENE_GRAPH_SCRIPTS_FILES})
 set(PROJECT_FILES
     ${PLATFORM_FILES}
     ${FRAMEWORK_FILES}
-    ${FONT_FILES}   
+    ${FONT_FILES}
     ${CORE_FILES}
     ${SCENE_GRAPH_FILES}
     ${SCENE_GRAPH_COMPONENT_FILES}
@@ -226,6 +235,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 # Link third party libraries
 target_link_libraries(${PROJECT_NAME}
     volk
+    ktx
+    stb
+    astc
     imgui
     tinygltf
     glm
@@ -234,7 +246,8 @@ target_link_libraries(${PROJECT_NAME}
     vma
     hwcpipe
     spirv-cross-glsl
-    glslang-default-resource-limits)
+    glslang-default-resource-limits
+    spdlog)
 
 # Link platform specific libraries
 if(ANDROID)

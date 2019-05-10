@@ -25,12 +25,12 @@
 
 #include "vulkan_sample.h"
 
-#include <mali_counter.h>
-#include <pmu_counter.h>
-
 #include <chrono>
 #include <imgui.h>
+#include <unistd.h>
 #include <unordered_map>
+
+#include <spdlog/sinks/android_sink.h>
 
 namespace vkb
 {
@@ -217,7 +217,7 @@ inline TouchAction translate_touch_action(int action)
 
 void on_content_rect_changed(ANativeActivity *activity, const ARect *rect)
 {
-	LOGI("ContentRectChanged: %p\n", activity);
+	LOGI("ContentRectChanged: {:p}\n", static_cast<void *>(activity));
 	struct android_app *app = reinterpret_cast<struct android_app *>(activity->instance);
 	auto                cmd = APP_CMD_CONTENT_RECT_CHANGED;
 
@@ -225,7 +225,7 @@ void on_content_rect_changed(ANativeActivity *activity, const ARect *rect)
 
 	if (write(app->msgwrite, &cmd, sizeof(cmd)) != sizeof(cmd))
 	{
-		LOGE("Failure writing android_app cmd: %s\n", strerror(errno));
+		LOGE("Failure writing android_app cmd: {}\n", strerror(errno));
 	}
 }
 
@@ -331,22 +331,14 @@ AndroidPlatform::AndroidPlatform(android_app *app) :
 
 bool AndroidPlatform::initialise(std::unique_ptr<Application> &&appplication)
 {
+	auto android_logger = spdlog::android_logger_mt("android", PROJECT_NAME);
+	android_logger->set_pattern(LOGGER_FORMAT);
+	spdlog::set_default_logger(android_logger);
+
 	app->onAppCmd                                  = on_app_cmd;
 	app->onInputEvent                              = on_input_event;
 	app->activity->callbacks->onContentRectChanged = on_content_rect_changed;
 	app->userData                                  = this;
-
-	try
-	{
-		auto instruments = std::vector<std::shared_ptr<Instrument>>{
-		    std::make_shared<PMUCounter>(),
-		    std::make_shared<MaliCounter>()};
-		profiler.add_instruments(instruments);
-	}
-	catch (const std::runtime_error &e)
-	{
-		LOGE("Failed to add instruments to the profiler: %s", e.what());
-	}
 
 	assert(appplication && "Appplication is not valid");
 	active_app = std::move(appplication);
@@ -374,12 +366,6 @@ VkSurfaceKHR AndroidPlatform::create_surface(VkInstance instance)
 
 void AndroidPlatform::main_loop()
 {
-	uint32_t frame_count = 0;
-
-	auto start_time = std::chrono::system_clock::now();
-
-	auto last_time = start_time;
-
 	while (true)
 	{
 		android_poll_source *source;
@@ -401,33 +387,17 @@ void AndroidPlatform::main_loop()
 			break;
 		}
 
-		frame_count++;
-
-		auto current_time = std::chrono::system_clock::now();
-
-		float delta_time = std::chrono::duration<float>(current_time - last_time).count();
-
-		last_time = current_time;
-
 		if (app->window && active_app->is_focused())
 		{
-			active_app->update(delta_time);
-		}
-
-		float elapsed_time = std::chrono::duration<float>(current_time - start_time).count();
-
-		if (elapsed_time > 2.0)
-		{
-			LOGI("FPS: %.3f", frame_count / elapsed_time);
-
-			frame_count = 0;
-			start_time  = current_time;
+			active_app->step();
 		}
 	}
 }
 
 void AndroidPlatform::terminate()
 {
+	active_app.reset();
+	spdlog::drop_all();
 }
 
 void AndroidPlatform::close() const

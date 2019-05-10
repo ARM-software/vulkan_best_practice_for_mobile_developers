@@ -19,7 +19,6 @@
  */
 
 #include "hello_triangle.h"
-
 #include "common.h"
 #include "glsl_compiler.h"
 #include "platform/platform.h"
@@ -36,28 +35,32 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
 {
 	if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
 	{
-		LOGE("Validation Layer: Error: %s: %s", layer_prefix, message);
+		LOGE("Validation Layer: Error: {}: {}", layer_prefix, message);
 	}
 	else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
 	{
-		LOGE("Validation Layer: Warning: %s: %s", layer_prefix, message);
+		LOGE("Validation Layer: Warning: {}: {}", layer_prefix, message);
 	}
 	else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
 	{
-		LOGI("Validation Layer: Performance warning: %s: %s", layer_prefix, message);
+		LOGI("Validation Layer: Performance warning: {}: {}", layer_prefix, message);
 	}
 	else
 	{
-		LOGI("Validation Layer: Information: %s: %s", layer_prefix, message);
+		LOGI("Validation Layer: Information: {}: {}", layer_prefix, message);
 	}
 	return VK_FALSE;
 }
 #endif
 
-/// @brief Validates a list of required extensions, comparing it with the available ones.
-/// @param required A vector containing required extension names.
-/// @param available A VkExtensionProperties object containing available extensions.
-/// @returns True if all required extensions are available, false otherwise.
+/**
+ * @brief Validates a list of required extensions, comparing it with the available ones.
+ * 
+ * @param required A vector containing required extension names. 
+ * @param available A VkExtensionProperties object containing available extensions. 
+ * @return true if all required extensions are available
+ * @return false otherwise
+ */
 bool validate_extensions(const std::vector<const char *> &         required,
                          const std::vector<VkExtensionProperties> &available)
 {
@@ -82,10 +85,14 @@ bool validate_extensions(const std::vector<const char *> &         required,
 	return true;
 }
 
-/// @brief Validates a list of required layers, comparing it with the available ones.
-/// @param required A vector containing required layer names.
-/// @param available A VkLayerProperties object containing available layers.
-/// @returns True if all required extensions are available, false otherwise.
+/**
+ * @brief Validates a list of required layers, comparing it with the available ones.
+ * 
+ * @param required A vector containing required layer names. 
+ * @param available A VkLayerProperties object containing available layers. 
+ * @return true if all required extensions are available
+ * @return false otherwise
+ */
 bool validate_layers(const std::vector<const char *> &     required,
                      const std::vector<VkLayerProperties> &available)
 {
@@ -110,9 +117,12 @@ bool validate_layers(const std::vector<const char *> &     required,
 	return true;
 }
 
-/// @brief Find the vulkan shader stage for a given a string.
-/// @param ext A string containing the shader stage name.
-/// @returns The shader stage mapping from the given string, VK_SHADER_STAGE_VERTEX_BIT otherwise.
+/**
+ * @brief Find the vulkan shader stage for a given a string.
+ * 
+ * @param ext A string containing the shader stage name. 
+ * @return VkShaderStageFlagBits The shader stage mapping from the given string, VK_SHADER_STAGE_VERTEX_BIT otherwise.
+ */
 VkShaderStageFlagBits find_shader_stage(const std::string &ext)
 {
 	if (ext == "vert")
@@ -143,9 +153,13 @@ VkShaderStageFlagBits find_shader_stage(const std::string &ext)
 	throw std::runtime_error("No Vulkan shader stage found for the file extension name.");
 };
 
-/// @brief Initializes the Vulkan instance.
-/// @param context A newly created Vulkan context.
-/// @param required_instance_extensions The required Vulkan instance extensions.
+/**
+ * @brief Initializes the Vulkan instance.
+ * 
+ * @param context A newly created Vulkan context. 
+ * @param required_instance_extensions The required Vulkan instance extensions. 
+ * @param required_instance_layers 
+ */
 void init_instance(Context &                        context,
                    const std::vector<const char *> &required_instance_extensions,
                    const std::vector<const char *> &required_instance_layers)
@@ -231,9 +245,12 @@ void init_instance(Context &                        context,
 #endif
 }
 
-/// @brief Initializes the Vulkan physical device and logical device.
-/// @param context A Vulkan context with an instance already set up.
-/// @param required_device_extensions The required Vulkan device extensions.
+/**
+ * @brief Initializes the Vulkan physical device and logical device.
+ * 
+ * @param context A Vulkan context with an instance already set up. 
+ * @param required_device_extensions The required Vulkan device extensions. 
+ */
 void init_device(Context &                        context,
                  const std::vector<const char *> &required_device_extensions)
 {
@@ -312,9 +329,11 @@ void init_device(Context &                        context,
 	vkGetDeviceQueue(context.device, context.graphics_queue_index, 0, &context.queue);
 }
 
-/// @brief Initializes per frame data.
-/// @param context A newly created Vulkan context.
-/// @param per_frame The data of a frame.
+/**
+* @brief Initializes per frame data.
+* @param context A newly created Vulkan context.
+* @param per_frame The data of a frame.
+*/
 void init_per_frame(Context &context, PerFrame &per_frame)
 {
 	VkFenceCreateInfo info{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
@@ -686,7 +705,7 @@ VkShaderModule load_shader_module(Context &context, const char *path)
 	// Compile the GLSL source
 	if (!glsl_compiler.compile_to_spirv(find_shader_stage(file_ext), buffer, "main", spirv, info_log))
 	{
-		LOGE("Failed to compile shader, Error: %s", info_log.c_str());
+		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
 		return VK_NULL_HANDLE;
 	}
 

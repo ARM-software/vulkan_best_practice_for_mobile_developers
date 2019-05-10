@@ -31,3 +31,12 @@
 [submodule "third_party/vma"]
 	path = third_party/vma
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+[submodule "third_party/spdlog"]
+	path = third_party/spdlog
+	url = https://github.com/gabime/spdlog
+[submodule "third_party/ktx"]
+	path = third_party/ktx
+	url = https://github.com/KhronosGroup/KTX-Software
+[submodule "third_party/astc"]
+	path = third_party/astc
+	url = https://github.com/ARM-software/astc-encoder

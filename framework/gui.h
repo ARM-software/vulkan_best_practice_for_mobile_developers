@@ -25,6 +25,9 @@
 #include <imgui.h>
 
 #include "core/command_buffer.h"
+#include "core/sampler.h"
+#include "debug_info.h"
+
 #include "platform/input_events.h"
 #include "render_context.h"
 #include "stats.h"
@@ -61,7 +64,6 @@ class Gui
 			/**
 			 * @brief Constructs data for the graph
 			 * @param graph_label_format Format of the label
-			 * @param graph_elements Reference to the data to show
 			 * @param scale_factor Any scaling to apply to the data
 			 * @param has_fixed_max Whether the data should have a fixed max value
 			 * @param max_value The maximum value to use
@@ -133,12 +135,37 @@ class Gui
 		    {StatIndex::l2_ext_write_stalls,
 		     {/* label = */ "Ext write stalls: %4.1f M/s",
 		      /* scale_factor = */ float(1e-6)}},
-		    {StatIndex::l2_ext_read_beats,
+		    {StatIndex::l2_ext_read_bytes,
 		     {/* label = */ "Ext read bw: %4.1f MiB/s",
-		      /* scale_factor = */ 16.0f / (1024.0f * 1024.0f)}},
-		    {StatIndex::l2_ext_write_beats,
+		      /* scale_factor = */ 1.0f / (1024.0f * 1024.0f)}},
+		    {StatIndex::l2_ext_write_bytes,
 		     {/* label = */ "Ext write bw: %4.1f MiB/s",
-		      /* scale_factor = */ 16.0f / (1024.0f * 1024.0f)}}};
+		      /* scale_factor = */ 1.0f / (1024.0f * 1024.0f)}}};
+
+		float graph_height{64.0f};
+
+		float top_padding{1.1f};
+	};
+
+	/**
+	 * @brief Helper class for rendering debug statistics in the GUI
+	 */
+	class DebugView
+	{
+	  public:
+		bool active{false};
+
+		const char *title{"Debug Info"};
+
+		ImVec2 window_size{600, 0};
+
+		uint32_t column_width{150};
+
+		float button_padding{5.0f};
+
+		ImVec2 frame_padding{10.0f, 3.0f};
+
+		float round_corners{3.0f};
 	};
 
 	/**
@@ -168,7 +195,6 @@ class Gui
 
 	/**
 	 * @brief Updates the Gui
-	 * @param swapchain_index The swapchain index for the image being rendered
 	 * @param delta_time Time passed since last update
 	 */
 	void update(const float delta_time);
@@ -176,7 +202,6 @@ class Gui
 	/**
 	 * @brief Draws the Gui
 	 * @param command_buffer Command buffer to register draw-commands
-	 * @param frame Frame to render into
 	 */
 	void draw(CommandBuffer &command_buffer);
 
@@ -184,8 +209,9 @@ class Gui
 	 * @brief Shows an overlay top window with app info and maybe stats
 	 * @param app_name Application name
 	 * @param stats Statistics to show (can be null)
+	 * @param debug_info Debug info to show (can be null)
 	 */
-	void show_top_window(const std::string &app_name, const Stats *stats = nullptr);
+	void show_top_window(const std::string &app_name, const Stats *stats = nullptr, DebugInfo *debug_info = nullptr);
 
 	/**
 	 * @brief Shows the ImGui Demo window
@@ -197,6 +223,13 @@ class Gui
 	 * @param app_name Application name
 	 */
 	void show_app_info(const std::string &app_name);
+
+	/**
+	 * @brief Shows a moveable window with debug information
+	 * @param debug_info The object holding the data fields to be displayed
+	 * @param position The absolute position to set
+	 */
+	void show_debug_window(DebugInfo &debug_info, const ImVec2 &position);
 
 	/**
 	 * @brief Shows a child with statistics
@@ -249,11 +282,13 @@ class Gui
 	std::unique_ptr<core::Image> font_image;
 	std::unique_ptr<ImageView>   font_image_view;
 
-	VkSampler sampler{VK_NULL_HANDLE};
+	std::unique_ptr<core::Sampler> sampler{nullptr};
 
 	PipelineLayout &pipeline_layout;
 
 	StatsView stats_view;
+
+	DebugView debug_view;
 
 	/// Used to measure duration of input events
 	std::chrono::time_point<std::chrono::high_resolution_clock> press_start;
@@ -266,5 +301,4 @@ void Gui::new_frame()
 {
 	ImGui::NewFrame();
 }
-
 }        // namespace vkb

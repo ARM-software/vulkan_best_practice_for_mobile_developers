@@ -34,6 +34,7 @@
   - [Supported Platforms](#supported-platforms)
 - [License](#license)
   - [Trademarks](#trademarks)
+- [Contributions](#contributions)
 
 ## Introduction
 
@@ -90,12 +91,15 @@ See [LICENSE](LICENSE).
 
 This project has some third-party dependencies, each of which may have independent licensing:
 
+- [astc-encoder](https://github.com/ARM-software/astc-encoder): ASTC Evaluation Codec
 - [glfw](https://github.com/glfw/glfw): A multi-platform library for OpenGL, OpenGL ES, Vulkan, window and input
 - [glm](https://github.com/g-truc/glm): OpenGL Mathematics
 - [glslang](https://github.com/KhronosGroup/glslang): Shader front end and validator
-- [HWCPipe](https://github.com/ARM-software/HWCPipe): Interface to mobile Hardware Counters
 - [dear imgui](https://github.com/ocornut/imgui): Immediate Mode Graphical User Interface
   - [dear imgui shaders](https://github.com/SaschaWillems/Vulkan/tree/master/data/shaders/imgui): GLSL shaders for dear imgui
+- [HWCPipe](https://github.com/ARM-software/HWCPipe): Interface to mobile Hardware Counters
+- [KTX-Software](https://github.com/KhronosGroup/KTX-Software): Khronos Texture Library and Tools
+- [spdlog](https://github.com/gabime/spdlog): Fast C++ logging library
 - [SPIRV-Cross](https://github.com/KhronosGroup/SPIRV-Cross): Parses and converts SPIR-V to other shader languages
 - [stb](https://github.com/nothings/stb): Single-file public domain (or MIT licensed) libraries
 - [tinygltf](https://github.com/syoyo/tinygltf): Header only C++11 tiny glTF 2.0 library

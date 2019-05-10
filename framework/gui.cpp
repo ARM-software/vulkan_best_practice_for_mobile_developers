@@ -32,6 +32,7 @@
 #include "core/pipeline.h"
 #include "core/pipeline_layout.h"
 #include "core/shader_module.h"
+#include "vulkan_sample.h"
 
 namespace vkb
 {
@@ -119,9 +120,8 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 	// Upload font data into the vulkan image memory
 	{
 		core::Buffer stage_buffer{device, upload_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY};
-		stage_buffer.update({font_data, font_data + upload_size});
+		stage_buffer.update(0, {font_data, font_data + upload_size});
 
-		auto &graphics_queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 		auto &command_buffer = device.request_command_buffer();
 
 		FencePool fence_pool{device};
@@ -186,7 +186,8 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 	sampler_info.addressModeV  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_info.addressModeW  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_info.borderColor   = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	VK_CHECK(vkCreateSampler(device.get_handle(), &sampler_info, nullptr, &sampler));
+
+	sampler = std::make_unique<core::Sampler>(device, sampler_info);
 }
 
 void Gui::update(const float delta_time)
@@ -255,7 +256,7 @@ void Gui::update_buffers()
 	}
 
 	// Update current buffer with new data
-	vertex_buffer->update(vertex_data);
+	vertex_buffer->update(0, vertex_data);
 
 	// Get vertex buffer for the current image
 	auto &index_buffer = frame.gui_index_buffer;
@@ -274,7 +275,7 @@ void Gui::update_buffers()
 	}
 
 	// Update current buffer with new data
-	index_buffer->update(index_data);
+	index_buffer->update(0, index_data);
 }
 
 void Gui::resize(const uint32_t width, const uint32_t height) const
@@ -343,7 +344,7 @@ void Gui::draw(CommandBuffer &command_buffer)
 	// Bind pipeline layout
 	command_buffer.bind_pipeline_layout(pipeline_layout);
 
-	command_buffer.bind_image(*font_image_view, sampler, 0, 0, 0);
+	command_buffer.bind_image(*font_image_view, *sampler, 0, 0, 0);
 
 	// Pre-rotation
 	auto      transform      = render_context.get_swapchain().get_transform();
@@ -442,12 +443,6 @@ void Gui::draw(CommandBuffer &command_buffer)
 
 Gui::~Gui()
 {
-	if (sampler)
-	{
-		vkDestroySampler(render_context.get_device().get_handle(), sampler, nullptr);
-		sampler = VK_NULL_HANDLE;
-	}
-
 	ImGui::DestroyContext();
 }
 
@@ -478,7 +473,7 @@ void Gui::StatsView::reset_max_values()
 	              [](auto &pr) { reset_graph_max_value(pr.second); });
 }
 
-void Gui::show_top_window(const std::string &app_name, const Stats *stats)
+void Gui::show_top_window(const std::string &app_name, const Stats *stats, DebugInfo *debug_info)
 {
 	// Transparent background
 	ImGui::SetNextWindowBgAlpha(overlay_alpha);
@@ -505,6 +500,28 @@ void Gui::show_top_window(const std::string &app_name, const Stats *stats)
 		}
 	}
 
+	if (debug_info)
+	{
+		ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4) ImColor::HSV(0.0f, 0.35f, 0.55f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4) ImColor::HSV(0.0f, 0.5f, 0.75f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4) ImColor::HSV(0.5f, 0.35f, 0.55f));
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, debug_view.round_corners);
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, debug_view.frame_padding);
+		ImGui::Dummy(ImVec2(0.0f, debug_view.button_padding));
+		if (ImGui::Button(debug_view.active ? "Disable debug info" : "Enable debug info"))
+		{
+			debug_view.active = !debug_view.active;
+		}
+		ImGui::PopStyleVar(2);
+		ImGui::PopStyleColor(3);
+		ImGui::Dummy(ImVec2(0.0f, debug_view.button_padding));
+
+		if (debug_view.active)
+		{
+			show_debug_window(*debug_info, ImVec2{debug_view.button_padding, debug_view.button_padding + ImGui::GetWindowSize().y});
+		}
+	}
+
 	ImGui::End();
 }
 
@@ -518,6 +535,34 @@ void Gui::show_app_info(const std::string &app_name)
 	auto  device_name_label = "GPU: " + std::string(device.get_properties().deviceName);
 	ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize(device_name_label.c_str()).x);
 	ImGui::Text("%s", device_name_label.c_str());
+}
+
+void Gui::show_debug_window(DebugInfo &debug_info, const ImVec2 &position)
+{
+	ImGui::SetNextWindowBgAlpha(overlay_alpha);
+	ImGui::SetNextWindowPos(position, ImGuiSetCond_FirstUseEver);
+	ImGui::SetNextWindowContentSize(ImVec2{debug_view.window_size.x * dpi_factor, debug_view.window_size.y * dpi_factor});
+
+	bool is_open = true;
+	ImGui::Begin(debug_view.title, &is_open, common_flags);
+
+	ImGui::Separator();
+	ImGui::Columns(2);
+	ImGui::SetColumnWidth(0, debug_view.column_width * dpi_factor);
+	for (auto &field : debug_info.get_fields())
+	{
+		const std::string &label = field->label;
+		const std::string &value = field->to_string();
+
+		ImGui::Text("%s", label.c_str());
+		ImGui::NextColumn();
+		ImGui::Text(" %s", value.c_str());
+		ImGui::NextColumn();
+	}
+	ImGui::Columns(1);
+	ImGui::Separator();
+
+	ImGui::End();
 }
 
 Gui::StatsView::GraphData::GraphData(const std::string &graph_label_format_,
@@ -550,8 +595,7 @@ void Gui::show_stats(const Stats &stats)
 
 		if (!graph_data.has_fixed_max)
 		{
-			float top_padding = 1.1f;
-			auto  new_max     = *std::max_element(graph_elements.begin(), graph_elements.end()) * top_padding;
+			auto new_max = *std::max_element(graph_elements.begin(), graph_elements.end()) * stats_view.top_padding;
 			if (new_max > graph_max)
 			{
 				graph_max = new_max;
@@ -560,7 +604,7 @@ void Gui::show_stats(const Stats &stats)
 
 		const ImVec2 graph_size = ImVec2{
 		    ImGui::GetIO().DisplaySize.x,
-		    64.0f /* dpi */ * dpi_factor};
+		    stats_view.graph_height /* dpi */ * dpi_factor};
 
 		char  graph_label[64];
 		float avg = std::accumulate(graph_elements.begin(), graph_elements.end(), 0.0f) / graph_elements.size();

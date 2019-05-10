@@ -200,8 +200,10 @@ void FreeCamera::resize(uint32_t width, uint32_t height)
 
 	if (node.has_component<Camera>())
 	{
-		auto camera = dynamic_cast<PerspectiveCamera &>(node.get_component<Camera>());
-		camera.set_aspect_ratio(static_cast<float>(width) / height);
+		if (auto camera = dynamic_cast<PerspectiveCamera *>(&node.get_component<Camera>()))
+		{
+			camera->set_aspect_ratio(static_cast<float>(width) / height);
+		}
 	}
 }
 

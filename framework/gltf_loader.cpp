@@ -26,9 +26,6 @@
 
 #include "gltf_loader.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
 #include <queue>
 
 #include "core/image.h"
@@ -36,18 +33,21 @@
 #include "core/device.h"
 #include "platform/thread_pool.h"
 
+#include "scene_graph/components/image/astc.h"
 #include "scene_graph/components/perspective_camera.h"
 #include "scene_graph/components/texture.h"
 #include "scene_graph/components/transform.h"
 #include "scene_graph/node.h"
 
+#include "utils.h"
+
 namespace vkb
 {
 namespace
 {
-inline VkFilter find_min_filter(int minFilter)
+inline VkFilter find_min_filter(int min_filter)
 {
-	switch (minFilter)
+	switch (min_filter)
 	{
 		case TINYGLTF_TEXTURE_FILTER_NEAREST:
 		case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST:
@@ -62,9 +62,9 @@ inline VkFilter find_min_filter(int minFilter)
 	}
 };
 
-inline VkSamplerMipmapMode find_mipmap_mode(int minFilter)
+inline VkSamplerMipmapMode find_mipmap_mode(int min_filter)
 {
-	switch (minFilter)
+	switch (min_filter)
 	{
 		case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST:
 		case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST:
@@ -77,9 +77,9 @@ inline VkSamplerMipmapMode find_mipmap_mode(int minFilter)
 	}
 };
 
-inline VkFilter find_mag_filter(int magFilter)
+inline VkFilter find_mag_filter(int mag_filter)
 {
-	switch (magFilter)
+	switch (mag_filter)
 	{
 		case TINYGLTF_TEXTURE_FILTER_NEAREST:
 			return VK_FILTER_NEAREST;
@@ -264,7 +264,7 @@ inline std::vector<uint8_t> convert_data(const std::vector<uint8_t> &srcData, ui
 	return result;
 }
 
-inline void upload_image(CommandBuffer &command_buffer, core::Buffer &data, core::Image &image, ImageView &image_view)
+inline void upload_image(CommandBuffer &command_buffer, core::Buffer &data, sg::Image &image)
 {
 	{
 		ImageMemoryBarrier memory_barrier{};
@@ -275,15 +275,27 @@ inline void upload_image(CommandBuffer &command_buffer, core::Buffer &data, core
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_HOST_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
-		command_buffer.image_memory_barrier(image_view, memory_barrier);
+		command_buffer.image_memory_barrier(image.get_vk_image_view(), memory_barrier);
 	}
 
-	VkBufferImageCopy buffer_copy_region{};
-	buffer_copy_region.imageSubresource.layerCount = image_view.get_subresource_range().layerCount;
-	buffer_copy_region.imageSubresource.aspectMask = image_view.get_subresource_range().aspectMask;
-	buffer_copy_region.imageExtent                 = image.get_extent();
+	// Create a buffer image copy for every mip level
+	auto &mipmaps = image.get_mipmaps();
 
-	command_buffer.copy_buffer_to_image(data, image, {buffer_copy_region});
+	std::vector<VkBufferImageCopy> buffer_copy_regions(mipmaps.size());
+
+	for (size_t i = 0; i < mipmaps.size(); ++i)
+	{
+		auto &mipmap      = mipmaps[i];
+		auto &copy_region = buffer_copy_regions[i];
+
+		copy_region.bufferOffset     = mipmap.offset;
+		copy_region.imageSubresource = image.get_vk_image_view().get_subresource_layers();
+		// Update miplevel
+		copy_region.imageSubresource.mipLevel = mipmap.level;
+		copy_region.imageExtent               = mipmap.extent;
+	}
+
+	command_buffer.copy_buffer_to_image(data, image.get_vk_image(), buffer_copy_regions);
 
 	{
 		ImageMemoryBarrier memory_barrier{};
@@ -294,7 +306,7 @@ inline void upload_image(CommandBuffer &command_buffer, core::Buffer &data, core
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-		command_buffer.image_memory_barrier(image_view, memory_barrier);
+		command_buffer.image_memory_barrier(image.get_vk_image_view(), memory_barrier);
 	}
 }
 }        // namespace
@@ -323,21 +335,21 @@ bool GLTFLoader::read_scene_from_file(const std::string &file_name, sg::Scene &s
 
 	if (!importResult)
 	{
-		LOGE("Failed to load gltf file %s.", gltf_file.c_str());
+		LOGE("Failed to load gltf file {}.", gltf_file.c_str());
 
 		return false;
 	}
 
 	if (!err.empty())
 	{
-		LOGE("Error loading gltf model: %s.", err.c_str());
+		LOGE("Error loading gltf model: {}.", err.c_str());
 
 		return false;
 	}
 
 	if (!warn.empty())
 	{
-		LOGI("%s", warn.c_str());
+		LOGI("{}", warn.c_str());
 	}
 
 	size_t pos = file_name.find_last_of('/');
@@ -391,7 +403,7 @@ sg::Scene GLTFLoader::load_scene()
 		    [&](size_t image_index) {
 			    auto image = parse_image(model.images.at(image_index));
 
-			    LOGI("Loaded gltf image #%zu (%s)", image_index, model.images.at(image_index).uri.c_str());
+			    LOGI("Loaded gltf image #{} ({})", image_index, model.images.at(image_index).uri.c_str());
 
 			    image_components[image_index] = std::move(image);
 		    },
@@ -409,13 +421,12 @@ sg::Scene GLTFLoader::load_scene()
 
 	for (size_t image_index = 0; image_index < image_components.size(); image_index++)
 	{
-		auto &image      = image_components.at(image_index);
-		auto &gltf_image = model.images.at(image_index);
+		auto &image = image_components.at(image_index);
 
-		core::Buffer stage_buffer{device, gltf_image.image.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU};
-		stage_buffer.update(gltf_image.image);
+		core::Buffer stage_buffer{device, image->get_data().size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU};
+		stage_buffer.update(0, image->get_data());
 
-		upload_image(command_buffer, stage_buffer, *image->image, *image->image_view);
+		upload_image(command_buffer, stage_buffer, *image);
 
 		transient_buffers.push_back(std::move(stage_buffer));
 	}
@@ -438,7 +449,7 @@ sg::Scene GLTFLoader::load_scene()
 
 	auto elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
 
-	LOGI("Time spent loading images: %lld seconds.", elapsed_time.count());
+	LOGI("Time spent loading images: {} seconds.", elapsed_time.count());
 
 	// Load textures
 	auto images          = scene.get_components<sg::Image>();
@@ -543,8 +554,7 @@ sg::Scene GLTFLoader::load_scene()
 	}
 
 	// Load nodes
-	auto meshes  = scene.get_components<sg::Mesh>();
-	auto cameras = scene.get_components<sg::Camera>();
+	auto meshes = scene.get_components<sg::Mesh>();
 
 	std::vector<std::unique_ptr<sg::Node>> nodes;
 
@@ -563,7 +573,8 @@ sg::Scene GLTFLoader::load_scene()
 
 		if (gltf_node.camera >= 0)
 		{
-			auto camera = cameras.at(gltf_node.camera);
+			auto cameras = scene.get_components<sg::Camera>();
+			auto camera  = cameras.at(gltf_node.camera);
 
 			node->set_component(*camera);
 
@@ -714,7 +725,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primiti
 
 		core::Buffer buffer{device, vertex_data.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU};
 
-		buffer.update(vertex_data);
+		buffer.update(0, vertex_data);
 
 		auto pair = std::make_pair(attrib_name, std::move(buffer));
 
@@ -756,7 +767,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primiti
 
 		submesh->index_buffer = std::make_unique<core::Buffer>(device, index_data.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
-		submesh->index_buffer->update(index_data);
+		submesh->index_buffer->update(0, index_data);
 	}
 	else
 	{
@@ -801,74 +812,70 @@ std::unique_ptr<sg::PBRMaterial> GLTFLoader::parse_material(const tinygltf::Mate
 
 std::unique_ptr<sg::Image> GLTFLoader::parse_image(tinygltf::Image &gltf_image)
 {
-	auto image = std::make_unique<sg::Image>(gltf_image.name);
+	std::unique_ptr<sg::Image> image{nullptr};
 
-	int width  = gltf_image.width;
-	int height = gltf_image.height;
-
-	if (gltf_image.image.empty())
+	if (!gltf_image.image.empty())
 	{
-		if (gltf_image.bufferView < 0)
+		// Image embedded in gltf file
+		auto mipmap = sg::Mipmap{
+		    /* .level = */ 0,
+		    /* .offset = */ 0,
+		    /* .extent = */ {/* .width = */ static_cast<uint32_t>(gltf_image.width),
+		                     /* .height = */ static_cast<uint32_t>(gltf_image.height),
+		                     /* .depth = */ 1u}};
+		std::vector<sg::Mipmap> mipmaps{mipmap};
+		image = std::make_unique<sg::Image>(gltf_image.name, std::move(gltf_image.image), std::move(mipmaps));
+	}
+	else
+	{
+		// Load image from uri
+		auto image_uri = model_path + "/" + gltf_image.uri;
+		image          = sg::Image::load(gltf_image.name, image_uri);
+	}
+
+	// Check whether the format is supported by the GPU
+	if (sg::is_astc(image->get_format()))
+	{
+		if (device.get_features().textureCompressionASTC_LDR == VK_FALSE)
 		{
-			const std::string image_file = model_path + "/" + gltf_image.uri;
-
-			std::vector<uint8_t> compressed_data = read_binary_file(image_file);
-
-			int comp, req_comp = 4;
-
-			auto           data_size = to_u32(compressed_data.size());
-			unsigned char *raw_data  = stbi_load_from_memory(reinterpret_cast<stbi_uc *>(compressed_data.data()),
-                                                            data_size, &width, &height, &comp, req_comp);
-
-			if (!raw_data)
-			{
-				LOGE("Failed to load image %s. Error: %s.", image_file.c_str(), stbi_failure_reason());
-
-				return {};
-			}
-
-			gltf_image.image = {raw_data, raw_data + width * height * req_comp};
-
-			free(raw_data);
-		}
-		else
-		{
-			throw std::runtime_error("Parsing embedded image not supported");
+			LOGW("%s %s", "ASTC not supported: decoding", image->get_name());
+			image = std::make_unique<sg::Astc>(*image);
+			image->generate_mipmaps();
 		}
 	}
 
-	image->image = std::make_unique<core::Image>(device, VkExtent3D{to_u32(width), to_u32(height), 1u}, VK_FORMAT_R8G8B8A8_UNORM,
-	                                             VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
-
-	image->image_view = std::make_unique<ImageView>(*image->image, VK_IMAGE_VIEW_TYPE_2D);
+	image->create_vk_image(device);
 
 	return image;
 }
 
 std::unique_ptr<sg::Sampler> GLTFLoader::parse_sampler(const tinygltf::Sampler &gltf_sampler)
 {
-	auto sampler = std::make_unique<sg::Sampler>(gltf_sampler.name);
+	auto name = gltf_sampler.name;
 
-	VkFilter minFilter = find_min_filter(gltf_sampler.minFilter);
-	VkFilter magFilter = find_mag_filter(gltf_sampler.magFilter);
+	VkFilter min_filter = find_min_filter(gltf_sampler.minFilter);
+	VkFilter mag_filter = find_mag_filter(gltf_sampler.magFilter);
 
-	VkSamplerAddressMode addressModeU = find_wrap_mode(gltf_sampler.wrapS);
-	VkSamplerAddressMode addressModeV = find_wrap_mode(gltf_sampler.wrapT);
-	VkSamplerAddressMode addressModeW = find_wrap_mode(gltf_sampler.wrapR);
+	VkSamplerMipmapMode mipmap_mode = find_mipmap_mode(gltf_sampler.minFilter);
+
+	VkSamplerAddressMode address_mode_u = find_wrap_mode(gltf_sampler.wrapS);
+	VkSamplerAddressMode address_mode_v = find_wrap_mode(gltf_sampler.wrapT);
+	VkSamplerAddressMode address_mode_w = find_wrap_mode(gltf_sampler.wrapR);
 
 	VkSamplerCreateInfo sampler_info{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
 
-	sampler_info.magFilter    = minFilter;
-	sampler_info.minFilter    = minFilter;
-	sampler_info.mipmapMode   = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-	sampler_info.addressModeU = addressModeU;
-	sampler_info.addressModeV = addressModeU;
-	sampler_info.addressModeW = addressModeU;
+	sampler_info.magFilter    = mag_filter;
+	sampler_info.minFilter    = min_filter;
+	sampler_info.mipmapMode   = mipmap_mode;
+	sampler_info.addressModeU = address_mode_u;
+	sampler_info.addressModeV = address_mode_v;
+	sampler_info.addressModeW = address_mode_w;
 	sampler_info.borderColor  = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+	sampler_info.maxLod       = VK_REMAINING_MIP_LEVELS;
 
-	VK_CHECK(vkCreateSampler(device.get_handle(), &sampler_info, nullptr, &sampler->vk_sampler));
+	core::Sampler vk_sampler{device, sampler_info};
 
-	return sampler;
+	return std::make_unique<sg::Sampler>(name, std::move(vk_sampler));
 }
 
 std::unique_ptr<sg::Texture> GLTFLoader::parse_texture(const tinygltf::Texture &gltf_texture)

@@ -34,6 +34,35 @@ bool Application::prepare(Platform &platform)
 	return true;
 }
 
+void Application::step()
+{
+	auto current_time = std::chrono::system_clock::now();
+
+	float delta_time = std::chrono::duration<float>(current_time - last_frame_time).count();
+
+	if (is_focused())
+	{
+		update(delta_time);
+	}
+
+	last_frame_time = current_time;
+
+	float elapsed_time = std::chrono::duration<float>(current_time - start_time).count();
+
+	frame_count++;
+
+	if (elapsed_time > 0.5)
+	{
+		fps        = frame_count / elapsed_time;
+		frame_time = delta_time * 1000.0f;
+
+		LOGI("FPS: {:.1f}", fps);
+
+		frame_count = 0;
+		start_time  = current_time;
+	}
+}
+
 void Application::finish()
 {
 }
@@ -64,6 +93,11 @@ const std::string &Application::get_name() const
 void Application::set_name(const std::string &name)
 {
 	this->name = name;
+}
+
+DebugInfo &Application::get_debug_info()
+{
+	return debug_info;
 }
 
 Configuration &Application::get_configuration()

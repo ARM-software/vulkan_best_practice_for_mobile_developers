@@ -150,7 +150,8 @@ void CommandReplay::play(CommandBuffer &command_buffer, CommandRecord &recorder)
 				                        descriptor_set_binding_it->pipeline_layout.get_handle(),
 				                        descriptor_set_binding_it->set_index,
 				                        1, &descriptor_set,
-				                        0, nullptr);
+				                        descriptor_set_binding_it->dynamic_offsets.size(),
+				                        descriptor_set_binding_it->dynamic_offsets.data());
 
 				// Move to the next descriptor set binding
 				if (++descriptor_set_binding_it == recorder.get_descriptor_set_bindings().cend())

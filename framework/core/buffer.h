@@ -33,7 +33,6 @@ class Buffer : public NonCopyable
   public:
 	Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage);
 
-	/// @brief Move constructs
 	Buffer(Buffer &&other);
 
 	~Buffer();
@@ -46,9 +45,19 @@ class Buffer : public NonCopyable
 
 	VkDeviceSize get_size() const;
 
-	/// @brief Updates the content of the buffer
-	/// @brief data Data to upload
-	void update(const std::vector<uint8_t> &data);
+	/**
+	 * @brief Updates the content of the buffer
+	 * @param offset Offset from which to start uploading
+	 * @param data Data to upload
+	 */
+	void update(size_t offset, const std::vector<uint8_t> &data);
+
+	template <class T>
+	void update(size_t offset, const T &value)
+	{
+		update(offset, std::vector<uint8_t>{reinterpret_cast<const uint8_t *>(&value),
+		                                    reinterpret_cast<const uint8_t *>(&value) + sizeof(T)});
+	}
 
   private:
 	Device &device;

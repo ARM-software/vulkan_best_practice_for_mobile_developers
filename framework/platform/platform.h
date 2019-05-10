@@ -24,11 +24,8 @@
 #include <string>
 #include <vector>
 
-#include "vulkan/vulkan.h"
-
 #include "application.h"
 #include "common.h"
-#include "profiler.h"
 
 namespace vkb
 {
@@ -54,15 +51,11 @@ class Platform
 
 	const std::vector<std::string> &get_arguments();
 
-	Profiler &get_profiler();
-
 	Application &get_app() const;
 
   protected:
 	std::unique_ptr<Application> active_app;
 
 	std::vector<std::string> arguments;
-
-	Profiler profiler;
 };
 }        // namespace vkb

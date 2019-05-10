@@ -57,8 +57,7 @@ bool SwapchainImages::prepare(vkb::Platform &platform)
 
 	auto swapchain = std::make_unique<vkb::Swapchain>(*device, get_surface());
 
-	stats = std::make_unique<vkb::Stats>(platform.get_profiler(),
-	                                     std::set<vkb::StatIndex>{vkb::StatIndex::frame_times});
+	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times});
 
 	render_context = std::make_unique<vkb::RenderContext>(*device, std::move(swapchain));
 	render_context->prepare();

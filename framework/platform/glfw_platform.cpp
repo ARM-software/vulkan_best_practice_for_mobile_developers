@@ -29,13 +29,15 @@
 
 #include <unordered_map>
 
+#include <spdlog/sinks/stdout_color_sinks.h>
+
 namespace vkb
 {
 namespace
 {
 void error_callback(int error, const char *description)
 {
-	LOGE("GLFW Error (code %i): %s", error, description);
+	LOGE("GLFW Error (code {}): {}", error, description);
 }
 
 void window_close_callback(GLFWwindow *window)
@@ -292,6 +294,10 @@ bool GlfwPlatform::initialise(std::unique_ptr<Application> &&app)
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
 	glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, 1);
 
+	auto console = spdlog::stdout_color_mt("console");
+	console->set_pattern(LOGGER_FORMAT);
+	spdlog::set_default_logger(console);
+
 	return Platform::initialise(std::move(app));
 }
 
@@ -316,35 +322,11 @@ VkSurfaceKHR GlfwPlatform::create_surface(VkInstance instance)
 
 void GlfwPlatform::main_loop()
 {
-	uint32_t frame_count = 0;
-
-	auto start_time = std::chrono::system_clock::now();
-
-	auto last_time = start_time;
-
 	while (!glfwWindowShouldClose(window))
 	{
-		frame_count++;
-
-		auto current_time = std::chrono::system_clock::now();
-
-		float delta_time = std::chrono::duration<float>(current_time - last_time).count();
-
-		last_time = current_time;
-
 		if (active_app->is_focused())
 		{
-			active_app->update(delta_time);
-		}
-
-		float elapsed_time = std::chrono::duration<float>(current_time - start_time).count();
-
-		if (elapsed_time > 2.0)
-		{
-			LOGI("FPS: %.3f", frame_count / elapsed_time);
-
-			frame_count = 0;
-			start_time  = current_time;
+			active_app->step();
 		}
 
 		glfwPollEvents();
@@ -364,7 +346,7 @@ void GlfwPlatform::close() const
 }
 
 /// @brief It calculates the dpi factor using the density from GLFW physical size
-/// @url https://www.glfw.org/docs/latest/monitor_guide.html#monitor_size
+/// <a href="https://www.glfw.org/docs/latest/monitor_guide.html#monitor_size">GLFW docs for dpi</a>
 float GlfwPlatform::get_dpi_factor() const
 {
 	auto primary_monitor = glfwGetPrimaryMonitor();

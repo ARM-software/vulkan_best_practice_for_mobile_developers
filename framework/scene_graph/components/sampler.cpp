@@ -24,8 +24,9 @@ namespace vkb
 {
 namespace sg
 {
-Sampler::Sampler(const std::string &name) :
-    Component{name}
+Sampler::Sampler(const std::string &name, core::Sampler &&vk_sampler) :
+    Component{name},
+    vk_sampler{std::move(vk_sampler)}
 {}
 
 std::type_index Sampler::get_type()
