@@ -24,7 +24,7 @@ namespace vkb
 {
 namespace
 {
-struct CompareExtent2D : public std::binary_function<VkExtent2D, VkExtent2D, bool>
+struct CompareExtent2D
 {
 	bool operator()(const VkExtent2D &lhs, const VkExtent2D &rhs) const
 	{

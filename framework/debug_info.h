@@ -178,7 +178,7 @@ class DebugInfo
 		{
 			if (field->label == label)
 			{
-				if (auto static_field = dynamic_cast<field::Static<T> *>(field.get()))
+				if (dynamic_cast<typename field::Static<T> *>(field.get()))
 				{
 					field = std::make_unique<C<T>>(label, args...);
 				}
