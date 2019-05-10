@@ -39,7 +39,6 @@ Buffer::Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usag
 	memory_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
 	VmaAllocationInfo alloc_info{};
-
 	auto result = vmaCreateBuffer(device.get_memory_allocator(),
 	                              &buffer_info, &memory_info,
 	                              &handle, &memory,
