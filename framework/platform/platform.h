@@ -36,7 +36,7 @@ class Platform
   public:
 	virtual ~Platform() = default;
 
-	virtual bool initialise(std::unique_ptr<Application> &&app);
+	virtual bool initialize(std::unique_ptr<Application> &&app);
 
 	virtual VkSurfaceKHR create_surface(VkInstance instance) = 0;
 

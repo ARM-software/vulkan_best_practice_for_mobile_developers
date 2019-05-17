@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
     auto sample = create_@TARGET_ID@();
     sample->set_name("@TARGET_NAME@");
 
-    if (platform.initialise(std::move(sample)))
+    if (platform.initialize(std::move(sample)))
     {
         platform.main_loop();
     }

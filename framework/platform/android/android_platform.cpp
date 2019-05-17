@@ -329,7 +329,7 @@ AndroidPlatform::AndroidPlatform(android_app *app) :
     app{app}
 {}
 
-bool AndroidPlatform::initialise(std::unique_ptr<Application> &&appplication)
+bool AndroidPlatform::initialize(std::unique_ptr<Application> &&appplication)
 {
 	auto android_logger = spdlog::android_logger_mt("android", PROJECT_NAME);
 	android_logger->set_pattern(LOGGER_FORMAT);

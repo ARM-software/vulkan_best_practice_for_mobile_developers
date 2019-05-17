@@ -264,7 +264,7 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 }
 }        // namespace
 
-bool GlfwPlatform::initialise(std::unique_ptr<Application> &&app)
+bool GlfwPlatform::initialize(std::unique_ptr<Application> &&app)
 {
 	if (!glfwInit())
 	{
@@ -298,7 +298,7 @@ bool GlfwPlatform::initialise(std::unique_ptr<Application> &&app)
 	console->set_pattern(LOGGER_FORMAT);
 	spdlog::set_default_logger(console);
 
-	return Platform::initialise(std::move(app));
+	return Platform::initialize(std::move(app));
 }
 
 VkSurfaceKHR GlfwPlatform::create_surface(VkInstance instance)

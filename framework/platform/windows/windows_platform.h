@@ -32,7 +32,7 @@ class WindowsPlatform : public GlfwPlatform
 
 	virtual ~WindowsPlatform() = default;
 
-	virtual bool initialise(std::unique_ptr<Application> &&app) override;
+	virtual bool initialize(std::unique_ptr<Application> &&app) override;
 
 	virtual void terminate() override;
 };
