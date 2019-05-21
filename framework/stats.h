@@ -22,12 +22,13 @@
 
 #include <hwcpipe.h>
 
-#include <chrono>
 #include <cstdint>
 #include <ctime>
 #include <map>
 #include <set>
 #include <vector>
+
+#include "timer.h"
 
 namespace vkb
 {
@@ -156,8 +157,8 @@ class Stats
 	/// Mapping of stats to their availability and value getters
 	StatDataMap stat_data;
 
-	/// Time of previous frame
-	std::chrono::time_point<std::chrono::high_resolution_clock> prev_time;
+	/// Timer
+	Timer timer;
 
 	/// Circular buffers for counter data
 	std::map<StatIndex, std::vector<float>> counters{};

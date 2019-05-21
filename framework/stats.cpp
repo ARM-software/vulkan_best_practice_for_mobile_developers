@@ -107,14 +107,7 @@ bool Stats::is_available(const StatIndex index) const
 
 void Stats::update()
 {
-	// Get current time
-	auto current_time = std::chrono::high_resolution_clock::now();
-
-	// Compute delta time
-	float delta_time = std::chrono::duration<float>(current_time - prev_time).count();
-
-	// Overwrite previous time
-	prev_time = current_time;
+	auto delta_time = timer.tick<Timer::Seconds>();
 
 	const auto measurements = hwcpipe->sample();
 

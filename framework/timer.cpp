@@ -18,34 +18,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-
-#include "platform.h"
-
-struct GLFWwindow;
+#include "timer.h"
 
 namespace vkb
 {
-class GlfwPlatform : public Platform
+Timer::Timer() :
+    start_time{Clock::now()},
+    previous_tick{Clock::now()}
 {
-  public:
-	GlfwPlatform() = default;
+}
 
-	virtual ~GlfwPlatform() = default;
+void Timer::start()
+{
+	if (!running)
+	{
+		running    = true;
+		start_time = Clock::now();
+	}
+}
 
-	virtual bool initialize(std::unique_ptr<Application> &&app) override;
-
-	virtual VkSurfaceKHR create_surface(VkInstance instance) override;
-
-	virtual void main_loop() override;
-
-	virtual void terminate() override;
-
-	virtual void close() const override;
-
-	float get_dpi_factor() const override;
-
-  private:
-	GLFWwindow *window = nullptr;
-};
+void Timer::lap()
+{
+	lapping  = true;
+	lap_time = Clock::now();
+}
 }        // namespace vkb

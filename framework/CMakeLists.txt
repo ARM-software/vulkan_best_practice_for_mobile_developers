@@ -44,6 +44,7 @@ set(FRAMEWORK_FILES
     render_frame.h
     render_context.h
     vulkan_sample.h
+    timer.h
     # Source Files
     common.cpp
     utils.cpp
@@ -62,7 +63,8 @@ set(FRAMEWORK_FILES
     resource_binding_state.cpp
     render_frame.cpp
     render_context.cpp
-    vulkan_sample.cpp)
+    vulkan_sample.cpp
+    timer.cpp)
 
 set(FONT_FILES
     # Source Files

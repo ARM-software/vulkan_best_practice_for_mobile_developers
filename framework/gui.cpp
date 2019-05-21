@@ -710,12 +710,11 @@ bool Gui::input_event(const InputEvent &input_event)
 
 		if (press_down)
 		{
-			press_start = std::chrono::high_resolution_clock::now();
+			timer.start();
 		}
 		if (press_up)
 		{
-			auto press_end   = std::chrono::high_resolution_clock::now();
-			auto press_delta = std::chrono::duration<double, std::milli>(press_end - press_start).count();
+			auto press_delta = timer.stop<Timer::Milliseconds>();
 			if (press_delta < press_time_ms)
 			{
 				visible = !visible;

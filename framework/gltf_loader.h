@@ -53,6 +53,8 @@ extern AAssetManager *asset_manager;
 #include "core/device.h"
 #include "core/sampler.h"
 
+#include "timer.h"
+
 namespace vkb
 {
 /// Read a gltf file and return a scene object. Converts the gltf objects

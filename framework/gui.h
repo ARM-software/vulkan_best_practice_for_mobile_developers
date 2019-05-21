@@ -291,7 +291,7 @@ class Gui
 	DebugView debug_view;
 
 	/// Used to measure duration of input events
-	std::chrono::time_point<std::chrono::high_resolution_clock> press_start;
+	Timer timer;
 
 	/// Used to show/hide the GUI
 	bool visible = true;

@@ -141,108 +141,110 @@ inline VkFormat get_attribute_format(const tinygltf::Model *model, uint32_t acce
 	{
 		case TINYGLTF_COMPONENT_TYPE_BYTE:
 		{
-			static const std::map<int, VkFormat> mappedFormat = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R8_SINT},
-			                                                     {TINYGLTF_TYPE_VEC2, VK_FORMAT_R8G8_SINT},
-			                                                     {TINYGLTF_TYPE_VEC3, VK_FORMAT_R8G8B8_SINT},
-			                                                     {TINYGLTF_TYPE_VEC4, VK_FORMAT_R8G8B8A8_SINT}};
+			static const std::map<int, VkFormat> mapped_format = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R8_SINT},
+			                                                      {TINYGLTF_TYPE_VEC2, VK_FORMAT_R8G8_SINT},
+			                                                      {TINYGLTF_TYPE_VEC3, VK_FORMAT_R8G8B8_SINT},
+			                                                      {TINYGLTF_TYPE_VEC4, VK_FORMAT_R8G8B8A8_SINT}};
 
-			format = mappedFormat.at(accessor.type);
+			format = mapped_format.at(accessor.type);
 
 			break;
 		}
 		case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
 		{
-			static const std::map<int, VkFormat> mappedFormat = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R8_UINT},
-			                                                     {TINYGLTF_TYPE_VEC2, VK_FORMAT_R8G8_UINT},
-			                                                     {TINYGLTF_TYPE_VEC3, VK_FORMAT_R8G8B8_UINT},
-			                                                     {TINYGLTF_TYPE_VEC4, VK_FORMAT_R8G8B8A8_UINT}};
+			static const std::map<int, VkFormat> mapped_format = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R8_UINT},
+			                                                      {TINYGLTF_TYPE_VEC2, VK_FORMAT_R8G8_UINT},
+			                                                      {TINYGLTF_TYPE_VEC3, VK_FORMAT_R8G8B8_UINT},
+			                                                      {TINYGLTF_TYPE_VEC4, VK_FORMAT_R8G8B8A8_UINT}};
 
-			static const std::map<int, VkFormat> mappedFormatNormalize = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R8_UNORM},
-			                                                              {TINYGLTF_TYPE_VEC2, VK_FORMAT_R8G8_UNORM},
-			                                                              {TINYGLTF_TYPE_VEC3, VK_FORMAT_R8G8B8_UNORM},
-			                                                              {TINYGLTF_TYPE_VEC4, VK_FORMAT_R8G8B8A8_UNORM}};
+			static const std::map<int, VkFormat> mapped_format_normalize = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R8_UNORM},
+			                                                                {TINYGLTF_TYPE_VEC2, VK_FORMAT_R8G8_UNORM},
+			                                                                {TINYGLTF_TYPE_VEC3, VK_FORMAT_R8G8B8_UNORM},
+			                                                                {TINYGLTF_TYPE_VEC4, VK_FORMAT_R8G8B8A8_UNORM}};
 
 			if (accessor.normalized)
 			{
-				format = mappedFormatNormalize.at(accessor.type);
+				format = mapped_format_normalize.at(accessor.type);
 			}
 			else
 			{
-				format = mappedFormat.at(accessor.type);
+				format = mapped_format.at(accessor.type);
 			}
 
 			break;
 		}
 		case TINYGLTF_COMPONENT_TYPE_SHORT:
 		{
-			static const std::map<int, VkFormat> mappedFormat = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R8_SINT},
-			                                                     {TINYGLTF_TYPE_VEC2, VK_FORMAT_R8G8_SINT},
-			                                                     {TINYGLTF_TYPE_VEC3, VK_FORMAT_R8G8B8_SINT},
-			                                                     {TINYGLTF_TYPE_VEC4, VK_FORMAT_R8G8B8A8_SINT}};
+			static const std::map<int, VkFormat> mapped_format = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R8_SINT},
+			                                                      {TINYGLTF_TYPE_VEC2, VK_FORMAT_R8G8_SINT},
+			                                                      {TINYGLTF_TYPE_VEC3, VK_FORMAT_R8G8B8_SINT},
+			                                                      {TINYGLTF_TYPE_VEC4, VK_FORMAT_R8G8B8A8_SINT}};
 
-			format = mappedFormat.at(accessor.type);
+			format = mapped_format.at(accessor.type);
 
 			break;
 		}
 		case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
 		{
-			static const std::map<int, VkFormat> mappedFormat = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R16_UINT},
-			                                                     {TINYGLTF_TYPE_VEC2, VK_FORMAT_R16G16_UINT},
-			                                                     {TINYGLTF_TYPE_VEC3, VK_FORMAT_R16G16B16_UINT},
-			                                                     {TINYGLTF_TYPE_VEC4, VK_FORMAT_R16G16B16A16_UINT}};
+			static const std::map<int, VkFormat> mapped_format = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R16_UINT},
+			                                                      {TINYGLTF_TYPE_VEC2, VK_FORMAT_R16G16_UINT},
+			                                                      {TINYGLTF_TYPE_VEC3, VK_FORMAT_R16G16B16_UINT},
+			                                                      {TINYGLTF_TYPE_VEC4, VK_FORMAT_R16G16B16A16_UINT}};
 
-			static const std::map<int, VkFormat> mappedFormatNormalize = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R16_UNORM},
-			                                                              {TINYGLTF_TYPE_VEC2, VK_FORMAT_R16G16_UNORM},
-			                                                              {TINYGLTF_TYPE_VEC3, VK_FORMAT_R16G16B16_UNORM},
-			                                                              {TINYGLTF_TYPE_VEC4, VK_FORMAT_R16G16B16A16_UNORM}};
+			static const std::map<int, VkFormat> mapped_format_normalize = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R16_UNORM},
+			                                                                {TINYGLTF_TYPE_VEC2, VK_FORMAT_R16G16_UNORM},
+			                                                                {TINYGLTF_TYPE_VEC3, VK_FORMAT_R16G16B16_UNORM},
+			                                                                {TINYGLTF_TYPE_VEC4, VK_FORMAT_R16G16B16A16_UNORM}};
 
 			if (accessor.normalized)
 			{
-				format = mappedFormatNormalize.at(accessor.type);
+				format = mapped_format_normalize.at(accessor.type);
 			}
 			else
 			{
-				format = mappedFormat.at(accessor.type);
+				format = mapped_format.at(accessor.type);
 			}
 
 			break;
 		}
 		case TINYGLTF_COMPONENT_TYPE_INT:
 		{
-			static const std::map<int, VkFormat> mappedFormat = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R32_SINT},
-			                                                     {TINYGLTF_TYPE_VEC2, VK_FORMAT_R32G32_SINT},
-			                                                     {TINYGLTF_TYPE_VEC3, VK_FORMAT_R32G32B32_SINT},
-			                                                     {TINYGLTF_TYPE_VEC4, VK_FORMAT_R32G32B32A32_SINT}};
+			static const std::map<int, VkFormat> mapped_format = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R32_SINT},
+			                                                      {TINYGLTF_TYPE_VEC2, VK_FORMAT_R32G32_SINT},
+			                                                      {TINYGLTF_TYPE_VEC3, VK_FORMAT_R32G32B32_SINT},
+			                                                      {TINYGLTF_TYPE_VEC4, VK_FORMAT_R32G32B32A32_SINT}};
 
-			format = mappedFormat.at(accessor.type);
+			format = mapped_format.at(accessor.type);
 
 			break;
 		}
 		case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:
 		{
-			static const std::map<int, VkFormat> mappedFormat = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R32_UINT},
-			                                                     {TINYGLTF_TYPE_VEC2, VK_FORMAT_R32G32_UINT},
-			                                                     {TINYGLTF_TYPE_VEC3, VK_FORMAT_R32G32B32_UINT},
-			                                                     {TINYGLTF_TYPE_VEC4, VK_FORMAT_R32G32B32A32_UINT}};
+			static const std::map<int, VkFormat> mapped_format = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R32_UINT},
+			                                                      {TINYGLTF_TYPE_VEC2, VK_FORMAT_R32G32_UINT},
+			                                                      {TINYGLTF_TYPE_VEC3, VK_FORMAT_R32G32B32_UINT},
+			                                                      {TINYGLTF_TYPE_VEC4, VK_FORMAT_R32G32B32A32_UINT}};
 
-			format = mappedFormat.at(accessor.type);
+			format = mapped_format.at(accessor.type);
 
 			break;
 		}
 		case TINYGLTF_COMPONENT_TYPE_FLOAT:
 		{
-			static const std::map<int, VkFormat> mappedFormat = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R32_SFLOAT},
-			                                                     {TINYGLTF_TYPE_VEC2, VK_FORMAT_R32G32_SFLOAT},
-			                                                     {TINYGLTF_TYPE_VEC3, VK_FORMAT_R32G32B32_SFLOAT},
-			                                                     {TINYGLTF_TYPE_VEC4, VK_FORMAT_R32G32B32A32_SFLOAT}};
+			static const std::map<int, VkFormat> mapped_format = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R32_SFLOAT},
+			                                                      {TINYGLTF_TYPE_VEC2, VK_FORMAT_R32G32_SFLOAT},
+			                                                      {TINYGLTF_TYPE_VEC3, VK_FORMAT_R32G32B32_SFLOAT},
+			                                                      {TINYGLTF_TYPE_VEC4, VK_FORMAT_R32G32B32A32_SFLOAT}};
 
-			format = mappedFormat.at(accessor.type);
+			format = mapped_format.at(accessor.type);
 
 			break;
 		}
 		default:
+		{
 			format = VK_FORMAT_UNDEFINED;
 			break;
+		}
 	}
 
 	return format;
@@ -392,7 +394,8 @@ sg::Scene GLTFLoader::load_scene()
 
 	scene.set_components(std::move(sampler_components));
 
-	auto start_time = std::chrono::high_resolution_clock::now();
+	Timer timer;
+	timer.start();
 
 	// Load images
 	std::vector<std::unique_ptr<sg::Image>> image_components(model.images.size());
@@ -445,11 +448,9 @@ sg::Scene GLTFLoader::load_scene()
 
 	scene.set_components(std::move(image_components));
 
-	auto end_time = std::chrono::high_resolution_clock::now();
+	auto elapsed_time = timer.stop();
 
-	auto elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
-
-	LOGI("Time spent loading images: {} seconds.", elapsed_time.count());
+	LOGI("Time spent loading images: {} seconds.", vkb::to_string(elapsed_time));
 
 	// Load textures
 	auto images          = scene.get_components<sg::Image>();
