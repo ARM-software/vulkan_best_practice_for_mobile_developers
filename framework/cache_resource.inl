@@ -66,13 +66,13 @@ inline void hash_param<std::vector<SubpassInfo>>(
 }
 
 template <>
-inline void hash_param<std::vector<ShaderModule>>(
-    size_t &                         seed,
-    const std::vector<ShaderModule> &value)
+inline void hash_param<std::vector<ShaderModule *>>(
+    size_t &                           seed,
+    const std::vector<ShaderModule *> &value)
 {
-	for (auto &shader_module : value)
+	for (auto shader_module : value)
 	{
-		hash_combine(seed, shader_module);
+		hash_combine(seed, *shader_module);
 	}
 }
 

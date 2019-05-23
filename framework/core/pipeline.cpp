@@ -56,18 +56,30 @@ ComputePipeline::ComputePipeline(Device &                  device,
                                  const SpecializationInfo &specialization_info) :
     Pipeline{device}
 {
-	const ShaderModule &shader_module = pipeline_layout.get_stages().front();
+	const ShaderModule *shader_module = pipeline_layout.get_stages().front();
 
-	if (shader_module.get_stage() != VK_SHADER_STAGE_COMPUTE_BIT)
+	if (shader_module->get_stage() != VK_SHADER_STAGE_COMPUTE_BIT)
 	{
 		throw VulkanException{VK_ERROR_INVALID_SHADER_NV, "Shader module stage is not compute"};
 	}
 
 	VkPipelineShaderStageCreateInfo stage{VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO};
 
-	stage.stage  = shader_module.get_stage();
-	stage.module = shader_module.get_handle();
-	stage.pName  = shader_module.get_entry_point().c_str();
+	stage.stage = shader_module->get_stage();
+	stage.pName = shader_module->get_entry_point().c_str();
+
+	// Create the Vulkan handle
+	VkShaderModuleCreateInfo vk_create_info{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
+
+	vk_create_info.codeSize = shader_module->get_binary().size() * sizeof(uint32_t);
+	vk_create_info.pCode    = shader_module->get_binary().data();
+
+	VkResult result = vkCreateShaderModule(device.get_handle(), &vk_create_info, nullptr, &stage.module);
+
+	if (result != VK_SUCCESS)
+	{
+		throw VulkanException{result};
+	}
 
 	stage.pSpecializationInfo = &specialization_info.get_handle();
 
@@ -76,12 +88,14 @@ ComputePipeline::ComputePipeline(Device &                  device,
 	create_info.layout = pipeline_layout.get_handle();
 	create_info.stage  = stage;
 
-	VkResult result = vkCreateComputePipelines(device.get_handle(), VK_NULL_HANDLE, 1, &create_info, 0, &handle);
+	result = vkCreateComputePipelines(device.get_handle(), VK_NULL_HANDLE, 1, &create_info, 0, &handle);
 
 	if (result != VK_SUCCESS)
 	{
 		throw VulkanException{result, "Cannot create ComputePipelines"};
 	}
+
+	vkDestroyShaderModule(device.get_handle(), stage.module, nullptr);
 }
 
 GraphicsPipeline::GraphicsPipeline(Device &                                  device,
@@ -89,15 +103,29 @@ GraphicsPipeline::GraphicsPipeline(Device &                                  dev
                                    const ShaderStageMap<SpecializationInfo> &specialization_infos) :
     Pipeline{device}
 {
+	std::vector<VkShaderModule> shader_modules;
+
 	std::vector<VkPipelineShaderStageCreateInfo> stage_create_infos;
 
-	for (const ShaderModule &shader_module : graphics_state.get_pipeline_layout().get_stages())
+	for (const ShaderModule *shader_module : graphics_state.get_pipeline_layout().get_stages())
 	{
 		VkPipelineShaderStageCreateInfo stage_create_info{VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO};
 
-		stage_create_info.stage  = shader_module.get_stage();
-		stage_create_info.module = shader_module.get_handle();
-		stage_create_info.pName  = shader_module.get_entry_point().c_str();
+		stage_create_info.stage = shader_module->get_stage();
+		stage_create_info.pName = shader_module->get_entry_point().c_str();
+
+		// Create the Vulkan handle
+		VkShaderModuleCreateInfo vk_create_info{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
+
+		vk_create_info.codeSize = shader_module->get_binary().size() * sizeof(uint32_t);
+		vk_create_info.pCode    = shader_module->get_binary().data();
+
+		VkResult result = vkCreateShaderModule(device.get_handle(), &vk_create_info, nullptr, &stage_create_info.module);
+
+		if (result != VK_SUCCESS)
+		{
+			throw VulkanException{result};
+		}
 
 		// Find if shader stage has specialization constants
 		auto it = specialization_infos.find(stage_create_info.stage);
@@ -108,6 +136,7 @@ GraphicsPipeline::GraphicsPipeline(Device &                                  dev
 		}
 
 		stage_create_infos.push_back(stage_create_info);
+		shader_modules.push_back(stage_create_info.module);
 	}
 
 	VkGraphicsPipelineCreateInfo create_info{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
@@ -226,6 +255,11 @@ GraphicsPipeline::GraphicsPipeline(Device &                                  dev
 	if (result != VK_SUCCESS)
 	{
 		throw VulkanException{result, "Cannot create GraphicsPipelines"};
+	}
+
+	for (auto shader_module : shader_modules)
+	{
+		vkDestroyShaderModule(device.get_handle(), shader_module, nullptr);
 	}
 }
 }        // namespace vkb

@@ -32,12 +32,12 @@ inline VkImageType find_image_type(VkExtent3D extent)
 
 	uint32_t dim_num{0};
 
-	if (extent.width > 1)
+	if (extent.width >= 1)
 	{
 		dim_num++;
 	}
 
-	if (extent.height > 1)
+	if (extent.height >= 1)
 	{
 		dim_num++;
 	}

@@ -36,7 +36,7 @@ class GraphicsPipelineState;
 class PipelineLayout : public NonCopyable
 {
   public:
-	PipelineLayout(Device &device, std::vector<ShaderModule> &&shader_modules);
+	PipelineLayout(Device &device, const std::vector<ShaderModule *> &shader_modules);
 
 	/// @brief Move constructs
 	PipelineLayout(PipelineLayout &&other);
@@ -45,7 +45,7 @@ class PipelineLayout : public NonCopyable
 
 	VkPipelineLayout get_handle() const;
 
-	const std::vector<ShaderModule> &get_stages() const;
+	const std::vector<ShaderModule *> &get_stages() const;
 
 	const std::unordered_map<uint32_t, std::vector<ShaderResource>> &get_bindings() const;
 
@@ -66,7 +66,7 @@ class PipelineLayout : public NonCopyable
   private:
 	Device &device;
 
-	std::vector<ShaderModule> stages;
+	std::vector<ShaderModule *> shader_modules;
 
 	VkPipelineLayout handle{VK_NULL_HANDLE};
 

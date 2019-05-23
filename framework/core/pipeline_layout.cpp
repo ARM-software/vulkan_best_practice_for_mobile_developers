@@ -27,15 +27,15 @@
 
 namespace vkb
 {
-PipelineLayout::PipelineLayout(Device &device, std::vector<ShaderModule> &&stages) :
+PipelineLayout::PipelineLayout(Device &device, const std::vector<ShaderModule *> &shader_modules) :
     device{device},
-    stages{std::move(stages)}
+    shader_modules{shader_modules}
 {
 	// Merge shader stages resources
-	for (const ShaderModule &stage : this->stages)
+	for (ShaderModule *stage : shader_modules)
 	{
 		// Iterate over all of the shader resources
-		for (const ShaderResource &resource : stage.get_resources())
+		for (const ShaderResource &resource : stage->get_resources())
 		{
 			std::string key = resource.name;
 
@@ -141,8 +141,8 @@ PipelineLayout::PipelineLayout(Device &device, std::vector<ShaderModule> &&stage
 
 PipelineLayout::PipelineLayout(PipelineLayout &&other) :
     device{other.device},
-    stages{std::move(other.stages)},
     handle{other.handle},
+    shader_modules{std::move(other.shader_modules)},
     resources{std::move(other.resources)},
     set_bindings{std::move(other.set_bindings)},
     set_layouts{std::move(other.set_layouts)}
@@ -164,9 +164,9 @@ VkPipelineLayout PipelineLayout::get_handle() const
 	return handle;
 }
 
-const std::vector<ShaderModule> &PipelineLayout::get_stages() const
+const std::vector<ShaderModule *> &PipelineLayout::get_stages() const
 {
-	return stages;
+	return shader_modules;
 }
 
 const std::unordered_map<uint32_t, std::vector<ShaderResource>> &PipelineLayout::get_bindings() const

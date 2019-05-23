@@ -258,7 +258,7 @@ class Gui
 	 * @brief Updates Vulkan buffers
 	 * @param frame Frame to render into
 	 */
-	void update_buffers();
+	void update_buffers(CommandBuffer &command_buffer);
 
 	static const float press_time_ms;
 
@@ -284,7 +284,7 @@ class Gui
 
 	std::unique_ptr<core::Sampler> sampler{nullptr};
 
-	PipelineLayout &pipeline_layout;
+	PipelineLayout *pipeline_layout{nullptr};
 
 	StatsView stats_view;
 

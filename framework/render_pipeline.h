@@ -20,35 +20,63 @@
 
 #pragma once
 
-#include "utils.h"
-#include "vulkan_sample.h"
+#include "core/buffer.h"
 
-#include "render_pipeline.h"
+#include "render_frame.h"
+
 #include "scene_graph/components/camera.h"
+#include "scene_graph/scene.h"
 
-class SwapchainImages : public vkb::VulkanSample
+#include "utils.h"
+
+namespace vkb
 {
-  public:
-	SwapchainImages();
+/**
+ * @brief Global uniform structure for base shader
+ */
+struct alignas(16) GlobalUniform
+{
+	glm::mat4 model;
 
-	virtual ~SwapchainImages() = default;
+	glm::mat4 camera_view_proj;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	glm::vec4 light_pos;
 
-	virtual void update(float delta_time) override;
-
-  private:
-	std::unique_ptr<vkb::RenderPipeline> render_pipeline{nullptr};
-
-	vkb::sg::Camera *camera{nullptr};
-
-	virtual void draw_gui() override;
-
-	virtual void draw_scene(vkb::CommandBuffer &cmd_buf) override;
-
-	int swapchain_image_count{3};
-
-	int last_swapchain_image_count{3};
+	glm::vec4 light_color;
 };
 
-std::unique_ptr<vkb::VulkanSample> create_swapchain_images();
+/**
+ * @brief PBR material uniform for base shader
+ */
+struct PBRMaterialUniform
+{
+	glm::vec4 base_color_factor;
+
+	float metallic_factor;
+
+	float roughness_factor;
+};
+
+class RenderPipeline : public NonCopyable
+{
+  public:
+	RenderPipeline(RenderContext &render_context, sg::Scene &scene, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader);
+
+	void draw_scene(CommandBuffer &command_buffer, sg::Camera &camera);
+
+  protected:
+	virtual void draw_scene_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh);
+
+  private:
+	RenderContext &render_context;
+
+	sg::Scene &scene;
+
+	ShaderSource vertex_shader;
+
+	ShaderSource fragment_shader;
+
+	GlobalUniform global_uniform;
+};
+
+}        // namespace vkb

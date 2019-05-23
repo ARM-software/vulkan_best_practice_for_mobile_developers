@@ -231,9 +231,14 @@ VkResult Device::wait_idle()
 	return vkDeviceWaitIdle(handle);
 }
 
-PipelineLayout &Device::request_pipeline_layout(std::vector<ShaderModule> &&shader_modules)
+ShaderModule &Device::request_shader_module(VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const ShaderVariant &shader_variant)
 {
-	return cache_pipeline_layouts.request_resource(*this, std::move(shader_modules));
+	return cache_shader_modules.request_resource(*this, stage, glsl_source, std::string{"main"}, shader_variant);
+}
+
+PipelineLayout &Device::request_pipeline_layout(const std::vector<ShaderModule *> &shader_modules)
+{
+	return cache_pipeline_layouts.request_resource(*this, shader_modules);
 }
 
 GraphicsPipeline &Device::request_graphics_pipeline(GraphicsPipelineState &                   graphics_state,

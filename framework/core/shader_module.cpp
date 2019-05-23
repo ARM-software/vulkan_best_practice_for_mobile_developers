@@ -26,13 +26,13 @@
 
 namespace vkb
 {
-ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const std::vector<uint8_t> &glsl_source, const std::string &entry_point) :
+ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const std::string &entry_point, const ShaderVariant &shader_variant) :
     device{device},
     stage{stage},
     entry_point{entry_point}
 {
 	// Check if application is passing in GLSL source code to compile to SPIR-V
-	if (glsl_source.empty())
+	if (glsl_source.get_data().empty())
 	{
 		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
 	}
@@ -46,7 +46,7 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const st
 	GLSLCompiler glsl_compiler;
 
 	// Compile the GLSL source
-	if (!glsl_compiler.compile_to_spirv(stage, glsl_source, entry_point, spirv, info_log))
+	if (!glsl_compiler.compile_to_spirv(stage, glsl_source.get_data(), entry_point, shader_variant, spirv, info_log))
 	{
 		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
 	}
@@ -59,46 +59,26 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const st
 		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
 	}
 
-	// Create the Vulkan handle
-	VkShaderModuleCreateInfo vk_create_info{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
-
-	vk_create_info.codeSize = spirv.size() * sizeof(uint32_t);
-	vk_create_info.pCode    = spirv.data();
-
-	VkResult result = vkCreateShaderModule(device.get_handle(), &vk_create_info, nullptr, &handle);
-
-	if (result != VK_SUCCESS)
-	{
-		throw VulkanException{result};
-	}
+	// Generate a unique id, determined by source and variant
+	std::hash<std::string> hasher{};
+	id = hasher(std::string{spirv.cbegin(), spirv.cend()});
 }
 
 ShaderModule::ShaderModule(ShaderModule &&other) :
     device{other.device},
-    handle{other.handle},
+    id{other.id},
     stage{other.stage},
     entry_point{other.entry_point},
     spirv{other.spirv},
     resources{other.resources},
     info_log{other.info_log}
 {
-	other.handle = VK_NULL_HANDLE;
-
 	other.stage = {};
 }
 
-ShaderModule::~ShaderModule()
+size_t ShaderModule::get_id() const
 {
-	// Destroy shader module
-	if (handle != VK_NULL_HANDLE)
-	{
-		vkDestroyShaderModule(device.get_handle(), handle, nullptr);
-	}
-}
-
-VkShaderModule ShaderModule::get_handle() const
-{
-	return handle;
+	return id;
 }
 
 VkShaderStageFlagBits ShaderModule::get_stage() const
@@ -145,5 +125,77 @@ void ShaderModule::set_resource_dynamic(const std::string &resource_name)
 	{
 		LOGW("Resource `{}` not found for shader.", resource_name);
 	}
+}
+
+size_t ShaderVariant::get_id() const
+{
+	return id;
+}
+
+void ShaderVariant::add_define(const std::string &def)
+{
+	processes.push_back("D" + def);
+
+	std::string tmp_def = def;
+
+	// The "=" needs to turn into a space
+	size_t pos_equal = tmp_def.find_first_of("=");
+	if (pos_equal != std::string::npos)
+	{
+		tmp_def[pos_equal] = ' ';
+	}
+
+	preamble.append("#define " + tmp_def + "\n");
+
+	update_id();
+}
+
+void ShaderVariant::add_undefine(const std::string &undef)
+{
+	processes.push_back("U" + undef);
+
+	preamble.append("#undef " + undef + "\n");
+
+	update_id();
+}
+
+const std::string &ShaderVariant::get_preamble() const
+{
+	return preamble;
+}
+
+const std::vector<std::string> &ShaderVariant::get_processes() const
+{
+	return processes;
+}
+
+void ShaderVariant::clear()
+{
+	preamble.clear();
+	processes.clear();
+	update_id();
+}
+
+void ShaderVariant::update_id()
+{
+	std::hash<std::string> hasher{};
+	id = hasher(preamble);
+}
+
+ShaderSource::ShaderSource(std::vector<uint8_t> &&data) :
+    data{std::move(data)}
+{
+	std::hash<std::string> hasher{};
+	id = hasher(std::string{this->data.cbegin(), this->data.cend()});
+}
+
+size_t ShaderSource::get_id() const
+{
+	return id;
+}
+
+const std::vector<uint8_t> &ShaderSource::get_data() const
+{
+	return data;
 }
 }        // namespace vkb

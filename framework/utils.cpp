@@ -26,6 +26,7 @@
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/mesh.h"
+#include "scene_graph/components/pbr_material.h"
 #include "scene_graph/components/sampler.h"
 #include "scene_graph/components/sub_mesh.h"
 #include "scene_graph/components/texture.h"
@@ -81,126 +82,6 @@ VkShaderStageFlagBits find_shader_stage(const std::string &ext)
 };
 }        // namespace
 
-ShaderModule create_shader_module(Device &device, const char *path)
-{
-	auto file_ext = get_extension(path);
-
-	auto shader_stage = find_shader_stage(file_ext);
-
-	auto buffer = read_binary_file(path);
-
-	return ShaderModule{device, shader_stage, buffer, "main"};
-}
-
-PipelineLayout &create_pipeline_layout(Device &    device,
-                                       const char *vertex_shader_file,
-                                       const char *fragment_shader_file)
-{
-	std::vector<ShaderModule> shader_modules;
-	shader_modules.push_back(create_shader_module(device, vertex_shader_file));
-	shader_modules.push_back(create_shader_module(device, fragment_shader_file));
-
-	return device.request_pipeline_layout(std::move(shader_modules));
-}
-
-void draw_scene_submesh(CommandBuffer &command_buffer, PipelineLayout &pipeline_layout, const sg::SubMesh &sub_mesh)
-{
-	auto &material = sub_mesh.material;
-
-	auto &base_color_texture = material->base_color_texture;
-
-	// Bind color texture of material
-	if (base_color_texture && base_color_texture->get_image())
-	{
-		command_buffer.bind_image(base_color_texture->get_image()->get_vk_image_view(),
-		                          base_color_texture->get_sampler()->vk_sampler, 0, 0, 0);
-	}
-
-	auto vertex_input_resources = pipeline_layout.get_vertex_input_attributes();
-
-	VertexInputState vertex_input_state;
-
-	for (auto &input_resource : vertex_input_resources)
-	{
-		auto attribute_it = sub_mesh.vertex_attributes.find(input_resource.name);
-
-		if (attribute_it == sub_mesh.vertex_attributes.end())
-		{
-			continue;
-		}
-
-		VkVertexInputAttributeDescription vertex_attribute{};
-		vertex_attribute.binding  = input_resource.location;
-		vertex_attribute.format   = attribute_it->second.format;
-		vertex_attribute.location = input_resource.location;
-		vertex_attribute.offset   = attribute_it->second.offset;
-
-		vertex_input_state.attributes.push_back(vertex_attribute);
-
-		VkVertexInputBindingDescription vertex_binding{};
-		vertex_binding.binding = input_resource.location;
-		vertex_binding.stride  = attribute_it->second.stride;
-
-		vertex_input_state.bindings.push_back(vertex_binding);
-	}
-
-	command_buffer.set_vertex_input_state(vertex_input_state);
-
-	// Find submesh vertex buffers matching the shader input attribute names
-	for (auto &input_resource : vertex_input_resources)
-	{
-		const auto &buffer_iter = sub_mesh.vertex_buffers.find(input_resource.name);
-
-		if (buffer_iter != sub_mesh.vertex_buffers.end())
-		{
-			std::vector<std::reference_wrapper<const core::Buffer>> buffers;
-			buffers.emplace_back(std::ref(buffer_iter->second));
-
-			// Bind vertex buffers only for the attribute locations defined
-			command_buffer.bind_vertex_buffers(input_resource.location, std::move(buffers), {0});
-		}
-	}
-
-	// Draw submesh indexed if indices exists
-	if (sub_mesh.vertex_indices != 0)
-	{
-		// Bind index buffer of submesh
-		command_buffer.bind_index_buffer(*sub_mesh.index_buffer, sub_mesh.index_offset, sub_mesh.index_type);
-
-		// Draw submesh using indexed data
-		command_buffer.draw_indexed(sub_mesh.vertex_indices, 1, 0, 0, 0);
-	}
-	else
-	{
-		// Draw submesh using vertices only
-		command_buffer.draw(sub_mesh.vertices_count, 1, 0, 0);
-	}
-}
-
-void draw_scene_meshes(CommandBuffer &command_buffer, PipelineLayout &pipeline_layout, const sg::Scene &scene)
-{
-	auto meshes = scene.get_components<sg::Mesh>();
-
-	// draw all meshes in the scene
-	for (auto &mesh : meshes)
-	{
-		// draw mesh for each node
-		for (auto &node : mesh->get_nodes())
-		{
-			auto &transform = node->get_component<vkb::sg::Transform>();
-
-			// set world matrix of the node
-			command_buffer.push_constants(0, transform.get_world_matrix());
-
-			// draw each submesh of the current mesh
-			for (auto &sub_mesh : mesh->get_submeshes())
-			{
-				draw_scene_submesh(command_buffer, pipeline_layout, *sub_mesh);
-			}
-		}
-	}
-}
-
 glm::mat4 vulkan_style_projection(const glm::mat4 &proj)
 {
 	// Flip Y in clipspace. X = -1, Y = -1 is topLeft in Vulkan.
@@ -210,5 +91,36 @@ glm::mat4 vulkan_style_projection(const glm::mat4 &proj)
 	mat = glm::scale(mat, glm::vec3(1.0f, 1.0f, 0.5f));
 
 	return glm::translate(mat, glm::vec3(0.0f, 0.0f, 1.0f)) * proj;
+}
+
+std::string to_snake_case(const std::string &text)
+{
+	std::stringstream result;
+
+	for (const auto ch : text)
+	{
+		if (std::isalpha(ch))
+		{
+			if (std::isspace(ch))
+			{
+				result << "_";
+			}
+			else
+			{
+				if (std::isupper(ch))
+				{
+					result << "_";
+				}
+
+				result << static_cast<char>(std::tolower(ch));
+			}
+		}
+		else
+		{
+			result << ch;
+		}
+	}
+
+	return result.str();
 }
 }        // namespace vkb

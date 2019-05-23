@@ -42,13 +42,12 @@ class PBRMaterial : public Material
 
 	virtual std::type_index get_type() override;
 
-	glm::vec4 base_color_factor = glm::vec4(0.0, 0.0, 0.0, 0.0);
+	glm::vec4 base_color_factor{0.0f, 0.0f, 0.0f, 0.0f};
 
-	float metallic_factor = 0.0;
+	float metallic_factor{0.0f};
 
-	float roughness_factor = 0.0;
-
-	glm::vec3 emissive_factor = glm::vec3(0.0, 0.0, 0.0);
+	float roughness_factor{0.0f};
 };
+
 }        // namespace sg
 }        // namespace vkb

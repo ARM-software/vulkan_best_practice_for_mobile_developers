@@ -703,7 +703,7 @@ VkShaderModule load_shader_module(Context &context, const char *path)
 	std::string           info_log;
 
 	// Compile the GLSL source
-	if (!glsl_compiler.compile_to_spirv(find_shader_stage(file_ext), buffer, "main", spirv, info_log))
+	if (!glsl_compiler.compile_to_spirv(find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
 	{
 		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
 		return VK_NULL_HANDLE;

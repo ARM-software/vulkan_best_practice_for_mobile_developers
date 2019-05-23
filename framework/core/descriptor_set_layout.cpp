@@ -106,6 +106,8 @@ DescriptorSetLayout::DescriptorSetLayout(Device &device, const std::vector<Shade
 
 		// Store mapping between binding and the binding point
 		bindings_lookup.emplace(resource.binding, layout_binding);
+
+		resources_lookup.emplace(resource.name, resource.binding);
 	}
 
 	VkDescriptorSetLayoutCreateInfo create_info{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
@@ -129,7 +131,8 @@ DescriptorSetLayout::DescriptorSetLayout(DescriptorSetLayout &&other) :
     descriptor_pool{std::move(other.descriptor_pool)},
     handle{other.handle},
     bindings{std::move(other.bindings)},
-    bindings_lookup{std::move(other.bindings_lookup)}
+    bindings_lookup{std::move(other.bindings_lookup)},
+    resources_lookup{std::move(other.resources_lookup)}
 {
 	other.handle = VK_NULL_HANDLE;
 
@@ -173,5 +176,17 @@ bool DescriptorSetLayout::get_layout_binding(uint32_t binding_index, VkDescripto
 	binding = it->second;
 
 	return true;
+}
+
+bool DescriptorSetLayout::has_layout_binding(const std::string &name, VkDescriptorSetLayoutBinding &binding) const
+{
+	auto it = resources_lookup.find(name);
+
+	if (it == resources_lookup.end())
+	{
+		return false;
+	}
+
+	return get_layout_binding(it->second, binding);
 }
 }        // namespace vkb

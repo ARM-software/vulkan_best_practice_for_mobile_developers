@@ -38,7 +38,6 @@
 
 #include "cache_resource.h"
 #include "graphics_pipeline_state.h"
-#include "render_frame.h"
 #include "render_target.h"
 
 namespace vkb
@@ -96,7 +95,9 @@ class Device : public NonCopyable
 
 	VkResult wait_idle();
 
-	PipelineLayout &request_pipeline_layout(std::vector<ShaderModule> &&shader_modules);
+	ShaderModule &request_shader_module(VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const ShaderVariant &shader_variant);
+
+	PipelineLayout &request_pipeline_layout(const std::vector<ShaderModule *> &shader_modules);
 
 	GraphicsPipeline &request_graphics_pipeline(GraphicsPipelineState &                   graphics_state,
 	                                            const ShaderStageMap<SpecializationInfo> &specialization_infos);
@@ -143,6 +144,8 @@ class Device : public NonCopyable
 	/// A fence pool associated to the primary queue
 	std::unique_ptr<FencePool> fence_pool;
 
+	CacheResource<ShaderModule> cache_shader_modules;
+
 	CacheResource<PipelineLayout> cache_pipeline_layouts;
 
 	CacheResource<GraphicsPipeline> cache_graphics_pipelines;
@@ -174,13 +177,39 @@ struct hash<vkb::Device>
 };
 
 template <>
+struct hash<vkb::ShaderSource>
+{
+	std::size_t operator()(const vkb::ShaderSource &shader_source) const
+	{
+		std::size_t result = 0;
+
+		vkb::hash_combine(result, shader_source.get_id());
+
+		return result;
+	}
+};
+
+template <>
+struct hash<vkb::ShaderVariant>
+{
+	std::size_t operator()(const vkb::ShaderVariant &shader_variant) const
+	{
+		std::size_t result = 0;
+
+		vkb::hash_combine(result, shader_variant.get_id());
+
+		return result;
+	}
+};
+
+template <>
 struct hash<vkb::ShaderModule>
 {
 	std::size_t operator()(const vkb::ShaderModule &shader_module) const
 	{
 		std::size_t result = 0;
 
-		vkb::hash_combine(result, shader_module.get_handle());
+		vkb::hash_combine(result, shader_module.get_id());
 
 		return result;
 	}
@@ -495,7 +524,7 @@ struct hash<vkb::GraphicsPipelineState>
 
 		for (auto &stage : graphics_state.get_pipeline_layout().get_stages())
 		{
-			vkb::hash_combine(result, stage.get_handle());
+			vkb::hash_combine(result, stage->get_id());
 		}
 
 		// VkPipelineVertexInputStateCreateInfo

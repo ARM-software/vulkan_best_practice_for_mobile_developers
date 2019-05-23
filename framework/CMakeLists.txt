@@ -31,6 +31,7 @@ set(FRAMEWORK_FILES
     glsl_compiler.h
     spirv_reflection.h
     gltf_loader.h
+    buffer_pool.h
     debug_info.h
     fence_pool.h
     semaphore_pool.h
@@ -44,6 +45,7 @@ set(FRAMEWORK_FILES
     render_frame.h
     render_context.h
     vulkan_sample.h
+    render_pipeline.h
     timer.h
     # Source Files
     common.cpp
@@ -54,6 +56,7 @@ set(FRAMEWORK_FILES
     spirv_reflection.cpp
     gltf_loader.cpp
     debug_info.cpp
+    buffer_pool.cpp
     fence_pool.cpp
     semaphore_pool.cpp
     command_record.cpp
@@ -64,6 +67,7 @@ set(FRAMEWORK_FILES
     render_frame.cpp
     render_context.cpp
     vulkan_sample.cpp
+    render_pipeline.cpp
     timer.cpp)
 
 set(FONT_FILES

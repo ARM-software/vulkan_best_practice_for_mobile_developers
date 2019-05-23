@@ -73,19 +73,76 @@ struct ShaderResource
 	std::string name;
 };
 
+/**
+ * @brief Adds support for C style preprocessor macros to glsl shaders
+ *        enabling you to define or undefine certain symbols
+ */
+class ShaderVariant
+{
+  public:
+	size_t get_id() const;
+
+	/**
+	 * @brief Adds a define macro to the shader
+	 * @param def String which should go to the right of a define directive
+	 */
+	void add_define(const std::string &def);
+
+	/**
+	 * @brief Adds an undef macro to the shader
+	 * @param undef String which should go to the right of an undef directive
+	 */
+	void add_undefine(const std::string &undef);
+
+	const std::string &get_preamble() const;
+
+	const std::vector<std::string> &get_processes() const;
+
+	void clear();
+
+  private:
+	size_t id;
+
+	std::string preamble;
+
+	std::vector<std::string> processes;
+
+	void update_id();
+};
+
+class ShaderSource
+{
+  public:
+	ShaderSource() = default;
+
+	ShaderSource(std::vector<uint8_t> &&data);
+
+	size_t get_id() const;
+
+	const std::vector<uint8_t> &get_data() const;
+
+  private:
+	size_t id;
+
+	std::vector<uint8_t> data;
+};
+
+/**
+ * @brief Contains shader code, with an entry point, for a specific shader stage.
+ *        It is needed by a @ref PipelineLayout to create a @ref Pipeline
+ */
 class ShaderModule : public NonCopyable
 {
   public:
-	ShaderModule(Device &                    device,
-	             VkShaderStageFlagBits       stage,
-	             const std::vector<uint8_t> &glsl_source,
-	             const std::string &         entry_point);
+	ShaderModule(Device &              device,
+	             VkShaderStageFlagBits stage,
+	             const ShaderSource &  glsl_source,
+	             const std::string &   entry_point,
+	             const ShaderVariant & shader_variant);
 
 	ShaderModule(ShaderModule &&other);
 
-	~ShaderModule();
-
-	VkShaderModule get_handle() const;
+	size_t get_id() const;
 
 	VkShaderStageFlagBits get_stage() const;
 
@@ -102,12 +159,16 @@ class ShaderModule : public NonCopyable
   private:
 	Device &device;
 
-	VkShaderModule handle{VK_NULL_HANDLE};
+	/// Shader unique id
+	size_t id;
 
+	/// Stage of the shader (vertex, fragment, etc)
 	VkShaderStageFlagBits stage{};
 
+	/// Name of the main function
 	std::string entry_point;
 
+	/// Compiled source
 	std::vector<uint32_t> spirv;
 
 	std::vector<ShaderResource> resources;

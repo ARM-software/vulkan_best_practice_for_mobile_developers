@@ -486,29 +486,21 @@ sg::Scene GLTFLoader::load_scene()
 
 		for (auto &gltf_value : gltf_material.values)
 		{
-			if (gltf_value.first == "baseColorTexture")
+			if (gltf_value.first.find("Texture") != std::string::npos)
 			{
-				material->base_color_texture = textures.at(gltf_value.second.TextureIndex());
-			}
-			else if (gltf_value.first == "metallicRoughnessTexture")
-			{
-				material->metallic_roughness_texture = textures.at(gltf_value.second.TextureIndex());
+				std::string tex_name = to_snake_case(gltf_value.first);
+
+				material->textures[tex_name] = textures.at(gltf_value.second.TextureIndex());
 			}
 		}
 
 		for (auto &gltf_value : gltf_material.additionalValues)
 		{
-			if (gltf_value.first == "normalTexture")
+			if (gltf_value.first.find("Texture") != std::string::npos)
 			{
-				material->normal_texture = textures.at(gltf_value.second.TextureIndex());
-			}
-			else if (gltf_value.first == "occlusionTexture")
-			{
-				material->occlusion_texture = textures.at(gltf_value.second.TextureIndex());
-			}
-			else if (gltf_value.first == "emissiveTexture")
-			{
-				material->emissive_texture = textures.at(gltf_value.second.TextureIndex());
+				std::string tex_name = to_snake_case(gltf_value.first);
+
+				material->textures[tex_name] = textures.at(gltf_value.second.TextureIndex());
 			}
 		}
 
@@ -530,11 +522,11 @@ sg::Scene GLTFLoader::load_scene()
 
 			if (gltf_primitive.material < 0)
 			{
-				submesh->material = default_material.get();
+				submesh->set_material(*default_material);
 			}
 			else
 			{
-				submesh->material = materials.at(gltf_primitive.material);
+				submesh->set_material(*materials.at(gltf_primitive.material));
 			}
 
 			mesh->add_submesh(*submesh);
@@ -736,7 +728,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primiti
 		attrib.format = get_attribute_format(&model, attribute.second);
 		attrib.stride = to_u32(get_attribute_stride(&model, attribute.second));
 
-		submesh->vertex_attributes[attrib_name] = attrib;
+		submesh->set_attribute(attrib_name, attrib);
 	}
 
 	if (gltf_primitive.indices >= 0)
@@ -804,7 +796,31 @@ std::unique_ptr<sg::PBRMaterial> GLTFLoader::parse_material(const tinygltf::Mate
 		if (gltf_value.first == "emissiveFactor")
 		{
 			const auto &emissive_factor = gltf_value.second.number_array;
-			material->emissive_factor   = glm::vec3(emissive_factor[0], emissive_factor[1], emissive_factor[2]);
+
+			material->emissive = glm::vec3(emissive_factor[0], emissive_factor[1], emissive_factor[2]);
+		}
+		else if (gltf_value.first == "alphaMode")
+		{
+			if (gltf_value.second.string_value == "BLEND")
+			{
+				material->alpha_mode = vkb::sg::AlphaMode::Blend;
+			}
+			else if (gltf_value.second.string_value == "OPAQUE")
+			{
+				material->alpha_mode = vkb::sg::AlphaMode::Opaque;
+			}
+			else if (gltf_value.second.string_value == "MASK")
+			{
+				material->alpha_mode = vkb::sg::AlphaMode::Mask;
+			}
+		}
+		else if (gltf_value.first == "alphaCutoff")
+		{
+			material->alpha_cutoff = static_cast<float>(gltf_value.second.number_value);
+		}
+		else if (gltf_value.first == "doubleSided")
+		{
+			material->double_sided = gltf_value.second.bool_value;
 		}
 	}
 

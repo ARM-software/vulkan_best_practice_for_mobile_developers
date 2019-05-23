@@ -24,6 +24,7 @@
 #include <map>
 #include <numeric>
 
+#include "buffer_pool.h"
 #include "render_context.h"
 #include "utils.h"
 
@@ -70,8 +71,7 @@ const ImGuiWindowFlags Gui::info_flags = Gui::common_flags | ImGuiWindowFlags_No
 
 Gui::Gui(RenderContext &render_context, const float dpi_factor) :
     render_context{render_context},
-    dpi_factor{dpi_factor},
-    pipeline_layout{create_pipeline_layout(render_context.get_device(), "shaders/imgui.vert", "shaders/imgui.frag")}
+    dpi_factor{dpi_factor}
 {
 	ImGui::CreateContext();
 
@@ -187,6 +187,15 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 	sampler_info.addressModeW  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_info.borderColor   = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 
+	vkb::ShaderSource vert_shader(vkb::read_binary_file("shaders/imgui.vert"));
+	vkb::ShaderSource frag_shader(vkb::read_binary_file("shaders/imgui.frag"));
+
+	std::vector<vkb::ShaderModule *> shader_modules;
+	shader_modules.push_back(&device.request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vert_shader, {}));
+	shader_modules.push_back(&device.request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, frag_shader, {}));
+
+	pipeline_layout = &device.request_pipeline_layout(shader_modules);
+
 	sampler = std::make_unique<core::Sampler>(device, sampler_info);
 }
 
@@ -206,10 +215,10 @@ void Gui::update(const float delta_time)
 	ImGui::Render();
 
 	// Update vulkan buffers
-	update_buffers();
+	//update_buffers();
 }
 
-void Gui::update_buffers()
+void Gui::update_buffers(CommandBuffer &command_buffer)
 {
 	ImDrawData *draw_data = ImGui::GetDrawData();
 
@@ -237,45 +246,22 @@ void Gui::update_buffers()
 		idx_dst += cmd_list->IdxBuffer.Size;
 	}
 
-	auto &frame = render_context.get_active_frame();
-	// Get vertex buffer for the current image
-	auto &vertex_buffer = frame.gui_vertex_buffer;
+	auto vertex_allocation = render_context.get_active_frame().allocate_buffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertex_buffer_size);
 
-	// Upload to buffers to make writes visible to GPU
-	// If buffer size is not enough
-	if (vertex_buffer && vertex_buffer->get_size() < vertex_buffer_size)
-	{
-		// Destroy the old buffer before creating a new one
-		vertex_buffer.reset();
-	}
+	vertex_allocation.update(0, vertex_data);
 
-	if (!vertex_buffer)
-	{
-		// Create a buffer for vertices
-		vertex_buffer = std::make_unique<core::Buffer>(render_context.get_device(), vertex_buffer_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	}
+	std::vector<std::reference_wrapper<const core::Buffer>> buffers;
+	buffers.emplace_back(std::ref(vertex_allocation.get_buffer()));
 
-	// Update current buffer with new data
-	vertex_buffer->update(0, vertex_data);
+	std::vector<VkDeviceSize> offsets{vertex_allocation.get_offset()};
 
-	// Get vertex buffer for the current image
-	auto &index_buffer = frame.gui_index_buffer;
+	command_buffer.bind_vertex_buffers(0, buffers, offsets);
 
-	// If buffer size is not enough
-	if (index_buffer && index_buffer->get_size() < index_buffer_size)
-	{
-		// Destroy the old buffer before creating a new one
-		index_buffer.reset();
-	}
+	auto index_allocation = render_context.get_active_frame().allocate_buffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, index_buffer_size);
 
-	if (!index_buffer)
-	{
-		// Create a buffer for indices
-		index_buffer = std::make_unique<core::Buffer>(render_context.get_device(), index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	}
+	index_allocation.update(0, index_data);
 
-	// Update current buffer with new data
-	index_buffer->update(0, index_data);
+	command_buffer.bind_index_buffer(index_allocation.get_buffer(), index_allocation.get_offset(), VK_INDEX_TYPE_UINT16);
 }
 
 void Gui::resize(const uint32_t width, const uint32_t height) const
@@ -342,7 +328,7 @@ void Gui::draw(CommandBuffer &command_buffer)
 	command_buffer.set_depth_stencil_state(depth_state);
 
 	// Bind pipeline layout
-	command_buffer.bind_pipeline_layout(pipeline_layout);
+	command_buffer.bind_pipeline_layout(*pipeline_layout);
 
 	command_buffer.bind_image(*font_image_view, *sampler, 0, 0, 0);
 
@@ -370,6 +356,8 @@ void Gui::draw(CommandBuffer &command_buffer)
 	// Push constants
 	command_buffer.push_constants(0, push_transform);
 
+	update_buffers(command_buffer);
+
 	// Render commands
 	ImDrawData *draw_data     = ImGui::GetDrawData();
 	int32_t     vertex_offset = 0;
@@ -377,24 +365,6 @@ void Gui::draw(CommandBuffer &command_buffer)
 
 	if (draw_data->CmdListsCount > 0)
 	{
-		auto &frame = render_context.get_active_frame();
-
-		// Vertex buffers
-		assert(frame.gui_vertex_buffer && "Gui vertex buffer is invalid");
-		const auto &vertex_buffer = *frame.gui_vertex_buffer;
-
-		std::vector<std::reference_wrapper<const core::Buffer>> buffers;
-		buffers.emplace_back(std::ref(vertex_buffer));
-
-		std::vector<VkDeviceSize> offsets{0};
-
-		command_buffer.bind_vertex_buffers(0, buffers, offsets);
-
-		// Index buffer
-		assert(frame.gui_index_buffer && "Gui index buffer is invalid");
-		const auto &index_buffer = *frame.gui_index_buffer;
-		command_buffer.bind_index_buffer(index_buffer, 0, VK_INDEX_TYPE_UINT16);
-
 		for (int32_t i = 0; i < draw_data->CmdListsCount; i++)
 		{
 			const ImDrawList *cmd_list = draw_data->CmdLists[i];

@@ -20,11 +20,10 @@
 
 #pragma once
 
+#include "render_pipeline.h"
 #include "vulkan_sample.h"
 
 #include "scene_graph/components/camera.h"
-
-#include "utils.h"
 
 class AFBCSample : public vkb::VulkanSample
 {
@@ -38,11 +37,7 @@ class AFBCSample : public vkb::VulkanSample
 	virtual void update(float delta_time) override;
 
   private:
-	vkb::VertPushConstant vs_push_constant;
-
-	vkb::FragPushConstant fs_push_constant;
-
-	vkb::PipelineLayout *pipeline_layout{nullptr};
+	std::unique_ptr<vkb::RenderPipeline> render_pipeline{nullptr};
 
 	vkb::sg::Camera *camera{nullptr};
 
