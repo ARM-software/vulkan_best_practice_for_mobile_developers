@@ -93,8 +93,8 @@ class Gui
 		/// Per-statistic max values
 		std::map<StatIndex, GraphData> graph_map{
 		    {StatIndex::frame_times,
-		     {/* label = */ "Frame time: %3.1f",
-		      /* scale_factor = */ 1}},
+		     {/* label = */ "Frame time: %3.1f ms",
+		      /* scale_factor = */ 1000.0f}},
 		    {StatIndex::cpu_cycles,
 		     {/* label = */ "CPU cycles: %4.1f M/s",
 		      /* scale_factor = */ float(1e-6),

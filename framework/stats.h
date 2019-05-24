@@ -24,6 +24,7 @@
 
 #include <cstdint>
 #include <ctime>
+#include <future>
 #include <map>
 #include <set>
 #include <vector>
@@ -102,6 +103,27 @@ struct StatData
 
 using StatDataMap = std::unordered_map<StatIndex, StatData, StatIndexHash>;
 
+enum class CounterSamplingMode
+{
+	/// Sample counters only when calling update()
+	Polling,
+	/// Sample counters continuously, update circular buffers when calling update()
+	Continuous
+};
+
+struct CounterSamplingConfig
+{
+	/// Sampling mode (polling or continuous)
+	CounterSamplingMode mode;
+
+	/// Sampling interval in continuous mode
+	std::chrono::milliseconds interval{1};
+
+	/// Speed of circular buffer updates in continuous mode;
+	/// at speed = 1.0f a new sample is displayed over 1 second.
+	float speed{0.5f};
+};
+
 /*
  * @brief Helper class for querying statistics about the CPU and the GPU
  */
@@ -111,9 +133,17 @@ class Stats
 	/**
 	 * @brief Constructs a Stats object
 	 * @param enabled_stats Set of stats to be collected
+	 * @param sampling_config Sampling mode configuration (polling or continuous)
 	 * @param buffer_size Size of the circular buffers
 	 */
-	Stats(const std::set<StatIndex> &enabled_stats, size_t buffer_size = 16);
+	Stats(const std::set<StatIndex> &enabled_stats,
+	      CounterSamplingConfig      sampling_config = {CounterSamplingMode::Polling},
+	      size_t                     buffer_size     = 16);
+
+	/**
+	 * @brief Destroys the Stats object
+	 */
+	~Stats();
 
 	/**
 	 * @brief Resizes the stats buffers according to the width of the screen
@@ -151,20 +181,61 @@ class Stats
 	void update();
 
   private:
+	struct MeasurementSample
+	{
+		hwcpipe::CpuMeasurements cpu{};
+		hwcpipe::GpuMeasurements gpu{};
+		float                    delta_time{0.0f};
+	};
+
 	/// Stats to be enabled
 	std::set<StatIndex> enabled_stats;
+
+	/// Counter sampling configuration
+	CounterSamplingConfig sampling_config;
 
 	/// Mapping of stats to their availability and value getters
 	StatDataMap stat_data;
 
-	/// Timer
-	Timer timer;
+	/// Timer used in the main thread to compute delta time
+	Timer main_timer;
+
+	/// Timer used by the worker thread to throttle counter sampling
+	Timer worker_timer;
+
+	/// Alpha smoothing for running average
+	float alpha_smoothing{0.2f};
 
 	/// Circular buffers for counter data
 	std::map<StatIndex, std::vector<float>> counters{};
 
 	/// Profiler to gather CPU and GPU performance data
 	std::unique_ptr<hwcpipe::HWCPipe> hwcpipe{};
+
+	/// Worker thread for continuous sampling
+	std::thread worker_thread;
+
+	/// Promise to stop the worker thread
+	std::unique_ptr<std::promise<void>> stop_worker;
+
+	/// A mutex for accessing measurements during continuous sampling
+	std::mutex continuous_sampling_mutex;
+
+	/// The samples read during continuous sampling
+	std::vector<MeasurementSample> continuous_samples;
+
+	/// A flag specifying if the worker thread should add entries to continuous_samples
+	bool should_add_to_continuous_samples{false};
+
+	/// The samples waiting to be displayed
+	std::vector<MeasurementSample> pending_samples;
+
+	/// The worker thread function for continuous sampling;
+	/// it adds a new entry to continuous_samples at every interval
+	void continuous_sampling_worker(std::future<void> should_terminate);
+
+	/// Updates circular buffers for CPU and GPU counters
+	void push_sample(const MeasurementSample &sample);
 };
 
 }        // namespace vkb
