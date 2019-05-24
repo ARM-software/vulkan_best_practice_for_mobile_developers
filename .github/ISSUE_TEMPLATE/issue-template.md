@@ -31,6 +31,7 @@ If applicable, add screenshots to help explain your problem.
  - Device: [e.g. Samsung S10]
  - OS: [e.g. Android 8.0]
  - GPU: [e.g. Mali G72]
+ - Driver version [Report GL_VENDOR and GL_VERSION from chrome://gpu/ on the device]
 
 **Additional context**
 Add any other context about the problem here.
