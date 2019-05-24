@@ -34,46 +34,115 @@ namespace vkb
 {
 RenderPipeline::RenderPipeline(RenderContext &render_context, sg::Scene &scene, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader) :
     render_context{render_context},
-    scene{scene},
+    meshes{scene.get_components<sg::Mesh>()},
     vertex_shader{std::move(vertex_shader)},
     fragment_shader{std::move(fragment_shader)}
 {
 	global_uniform.light_pos   = glm::vec4(500.0f, 1550.0f, 0.0f, 1.0);
 	global_uniform.light_color = glm::vec4(1.0, 1.0, 1.0, 1.0);
+
+	Device &device = render_context.get_device();
+
+	// Build all shader variance upfront
+	for (auto &mesh : meshes)
+	{
+		for (auto &sub_mesh : mesh->get_submeshes())
+		{
+			ShaderModule &vert_shader_module = device.request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, this->vertex_shader, sub_mesh->get_shader_variant());
+			ShaderModule &frag_shader_module = device.request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, this->fragment_shader, sub_mesh->get_shader_variant());
+
+			vert_shader_module.set_resource_dynamic("GlobalUniform");
+			frag_shader_module.set_resource_dynamic("GlobalUniform");
+		}
+	}
 }
 
 void RenderPipeline::draw_scene(CommandBuffer &command_buffer, sg::Camera &camera)
 {
-	global_uniform.camera_view_proj = vkb::vulkan_style_projection(camera.get_projection()) * camera.get_view();
+	std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> opaque_nodes;
+	std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> transparent_nodes;
 
-	auto meshes = scene.get_components<sg::Mesh>();
+	glm::mat4 camera_transform = camera.get_node()->get_transform().get_world_matrix();
+
+	// Sort objects based on distance from camera and type
+	for (auto &mesh : meshes)
+	{
+		for (auto &node : mesh->get_nodes())
+		{
+			glm::mat4 node_transform = node->get_transform().get_world_matrix();
+
+			const sg::AABB &mesh_bounds = mesh->get_bounds();
+
+			sg::AABB world_bounds{mesh_bounds.get_min(), mesh_bounds.get_max()};
+			world_bounds.transform(node_transform);
+
+			float distance = glm::length(glm::vec3(camera_transform[3]) - world_bounds.get_center());
+
+			for (auto &sub_mesh : mesh->get_submeshes())
+			{
+				if (sub_mesh->get_material()->alpha_mode == sg::AlphaMode::Blend)
+				{
+					transparent_nodes.emplace(distance, std::make_pair(node, sub_mesh));
+				}
+				else
+				{
+					opaque_nodes.emplace(distance, std::make_pair(node, sub_mesh));
+				}
+			}
+		}
+	}
+
+	global_uniform.camera_view_proj = vkb::vulkan_style_projection(camera.get_projection()) * camera.get_view();
 
 	auto &render_frame = render_context.get_active_frame();
 
-	// draw all meshes in the scene
-	for (auto &mesh : meshes)
+	// Draw opaque objects in front-to-back order
+	for (auto node_it = opaque_nodes.begin(); node_it != opaque_nodes.end(); node_it++)
 	{
-		// draw mesh for each node
-		for (auto &node : mesh->get_nodes())
-		{
-			auto &transform = node->get_component<vkb::sg::Transform>();
+		auto &transform = node_it->second.first->get_transform();
 
-			auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GlobalUniform));
+		auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GlobalUniform));
 
-			global_uniform.model = transform.get_world_matrix();
+		global_uniform.model = transform.get_world_matrix();
 
-			allocation.update(0, global_uniform);
+		allocation.update(0, global_uniform);
 
-			command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
+		command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
 
-			auto &mesh = node->get_component<vkb::sg::Mesh>();
+		draw_scene_submesh(command_buffer, *node_it->second.second);
+	}
 
-			// draw each submesh of the current mesh
-			for (auto &sub_mesh : mesh.get_submeshes())
-			{
-				draw_scene_submesh(command_buffer, *sub_mesh);
-			}
-		}
+	// Enable alpha blending
+	ColorBlendAttachmentState color_blend_attachment{};
+	color_blend_attachment.blend_enable           = VK_TRUE;
+	color_blend_attachment.src_color_blend_factor = VK_BLEND_FACTOR_SRC_ALPHA;
+	color_blend_attachment.dst_color_blend_factor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	color_blend_attachment.src_alpha_blend_factor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+
+	ColorBlendState color_blend_state{};
+	color_blend_state.attachments = {color_blend_attachment};
+
+	command_buffer.set_color_blend_state(color_blend_state);
+
+	DepthStencilState depth_stencil_state{};
+	depth_stencil_state.depth_write_enable = VK_FALSE;
+
+	command_buffer.set_depth_stencil_state(depth_stencil_state);
+
+	// Draw transparent objects in back-to-front order
+	for (auto node_it = transparent_nodes.rbegin(); node_it != transparent_nodes.rend(); node_it++)
+	{
+		auto &transform = node_it->second.first->get_transform();
+
+		auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GlobalUniform));
+
+		global_uniform.model = transform.get_world_matrix();
+
+		allocation.update(0, global_uniform);
+
+		command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
+
+		draw_scene_submesh(command_buffer, *node_it->second.second);
 	}
 }
 
@@ -89,30 +158,6 @@ void RenderPipeline::draw_scene_submesh(CommandBuffer &command_buffer, sg::SubMe
 	}
 
 	command_buffer.set_rasterization_state(rasterization_state);
-
-	ColorBlendAttachmentState color_blend_attachment{};
-
-	if (sub_mesh.get_material()->alpha_mode == sg::AlphaMode::Blend)
-	{
-		color_blend_attachment.blend_enable           = VK_TRUE;
-		color_blend_attachment.src_color_blend_factor = VK_BLEND_FACTOR_SRC_ALPHA;
-		color_blend_attachment.dst_color_blend_factor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-		color_blend_attachment.src_alpha_blend_factor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-	}
-
-	ColorBlendState color_blend_state{};
-	color_blend_state.attachments = {color_blend_attachment};
-
-	command_buffer.set_color_blend_state(color_blend_state);
-
-	DepthStencilState depth_stencil_state{};
-
-	if (sub_mesh.get_material()->alpha_mode == sg::AlphaMode::Blend)
-	{
-		depth_stencil_state.depth_write_enable = VK_FALSE;
-	}
-
-	command_buffer.set_depth_stencil_state(depth_stencil_state);
 
 	ShaderModule &vert_shader_module = device.request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vertex_shader, sub_mesh.get_shader_variant());
 	ShaderModule &frag_shader_module = device.request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, fragment_shader, sub_mesh.get_shader_variant());

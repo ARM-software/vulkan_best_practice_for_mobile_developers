@@ -44,10 +44,7 @@ void Node::set_parent(Node &p)
 {
 	parent = &p;
 
-	if (has_component<Transform>())
-	{
-		get_component<Transform>().invalidate_world_matrix();
-	}
+	transform.invalidate_world_matrix();
 }
 
 Node *Node::get_parent() const
@@ -68,6 +65,7 @@ const std::vector<Node *> &Node::get_children() const
 void Node::set_component(Component &component)
 {
 	auto it = components.find(component.get_type());
+
 	if (it != components.end())
 	{
 		it->second = &component;

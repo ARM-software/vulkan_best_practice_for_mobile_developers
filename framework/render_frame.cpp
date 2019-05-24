@@ -69,11 +69,13 @@ void RenderFrame::reset()
 		command_pool.second.reset();
 	}
 
-	for (auto &buffer_pool : buffer_pools)
+	for (auto &buffer_pool_it : buffer_pools)
 	{
-		buffer_pool.second.first.reset();
+		auto &[buffer_pool, buffer_block] = buffer_pool_it.second;
 
-		buffer_pool.second.second = nullptr;
+		buffer_pool.reset();
+
+		buffer_block = nullptr;
 	}
 
 	semaphore_pool.reset();

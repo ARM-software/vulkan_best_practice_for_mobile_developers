@@ -26,40 +26,79 @@
 #include <vector>
 
 #include "scene_graph/component.h"
+#include "scene_graph/components/sub_mesh.h"
 
-#include "scene_graph/components/aabb.h"
+#include "common.h"
 
 namespace vkb
 {
 namespace sg
 {
-class SubMesh;
-
-class Mesh : public Component
+/**
+ * @brief Axis Aligned Bounding Box
+ */
+class AABB : public Component
 {
   public:
-	Mesh(const std::string &name);
+	AABB();
 
-	virtual ~Mesh() = default;
+	AABB(const glm::vec3 &min, const glm::vec3 &max);
+
+	virtual ~AABB() = default;
 
 	virtual std::type_index get_type() override;
 
-	const AABB &get_bounds() const;
+	/**
+	 * @brief Update the bounding box based on the given vertex position
+	 * @param point The 3D position of a point
+	 */
+	void update(const glm::vec3 &point);
 
-	void add_submesh(SubMesh &submesh);
+	/**
+	 * @brief Update the bounding box based on the given submesh vertices
+	 * @param submesh The submesh object
+	 */
+	void update(const SubMesh &submesh);
 
-	const std::vector<SubMesh *> &get_submeshes() const;
+	/**
+	 * @brief Apply a given matrix transformation to the bounding box
+	 * @param transform The matrix transform to apply
+	 */
+	void transform(glm::mat4 &transform);
 
-	void add_node(Node &node);
+	/**
+	 * @brief Scale vector of the bounding box
+	 * @return vector in 3D space
+	 */
+	glm::vec3 get_scale() const;
 
-	const std::vector<Node *> &get_nodes() const;
+	/**
+	 * @brief Center position of the bounding box
+	 * @return vector in 3D space
+	 */
+	glm::vec3 get_center() const;
+
+	/**
+	 * @brief Minimum position of the bounding box
+	 * @return vector in 3D space
+	 */
+	glm::vec3 get_min() const;
+
+	/**
+	 * @brief Maximum position of the bounding box
+	 * @return vector in 3D space
+	 */
+	glm::vec3 get_max() const;
+
+	/**
+	 * @brief Resets the min and max position coordinates
+	 */
+	void reset();
 
   private:
-	AABB bounds;
+	glm::vec3 min;
 
-	std::vector<SubMesh *> submeshes;
-
-	std::vector<Node *> nodes;
+	glm::vec3 max;
 };
 }        // namespace sg
 }        // namespace vkb

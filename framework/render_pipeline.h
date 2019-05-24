@@ -25,6 +25,7 @@
 #include "render_frame.h"
 
 #include "scene_graph/components/camera.h"
+#include "scene_graph/components/mesh.h"
 #include "scene_graph/scene.h"
 
 #include "utils.h"
@@ -70,7 +71,7 @@ class RenderPipeline : public NonCopyable
   private:
 	RenderContext &render_context;
 
-	sg::Scene &scene;
+	std::vector<sg::Mesh *> meshes;
 
 	ShaderSource vertex_shader;
 

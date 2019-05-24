@@ -59,25 +59,25 @@ inline void read(std::istringstream &is, T &first_arg, Args &... args)
 
 CommandReplay::CommandReplay()
 {
-	stream_commands[CommandType::Begin]              = std::bind(&CommandReplay::begin, *this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::End]                = std::bind(&CommandReplay::end, *this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::NextSubpass]        = std::bind(&CommandReplay::next_subpass, *this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::EndRenderPass]      = std::bind(&CommandReplay::end_render_pass, *this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::PushConstants]      = std::bind(&CommandReplay::push_constants, *this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::BindVertexBuffers]  = std::bind(&CommandReplay::bind_vertex_buffers, *this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::BindIndexBuffer]    = std::bind(&CommandReplay::bind_index_buffer, *this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::SetViewport]        = std::bind(&CommandReplay::set_viewport, *this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::SetScissor]         = std::bind(&CommandReplay::set_scissor, *this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::SetLineWidth]       = std::bind(&CommandReplay::set_line_width, *this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::SetDepthBias]       = std::bind(&CommandReplay::set_depth_bias, *this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::SetBlendConstants]  = std::bind(&CommandReplay::set_blend_constants, *this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::SetDepthBounds]     = std::bind(&CommandReplay::set_depth_bounds, *this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::Draw]               = std::bind(&CommandReplay::draw, *this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::DrawIndexed]        = std::bind(&CommandReplay::draw_indexed, *this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::UpdateBuffer]       = std::bind(&CommandReplay::update_buffer, *this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::CopyImage]          = std::bind(&CommandReplay::copy_image, *this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::CopyBufferToImage]  = std::bind(&CommandReplay::copy_buffer_to_image, *this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::ImageMemoryBarrier] = std::bind(&CommandReplay::image_memory_barrier, *this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::Begin]              = std::bind(&CommandReplay::begin, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::End]                = std::bind(&CommandReplay::end, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::NextSubpass]        = std::bind(&CommandReplay::next_subpass, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::EndRenderPass]      = std::bind(&CommandReplay::end_render_pass, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::PushConstants]      = std::bind(&CommandReplay::push_constants, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::BindVertexBuffers]  = std::bind(&CommandReplay::bind_vertex_buffers, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::BindIndexBuffer]    = std::bind(&CommandReplay::bind_index_buffer, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::SetViewport]        = std::bind(&CommandReplay::set_viewport, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::SetScissor]         = std::bind(&CommandReplay::set_scissor, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::SetLineWidth]       = std::bind(&CommandReplay::set_line_width, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::SetDepthBias]       = std::bind(&CommandReplay::set_depth_bias, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::SetBlendConstants]  = std::bind(&CommandReplay::set_blend_constants, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::SetDepthBounds]     = std::bind(&CommandReplay::set_depth_bounds, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::Draw]               = std::bind(&CommandReplay::draw, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::DrawIndexed]        = std::bind(&CommandReplay::draw_indexed, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::UpdateBuffer]       = std::bind(&CommandReplay::update_buffer, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::CopyImage]          = std::bind(&CommandReplay::copy_image, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::CopyBufferToImage]  = std::bind(&CommandReplay::copy_buffer_to_image, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::ImageMemoryBarrier] = std::bind(&CommandReplay::image_memory_barrier, this, std::placeholders::_1, std::placeholders::_2);
 }
 
 void CommandReplay::play(CommandBuffer &command_buffer, CommandRecord &recorder)
