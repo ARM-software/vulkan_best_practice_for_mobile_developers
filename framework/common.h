@@ -114,6 +114,20 @@ bool is_depth_only_format(VkFormat format);
 bool is_depth_stencil_format(VkFormat format);
 
 /**
+ * @brief Helper function to determine if a Vulkan descriptor type is a dynamic storage buffer or dynamic uniform buffer.
+ * @param descriptor_type Vulkan descriptor type to check.
+ * @return True if type is dynamic buffer, false otherwise.
+ */
+bool is_dynamic_buffer_descriptor_type(VkDescriptorType descriptor_type);
+
+/**
+ * @brief Helper function to determine if a Vulkan descriptor type is a buffer (either uniform or storage buffer, dynamic or not).
+ * @param descriptor_type Vulkan descriptor type to check.
+ * @return True if type is buffer, false otherwise.
+ */
+bool is_buffer_descriptor_type(VkDescriptorType descriptor_type);
+
+/**
  * @brief Helper function to get the bits per pixel of a Vulkan format.
  * @param format Vulkan format to check.
  * @return The bits per pixel of the given format, -1 for invalid formats.

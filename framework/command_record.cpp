@@ -69,10 +69,10 @@ void CommandRecord::reset()
 
 	graphics_pipeline_state.reset();
 	resource_binding_state.reset();
+	descriptor_set_layout_state.clear();
 
 	render_pass_bindings.clear();
 	descriptor_set_bindings.clear();
-	descriptor_set_layout_state.clear();
 	pipeline_bindings.clear();
 }
 
@@ -117,6 +117,8 @@ void vkb::CommandRecord::begin_render_pass(const RenderTarget &render_target, co
 {
 	// Reset graphics pipeline state
 	graphics_pipeline_state.reset();
+	resource_binding_state.reset();
+	descriptor_set_layout_state.clear();
 
 	RenderPassBinding render_pass_binding{stream.tellp(), render_target};
 	render_pass_binding.load_store_infos = load_store_infos;
@@ -465,12 +467,11 @@ void CommandRecord::FlushDescriptorState()
 					auto &resource_info = element_it.second;
 
 					// Get buffer info
-					if (resource_info.is_buffer())
+					if (resource_info.is_buffer() && is_buffer_descriptor_type(binding_info.descriptorType))
 					{
 						VkDescriptorBufferInfo buffer_info = resource_info.get_buffer_info();
 
-						if (binding_info.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC ||
-						    binding_info.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
+						if (is_dynamic_buffer_descriptor_type(binding_info.descriptorType))
 						{
 							dynamic_offsets.push_back(buffer_info.offset);
 

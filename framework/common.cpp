@@ -89,6 +89,19 @@ bool is_depth_stencil_format(VkFormat format)
 	       is_depth_only_format(format);
 }
 
+bool is_dynamic_buffer_descriptor_type(VkDescriptorType descriptor_type)
+{
+	return descriptor_type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC ||
+	       descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+}
+
+bool is_buffer_descriptor_type(VkDescriptorType descriptor_type)
+{
+	return descriptor_type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER ||
+	       descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER ||
+	       is_dynamic_buffer_descriptor_type(descriptor_type);
+}
+
 int32_t get_bits_per_pixel(VkFormat format)
 {
 	switch (format)
