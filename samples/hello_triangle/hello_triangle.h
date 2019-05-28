@@ -101,10 +101,6 @@ struct Context
 	std::vector<VkSemaphore> recycled_semaphores;
 
 	std::vector<PerFrame> per_frame;
-
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-	AAssetManager *asset_manager = nullptr;
-#endif
 };
 
 class HelloTriangle : public vkb::Application

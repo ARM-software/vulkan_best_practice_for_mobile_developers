@@ -21,6 +21,7 @@
 #include "surface_rotation.h"
 
 #include "gui.h"
+#include "platform/file.h"
 #include "platform/platform.h"
 #include "stats.h"
 
@@ -64,8 +65,8 @@ bool SurfaceRotation::prepare(vkb::Platform &platform)
 	render_context = std::make_unique<SurfaceRotationRenderContext>(*device, std::move(swapchain), pre_rotate);
 	render_context->prepare();
 
-	vkb::ShaderSource vert_shader(vkb::read_binary_file("shaders/base.vert"));
-	vkb::ShaderSource frag_shader(vkb::read_binary_file("shaders/base.frag"));
+	vkb::ShaderSource vert_shader(vkb::file::read_asset("shaders/base.vert"));
+	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/base.frag"));
 
 	render_pipeline = std::make_unique<vkb::RenderPipeline>(*render_context, scene, std::move(vert_shader), std::move(frag_shader));
 

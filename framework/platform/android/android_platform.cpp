@@ -327,14 +327,14 @@ int32_t on_input_event(android_app *app, AInputEvent *input_event)
 
 AndroidPlatform::AndroidPlatform(android_app *app) :
     app{app}
-{}
-
-bool AndroidPlatform::initialize(std::unique_ptr<Application> &&appplication)
 {
 	auto android_logger = spdlog::android_logger_mt("android", PROJECT_NAME);
 	android_logger->set_pattern(LOGGER_FORMAT);
 	spdlog::set_default_logger(android_logger);
+}
 
+bool AndroidPlatform::initialize(std::unique_ptr<Application> &&appplication)
+{
 	app->onAppCmd                                  = on_app_cmd;
 	app->onInputEvent                              = on_input_event;
 	app->activity->callbacks->onContentRectChanged = on_content_rect_changed;

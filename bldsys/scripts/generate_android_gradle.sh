@@ -35,7 +35,7 @@ cmake -DPROJECT_NAME="vulkan_best_practice" \
 	  -DJAVA_DIRS=$ROOT_DIR/vulkan_best_practice/android/java \
 	  -DRES_DIRS=$ROOT_DIR/vulkan_best_practice/android/res \
 	  -DOUTPUT_DIR=$BUILD_DIR \
-	  -DASSET_DIRS=$ROOT_DIR/assets \
+	  -DASSET_DIRS="" \
 	  -DJNI_LIBS_DIRS="" \
 	  -DNATIVE_SCRIPT=$ROOT_DIR/CMakeLists.txt \
 	  -DNATIVE_ARGUMENTS="ANDROID_TOOLCHAIN=clang;ANDROID_STL=c++_static" \

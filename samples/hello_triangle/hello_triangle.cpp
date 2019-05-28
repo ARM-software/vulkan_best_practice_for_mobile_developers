@@ -21,11 +21,8 @@
 #include "hello_triangle.h"
 #include "common.h"
 #include "glsl_compiler.h"
+#include "platform/file.h"
 #include "platform/platform.h"
-
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-#	include "platform/android/android_platform.h"
-#endif
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 /// @brief A debug callback called from Vulkan validation layers.
@@ -634,65 +631,15 @@ void init_render_pass(Context &context)
 	VK_CHECK(vkCreateRenderPass(context.device, &rp_info, nullptr, &context.render_pass));
 }
 
-/**
- * @brief Helper function to read a binary file
- *
- * @param path The path for the file (relative to the assets directory)
- *
- * @return A vector filled with data read from the file
- */
-std::vector<uint8_t> read_binary_file(Context &context, const std::string &path)
-{
-	std::vector<uint8_t> data;
-
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-	if (!context.asset_manager)
-	{
-		throw std::runtime_error("Asset manager does not exist.");
-	}
-
-	AAsset *asset = AAssetManager_open(context.asset_manager, path.c_str(), AASSET_MODE_BUFFER);
-	if (!asset)
-	{
-		throw std::runtime_error("AAssetManager_open() failed to load file: " + path);
-	}
-
-	size_t size = AAsset_getLength(asset);
-	if (size <= 0)
-	{
-		AAsset_close(asset);
-		throw std::runtime_error("Invalid file size: " + path);
-	}
-
-	data.resize(size);
-
-	AAsset_read(asset, data.data(), size);
-	AAsset_close(asset);
-#else
-	std::ifstream file;
-
-	file.open("assets/" + path, std::ios::in | std::ios::binary);
-
-	if (!file.is_open())
-	{
-		throw std::runtime_error("Failed to load file: " + path);
-	}
-
-	data.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
-#endif
-
-	return data;
-}
-
 /// @brief Helper function to load a shader module.
-/// @param context A Vulkan context with a device and an asset manager already set up.
+/// @param context A Vulkan context with a device.
 /// @param path The path for the shader (relative to the assets directory).
 /// @returns A VkShaderModule handle. Aborts execution if shader creation fails.
 VkShaderModule load_shader_module(Context &context, const char *path)
 {
 	vkb::GLSLCompiler glsl_compiler;
 
-	std::vector<uint8_t> buffer = read_binary_file(context, path);
+	auto buffer = vkb::file::read_asset(path);
 
 	std::string file_ext = path;
 
@@ -1064,12 +1011,6 @@ HelloTriangle::~HelloTriangle()
 
 bool HelloTriangle::prepare(vkb::Platform &platform)
 {
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-	auto &android_platform = dynamic_cast<vkb::AndroidPlatform &>(platform);
-
-	context.asset_manager = android_platform.get_activity()->assetManager;
-#endif
-
 	init_instance(context, {VK_KHR_SURFACE_EXTENSION_NAME}, {});
 
 	context.surface = platform.create_surface(context.instance);

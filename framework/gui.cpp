@@ -25,6 +25,7 @@
 #include <numeric>
 
 #include "buffer_pool.h"
+#include "platform/file.h"
 #include "render_context.h"
 #include "utils.h"
 
@@ -187,8 +188,8 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 	sampler_info.addressModeW  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_info.borderColor   = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 
-	vkb::ShaderSource vert_shader(vkb::read_binary_file("shaders/imgui.vert"));
-	vkb::ShaderSource frag_shader(vkb::read_binary_file("shaders/imgui.frag"));
+	vkb::ShaderSource vert_shader(vkb::file::read_asset("shaders/imgui.vert"));
+	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/imgui.frag"));
 
 	std::vector<vkb::ShaderModule *> shader_modules;
 	shader_modules.push_back(&device.request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vert_shader, {}));

@@ -26,7 +26,6 @@
 #include <imgui.h>
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
-#	include "gltf_loader.h"
 #	include "platform/android/android_platform.h"
 #endif
 
@@ -131,11 +130,6 @@ bool VulkanSample::prepare(Platform &platform)
 
 	get_debug_info().insert<field::MinMax, float>("fps", fps);
 	get_debug_info().insert<field::MinMax, float>("frame_time", frame_time);
-
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-	auto &android_platform  = dynamic_cast<AndroidPlatform &>(platform);
-	tinygltf::asset_manager = android_platform.get_activity()->assetManager;
-#endif
 
 	LOGI("Initializing context");
 

@@ -126,15 +126,6 @@ int32_t get_bits_per_pixel(VkFormat format);
  * @return The string to return.
  */
 const std::string convert_format_to_string(VkFormat format);
-
-/**
- * @brief Helper function to read a binary file
- *
- * @param path The path for the file (relative to the assets directory)
- * 
- * @return A vector filled with data read from the file
- */
-std::vector<uint8_t> read_binary_file(const std::string &path);
 }        // namespace vkb
 
 namespace vkb
@@ -214,7 +205,6 @@ class VulkanException : std::runtime_error
 }        // namespace vkb
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
-#	include <android/asset_manager_jni.h>
 #	include <android/native_window_jni.h>
 #	include <android_native_app_glue.h>
 #else

@@ -33,15 +33,6 @@
 #include "scene_graph/node.h"
 #include "scene_graph/scene.h"
 
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-#	include <android/asset_manager.h>
-
-namespace tinygltf
-{
-extern AAssetManager *asset_manager;
-}
-#endif
-
 #define TINYGLTF_NO_STB_IMAGE
 #define TINYGLTF_NO_STB_IMAGE_WRITE
 #define TINYGLTF_NO_EXTERNAL_IMAGE

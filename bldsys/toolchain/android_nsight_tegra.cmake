@@ -65,7 +65,5 @@ set(CMAKE_GENERATOR_TOOLSET DefaultClang)
 # Tell CMake we have our java source in the 'java' directory
 set(CMAKE_ANDROID_JAVA_SOURCE_DIR ${CMAKE_SOURCE_DIR}/bldsys/android/vulkan_best_practice/src/main/java)
 
-set(CMAKE_ANDROID_ASSETS_DIRECTORIES ${CMAKE_SOURCE_DIR}/assets)
-
 # Tell CMake we have use Gradle as our default build system
 set(CMAKE_ANDROID_BUILD_SYSTEM GradleBuild)

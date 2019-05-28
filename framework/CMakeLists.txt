@@ -17,7 +17,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
- 
+
 cmake_minimum_required(VERSION 3.8)
 
 project(framework LANGUAGES C CXX)
@@ -169,6 +169,7 @@ set(PLATFORM_FILES
     # Header Files
     platform/application.h
     platform/platform.h
+    platform/file.h
     platform/thread_pool.h
     platform/concurrent_queue.h
     platform/concurrent_queue.inl
@@ -177,6 +178,7 @@ set(PLATFORM_FILES
     # Source Files
     platform/application.cpp
     platform/platform.cpp
+    platform/file.cpp
     platform/thread_pool.cpp
     platform/input_events.cpp
     platform/configuration.cpp)
@@ -187,7 +189,8 @@ if(ANDROID)
         # Header Files
         platform/android/android_platform.h
         # Source Files
-        platform/android/android_platform.cpp)
+        platform/android/android_platform.cpp
+        platform/android/file_android.cpp)
 else()
     list(APPEND PLATFORM_FILES
         # Header Files
@@ -200,13 +203,15 @@ else()
         # Header Files
         platform/windows/windows_platform.h
         # Source Files
-        platform/windows/windows_platform.cpp)
+        platform/windows/windows_platform.cpp
+        platform/windows/file_windows.cpp)
     else()
         list(APPEND PLATFORM_FILES
         # Header Files
         platform/linux/linux_platform.h
         # Source Files
-        platform/linux/linux_platform.cpp)
+        platform/linux/linux_platform.cpp
+        platform/linux/file_linux.cpp)
     endif()
 endif()
 

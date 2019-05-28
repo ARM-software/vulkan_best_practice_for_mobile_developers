@@ -21,6 +21,7 @@
 #include "swapchain_images.h"
 
 #include "gui.h"
+#include "platform/file.h"
 #include "platform/platform.h"
 #include "stats.h"
 
@@ -62,8 +63,8 @@ bool SwapchainImages::prepare(vkb::Platform &platform)
 	render_context = std::make_unique<vkb::RenderContext>(*device, std::move(swapchain));
 	render_context->prepare();
 
-	vkb::ShaderSource vert_shader(vkb::read_binary_file("shaders/base.vert"));
-	vkb::ShaderSource frag_shader(vkb::read_binary_file("shaders/base.frag"));
+	vkb::ShaderSource vert_shader(vkb::file::read_asset("shaders/base.vert"));
+	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/base.frag"));
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 

@@ -20,10 +20,6 @@
 
 #define TINYGLTF_IMPLEMENTATION
 
-#ifdef __ANDROID__
-#	define TINYGLTF_ANDROID_LOAD_FROM_ASSETS
-#endif
-
 #include "gltf_loader.h"
 
 #include <queue>
@@ -31,6 +27,7 @@
 #include "core/image.h"
 
 #include "core/device.h"
+#include "platform/file.h"
 #include "platform/thread_pool.h"
 
 #include "scene_graph/components/image/astc.h"
@@ -325,13 +322,7 @@ bool GLTFLoader::read_scene_from_file(const std::string &file_name, sg::Scene &s
 
 	tinygltf::TinyGLTF gltf_loader;
 
-	std::string gltf_file;
-
-#if !defined(VK_USE_PLATFORM_ANDROID_KHR)
-	gltf_file += "assets/";
-#endif
-
-	gltf_file += file_name;
+	std::string gltf_file = vkb::file::Path::assets() + file_name;
 
 	bool importResult = gltf_loader.LoadASCIIFromFile(&model, &err, &warn, gltf_file.c_str());
 
