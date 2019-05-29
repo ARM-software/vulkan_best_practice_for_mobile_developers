@@ -117,3 +117,8 @@ else()
             LINK ${CMAKE_CURRENT_BINARY_DIR}/assets)
     endif()
 endif()
+
+#Set the working directory to the source of the project so developer dont have to
+if(MSVC)
+    set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+endif()
