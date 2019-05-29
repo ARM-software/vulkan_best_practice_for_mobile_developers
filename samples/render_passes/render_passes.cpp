@@ -123,9 +123,9 @@ bool RenderPassesSample::prepare(vkb::Platform &platform)
 	vkb::ShaderSource vert_shader(vkb::file::read_asset("shaders/base.vert"));
 	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/base.frag"));
 
-	render_pipeline = std::make_unique<vkb::RenderPipeline>(*render_context, scene, std::move(vert_shader), std::move(frag_shader));
-
 	load_scene("scenes/sponza/Sponza01.gltf");
+
+	render_pipeline = std::make_unique<vkb::RenderPipeline>(*render_context, scene, std::move(vert_shader), std::move(frag_shader));
 
 	auto &camera_node = add_free_camera("main_camera");
 
