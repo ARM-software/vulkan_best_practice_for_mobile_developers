@@ -226,17 +226,21 @@ enum class TouchAction
 	Up,
 	Move,
 	Cancel,
+	PointerDown,
+	PointerUp,
 	Unknown
 };
 
 class TouchInputEvent : public InputEvent
 {
   public:
-	TouchInputEvent(Platform &platform, std::int32_t pointer_id, TouchAction action, float pos_x, float pos_y);
+	TouchInputEvent(Platform &platform, int32_t pointer_id, size_t pointer_count, TouchAction action, float pos_x, float pos_y);
 
 	TouchAction get_action() const;
 
-	std::int32_t get_pointer_id() const;
+	int32_t get_pointer_id() const;
+
+	size_t get_touch_points() const;
 
 	float get_pos_x() const;
 
@@ -245,7 +249,9 @@ class TouchInputEvent : public InputEvent
   private:
 	TouchAction action;
 
-	std::int32_t pointer_id;
+	int32_t pointer_id;
+
+	size_t touch_points;
 
 	float pos_x;
 

@@ -70,10 +70,6 @@ set(FRAMEWORK_FILES
     render_pipeline.cpp
     timer.cpp)
 
-set(FONT_FILES
-    # Source Files
-    fonts/roboto.cpp)
-
 set(SCENE_GRAPH_FILES
     # Header Files
     scene_graph/component.h
@@ -216,7 +212,6 @@ else()
 endif()
 
 source_group("\\" FILES ${FRAMEWORK_FILES})
-source_group("fonts\\" FILES ${FONT_FILES})
 source_group("platform\\" FILES ${PLATFORM_FILES})
 source_group("core\\" FILES ${CORE_FILES})
 source_group("scene_graph\\" FILES ${SCENE_GRAPH_FILES})
@@ -226,7 +221,6 @@ source_group("scene_graph\\scripts\\" FILES ${SCENE_GRAPH_SCRIPTS_FILES})
 set(PROJECT_FILES
     ${PLATFORM_FILES}
     ${FRAMEWORK_FILES}
-    ${FONT_FILES}
     ${CORE_FILES}
     ${SCENE_GRAPH_FILES}
     ${SCENE_GRAPH_COMPONENT_FILES}

@@ -114,8 +114,8 @@ struct Vector final : public Static<T>
 
 	const std::string to_string() override
 	{
-		return "x: " + vkb::to_string(x) + "\t" +
-		       "y: " + vkb::to_string(y) + "\t" +
+		return "x: " + vkb::to_string(x) + " " +
+		       "y: " + vkb::to_string(y) + " " +
 		       "z: " + vkb::to_string(z);
 	}
 };
@@ -150,8 +150,12 @@ struct MinMax final : public Dynamic<T>
 		{
 			min = Dynamic<T>::value;
 		}
+		if (min == 0)
+		{
+			min = Dynamic<T>::value;
+		}
 
-		return "current: " + vkb::to_string(Dynamic<T>::value) + "\t min: " + vkb::to_string(min) + "\t max: " + vkb::to_string(max);
+		return "current: " + vkb::to_string(Dynamic<T>::value) + " min: " + vkb::to_string(min) + " max: " + vkb::to_string(max);
 	}
 };
 }        // namespace field
@@ -163,6 +167,12 @@ class DebugInfo
 {
   public:
 	std::vector<std::unique_ptr<field::Base>> &get_fields();
+
+	/**
+	 * @brief   Calculates the field label with the most amount of characters
+	 * @returns The length of the longest label
+	 */
+	float get_longest_label() const;
 
 	/**
 	 * @brief Constructs and inserts a new field of type C<T>

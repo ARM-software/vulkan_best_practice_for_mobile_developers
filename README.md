@@ -115,6 +115,8 @@ This project uses the following 3D models. Each one has its own licence.
 
 Models downloaded from Morgan McGuire's [Computer Graphics Archive](https://casual-effects.com/data).
 
+Fonts downloaded from [Google Fonts](https://fonts.google.com), under license [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0)
+
 ### Trademarks
 
 Vulkan is a registered trademark of the Khronos Group Inc.

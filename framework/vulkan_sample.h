@@ -98,6 +98,11 @@ class VulkanSample : public Application
 	virtual void draw_gui();
 
 	/**
+	 * @brief Updates the debug window, samples can override this to insert their own data elements
+	 */
+	virtual void update_debug_window();
+
+	/**
 	 * @brief Add free camera script to a node with a camera object.
 	 *        Fallback to the default_camera if node not found.
 	 *
