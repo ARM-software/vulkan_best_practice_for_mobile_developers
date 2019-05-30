@@ -82,6 +82,7 @@ Image::Image(Device &              device,
     extent{extent},
     format{format},
     sample_count{sample_count},
+    usage{image_usage},
     mip_levels{mip_levels},
     array_layers{array_layers}
 {
@@ -117,15 +118,15 @@ Image::Image(Device &              device,
 	}
 }
 
-Image::Image(Device &device, VkImage handle, const VkExtent3D &extent, VkFormat format) :
+Image::Image(Device &device, VkImage handle, const VkExtent3D &extent, VkFormat format, VkImageUsageFlags image_usage) :
     device{device},
     handle{handle},
     type{find_image_type(extent)},
     extent{extent},
     format{format},
-    sample_count{VK_SAMPLE_COUNT_1_BIT}
-{
-}
+    sample_count{VK_SAMPLE_COUNT_1_BIT},
+    usage{image_usage}
+{}
 
 Image::Image(Image &&other) :
     device{other.device},
@@ -135,6 +136,7 @@ Image::Image(Image &&other) :
     extent{other.extent},
     format{other.format},
     sample_count{other.sample_count},
+    usage{other.usage},
     mip_levels{other.mip_levels},
     array_layers{other.array_layers}
 {
@@ -195,5 +197,9 @@ uint32_t Image::get_array_layers() const
 	return array_layers;
 }
 
+VkImageUsageFlags Image::get_usage() const
+{
+	return usage;
+}
 }        // namespace core
 }        // namespace vkb

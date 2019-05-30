@@ -40,8 +40,9 @@ set(FRAMEWORK_FILES
     render_target.h
     graphics_pipeline_state.h
     resource_binding_state.h
-    cache_resource.h
-    cache_resource.inl
+    resource_cache.h
+    resource_record.h
+    resource_replay.h
     render_frame.h
     render_context.h
     vulkan_sample.h
@@ -64,6 +65,9 @@ set(FRAMEWORK_FILES
     render_target.cpp
     graphics_pipeline_state.cpp
     resource_binding_state.cpp
+    resource_cache.cpp
+    resource_record.cpp
+    resource_replay.cpp
     render_frame.cpp
     render_context.cpp
     vulkan_sample.cpp

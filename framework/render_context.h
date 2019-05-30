@@ -32,10 +32,10 @@
 #include "core/shader_module.h"
 #include "core/swapchain.h"
 
-#include "cache_resource.h"
 #include "graphics_pipeline_state.h"
 #include "render_frame.h"
 #include "render_target.h"
+#include "resource_cache.h"
 
 namespace vkb
 {

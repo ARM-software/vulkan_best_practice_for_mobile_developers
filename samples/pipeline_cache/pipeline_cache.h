@@ -20,48 +20,33 @@
 
 #pragma once
 
-#include "core/image.h"
-#include "core/image_view.h"
+#include "utils.h"
+#include "vulkan_sample.h"
 
-namespace vkb
-{
-class Device;
+#include "render_pipeline.h"
+#include "scene_graph/components/camera.h"
 
-struct Attachment
-{
-	VkFormat format{VK_FORMAT_UNDEFINED};
-
-	VkSampleCountFlagBits samples{VK_SAMPLE_COUNT_1_BIT};
-
-	VkImageUsageFlags usage{VK_IMAGE_USAGE_SAMPLED_BIT};
-
-	Attachment() = default;
-
-	Attachment(VkFormat format, VkSampleCountFlagBits samples, VkImageUsageFlags usage);
-};
-
-class RenderTarget : public NonCopyable
+class PipelineCache : public vkb::VulkanSample
 {
   public:
-	RenderTarget(Device &device, std::vector<core::Image> &&images);
+	virtual ~PipelineCache();
 
-	RenderTarget(Device &device, const VkExtent2D &extent, const std::vector<Attachment> &attachments);
-
-	const VkExtent2D &get_extent() const;
-
-	const std::vector<ImageView> &get_views() const;
-
-	const std::vector<Attachment> &get_attachments() const;
+	virtual bool prepare(vkb::Platform &platform) override;
 
   private:
-	Device &device;
+	std::unique_ptr<vkb::RenderPipeline> render_pipeline{nullptr};
 
-	VkExtent2D extent{};
+	vkb::sg::Camera *camera{nullptr};
 
-	std::vector<core::Image> images;
+	VkPipelineCache pipeline_cache{VK_NULL_HANDLE};
 
-	std::vector<ImageView> views;
+	ImVec2 button_size{150, 30};
 
-	std::vector<Attachment> attachments;
+	bool enable_pipeline_cache{true};
+
+	virtual void draw_gui() override;
+
+	virtual void draw_scene(vkb::CommandBuffer &cmd_buf) override;
 };
-}        // namespace vkb
+
+std::unique_ptr<vkb::VulkanSample> create_pipeline_cache();

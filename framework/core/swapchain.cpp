@@ -328,7 +328,7 @@ const VkExtent2D &Swapchain::get_extent() const
 	return extent;
 }
 
-const VkFormat &Swapchain::get_format() const
+VkFormat Swapchain::get_format() const
 {
 	return format;
 }
@@ -336,5 +336,20 @@ const VkFormat &Swapchain::get_format() const
 const std::vector<VkImage> &Swapchain::get_images() const
 {
 	return images;
+}
+
+VkSurfaceTransformFlagBitsKHR Swapchain::get_transform() const
+{
+	return transform;
+}
+
+VkSurfaceKHR Swapchain::get_surface() const
+{
+	return surface;
+}
+
+VkImageUsageFlags Swapchain::get_usage() const
+{
+	return image_usage;
 }
 }        // namespace vkb

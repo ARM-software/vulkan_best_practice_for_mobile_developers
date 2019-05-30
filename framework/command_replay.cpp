@@ -22,41 +22,10 @@
 
 #include "core/command_buffer.h"
 #include "core/descriptor_set.h"
+#include "core/device.h"
 
 namespace vkb
 {
-namespace
-{
-template <typename T>
-inline void read(std::istringstream &is, T &value)
-{
-	is.read(reinterpret_cast<char *>(&value), sizeof(T));
-}
-
-template <class T>
-inline void read(std::istringstream &is, std::vector<T> &value)
-{
-	std::size_t size;
-	read(is, size);
-	value.resize(size);
-	is.read(reinterpret_cast<char *>(value.data()), value.size() * sizeof(T));
-}
-
-template <class T, uint32_t N>
-inline void read(std::istringstream &is, std::array<T, N> &value)
-{
-	is.read(reinterpret_cast<char *>(value.data()), N * sizeof(T));
-}
-
-template <typename T, typename... Args>
-inline void read(std::istringstream &is, T &first_arg, Args &... args)
-{
-	read(is, first_arg);
-
-	read(is, args...);
-}
-}        // namespace
-
 CommandReplay::CommandReplay()
 {
 	stream_commands[CommandType::Begin]              = std::bind(&CommandReplay::begin, this, std::placeholders::_1, std::placeholders::_2);

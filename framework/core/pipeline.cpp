@@ -52,6 +52,7 @@ VkPipeline Pipeline::get_handle() const
 }
 
 ComputePipeline::ComputePipeline(Device &                  device,
+                                 VkPipelineCache           pipeline_cache,
                                  const PipelineLayout &    pipeline_layout,
                                  const SpecializationInfo &specialization_info) :
     Pipeline{device}
@@ -88,7 +89,7 @@ ComputePipeline::ComputePipeline(Device &                  device,
 	create_info.layout = pipeline_layout.get_handle();
 	create_info.stage  = stage;
 
-	result = vkCreateComputePipelines(device.get_handle(), VK_NULL_HANDLE, 1, &create_info, 0, &handle);
+	result = vkCreateComputePipelines(device.get_handle(), pipeline_cache, 1, &create_info, nullptr, &handle);
 
 	if (result != VK_SUCCESS)
 	{
@@ -99,6 +100,7 @@ ComputePipeline::ComputePipeline(Device &                  device,
 }
 
 GraphicsPipeline::GraphicsPipeline(Device &                                  device,
+                                   VkPipelineCache                           pipeline_cache,
                                    GraphicsPipelineState &                   graphics_state,
                                    const ShaderStageMap<SpecializationInfo> &specialization_infos) :
     Pipeline{device}
@@ -250,7 +252,7 @@ GraphicsPipeline::GraphicsPipeline(Device &                                  dev
 	create_info.renderPass = graphics_state.get_render_pass().get_handle();
 	create_info.subpass    = graphics_state.get_subpass_index();
 
-	auto result = vkCreateGraphicsPipelines(device.get_handle(), VK_NULL_HANDLE, 1, &create_info, NULL, &handle);
+	auto result = vkCreateGraphicsPipelines(device.get_handle(), pipeline_cache, 1, &create_info, nullptr, &handle);
 
 	if (result != VK_SUCCESS)
 	{

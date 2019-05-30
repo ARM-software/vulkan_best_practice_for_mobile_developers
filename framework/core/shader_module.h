@@ -80,6 +80,10 @@ struct ShaderResource
 class ShaderVariant
 {
   public:
+	ShaderVariant() = default;
+
+	ShaderVariant(std::string &&preamble, std::vector<std::string> &&processes);
+
 	size_t get_id() const;
 
 	/**

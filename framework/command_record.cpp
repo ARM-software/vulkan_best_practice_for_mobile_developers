@@ -28,36 +28,6 @@
 
 namespace vkb
 {
-namespace
-{
-template <typename T>
-inline void write(std::ostringstream &os, const T &value)
-{
-	os.write(reinterpret_cast<const char *>(&value), sizeof(T));
-}
-
-template <class T>
-inline void write(std::ostringstream &os, const std::vector<T> &value)
-{
-	write(os, value.size());
-	os.write(reinterpret_cast<const char *>(value.data()), value.size() * sizeof(T));
-}
-
-template <class T, uint32_t N>
-inline void write(std::ostringstream &os, const std::array<T, N> &value)
-{
-	os.write(reinterpret_cast<const char *>(value.data()), N * sizeof(T));
-}
-
-template <typename T, typename... Args>
-inline void write(std::ostringstream &os, const T &first_arg, const Args &... args)
-{
-	write(os, first_arg);
-
-	write(os, args...);
-}
-}        // namespace
-
 CommandRecord::CommandRecord(Device &device) :
     device{device}
 {}
@@ -156,8 +126,8 @@ void CommandRecord::end_render_pass()
 		++subpass_it;
 	}
 
-	render_pass_desc.render_pass = &device.request_render_pass(render_pass_desc.render_target.get_attachments(), render_pass_desc.load_store_infos, subpasses);
-	render_pass_desc.framebuffer = &device.request_framebuffer(render_pass_desc.render_target, *render_pass_desc.render_pass);
+	render_pass_desc.render_pass = &device.get_resource_cache().request_render_pass(render_pass_desc.render_target.get_attachments(), render_pass_desc.load_store_infos, subpasses);
+	render_pass_desc.framebuffer = &device.get_resource_cache().request_framebuffer(render_pass_desc.render_target, *render_pass_desc.render_pass);
 
 	// Iterate over each graphics state that was bound within the subpass
 	for (SubpassDesc &subpassDesc : render_pass_desc.subpasses)
@@ -166,7 +136,7 @@ void CommandRecord::end_render_pass()
 		{
 			pipeline_state.graphics_pipeline_state.set_render_pass(*render_pass_desc.render_pass);
 
-			auto &pipeline = device.request_graphics_pipeline(pipeline_state.graphics_pipeline_state, {});
+			auto &pipeline = device.get_resource_cache().request_graphics_pipeline(pipeline_state.graphics_pipeline_state, {});
 
 			pipeline_bindings.push_back({pipeline_state.event_id, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline});
 		}
@@ -518,7 +488,7 @@ void CommandRecord::FlushDescriptorState()
 				}
 			}
 
-			auto &descriptor_set = device.request_descriptor_set(descriptor_set_layout, buffer_infos, image_infos);
+			auto &descriptor_set = device.get_resource_cache().request_descriptor_set(descriptor_set_layout, buffer_infos, image_infos);
 
 			descriptor_set_bindings.push_back({stream.tellp(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, set_it.first, descriptor_set, dynamic_offsets});
 		}

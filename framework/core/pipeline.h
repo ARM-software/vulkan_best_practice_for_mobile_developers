@@ -39,8 +39,6 @@ class Pipeline : public NonCopyable
 
 	virtual ~Pipeline();
 
-	void destroy();
-
 	VkPipeline get_handle() const;
 
   protected:
@@ -57,6 +55,7 @@ class ComputePipeline : public Pipeline
 	virtual ~ComputePipeline() = default;
 
 	ComputePipeline(Device &                  device,
+	                VkPipelineCache           pipeline_cache,
 	                const PipelineLayout &    pipeline_layout,
 	                const SpecializationInfo &specialization_info);
 };
@@ -69,6 +68,7 @@ class GraphicsPipeline : public Pipeline
 	virtual ~GraphicsPipeline() = default;
 
 	GraphicsPipeline(Device &                                  device,
+	                 VkPipelineCache                           pipeline_cache,
 	                 GraphicsPipelineState &                   graphics_state,
 	                 const ShaderStageMap<SpecializationInfo> &specialization_infos);
 };

@@ -84,23 +84,14 @@ PipelineLayout::PipelineLayout(Device &device, const std::vector<ShaderModule *>
 	// Create a descriptor set layout for each set index
 	for (auto it : set_bindings)
 	{
-		// Create a DescriptorSetLayout instance
-		DescriptorSetLayout set_layout{device, it.second};
-
-		// Ignore set layout if it has no binding
-		if (set_layout.get_bindings().empty())
-		{
-			continue;
-		}
-
-		set_layouts.emplace(it.first, std::move(set_layout));
+		set_layouts.emplace(it.first, &device.get_resource_cache().request_descriptor_set_layout(it.second));
 	}
 
 	std::vector<VkDescriptorSetLayout> set_layouts;
 
 	for (auto &it : this->set_layouts)
 	{
-		set_layouts.push_back(it.second.get_handle());
+		set_layouts.push_back(it.second->get_handle());
 	}
 
 	std::vector<VkPushConstantRange> push_constant_ranges;
@@ -186,7 +177,7 @@ bool PipelineLayout::has_set_layout(uint32_t set_index) const
 
 DescriptorSetLayout &PipelineLayout::get_set_layout(uint32_t set_index)
 {
-	return set_layouts.at(set_index);
+	return *set_layouts.at(set_index);
 }
 
 std::vector<ShaderResource> PipelineLayout::get_vertex_input_attributes() const

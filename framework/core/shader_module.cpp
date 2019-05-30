@@ -127,6 +127,13 @@ void ShaderModule::set_resource_dynamic(const std::string &resource_name)
 	}
 }
 
+ShaderVariant::ShaderVariant(std::string &&preamble, std::vector<std::string> &&processes) :
+    preamble{std::move(preamble)},
+    processes{std::move(processes)}
+{
+	update_id();
+}
+
 size_t ShaderVariant::get_id() const
 {
 	return id;

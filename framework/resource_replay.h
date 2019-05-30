@@ -20,29 +20,44 @@
 
 #pragma once
 
-#include <memory>
-#include <unordered_map>
+#include "common.h"
+
+#include "resource_record.h"
 
 namespace vkb
 {
-/// Mananger of resources based on the given hasher function.
-template <typename T>
-class CacheResource
+class ResourceCache;
+
+/**
+ * @brief Reads Vulkan objects from a memory stream and creates them in the resource cache.
+ */
+class ResourceReplay
 {
   public:
-	/// Create a new resource or return the cached resource
-	template <typename... Args>
-	T &request_resource(Args &&... args);
+	ResourceReplay();
 
-	/*
-	 * @brief Removes cached resources. 
-	 */
-	void clear();
+	void play(ResourceCache &resource_cache, ResourceRecord &recorder);
+
+  protected:
+	void create_shader_module(ResourceCache &resource_cache, std::istringstream &stream);
+
+	void create_pipeline_layout(ResourceCache &resource_cache, std::istringstream &stream);
+
+	void create_render_pass(ResourceCache &resource_cache, std::istringstream &stream);
+
+	void create_graphics_pipeline(ResourceCache &resource_cache, std::istringstream &stream);
 
   private:
-	/// Map of resource's hash and the resource object
-	std::unordered_map<size_t, T> cache_resources;
+	using ResourceFunc = std::function<void(ResourceCache &, std::istringstream &)>;
+
+	std::unordered_map<ResourceType, ResourceFunc> stream_resources;
+
+	std::vector<ShaderModule *> shader_modules;
+
+	std::vector<PipelineLayout *> pipeline_layouts;
+
+	std::vector<const RenderPass *> render_passes;
+
+	std::vector<const GraphicsPipeline *> graphics_pipelines;
 };
 }        // namespace vkb
-
-#include "cache_resource.inl"

@@ -194,10 +194,10 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/imgui.frag"));
 
 	std::vector<vkb::ShaderModule *> shader_modules;
-	shader_modules.push_back(&device.request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vert_shader, {}));
-	shader_modules.push_back(&device.request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, frag_shader, {}));
+	shader_modules.push_back(&device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vert_shader, {}));
+	shader_modules.push_back(&device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, frag_shader, {}));
 
-	pipeline_layout = &device.request_pipeline_layout(shader_modules);
+	pipeline_layout = &device.get_resource_cache().request_pipeline_layout(shader_modules);
 
 	sampler = std::make_unique<core::Sampler>(device, sampler_info);
 }

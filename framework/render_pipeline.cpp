@@ -48,8 +48,8 @@ RenderPipeline::RenderPipeline(RenderContext &render_context, sg::Scene &scene, 
 	{
 		for (auto &sub_mesh : mesh->get_submeshes())
 		{
-			ShaderModule &vert_shader_module = device.request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, this->vertex_shader, sub_mesh->get_shader_variant());
-			ShaderModule &frag_shader_module = device.request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, this->fragment_shader, sub_mesh->get_shader_variant());
+			ShaderModule &vert_shader_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, this->vertex_shader, sub_mesh->get_shader_variant());
+			ShaderModule &frag_shader_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, this->fragment_shader, sub_mesh->get_shader_variant());
 
 			vert_shader_module.set_resource_dynamic("GlobalUniform");
 			frag_shader_module.set_resource_dynamic("GlobalUniform");
@@ -159,12 +159,12 @@ void RenderPipeline::draw_scene_submesh(CommandBuffer &command_buffer, sg::SubMe
 
 	command_buffer.set_rasterization_state(rasterization_state);
 
-	ShaderModule &vert_shader_module = device.request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vertex_shader, sub_mesh.get_shader_variant());
-	ShaderModule &frag_shader_module = device.request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, fragment_shader, sub_mesh.get_shader_variant());
+	ShaderModule &vert_shader_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vertex_shader, sub_mesh.get_shader_variant());
+	ShaderModule &frag_shader_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, fragment_shader, sub_mesh.get_shader_variant());
 
 	std::vector<ShaderModule *> shader_modules{&vert_shader_module, &frag_shader_module};
 
-	PipelineLayout &pipeline_layout = device.request_pipeline_layout(shader_modules);
+	PipelineLayout &pipeline_layout = device.get_resource_cache().request_pipeline_layout(shader_modules);
 
 	command_buffer.bind_pipeline_layout(pipeline_layout);
 

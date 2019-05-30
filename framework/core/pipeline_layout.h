@@ -74,6 +74,6 @@ class PipelineLayout : public NonCopyable
 
 	std::unordered_map<uint32_t, std::vector<ShaderResource>> set_bindings;
 
-	std::unordered_map<uint32_t, DescriptorSetLayout> set_layouts;
+	std::unordered_map<uint32_t, DescriptorSetLayout *> set_layouts;
 };
 }        // namespace vkb

@@ -69,7 +69,7 @@ vkb::RenderTarget::RenderTarget(Device &device, std::vector<core::Image> &&image
 
 		views.emplace_back(image, VK_IMAGE_VIEW_TYPE_2D);
 
-		attachments.emplace_back(Attachment{image.get_format(), image.get_samples()});
+		attachments.emplace_back(Attachment{image.get_format(), image.get_samples(), image.get_usage()});
 	}
 }
 
