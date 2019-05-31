@@ -28,6 +28,7 @@
 
 #include "common.h"
 #include "core/buffer.h"
+#include "core/shader_module.h"
 #include "scene_graph/component.h"
 
 namespace vkb
@@ -48,13 +49,9 @@ struct VertexAttribute
 class SubMesh : public Component
 {
   public:
-	SubMesh() = default;
-
 	virtual ~SubMesh() = default;
 
 	virtual std::type_index get_type() override;
-
-	std::unordered_map<std::string, VertexAttribute> vertex_attributes;
 
 	VkIndexType index_type{};
 
@@ -68,7 +65,24 @@ class SubMesh : public Component
 
 	std::unique_ptr<core::Buffer> index_buffer;
 
-	Material *material{nullptr};
+	void set_attribute(const std::string &name, const VertexAttribute &attribute);
+
+	bool get_attribute(const std::string &name, VertexAttribute &attribute) const;
+
+	void set_material(const Material &material);
+
+	const Material *get_material() const;
+
+	const ShaderVariant &get_shader_variant() const;
+
+  private:
+	std::unordered_map<std::string, VertexAttribute> vertex_attributes;
+
+	const Material *material{nullptr};
+
+	ShaderVariant shader_variant;
+
+	void compute_shader_variant();
 };
 }        // namespace sg
 }        // namespace vkb

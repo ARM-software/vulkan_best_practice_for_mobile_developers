@@ -29,14 +29,19 @@
 If you would like to create a new sample the following script will generate a sample within the `samples` directory with a given name `MySample`
 
 ##### Windows <!-- omit in toc -->
+
 ```
 bldsys/scripts/generate_sample.bat MySample
 ```
+
 ##### Linux <!-- omit in toc -->
+
 ```
-Linux: ./bldsys/scripts/generate_sample.sh MySample
+./bldsys/scripts/generate_sample.sh MySample
 ```
+
 The sample is now created and the following files generated
+
 ```
 samples/my_sample/CMakeLists.txt
 samples/my_sample/my_sample.cpp

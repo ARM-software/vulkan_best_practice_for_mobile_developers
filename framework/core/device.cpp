@@ -28,8 +28,9 @@
 
 namespace vkb
 {
-Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const std::vector<const char *> extensions) :
-    physical_device{physical_device}
+Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const std::vector<const char *> extensions, const VkPhysicalDeviceFeatures &features) :
+    physical_device{physical_device},
+    resource_cache{*this}
 {
 	// Gpu properties
 	vkGetPhysicalDeviceProperties(physical_device, &properties);
@@ -55,8 +56,6 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const std
 		queue_create_info.queueCount       = queue_family_property.queueCount;
 		queue_create_info.pQueuePriorities = queue_priorities[queue_family_index].data();
 	}
-
-	vkGetPhysicalDeviceFeatures(physical_device, &features);
 
 	VkDeviceCreateInfo create_info{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
 
@@ -124,13 +123,7 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const std
 
 Device::~Device()
 {
-	// Clear caches
-	cache_framebuffers.clear();
-	cache_render_passes.clear();
-	cache_descriptor_sets.clear();
-	cache_compute_pipelines.clear();
-	cache_graphics_pipelines.clear();
-	cache_pipeline_layouts.clear();
+	resource_cache.clear();
 
 	command_pool.reset();
 	fence_pool.reset();
@@ -231,43 +224,8 @@ VkResult Device::wait_idle()
 	return vkDeviceWaitIdle(handle);
 }
 
-PipelineLayout &Device::request_pipeline_layout(std::vector<ShaderModule> &&shader_modules)
+ResourceCache &Device::get_resource_cache()
 {
-	return cache_pipeline_layouts.request_resource(*this, std::move(shader_modules));
+	return resource_cache;
 }
-
-GraphicsPipeline &Device::request_graphics_pipeline(GraphicsPipelineState &                   graphics_state,
-                                                    const ShaderStageMap<SpecializationInfo> &specialization_infos)
-{
-	return cache_graphics_pipelines.request_resource(*this, graphics_state, specialization_infos);
-}
-
-ComputePipeline &Device::request_compute_pipeline(const PipelineLayout &    pipeline_layout,
-                                                  const SpecializationInfo &specialization_info)
-{
-	return cache_compute_pipelines.request_resource(*this, pipeline_layout, specialization_info);
-}
-
-DescriptorSet &Device::request_descriptor_set(DescriptorSetLayout &                     descriptor_set_layout,
-                                              const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
-                                              const BindingMap<VkDescriptorImageInfo> & image_infos)
-{
-	return cache_descriptor_sets.request_resource(*this, descriptor_set_layout, buffer_infos, image_infos);
-}
-
-RenderPass &Device::request_render_pass(const std::vector<Attachment> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses)
-{
-	return cache_render_passes.request_resource(*this, attachments, load_store_infos, subpasses);
-}
-
-Framebuffer &Device::request_framebuffer(const RenderTarget &render_target, const RenderPass &render_pass)
-{
-	return cache_framebuffers.request_resource(*this, render_target, render_pass);
-}
-
-void Device::clear_framebuffers()
-{
-	cache_framebuffers.clear();
-}
-
 }        // namespace vkb

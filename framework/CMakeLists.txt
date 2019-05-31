@@ -17,8 +17,8 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
- 
-cmake_minimum_required(VERSION 3.6)
+
+cmake_minimum_required(VERSION 3.8)
 
 project(framework LANGUAGES C CXX)
 
@@ -31,6 +31,7 @@ set(FRAMEWORK_FILES
     glsl_compiler.h
     spirv_reflection.h
     gltf_loader.h
+    buffer_pool.h
     debug_info.h
     fence_pool.h
     semaphore_pool.h
@@ -39,11 +40,14 @@ set(FRAMEWORK_FILES
     render_target.h
     graphics_pipeline_state.h
     resource_binding_state.h
-    cache_resource.h
-    cache_resource.inl
+    resource_cache.h
+    resource_record.h
+    resource_replay.h
     render_frame.h
     render_context.h
     vulkan_sample.h
+    render_pipeline.h
+    timer.h
     # Source Files
     common.cpp
     utils.cpp
@@ -53,6 +57,7 @@ set(FRAMEWORK_FILES
     spirv_reflection.cpp
     gltf_loader.cpp
     debug_info.cpp
+    buffer_pool.cpp
     fence_pool.cpp
     semaphore_pool.cpp
     command_record.cpp
@@ -60,13 +65,14 @@ set(FRAMEWORK_FILES
     render_target.cpp
     graphics_pipeline_state.cpp
     resource_binding_state.cpp
+    resource_cache.cpp
+    resource_record.cpp
+    resource_replay.cpp
     render_frame.cpp
     render_context.cpp
-    vulkan_sample.cpp)
-
-set(FONT_FILES
-    # Source Files
-    fonts/roboto.cpp)
+    vulkan_sample.cpp
+    render_pipeline.cpp
+    timer.cpp)
 
 set(SCENE_GRAPH_FILES
     # Header Files
@@ -82,6 +88,7 @@ set(SCENE_GRAPH_FILES
 
 set(SCENE_GRAPH_COMPONENT_FILES
     # Header Files
+    scene_graph/components/aabb.h
     scene_graph/components/camera.h
     scene_graph/components/perspective_camera.h
     scene_graph/components/image.h
@@ -96,6 +103,7 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/image/ktx.h
     scene_graph/components/image/stb.h
     # Source Files
+    scene_graph/components/aabb.cpp
     scene_graph/components/camera.cpp
     scene_graph/components/perspective_camera.cpp
     scene_graph/components/image.cpp
@@ -161,6 +169,7 @@ set(PLATFORM_FILES
     # Header Files
     platform/application.h
     platform/platform.h
+    platform/file.h
     platform/thread_pool.h
     platform/concurrent_queue.h
     platform/concurrent_queue.inl
@@ -169,6 +178,7 @@ set(PLATFORM_FILES
     # Source Files
     platform/application.cpp
     platform/platform.cpp
+    platform/file.cpp
     platform/thread_pool.cpp
     platform/input_events.cpp
     platform/configuration.cpp)
@@ -179,7 +189,8 @@ if(ANDROID)
         # Header Files
         platform/android/android_platform.h
         # Source Files
-        platform/android/android_platform.cpp)
+        platform/android/android_platform.cpp
+        platform/android/file_android.cpp)
 else()
     list(APPEND PLATFORM_FILES
         # Header Files
@@ -192,18 +203,19 @@ else()
         # Header Files
         platform/windows/windows_platform.h
         # Source Files
-        platform/windows/windows_platform.cpp)
+        platform/windows/windows_platform.cpp
+        platform/windows/file_windows.cpp)
     else()
         list(APPEND PLATFORM_FILES
         # Header Files
         platform/linux/linux_platform.h
         # Source Files
-        platform/linux/linux_platform.cpp)
+        platform/linux/linux_platform.cpp
+        platform/linux/file_linux.cpp)
     endif()
 endif()
 
 source_group("\\" FILES ${FRAMEWORK_FILES})
-source_group("fonts\\" FILES ${FONT_FILES})
 source_group("platform\\" FILES ${PLATFORM_FILES})
 source_group("core\\" FILES ${CORE_FILES})
 source_group("scene_graph\\" FILES ${SCENE_GRAPH_FILES})
@@ -213,7 +225,6 @@ source_group("scene_graph\\scripts\\" FILES ${SCENE_GRAPH_SCRIPTS_FILES})
 set(PROJECT_FILES
     ${PLATFORM_FILES}
     ${FRAMEWORK_FILES}
-    ${FONT_FILES}
     ${CORE_FILES}
     ${SCENE_GRAPH_FILES}
     ${SCENE_GRAPH_COMPONENT_FILES}

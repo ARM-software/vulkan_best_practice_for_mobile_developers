@@ -25,6 +25,7 @@
 #include "debug_info.h"
 #include "platform/configuration.h"
 #include "platform/input_events.h"
+#include "timer.h"
 
 namespace vkb
 {
@@ -85,9 +86,7 @@ class Application
 
 	uint32_t frame_count{0};
 
-	std::chrono::system_clock::time_point start_time{std::chrono::system_clock::now()};
-
-	std::chrono::system_clock::time_point last_frame_time{std::chrono::system_clock::now()};
+	Timer timer;
 
   private:
 	/// The name of the app

@@ -31,7 +31,7 @@ class AndroidPlatform : public Platform
   public:
 	AndroidPlatform(android_app *app);
 
-	virtual bool initialise(std::unique_ptr<Application> &&app) override;
+	virtual bool initialize(std::unique_ptr<Application> &&app) override;
 
 	virtual VkSurfaceKHR create_surface(VkInstance instance) override;
 

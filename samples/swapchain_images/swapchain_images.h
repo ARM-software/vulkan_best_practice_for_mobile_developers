@@ -23,6 +23,7 @@
 #include "utils.h"
 #include "vulkan_sample.h"
 
+#include "render_pipeline.h"
 #include "scene_graph/components/camera.h"
 
 class SwapchainImages : public vkb::VulkanSample
@@ -37,21 +38,17 @@ class SwapchainImages : public vkb::VulkanSample
 	virtual void update(float delta_time) override;
 
   private:
-	vkb::VertPushConstant vs_push_constant;
+	std::unique_ptr<vkb::RenderPipeline> render_pipeline{nullptr};
 
-	vkb::FragPushConstant fs_push_constant;
-
-	vkb::PipelineLayout *pipeline_layout{nullptr};
-
-	vkb::sg::Camera* camera{nullptr};
+	vkb::sg::Camera *camera{nullptr};
 
 	virtual void draw_gui() override;
 
 	virtual void draw_scene(vkb::CommandBuffer &cmd_buf) override;
 
-	int swapchain_image_count = 3;
+	int swapchain_image_count{3};
 
-	int last_swapchain_image_count = 3;
+	int last_swapchain_image_count{3};
 };
 
 std::unique_ptr<vkb::VulkanSample> create_swapchain_images();

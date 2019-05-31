@@ -34,6 +34,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -63,6 +64,11 @@ public class BPSampleActivity extends AppCompatActivity {
 
         if (LoadNativeLibrary(getResources().getString(R.string.native_lib_name))) {
             sample_list = Arrays.asList(getSamples());
+            File external_files_dir = getExternalFilesDir("assets");
+            File temp_files_dir = getCacheDir();
+            if (external_files_dir != null && temp_files_dir != null){
+                initFilePath(external_files_dir.toString(), temp_files_dir.toString());
+            }
         }
 
         SampleArrayAdapter sample_list_adapter = new SampleArrayAdapter(this, sample_list);
@@ -113,6 +119,8 @@ public class BPSampleActivity extends AppCompatActivity {
     private native Sample[] getSamples();
 
     private native void setArguments(String []args);
+
+    private native void initFilePath(String asset_path, String temp_path);
 
     private static final int RC_READ_EXTERNAL_STORAGE = 1;
     private static final int RC_WRITE_EXTERNAL_STORAGE = 2;

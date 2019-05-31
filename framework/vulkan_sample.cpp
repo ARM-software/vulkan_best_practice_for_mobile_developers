@@ -26,7 +26,6 @@
 #include <imgui.h>
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
-#	include "gltf_loader.h"
 #	include "platform/android/android_platform.h"
 #endif
 
@@ -132,11 +131,6 @@ bool VulkanSample::prepare(Platform &platform)
 	get_debug_info().insert<field::MinMax, float>("fps", fps);
 	get_debug_info().insert<field::MinMax, float>("frame_time", frame_time);
 
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-	auto &android_platform  = dynamic_cast<AndroidPlatform &>(platform);
-	tinygltf::asset_manager = android_platform.get_activity()->assetManager;
-#endif
-
 	LOGI("Initializing context");
 
 	instance = create_instance({VK_KHR_SURFACE_EXTENSION_NAME});
@@ -170,18 +164,6 @@ void VulkanSample::update(float delta_time)
 		}
 	}
 
-	get_debug_info().insert<field::Static, std::string>("resolution",
-	                                                    to_string(render_context->get_swapchain().get_extent().width) + "x" +
-	                                                        to_string(render_context->get_swapchain().get_extent().height));
-
-	get_debug_info().insert<field::Static, std::string>("surface_format",
-	                                                    convert_format_to_string(render_context->get_swapchain().get_format()) + " (" +
-	                                                        to_string(vkb::get_bits_per_pixel(render_context->get_swapchain().get_format())) + "bbp)");
-
-	get_debug_info().insert<field::Static, uint32_t>("mesh_count", to_u32(scene.get_components<sg::SubMesh>().size()));
-
-	get_debug_info().insert<field::Static, uint32_t>("texture_count", to_u32(scene.get_components<sg::Texture>().size()));
-
 	VkSemaphore aquired_semaphore = render_context->begin_frame();
 
 	if (aquired_semaphore == VK_NULL_HANDLE)
@@ -212,6 +194,11 @@ void VulkanSample::update(float delta_time)
 	// Update gui
 	if (gui)
 	{
+		if (gui->is_debug_view_active())
+		{
+			update_debug_window();
+		}
+
 		gui->new_frame();
 
 		gui->show_top_window(get_name(), stats.get(), &debug_info);
@@ -334,6 +321,30 @@ void VulkanSample::draw_scene(vkb::CommandBuffer &command_buffer)
 
 void VulkanSample::draw_gui()
 {
+}
+
+void VulkanSample::update_debug_window()
+{
+	get_debug_info().insert<field::Static, std::string>("resolution",
+	                                                    to_string(render_context->get_swapchain().get_extent().width) + "x" +
+	                                                        to_string(render_context->get_swapchain().get_extent().height));
+
+	get_debug_info().insert<field::Static, std::string>("surface_format",
+	                                                    convert_format_to_string(render_context->get_swapchain().get_format()) + " (" +
+	                                                        to_string(vkb::get_bits_per_pixel(render_context->get_swapchain().get_format())) + "bbp)");
+
+	get_debug_info().insert<field::Static, uint32_t>("mesh_count", to_u32(scene.get_components<sg::SubMesh>().size()));
+
+	get_debug_info().insert<field::Static, uint32_t>("texture_count", to_u32(scene.get_components<sg::Texture>().size()));
+
+	if (auto camera = scene.get_components<vkb::sg::Camera>().at(0))
+	{
+		if (auto camera_node = camera->get_node())
+		{
+			const glm::vec3 &pos = camera_node->get_transform().get_translation();
+			get_debug_info().insert<field::Vector, float>("camera_pos", pos.x, pos.y, pos.z);
+		}
+	}
 }
 
 sg::Node &VulkanSample::add_free_camera(const std::string &node_name)

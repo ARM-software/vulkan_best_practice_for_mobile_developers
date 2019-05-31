@@ -66,6 +66,13 @@ Generate a build project for each sample so that they can be run separately
 
 Before you build the project make sure you download the 3D models this project uses. Download zip file located [here](https://github.com/ARM-software/vulkan_best_practice_for_mobile_developers/releases/download/v1.0.0/scenes.zip "Models") and extract it into `vulkan_best_practice_for_mobile_developers/assets` folder. You should now have a `scenes` folder containing all the 3D scenes the project uses.
 
+On Android CMake will use `adb` to sync assets to the device, ensure that the target device is connected before building with CMake.
+
+Alternatively, they may be synced manually:
+```
+adb push --sync assets /sdcard/Android/data/com.arm.vulkan_best_practice/files/
+```
+
 
 # Performance data
 
@@ -85,7 +92,7 @@ adb shell setprop security.perf_harden 0
 
 ## Dependencies
 
-- CMake v3.6
+- CMake v3.8+
 - Visual Studio 2017
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
@@ -97,8 +104,9 @@ adb shell setprop security.perf_harden 0
 > - Run Command Prompt or Visual Studio as administrator
 
 `Step 1.` The following command will generate the VS project
+
 ```
-cmake -G"Visual Studio 15 2017 Win64" -H. -Bbuild/windows -DVKB_ASSETS_SYMLINK=ON
+cmake -G"Visual Studio 15 2017 Win64" -H. -Bbuild/windows
 ```
 
 `Step 2.` Build the Visual Studio project
@@ -106,10 +114,11 @@ cmake -G"Visual Studio 15 2017 Win64" -H. -Bbuild/windows -DVKB_ASSETS_SYMLINK=O
 ```
 cmake --build build/windows --config Release --target vulkan_best_practice
 ```
+
 `Step 3.` Run the **Vulkan Best Practice** application
+
 ```
-cd build\windows
-vulkan_best_practice\bin\debug\AMD64\Release\vulkan_best_practice.exe
+build\windows\vulkan_best_practice\bin\debug\AMD64\Release\vulkan_best_practice.exe
 ```
 
 
@@ -117,8 +126,8 @@ vulkan_best_practice\bin\debug\AMD64\Release\vulkan_best_practice.exe
 
 ## Dependencies
 
-- CMake v3.6
-- C++14 Compiler (tested on GCC 7.3)
+- CMake v3.8+
+- C++17 Compiler (tested on GCC 7.3)
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
 
@@ -131,18 +140,19 @@ sudo apt-get install cmake g++ xorg-dev libglu1-mesa-dev
 `Step 1.` The following command will generate the project
 
 ```
-cmake -G "Unix Makefiles" -H. -Bbuild/linux -DVKB_ASSETS_SYMLINK=ON
+cmake -G "Unix Makefiles" -H. -Bbuild/linux -DCMAKE_BUILD_TYPE=Release
 ```
+
 `Step 2.` Build the project
 
 ```
-cmake --build build/linux --config Release --target vulkan_best_practice
+cmake --build build/linux --target vulkan_best_practice --parallel
 ```
-`Step 3.` Run the **Vulkan Best Practice** application
+
+`Step 3.` Run the **Vulkan Best Practice** application to display the help message
 
 ```
-cd build/linux
-./vulkan_best_practice/bin/x86_64/vulkan_best_practice
+./build/linux/vulkan_best_practice/bin/x86_64/vulkan_best_practice --help
 ```
 
 # Android
@@ -151,36 +161,42 @@ cd build/linux
 
 For all dependencies set the following environment variables.
 
-- CMake v3.6
+- CMake v3.8+
 - JDK 8+ `JAVA_HOME=<SYSTEM_DIR>/java`
 - Android NDK r18+ `ANDROID_NDK_ROOT=<WORK_DIR>/android-ndk`
 - Android SDK `ANDROID_HOME=<WORK_DIR>/android-sdk`
-- Gradle 4+ `GRADLE_HOME=<WORK_DIR>/gradle`
+- Gradle 5+ `GRADLE_HOME=<WORK_DIR>/gradle`
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
 - [Performance data](#performance-data)
 
 ## Build with Gradle
 
-`Step 1.` Generate the gradle project using the internal script by running the following command  
+`Step 1.` Generate the gradle project using the internal script by running the following command
+
 ##### Windows  <!-- omit in toc -->
+
 ```
 bldsys/scripts/generate_android_gradle.bat
 ```
+
 ##### Linux  <!-- omit in toc -->
 
 ```
-bldsys/scripts/generate_android_gradle.sh
+./bldsys/scripts/generate_android_gradle.sh
 ```
 
 A new folder will be created in the root directory at `build\android_gradle`
 
 `Step 2.` Build the project
+
 ```
 cd build/android_gradle
 gradle assembleDebug
 ```
+
 `Step 3.` You can now run the apk on a connected device
+
 ```
 adb install build/outputs/apk/debug/vulkan_best_practice-debug.apk
 ```
@@ -190,7 +206,7 @@ adb install build/outputs/apk/debug/vulkan_best_practice-debug.apk
 ## Build with CMake
 
 
-`Step 1.` Select a generator which supports custom compiler like `Unix  Makefiles` or `Ninja`.
+`Step 1.` Select a generator which supports custom compiler like `Unix Makefiles` or `Ninja`.
 
 `Step 2.` Run the command below in the root directory of the project.
 
@@ -203,7 +219,9 @@ cmake -G "Unix Makefiles" -H. -Bbuild/android -DCMAKE_TOOLCHAIN_FILE=bldsys/tool
 ```
 cmake --build build/android --config Release --target vulkan_best_practice_package
 ```
+
 `Step 4.` You can now run the apk on a connected device
+
 ```
 cd build/android/vulkan_best_practice/vulkan_best_practice_package
 adb install build/outputs/apk/debug/vulkan_best_practice-debug.apk

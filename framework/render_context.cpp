@@ -36,15 +36,16 @@ void RenderContext::prepare(RenderFrame::CreateFunc render_frame_create_func)
 	assert(frames.empty());
 
 	VkExtent2D swapchain_extent = swapchain->get_extent();
-	VkFormat   swapchain_format = swapchain->get_format();
+	VkExtent3D extent{swapchain_extent.width, swapchain_extent.height, 1};
 
 	for (auto &image_handle : swapchain->get_images())
 	{
-		frames.push_back(render_frame_create_func(device,
-		                                          core::Image{
-		                                              device, image_handle,
-		                                              VkExtent3D{swapchain_extent.width, swapchain_extent.height, 1},
-		                                              swapchain_format}));
+		core::Image swapchain_image{device, image_handle,
+		                            extent,
+		                            swapchain->get_format(),
+		                            swapchain->get_usage()};
+
+		frames.push_back(render_frame_create_func(device, std::move(swapchain_image)));
 	}
 }
 
@@ -180,20 +181,21 @@ Device &RenderContext::get_device()
 
 void RenderContext::update_swapchain(std::unique_ptr<Swapchain> &&new_swapchain)
 {
-	device.clear_framebuffers();
+	device.get_resource_cache().clear_framebuffers();
 
 	swapchain = std::move(new_swapchain);
 
 	VkExtent2D swapchain_extent = swapchain->get_extent();
-	VkFormat   swapchain_format = swapchain->get_format();
+	VkExtent3D extent{swapchain_extent.width, swapchain_extent.height, 1};
 
 	auto frame_it = frames.begin();
 
 	for (auto &image_handle : swapchain->get_images())
 	{
 		core::Image swapchain_image{device, image_handle,
-		                            VkExtent3D{swapchain_extent.width, swapchain_extent.height, 1},
-		                            swapchain_format};
+		                            extent,
+		                            swapchain->get_format(),
+		                            swapchain->get_usage()};
 
 		(*frame_it)->update_render_target(std::move(swapchain_image));
 

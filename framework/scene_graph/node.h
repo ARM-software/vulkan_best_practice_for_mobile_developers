@@ -78,7 +78,7 @@ class Node
   private:
 	std::string name;
 
-	sg::Transform transform;
+	Transform transform;
 
 	Node *parent{nullptr};
 

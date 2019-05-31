@@ -24,6 +24,8 @@
 #include <map>
 #include <numeric>
 
+#include "buffer_pool.h"
+#include "platform/file.h"
 #include "render_context.h"
 #include "utils.h"
 
@@ -49,11 +51,11 @@ inline void reset_graph_max_value(Gui::StatsView::GraphData &graph_data)
 }
 }        // namespace
 
-const float Gui::press_time_ms = 200.0f;
-
-const float Gui::font_size_dp = 21.0f;
+const double Gui::press_time_ms = 200.0f;
 
 const float Gui::overlay_alpha = 0.3f;
+
+const std::string Gui::default_font = "Roboto-Regular";
 
 const ImGuiWindowFlags Gui::common_flags = ImGuiWindowFlags_NoMove |
                                            ImGuiWindowFlags_NoScrollbar |
@@ -70,8 +72,7 @@ const ImGuiWindowFlags Gui::info_flags = Gui::common_flags | ImGuiWindowFlags_No
 
 Gui::Gui(RenderContext &render_context, const float dpi_factor) :
     render_context{render_context},
-    dpi_factor{dpi_factor},
-    pipeline_layout{create_pipeline_layout(render_context.get_device(), "shaders/imgui.vert", "shaders/imgui.frag")}
+    dpi_factor{dpi_factor}
 {
 	ImGui::CreateContext();
 
@@ -98,9 +99,11 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 	io.FontGlobalScale         = 1.0f;
 	io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
 
-	// Roboto font
-	const float size_pixels = font_size_dp * dpi_factor;
-	io.Fonts->AddFontFromMemoryCompressedTTF(roboto_font.data, roboto_font.size, size_pixels);
+	// Default font
+	fonts.emplace_back(default_font, 21.0f * dpi_factor);
+
+	// Debug window font
+	fonts.emplace_back("RobotoMono-Regular", 11.0f * dpi_factor);
 
 	// Create font texture
 	unsigned char *font_data;
@@ -187,6 +190,15 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 	sampler_info.addressModeW  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_info.borderColor   = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 
+	vkb::ShaderSource vert_shader(vkb::file::read_asset("shaders/imgui.vert"));
+	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/imgui.frag"));
+
+	std::vector<vkb::ShaderModule *> shader_modules;
+	shader_modules.push_back(&device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vert_shader, {}));
+	shader_modules.push_back(&device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, frag_shader, {}));
+
+	pipeline_layout = &device.get_resource_cache().request_pipeline_layout(shader_modules);
+
 	sampler = std::make_unique<core::Sampler>(device, sampler_info);
 }
 
@@ -206,10 +218,10 @@ void Gui::update(const float delta_time)
 	ImGui::Render();
 
 	// Update vulkan buffers
-	update_buffers();
+	//update_buffers();
 }
 
-void Gui::update_buffers()
+void Gui::update_buffers(CommandBuffer &command_buffer)
 {
 	ImDrawData *draw_data = ImGui::GetDrawData();
 
@@ -237,45 +249,22 @@ void Gui::update_buffers()
 		idx_dst += cmd_list->IdxBuffer.Size;
 	}
 
-	auto &frame = render_context.get_active_frame();
-	// Get vertex buffer for the current image
-	auto &vertex_buffer = frame.gui_vertex_buffer;
+	auto vertex_allocation = render_context.get_active_frame().allocate_buffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertex_buffer_size);
 
-	// Upload to buffers to make writes visible to GPU
-	// If buffer size is not enough
-	if (vertex_buffer && vertex_buffer->get_size() < vertex_buffer_size)
-	{
-		// Destroy the old buffer before creating a new one
-		vertex_buffer.reset();
-	}
+	vertex_allocation.update(0, vertex_data);
 
-	if (!vertex_buffer)
-	{
-		// Create a buffer for vertices
-		vertex_buffer = std::make_unique<core::Buffer>(render_context.get_device(), vertex_buffer_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	}
+	std::vector<std::reference_wrapper<const core::Buffer>> buffers;
+	buffers.emplace_back(std::ref(vertex_allocation.get_buffer()));
 
-	// Update current buffer with new data
-	vertex_buffer->update(0, vertex_data);
+	std::vector<VkDeviceSize> offsets{vertex_allocation.get_offset()};
 
-	// Get vertex buffer for the current image
-	auto &index_buffer = frame.gui_index_buffer;
+	command_buffer.bind_vertex_buffers(0, buffers, offsets);
 
-	// If buffer size is not enough
-	if (index_buffer && index_buffer->get_size() < index_buffer_size)
-	{
-		// Destroy the old buffer before creating a new one
-		index_buffer.reset();
-	}
+	auto index_allocation = render_context.get_active_frame().allocate_buffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, index_buffer_size);
 
-	if (!index_buffer)
-	{
-		// Create a buffer for indices
-		index_buffer = std::make_unique<core::Buffer>(render_context.get_device(), index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	}
+	index_allocation.update(0, index_data);
 
-	// Update current buffer with new data
-	index_buffer->update(0, index_data);
+	command_buffer.bind_index_buffer(index_allocation.get_buffer(), index_allocation.get_offset(), VK_INDEX_TYPE_UINT16);
 }
 
 void Gui::resize(const uint32_t width, const uint32_t height) const
@@ -342,7 +331,7 @@ void Gui::draw(CommandBuffer &command_buffer)
 	command_buffer.set_depth_stencil_state(depth_state);
 
 	// Bind pipeline layout
-	command_buffer.bind_pipeline_layout(pipeline_layout);
+	command_buffer.bind_pipeline_layout(*pipeline_layout);
 
 	command_buffer.bind_image(*font_image_view, *sampler, 0, 0, 0);
 
@@ -370,6 +359,8 @@ void Gui::draw(CommandBuffer &command_buffer)
 	// Push constants
 	command_buffer.push_constants(0, push_transform);
 
+	update_buffers(command_buffer);
+
 	// Render commands
 	ImDrawData *draw_data     = ImGui::GetDrawData();
 	int32_t     vertex_offset = 0;
@@ -377,24 +368,6 @@ void Gui::draw(CommandBuffer &command_buffer)
 
 	if (draw_data->CmdListsCount > 0)
 	{
-		auto &frame = render_context.get_active_frame();
-
-		// Vertex buffers
-		assert(frame.gui_vertex_buffer && "Gui vertex buffer is invalid");
-		const auto &vertex_buffer = *frame.gui_vertex_buffer;
-
-		std::vector<std::reference_wrapper<const core::Buffer>> buffers;
-		buffers.emplace_back(std::ref(vertex_buffer));
-
-		std::vector<VkDeviceSize> offsets{0};
-
-		command_buffer.bind_vertex_buffers(0, buffers, offsets);
-
-		// Index buffer
-		assert(frame.gui_index_buffer && "Gui index buffer is invalid");
-		const auto &index_buffer = *frame.gui_index_buffer;
-		command_buffer.bind_index_buffer(index_buffer, 0, VK_INDEX_TYPE_UINT16);
-
 		for (int32_t i = 0; i < draw_data->CmdListsCount; i++)
 		{
 			const ImDrawList *cmd_list = draw_data->CmdLists[i];
@@ -456,6 +429,28 @@ Gui::StatsView &Gui::get_stats_view()
 	return stats_view;
 }
 
+Font &Gui::get_font(const std::string &font_name)
+{
+	assert(!fonts.empty() && "No fonts exist");
+
+	auto it = std::find_if(fonts.begin(), fonts.end(), [&font_name](Font &font) { return font.name == font_name; });
+
+	if (it != fonts.end())
+	{
+		return *it;
+	}
+	else
+	{
+		LOGW("Couldn't find font with name {}", font_name);
+		return *fonts.begin();
+	}
+}
+
+bool Gui::is_debug_view_active() const
+{
+	return debug_view.active;
+}
+
 void Gui::StatsView::reset_max_value(const StatIndex index)
 {
 	auto pr = graph_map.find(index);
@@ -502,23 +497,9 @@ void Gui::show_top_window(const std::string &app_name, const Stats *stats, Debug
 
 	if (debug_info)
 	{
-		ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4) ImColor::HSV(0.0f, 0.35f, 0.55f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4) ImColor::HSV(0.0f, 0.5f, 0.75f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4) ImColor::HSV(0.5f, 0.35f, 0.55f));
-		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, debug_view.round_corners);
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, debug_view.frame_padding);
-		ImGui::Dummy(ImVec2(0.0f, debug_view.button_padding));
-		if (ImGui::Button(debug_view.active ? "Disable debug info" : "Enable debug info"))
-		{
-			debug_view.active = !debug_view.active;
-		}
-		ImGui::PopStyleVar(2);
-		ImGui::PopStyleColor(3);
-		ImGui::Dummy(ImVec2(0.0f, debug_view.button_padding));
-
 		if (debug_view.active)
 		{
-			show_debug_window(*debug_info, ImVec2{debug_view.button_padding, debug_view.button_padding + ImGui::GetWindowSize().y});
+			show_debug_window(*debug_info, ImVec2{0, ImGui::GetWindowSize().y});
 		}
 	}
 
@@ -539,29 +520,50 @@ void Gui::show_app_info(const std::string &app_name)
 
 void Gui::show_debug_window(DebugInfo &debug_info, const ImVec2 &position)
 {
+	auto &io    = ImGui::GetIO();
+	auto &style = ImGui::GetStyle();
+	auto &font  = get_font("RobotoMono-Regular");
+
+	// Calculate only once
+	if (debug_view.label_column_width == 0)
+	{
+		debug_view.label_column_width = style.ItemInnerSpacing.x + debug_info.get_longest_label() * font.size / debug_view.scale;
+	}
+
 	ImGui::SetNextWindowBgAlpha(overlay_alpha);
 	ImGui::SetNextWindowPos(position, ImGuiSetCond_FirstUseEver);
-	ImGui::SetNextWindowContentSize(ImVec2{debug_view.window_size.x * dpi_factor, debug_view.window_size.y * dpi_factor});
+	ImGui::SetNextWindowContentSize(ImVec2{io.DisplaySize.x, 0.0f});
 
-	bool is_open = true;
-	ImGui::Begin(debug_view.title, &is_open, common_flags);
+	bool                   is_open = true;
+	const ImGuiWindowFlags flags   = ImGuiWindowFlags_AlwaysAutoResize |
+	                               ImGuiWindowFlags_NoMove |
+	                               ImGuiWindowFlags_NoTitleBar |
+	                               ImGuiWindowFlags_NoResize |
+	                               ImGuiWindowFlags_NoFocusOnAppearing |
+	                               ImGuiWindowFlags_NoNav;
 
-	ImGui::Separator();
+	ImGui::Begin("Debug Window", &is_open, flags);
+	ImGui::PushFont(font.handle);
+
+	auto field_count = debug_info.get_fields().size() > debug_view.max_fields ? debug_view.max_fields : debug_info.get_fields().size();
+
+	ImGui::BeginChild("Table", ImVec2(0, field_count * (font.size + style.ItemSpacing.y)), false);
 	ImGui::Columns(2);
-	ImGui::SetColumnWidth(0, debug_view.column_width * dpi_factor);
+	ImGui::SetColumnWidth(0, debug_view.label_column_width);
+	ImGui::SetColumnWidth(1, io.DisplaySize.x - debug_view.label_column_width);
 	for (auto &field : debug_info.get_fields())
 	{
 		const std::string &label = field->label;
 		const std::string &value = field->to_string();
-
 		ImGui::Text("%s", label.c_str());
 		ImGui::NextColumn();
 		ImGui::Text(" %s", value.c_str());
 		ImGui::NextColumn();
 	}
 	ImGui::Columns(1);
-	ImGui::Separator();
+	ImGui::EndChild();
 
+	ImGui::PopFont();
 	ImGui::End();
 }
 
@@ -702,23 +704,57 @@ bool Gui::input_event(const InputEvent &input_event)
 		}
 	}
 
+	// Toggle GUI elements when tap or clicking outside the GUI windows
 	if (!io.WantCaptureMouse)
 	{
-		// Hide/show GUI on tap/click outside GUI windows
 		bool press_down = (input_event.get_source() == EventSource::Mouse && static_cast<const MouseButtonInputEvent &>(input_event).get_action() == MouseAction::Down) || (input_event.get_source() == EventSource::Touchscreen && static_cast<const TouchInputEvent &>(input_event).get_action() == TouchAction::Down);
 		bool press_up   = (input_event.get_source() == EventSource::Mouse && static_cast<const MouseButtonInputEvent &>(input_event).get_action() == MouseAction::Up) || (input_event.get_source() == EventSource::Touchscreen && static_cast<const TouchInputEvent &>(input_event).get_action() == TouchAction::Up);
 
 		if (press_down)
 		{
-			press_start = std::chrono::high_resolution_clock::now();
+			timer.start();
+			if (input_event.get_source() == EventSource::Touchscreen)
+			{
+				const auto &touch_event = static_cast<const TouchInputEvent &>(input_event);
+				if (touch_event.get_touch_points() == 2)
+				{
+					two_finger_tap = true;
+				}
+			}
 		}
 		if (press_up)
 		{
-			auto press_end   = std::chrono::high_resolution_clock::now();
-			auto press_delta = std::chrono::duration<double, std::milli>(press_end - press_start).count();
+			auto press_delta = timer.stop<Timer::Milliseconds>();
 			if (press_delta < press_time_ms)
 			{
-				visible = !visible;
+				if (input_event.get_source() == EventSource::Mouse)
+				{
+					const auto &mouse_button = static_cast<const MouseButtonInputEvent &>(input_event);
+					if (mouse_button.get_button() == MouseButton::Left)
+					{
+						visible = !visible;
+					}
+					else if (mouse_button.get_button() == MouseButton::Right)
+					{
+						debug_view.active = !debug_view.active;
+					}
+				}
+				else if (input_event.get_source() == EventSource::Touchscreen)
+				{
+					const auto &touch_event = static_cast<const TouchInputEvent &>(input_event);
+					if (!two_finger_tap && touch_event.get_touch_points() == 1)
+					{
+						visible = !visible;
+					}
+					else if (two_finger_tap && touch_event.get_touch_points() == 2)
+					{
+						debug_view.active = !debug_view.active;
+					}
+					else
+					{
+						two_finger_tap = false;
+					}
+				}
 			}
 		}
 	}

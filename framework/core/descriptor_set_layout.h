@@ -50,6 +50,8 @@ class DescriptorSetLayout : public NonCopyable
 
 	bool get_layout_binding(uint32_t binding_index, VkDescriptorSetLayoutBinding &binding) const;
 
+	bool has_layout_binding(const std::string &name, VkDescriptorSetLayoutBinding &binding) const;
+
   private:
 	Device &device;
 
@@ -60,5 +62,7 @@ class DescriptorSetLayout : public NonCopyable
 	std::vector<VkDescriptorSetLayoutBinding> bindings;
 
 	std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings_lookup;
+
+	std::unordered_map<std::string, uint32_t> resources_lookup;
 };
 }        // namespace vkb

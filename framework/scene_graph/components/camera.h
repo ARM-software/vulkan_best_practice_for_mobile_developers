@@ -49,8 +49,12 @@ class Camera : public Component
 
 	Node *get_node();
 
+	void set_pre_rotation(const glm::mat4 &pre_rotation);
+
   private:
 	Node *node{nullptr};
+
+	glm::mat4 pre_rotation{1.0f};
 };
 }        // namespace sg
 }        // namespace vkb

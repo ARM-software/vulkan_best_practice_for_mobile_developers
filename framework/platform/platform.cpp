@@ -24,7 +24,7 @@
 
 namespace vkb
 {
-bool Platform::initialise(std::unique_ptr<Application> &&app)
+bool Platform::initialize(std::unique_ptr<Application> &&app)
 {
 	assert(app && "Application is not valid");
 	active_app = std::move(app);

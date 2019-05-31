@@ -53,9 +53,9 @@ WindowsPlatform::WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	}
 }
 
-bool WindowsPlatform::initialise(std::unique_ptr<Application> &&app)
+bool WindowsPlatform::initialize(std::unique_ptr<Application> &&app)
 {
-	return GlfwPlatform::initialise(std::move(app));
+	return GlfwPlatform::initialize(std::move(app));
 }
 
 void WindowsPlatform::terminate()

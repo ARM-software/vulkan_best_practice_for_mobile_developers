@@ -59,6 +59,11 @@ class Buffer : public NonCopyable
 		                                    reinterpret_cast<const uint8_t *>(&value) + sizeof(T)});
 	}
 
+	const uint8_t *get_data() const
+	{
+		return mapped_data;
+	}
+
   private:
 	Device &device;
 

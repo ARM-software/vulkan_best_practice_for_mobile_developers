@@ -25,18 +25,30 @@
 #include "core/device.h"
 #include "core/image.h"
 #include "core/queue.h"
+
+#include "buffer_pool.h"
 #include "fence_pool.h"
 #include "render_target.h"
 #include "semaphore_pool.h"
 
 namespace vkb
 {
+/**
+ * @brief Helper class representing the rendering of a frame
+ *        Multiple frames can be rendered in flight
+ *        meaning they can not share the same resources
+ */
 class RenderFrame : public NonCopyable
 {
   public:
 	using CreateFunc = std::function<std::unique_ptr<RenderFrame>(Device &, core::Image &&)>;
 
 	static const CreateFunc DEFAULT_CREATE_FUNC;
+
+	/**
+	 * @brief Block size of a buffer pool in kilobytes
+	 */
+	static constexpr uint32_t BUFFER_POOL_BLOCK_SIZE = 256;
 
 	RenderFrame(Device &device, core::Image &&swapchain_image);
 
@@ -61,9 +73,12 @@ class RenderFrame : public NonCopyable
 
 	const RenderTarget &get_render_target() const;
 
-	std::unique_ptr<core::Buffer> gui_vertex_buffer;
-
-	std::unique_ptr<core::Buffer> gui_index_buffer;
+	/**
+	 * @param usage Usage of the buffer
+	 * @param size Amount of memory required
+	 * @return The requested allocation, it may be empty
+	 */
+	BufferAllocation allocate_buffer(VkBufferUsageFlags usage, VkDeviceSize size);
 
   private:
 	Device &device;
@@ -76,5 +91,7 @@ class RenderFrame : public NonCopyable
 	SemaphorePool semaphore_pool;
 
 	std::unique_ptr<RenderTarget> swapchain_render_target;
+
+	std::map<VkBufferUsageFlags, std::pair<BufferPool, BufferBlock *>> buffer_pools;
 };
 }        // namespace vkb

@@ -23,8 +23,6 @@
 #include <limits>
 #include <stdexcept>
 
-#include "gltf_loader.h"
-
 std::ostream &operator<<(std::ostream &os, const VkResult result)
 {
 #define WRITE_VK_ENUM(r) \
@@ -89,6 +87,19 @@ bool is_depth_stencil_format(VkFormat format)
 	       format == VK_FORMAT_D24_UNORM_S8_UINT ||
 	       format == VK_FORMAT_D32_SFLOAT_S8_UINT ||
 	       is_depth_only_format(format);
+}
+
+bool is_dynamic_buffer_descriptor_type(VkDescriptorType descriptor_type)
+{
+	return descriptor_type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC ||
+	       descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+}
+
+bool is_buffer_descriptor_type(VkDescriptorType descriptor_type)
+{
+	return descriptor_type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER ||
+	       descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER ||
+	       is_dynamic_buffer_descriptor_type(descriptor_type);
 }
 
 int32_t get_bits_per_pixel(VkFormat format)
@@ -539,56 +550,6 @@ VulkanException::VulkanException(const VkResult result, const std::string &msg) 
 const char *VulkanException::what() const noexcept
 {
 	return error_message.c_str();
-}
-
-std::vector<uint8_t> read_binary_file(const std::string &path)
-{
-	std::vector<uint8_t> data;
-
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-	if (!tinygltf::asset_manager)
-	{
-		throw std::runtime_error("Asset manager does not exist.");
-	}
-
-	AAsset *asset = AAssetManager_open(tinygltf::asset_manager, path.c_str(), AASSET_MODE_BUFFER);
-	if (!asset)
-	{
-		throw std::runtime_error("AAssetManager_open() failed to load file: " + path);
-	}
-
-	size_t size = AAsset_getLength(asset);
-	if (size <= 0)
-	{
-		AAsset_close(asset);
-		throw std::runtime_error("Invalid file size: " + path);
-	}
-
-	data.resize(size);
-
-	AAsset_read(asset, data.data(), size);
-	AAsset_close(asset);
-#else
-	std::ifstream file;
-
-	file.open("assets/" + path, std::ios::in | std::ios::binary);
-
-	if (!file.is_open())
-	{
-		throw std::runtime_error("Failed to load file: " + path);
-	}
-
-	// Calculate file size
-	file.seekg(0, std::ios::end);
-	auto file_size = file.tellg();
-	file.seekg(0, std::ios::beg);
-
-	// Make space and read
-	data.resize(file_size);
-	file.read(reinterpret_cast<char *>(&data[0]), file_size);
-#endif
-
-	return data;
 }
 
 }        // namespace vkb

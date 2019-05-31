@@ -195,11 +195,12 @@ inline MouseAction translate_mouse_action(int action)
 
 inline TouchAction translate_touch_action(int action)
 {
-	if (action == AMOTION_EVENT_ACTION_POINTER_DOWN || action == AMOTION_EVENT_ACTION_DOWN)
+	action &= AMOTION_EVENT_ACTION_MASK;
+	if (action == AMOTION_EVENT_ACTION_DOWN || action == AMOTION_EVENT_ACTION_POINTER_DOWN)
 	{
 		return TouchAction::Down;
 	}
-	else if (action == AMOTION_EVENT_ACTION_POINTER_UP || action == AMOTION_EVENT_ACTION_UP)
+	else if (action == AMOTION_EVENT_ACTION_UP || action == AMOTION_EVENT_ACTION_POINTER_UP)
 	{
 		return TouchAction::Up;
 	}
@@ -299,22 +300,19 @@ int32_t on_input_event(android_app *app, AInputEvent *input_event)
 	}
 	else if (event_source == AINPUT_SOURCE_TOUCHSCREEN)
 	{
+		size_t       pointer_count = AMotionEvent_getPointerCount(input_event);
 		std::int32_t action        = AMotionEvent_getAction(input_event);
-		std::int32_t pointer_count = AMotionEvent_getPointerCount(input_event);
+		std::int32_t pointer_id    = AMotionEvent_getPointerId(input_event, 0);
 
-		for (std::int32_t i = 0; i < pointer_count; i++)
-		{
-			std::int32_t pointer_id = AMotionEvent_getPointerId(input_event, i);
+		float x = AMotionEvent_getX(input_event, 0);
+		float y = AMotionEvent_getY(input_event, 0);
 
-			float x = AMotionEvent_getX(input_event, i);
-			float y = AMotionEvent_getY(input_event, i);
-
-			platform->get_app().input_event(TouchInputEvent{
-			    *platform,
-			    pointer_id,
-			    translate_touch_action(action),
-			    x, y});
-		}
+		platform->get_app().input_event(TouchInputEvent{
+		    *platform,
+		    pointer_id,
+		    pointer_count,
+		    translate_touch_action(action),
+		    x, y});
 	}
 	else
 	{
@@ -327,14 +325,14 @@ int32_t on_input_event(android_app *app, AInputEvent *input_event)
 
 AndroidPlatform::AndroidPlatform(android_app *app) :
     app{app}
-{}
-
-bool AndroidPlatform::initialise(std::unique_ptr<Application> &&appplication)
 {
 	auto android_logger = spdlog::android_logger_mt("android", PROJECT_NAME);
 	android_logger->set_pattern(LOGGER_FORMAT);
 	spdlog::set_default_logger(android_logger);
+}
 
+bool AndroidPlatform::initialize(std::unique_ptr<Application> &&appplication)
+{
 	app->onAppCmd                                  = on_app_cmd;
 	app->onInputEvent                              = on_input_event;
 	app->activity->callbacks->onContentRectChanged = on_content_rect_changed;

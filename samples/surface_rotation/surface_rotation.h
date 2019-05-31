@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "utils.h"
+#include "render_pipeline.h"
 #include "vulkan_sample.h"
 
 #include "scene_graph/components/perspective_camera.h"
@@ -62,13 +62,9 @@ class SurfaceRotation : public vkb::VulkanSample
 	static const char *transform_to_string(VkSurfaceTransformFlagBitsKHR flag);
 
   private:
-	vkb::VertPushConstant vs_push_constant;
+	std::unique_ptr<vkb::RenderPipeline> render_pipeline{nullptr};
 
-	vkb::FragPushConstant fs_push_constant;
-
-	vkb::PipelineLayout *pipeline_layout{nullptr};
-
-	vkb::sg::PerspectiveCamera* camera{nullptr};
+	vkb::sg::PerspectiveCamera *camera{nullptr};
 
 	virtual void draw_gui() override;
 

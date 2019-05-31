@@ -186,7 +186,7 @@ bool SampleController::prepare_sample(std::vector<SampleInfo>::const_iterator sa
 
 bool SampleController::parse_arguments(const std::vector<std::string> &args)
 {
-	if (std::find(args.begin(), args.end(), "help") != args.end())
+	if (std::find(args.begin(), args.end(), "--help") != args.end())
 	{
 		print_usage();
 

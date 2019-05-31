@@ -63,6 +63,7 @@ inline EShLanguage FindShaderLanguage(VkShaderStageFlagBits stage)
 bool GLSLCompiler::compile_to_spirv(VkShaderStageFlagBits       stage,
                                     const std::vector<uint8_t> &glsl_source,
                                     const std::string &         entry_point,
+                                    const ShaderVariant &       shader_variant,
                                     std::vector<std::uint32_t> &spirv,
                                     std::string &               info_log)
 {
@@ -81,6 +82,8 @@ bool GLSLCompiler::compile_to_spirv(VkShaderStageFlagBits       stage,
 	shader.setStringsWithLengthsAndNames(&shader_source, nullptr, file_name_list, 1);
 	shader.setEntryPoint(entry_point.c_str());
 	shader.setSourceEntryPoint(entry_point.c_str());
+	shader.setPreamble(shader_variant.get_preamble().c_str());
+	shader.addProcesses(shader_variant.get_processes());
 
 	if (!shader.parse(&glslang::DefaultTBuiltInResource, 100, false, messages))
 	{

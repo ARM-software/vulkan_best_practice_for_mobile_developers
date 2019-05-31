@@ -27,15 +27,15 @@
 
 namespace vkb
 {
-PipelineLayout::PipelineLayout(Device &device, std::vector<ShaderModule> &&stages) :
+PipelineLayout::PipelineLayout(Device &device, const std::vector<ShaderModule *> &shader_modules) :
     device{device},
-    stages{std::move(stages)}
+    shader_modules{shader_modules}
 {
 	// Merge shader stages resources
-	for (const ShaderModule &stage : this->stages)
+	for (ShaderModule *stage : shader_modules)
 	{
 		// Iterate over all of the shader resources
-		for (const ShaderResource &resource : stage.get_resources())
+		for (const ShaderResource &resource : stage->get_resources())
 		{
 			std::string key = resource.name;
 
@@ -84,23 +84,14 @@ PipelineLayout::PipelineLayout(Device &device, std::vector<ShaderModule> &&stage
 	// Create a descriptor set layout for each set index
 	for (auto it : set_bindings)
 	{
-		// Create a DescriptorSetLayout instance
-		DescriptorSetLayout set_layout{device, it.second};
-
-		// Ignore set layout if it has no binding
-		if (set_layout.get_bindings().empty())
-		{
-			continue;
-		}
-
-		set_layouts.emplace(it.first, std::move(set_layout));
+		set_layouts.emplace(it.first, &device.get_resource_cache().request_descriptor_set_layout(it.second));
 	}
 
 	std::vector<VkDescriptorSetLayout> set_layouts;
 
 	for (auto &it : this->set_layouts)
 	{
-		set_layouts.push_back(it.second.get_handle());
+		set_layouts.push_back(it.second->get_handle());
 	}
 
 	std::vector<VkPushConstantRange> push_constant_ranges;
@@ -141,8 +132,8 @@ PipelineLayout::PipelineLayout(Device &device, std::vector<ShaderModule> &&stage
 
 PipelineLayout::PipelineLayout(PipelineLayout &&other) :
     device{other.device},
-    stages{std::move(other.stages)},
     handle{other.handle},
+    shader_modules{std::move(other.shader_modules)},
     resources{std::move(other.resources)},
     set_bindings{std::move(other.set_bindings)},
     set_layouts{std::move(other.set_layouts)}
@@ -164,9 +155,9 @@ VkPipelineLayout PipelineLayout::get_handle() const
 	return handle;
 }
 
-const std::vector<ShaderModule> &PipelineLayout::get_stages() const
+const std::vector<ShaderModule *> &PipelineLayout::get_stages() const
 {
-	return stages;
+	return shader_modules;
 }
 
 const std::unordered_map<uint32_t, std::vector<ShaderResource>> &PipelineLayout::get_bindings() const
@@ -186,7 +177,7 @@ bool PipelineLayout::has_set_layout(uint32_t set_index) const
 
 DescriptorSetLayout &PipelineLayout::get_set_layout(uint32_t set_index)
 {
-	return set_layouts.at(set_index);
+	return *set_layouts.at(set_index);
 }
 
 std::vector<ShaderResource> PipelineLayout::get_vertex_input_attributes() const

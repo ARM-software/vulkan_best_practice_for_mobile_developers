@@ -26,6 +26,7 @@
 #include "scene_graph/components/image/ktx.h"
 #include "scene_graph/components/image/stb.h"
 
+#include "platform/file.h"
 #include "utils.h"
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
@@ -217,7 +218,7 @@ std::unique_ptr<Image> Image::load(const std::string &name, const std::string &u
 {
 	std::unique_ptr<Image> image{nullptr};
 
-	std::vector<uint8_t> data = read_binary_file(uri);
+	auto data = file::read_asset(uri);
 
 	// Get extension
 	auto extension = get_extension(uri);

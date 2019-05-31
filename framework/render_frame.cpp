@@ -33,6 +33,10 @@ RenderFrame::RenderFrame(Device &device, core::Image &&swapchain_image) :
     semaphore_pool{device}
 {
 	update_render_target(std::move(swapchain_image));
+
+	buffer_pools.emplace(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, std::make_pair(BufferPool{device, BUFFER_POOL_BLOCK_SIZE * 1024, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT}, nullptr));
+	buffer_pools.emplace(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, std::make_pair(BufferPool{device, BUFFER_POOL_BLOCK_SIZE * 1024, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT}, nullptr));
+	buffer_pools.emplace(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, std::make_pair(BufferPool{device, BUFFER_POOL_BLOCK_SIZE * 1024, VK_BUFFER_USAGE_INDEX_BUFFER_BIT}, nullptr));
 }
 
 RenderFrame::~RenderFrame()
@@ -63,6 +67,15 @@ void RenderFrame::reset()
 	for (auto &command_pool : command_pools)
 	{
 		command_pool.second.reset();
+	}
+
+	for (auto &buffer_pool_it : buffer_pools)
+	{
+		auto &[buffer_pool, buffer_block] = buffer_pool_it.second;
+
+		buffer_pool.reset();
+
+		buffer_block = nullptr;
 	}
 
 	semaphore_pool.reset();
@@ -102,5 +115,37 @@ SemaphorePool &RenderFrame::get_semaphore_pool()
 const RenderTarget &RenderFrame::get_render_target() const
 {
 	return *swapchain_render_target;
+}
+
+BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, const VkDeviceSize size)
+{
+	// Find a pool for this usage
+	auto buffer_pool_it = buffer_pools.find(usage);
+	if (buffer_pool_it == buffer_pools.end())
+	{
+		LOGE("No buffer pool for buffer usage {}", usage);
+		return BufferAllocation{};
+	}
+
+	auto &[buffer_pool, buffer_block] = buffer_pool_it->second;
+
+	if (!buffer_block)
+	{
+		// If there is no block associated with the pool
+		// Request one with that size
+		buffer_block = &buffer_pool.request_buffer_block(size);
+	}
+
+	auto data = buffer_block->allocate(size);
+
+	// Check if the buffer block can allocate the requested size
+	if (data.empty())
+	{
+		buffer_block = &buffer_pool.request_buffer_block(size);
+
+		data = buffer_block->allocate(size);
+	}
+
+	return data;
 }
 }        // namespace vkb

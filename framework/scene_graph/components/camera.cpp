@@ -44,7 +44,7 @@ glm::mat4 Camera::get_view()
 	}
 
 	auto &transform = node->get_component<Transform>();
-	return glm::inverse(transform.get_world_matrix());
+	return pre_rotation * glm::inverse(transform.get_world_matrix());
 }
 
 void Camera::set_node(Node &n)
@@ -55,6 +55,11 @@ void Camera::set_node(Node &n)
 Node *Camera::get_node()
 {
 	return node;
+}
+
+void Camera::set_pre_rotation(const glm::mat4 &pr)
+{
+	pre_rotation = pr;
 }
 }        // namespace sg
 }        // namespace vkb

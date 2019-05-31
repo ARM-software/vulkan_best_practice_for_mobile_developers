@@ -21,6 +21,7 @@
 #include "surface_rotation.h"
 
 #include "gui.h"
+#include "platform/file.h"
 #include "platform/platform.h"
 #include "stats.h"
 
@@ -64,18 +65,18 @@ bool SurfaceRotation::prepare(vkb::Platform &platform)
 	render_context = std::make_unique<SurfaceRotationRenderContext>(*device, std::move(swapchain), pre_rotate);
 	render_context->prepare();
 
-	pipeline_layout = &create_pipeline_layout(*device, "shaders/base.vert", "shaders/base.frag");
+	vkb::ShaderSource vert_shader(vkb::file::read_asset("shaders/base.vert"));
+	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/base.frag"));
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
-	auto& camera_node = add_free_camera("main_camera");
+	render_pipeline = std::make_unique<vkb::RenderPipeline>(*render_context, scene, std::move(vert_shader), std::move(frag_shader));
 
-	camera = dynamic_cast<vkb::sg::PerspectiveCamera*>(&camera_node.get_component<vkb::sg::Camera>());
+	auto &camera_node = add_free_camera("main_camera");
+
+	camera = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
 	gui = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor());
-
-	fs_push_constant.light_pos   = glm::vec4(500.0f, 1550.0f, 0.0f, 1.0);
-	fs_push_constant.light_color = glm::vec4(1.0, 1.0, 1.0, 1.0);
 
 	return true;
 }
@@ -102,7 +103,7 @@ void SurfaceRotation::draw_gui()
 	auto              transform       = SurfaceRotation::transform_to_string(render_context->get_swapchain().get_transform());
 	auto              resolution_str  = "Res: " + std::to_string(a_width) + "x" + std::to_string(a_height);
 	std::stringstream fov_stream;
-	fov_stream << "FOV: " << std::fixed << std::setprecision(2) << camera->get_field_of_view() * 180.0f / glm::pi<float>() << "º";
+	fov_stream << "FOV: " << std::fixed << std::setprecision(2) << camera->get_field_of_view() * 180.0f / glm::pi<float>();
 	auto fov_str = fov_stream.str();
 
 	// If pre-rotate is enabled, the aspect ratio will not change, therefore need to check if the
@@ -157,15 +158,9 @@ void SurfaceRotation::draw_scene(vkb::CommandBuffer &cmd_buf)
 	// mode the aspect ratio never changes
 	VkExtent2D extent = render_context->get_swapchain().get_extent();
 	camera->set_aspect_ratio(static_cast<float>(extent.width) / extent.height);
+	camera->set_pre_rotation(pre_rotate_mat);
 
-	vs_push_constant.camera_view_proj = vkb::vulkan_style_projection(camera->get_projection()) * pre_rotate_mat * camera->get_view();
-
-	cmd_buf.bind_pipeline_layout(*pipeline_layout);
-
-	cmd_buf.push_constants(0, vs_push_constant);
-	cmd_buf.push_constants(sizeof(vkb::VertPushConstant), fs_push_constant);
-
-	draw_scene_meshes(cmd_buf, *pipeline_layout, scene);
+	render_pipeline->draw_scene(cmd_buf, *camera);
 }
 
 void SurfaceRotation::trigger_swapchain_recreation()

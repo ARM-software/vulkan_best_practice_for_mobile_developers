@@ -29,13 +29,15 @@ class Device;
 
 struct Attachment
 {
-	VkFormat format;
+	VkFormat format{VK_FORMAT_UNDEFINED};
 
-	VkSampleCountFlagBits samples;
+	VkSampleCountFlagBits samples{VK_SAMPLE_COUNT_1_BIT};
 
-	VkImageUsageFlags usage;
+	VkImageUsageFlags usage{VK_IMAGE_USAGE_SAMPLED_BIT};
 
-	Attachment(VkFormat format, VkSampleCountFlagBits samples, VkImageUsageFlags usage = VK_IMAGE_USAGE_SAMPLED_BIT);
+	Attachment() = default;
+
+	Attachment(VkFormat format, VkSampleCountFlagBits samples, VkImageUsageFlags usage);
 };
 
 class RenderTarget : public NonCopyable

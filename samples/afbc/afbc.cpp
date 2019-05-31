@@ -23,6 +23,7 @@
 #include "platform/platform.h"
 
 #include "gui.h"
+#include "platform/file.h"
 #include "stats.h"
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
@@ -63,18 +64,18 @@ bool AFBCSample::prepare(vkb::Platform &platform)
 	render_context = std::make_unique<vkb::RenderContext>(*device, std::move(swapchain));
 	render_context->prepare();
 
-	pipeline_layout = &create_pipeline_layout(*device, "shaders/base.vert", "shaders/base.frag");
+	vkb::ShaderSource vert_shader(vkb::file::read_asset("shaders/base.vert"));
+	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/base.frag"));
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
-	auto& camera_node = add_free_camera("main_camera");
+	render_pipeline = std::make_unique<vkb::RenderPipeline>(*render_context, scene, std::move(vert_shader), std::move(frag_shader));
+
+	auto &camera_node = add_free_camera("main_camera");
 
 	camera = &camera_node.get_component<vkb::sg::Camera>();
 
 	gui = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor());
-
-	fs_push_constant.light_pos   = glm::vec4(500.0f, 1550.0f, 0.0f, 1.0);
-	fs_push_constant.light_color = glm::vec4(1.0, 1.0, 1.0, 1.0);
 
 	return true;
 }
@@ -115,14 +116,7 @@ void AFBCSample::draw_gui()
 
 void AFBCSample::draw_scene(vkb::CommandBuffer &cmd_buf)
 {
-	vs_push_constant.camera_view_proj = vkb::vulkan_style_projection(camera->get_projection()) * camera->get_view();
-
-	cmd_buf.bind_pipeline_layout(*pipeline_layout);
-
-	cmd_buf.push_constants(0, vs_push_constant);
-	cmd_buf.push_constants(sizeof(vkb::VertPushConstant), fs_push_constant);
-
-	draw_scene_meshes(cmd_buf, *pipeline_layout, scene);
+	render_pipeline->draw_scene(cmd_buf, *camera);
 }
 
 std::unique_ptr<vkb::VulkanSample> create_afbc()

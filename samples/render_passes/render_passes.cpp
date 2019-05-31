@@ -25,6 +25,7 @@
 #include "common.h"
 #include "gltf_loader.h"
 #include "gui.h"
+#include "platform/file.h"
 #include "stats.h"
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
@@ -117,16 +118,14 @@ bool RenderPassesSample::prepare(vkb::Platform &platform)
 	auto swapchain = std::make_unique<vkb::Swapchain>(*device, get_surface());
 
 	render_context = std::make_unique<vkb::RenderContext>(*device, std::move(swapchain));
-
 	render_context->prepare();
 
-	pipeline_layout = &create_pipeline_layout(*device, "shaders/base.vert", "shaders/base.frag");
-
-	// Set up lights
-	fs_push_constant.light_pos   = glm::vec4(500.0f, 1550.0f, 0.0f, 1.0);
-	fs_push_constant.light_color = glm::vec4(1.0, 1.0, 1.0, 1.0);
+	vkb::ShaderSource vert_shader(vkb::file::read_asset("shaders/base.vert"));
+	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/base.frag"));
 
 	load_scene("scenes/sponza/Sponza01.gltf");
+
+	render_pipeline = std::make_unique<vkb::RenderPipeline>(*render_context, scene, std::move(vert_shader), std::move(frag_shader));
 
 	auto &camera_node = add_free_camera("main_camera");
 
@@ -182,14 +181,7 @@ void RenderPassesSample::draw_swapchain_renderpass(vkb::CommandBuffer &command_b
 
 void RenderPassesSample::draw_scene(vkb::CommandBuffer &command_buffer)
 {
-	vs_push_constant.camera_view_proj = vkb::vulkan_style_projection(camera->get_projection()) * camera->get_view();
-
-	command_buffer.bind_pipeline_layout(*pipeline_layout);
-
-	command_buffer.push_constants(0, vs_push_constant);
-	command_buffer.push_constants(sizeof(vkb::VertPushConstant), fs_push_constant);
-
-	draw_scene_meshes(command_buffer, *pipeline_layout, scene);
+	render_pipeline->draw_scene(command_buffer, *camera);
 }
 
 void RenderPassesSample::update(float delta_time)

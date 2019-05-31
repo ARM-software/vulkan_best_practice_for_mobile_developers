@@ -1,0 +1,10 @@
+.clang-format
+doxyfile
+.gitignore
+.snakeignore
+.yml
+.gitmodules
+.jpg
+.png
+.ttf
+VERSION

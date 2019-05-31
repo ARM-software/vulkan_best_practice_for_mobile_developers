@@ -22,12 +22,16 @@
 
 #include <cstdint>
 #include <functional>
+#include <future>
 #include <imgui.h>
+#include <imgui_internal.h>
+#include <thread>
 
 #include "core/command_buffer.h"
 #include "core/sampler.h"
 #include "debug_info.h"
 
+#include "platform/file.h"
 #include "platform/input_events.h"
 #include "render_context.h"
 #include "stats.h"
@@ -35,12 +39,35 @@
 namespace vkb
 {
 /**
- * @brief Helper structure for fonts embedded in the source
+ * @brief Helper structure for fonts loaded from TTF
  */
 struct Font
 {
-	const uint32_t  size;
-	const uint32_t *data;
+	/**
+	 * @brief Constructor
+	 * @param name The name of the font file that exists within 'assets/fonts' (without extension)
+	 * @param size The font size, scaled by DPI
+	 */
+	Font(const std::string &name, float size) :
+	    name{name},
+	    data{vkb::file::read_asset("fonts/" + name + ".ttf")},
+	    size{size}
+	{
+		// Keep ownership of the font data to avoid a double delete
+		ImFontConfig font_config{};
+		font_config.FontDataOwnedByAtlas = false;
+
+		ImGuiIO &io = ImGui::GetIO();
+		handle      = io.Fonts->AddFontFromMemoryTTF(data.data(), data.size(), size, &font_config);
+	}
+
+	ImFont *handle{nullptr};
+
+	std::string name;
+
+	std::vector<uint8_t> data;
+
+	float size{};
 };
 
 /**
@@ -93,8 +120,8 @@ class Gui
 		/// Per-statistic max values
 		std::map<StatIndex, GraphData> graph_map{
 		    {StatIndex::frame_times,
-		     {/* label = */ "Frame time: %3.1f",
-		      /* scale_factor = */ 1}},
+		     {/* label = */ "Frame time: %3.1f ms",
+		      /* scale_factor = */ 1000.0f}},
 		    {StatIndex::cpu_cycles,
 		     {/* label = */ "CPU cycles: %4.1f M/s",
 		      /* scale_factor = */ float(1e-6),
@@ -142,7 +169,7 @@ class Gui
 		     {/* label = */ "Ext write bw: %4.1f MiB/s",
 		      /* scale_factor = */ 1.0f / (1024.0f * 1024.0f)}}};
 
-		float graph_height{64.0f};
+		float graph_height{50.0f};
 
 		float top_padding{1.1f};
 	};
@@ -155,18 +182,15 @@ class Gui
 	  public:
 		bool active{false};
 
-		const char *title{"Debug Info"};
+		float scale{1.7f};
 
-		ImVec2 window_size{600, 0};
+		uint32_t max_fields{8};
 
-		uint32_t column_width{150};
-
-		float button_padding{5.0f};
-
-		ImVec2 frame_padding{10.0f, 3.0f};
-
-		float round_corners{3.0f};
+		uint32_t label_column_width{0};
 	};
+
+	// The name of the default font file to use
+	static const std::string default_font;
 
 	/**
 	 * @brief Initializes the Gui
@@ -253,18 +277,18 @@ class Gui
 	 */
 	StatsView &get_stats_view();
 
+	Font &get_font(const std::string &font_name = Gui::default_font);
+
+	bool is_debug_view_active() const;
+
   private:
 	/**
 	 * @brief Updates Vulkan buffers
 	 * @param frame Frame to render into
 	 */
-	void update_buffers();
+	void update_buffers(CommandBuffer &command_buffer);
 
-	static const float press_time_ms;
-
-	static const float font_size_dp;
-
-	static const Font roboto_font;
+	static const double press_time_ms;
 
 	static const float overlay_alpha;
 
@@ -279,22 +303,27 @@ class Gui
 	/// Scale factor to apply to the size of gui elements (expressed in dp)
 	float dpi_factor{1.0f};
 
+	std::vector<Font> fonts;
+
 	std::unique_ptr<core::Image> font_image;
 	std::unique_ptr<ImageView>   font_image_view;
 
 	std::unique_ptr<core::Sampler> sampler{nullptr};
 
-	PipelineLayout &pipeline_layout;
+	PipelineLayout *pipeline_layout{nullptr};
 
 	StatsView stats_view;
 
 	DebugView debug_view;
 
 	/// Used to measure duration of input events
-	std::chrono::time_point<std::chrono::high_resolution_clock> press_start;
+	Timer timer;
 
 	/// Used to show/hide the GUI
 	bool visible = true;
+
+	/// Whether or not the GUI has detected a multi touch gesture
+	bool two_finger_tap = false;
 };
 
 void Gui::new_frame()

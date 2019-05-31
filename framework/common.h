@@ -24,7 +24,6 @@
 
 #include <algorithm>
 #include <array>
-#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
@@ -68,6 +67,99 @@ using BindingMap = std::unordered_map<uint32_t, std::map<uint32_t, T>>;
 
 namespace vkb
 {
+template <typename T>
+inline void read(std::istringstream &is, T &value)
+{
+	is.read(reinterpret_cast<char *>(&value), sizeof(T));
+}
+
+inline void read(std::istringstream &is, std::string &value)
+{
+	std::size_t size;
+	read(is, size);
+	value.resize(size);
+	is.read(value.data(), size);
+}
+
+template <class T>
+inline void read(std::istringstream &is, std::set<T> &value)
+{
+	std::size_t size;
+	read(is, size);
+	for (uint32_t i = 0; i < size; i++)
+	{
+		T item;
+		is.read(reinterpret_cast<char *>(&item), sizeof(T));
+		value.insert(std::move(item));
+	}
+}
+
+template <class T>
+inline void read(std::istringstream &is, std::vector<T> &value)
+{
+	std::size_t size;
+	read(is, size);
+	value.resize(size);
+	is.read(reinterpret_cast<char *>(value.data()), value.size() * sizeof(T));
+}
+
+template <class T, uint32_t N>
+inline void read(std::istringstream &is, std::array<T, N> &value)
+{
+	is.read(reinterpret_cast<char *>(value.data()), N * sizeof(T));
+}
+
+template <typename T, typename... Args>
+inline void read(std::istringstream &is, T &first_arg, Args &... args)
+{
+	read(is, first_arg);
+
+	read(is, args...);
+}
+
+template <typename T>
+inline void write(std::ostringstream &os, const T &value)
+{
+	os.write(reinterpret_cast<const char *>(&value), sizeof(T));
+}
+
+inline void write(std::ostringstream &os, const std::string &value)
+{
+	write(os, value.size());
+	os.write(value.data(), value.size());
+}
+
+template <class T>
+inline void write(std::ostringstream &os, const std::set<T> &value)
+{
+	write(os, value.size());
+	for (const T &item : value)
+	{
+		os.write(reinterpret_cast<const char *>(&item), sizeof(T));
+	}
+}
+
+template <class T>
+inline void write(std::ostringstream &os, const std::vector<T> &value)
+{
+	write(os, value.size());
+	os.write(reinterpret_cast<const char *>(value.data()), value.size() * sizeof(T));
+}
+
+template <class T, uint32_t N>
+inline void write(std::ostringstream &os, const std::array<T, N> &value)
+{
+	os.write(reinterpret_cast<const char *>(value.data()), N * sizeof(T));
+}
+
+template <typename T, typename... Args>
+inline void write(std::ostringstream &os, const T &first_arg, const Args &... args)
+{
+	write(os, first_arg);
+
+	write(os, args...);
+}
+
 /**
  * @brief Helper function to combine a given hash
  *        with a generated hash for the input param.
@@ -115,6 +207,20 @@ bool is_depth_only_format(VkFormat format);
 bool is_depth_stencil_format(VkFormat format);
 
 /**
+ * @brief Helper function to determine if a Vulkan descriptor type is a dynamic storage buffer or dynamic uniform buffer.
+ * @param descriptor_type Vulkan descriptor type to check.
+ * @return True if type is dynamic buffer, false otherwise.
+ */
+bool is_dynamic_buffer_descriptor_type(VkDescriptorType descriptor_type);
+
+/**
+ * @brief Helper function to determine if a Vulkan descriptor type is a buffer (either uniform or storage buffer, dynamic or not).
+ * @param descriptor_type Vulkan descriptor type to check.
+ * @return True if type is buffer, false otherwise.
+ */
+bool is_buffer_descriptor_type(VkDescriptorType descriptor_type);
+
+/**
  * @brief Helper function to get the bits per pixel of a Vulkan format.
  * @param format Vulkan format to check.
  * @return The bits per pixel of the given format, -1 for invalid formats.
@@ -127,15 +233,6 @@ int32_t get_bits_per_pixel(VkFormat format);
  * @return The string to return.
  */
 const std::string convert_format_to_string(VkFormat format);
-
-/**
- * @brief Helper function to read a binary file
- *
- * @param path The path for the file (relative to the assets directory)
- * 
- * @return A vector filled with data read from the file
- */
-std::vector<uint8_t> read_binary_file(const std::string &path);
 }        // namespace vkb
 
 namespace vkb
@@ -215,7 +312,6 @@ class VulkanException : std::runtime_error
 }        // namespace vkb
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
-#	include <android/asset_manager_jni.h>
 #	include <android/native_window_jni.h>
 #	include <android_native_app_glue.h>
 #else

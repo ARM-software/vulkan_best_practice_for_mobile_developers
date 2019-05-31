@@ -20,8 +20,6 @@
 
 #pragma once
 
-#include <chrono>
-
 #include "platform.h"
 
 struct GLFWwindow;
@@ -35,7 +33,7 @@ class GlfwPlatform : public Platform
 
 	virtual ~GlfwPlatform() = default;
 
-	virtual bool initialise(std::unique_ptr<Application> &&app) override;
+	virtual bool initialize(std::unique_ptr<Application> &&app) override;
 
 	virtual VkSurfaceKHR create_surface(VkInstance instance) override;
 

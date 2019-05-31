@@ -33,22 +33,29 @@ std::type_index Mesh::get_type()
 	return typeid(Mesh);
 }
 
-void Mesh::add_submesh(SubMesh& submesh)
+const AABB &Mesh::get_bounds() const
 {
-	submeshes.push_back(&submesh);
+	return bounds;
 }
 
-const std::vector<SubMesh*> &Mesh::get_submeshes() const
+void Mesh::add_submesh(SubMesh &submesh)
+{
+	submeshes.push_back(&submesh);
+
+	bounds.update(submesh);
+}
+
+const std::vector<SubMesh *> &Mesh::get_submeshes() const
 {
 	return submeshes;
 }
 
-void Mesh::add_node(Node& node)
+void Mesh::add_node(Node &node)
 {
 	nodes.push_back(&node);
 }
 
-const std::vector<Node*> &Mesh::get_nodes() const
+const std::vector<Node *> &Mesh::get_nodes() const
 {
 	return nodes;
 }

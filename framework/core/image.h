@@ -34,7 +34,8 @@ class Image : public NonCopyable
 	Image(Device &          device,
 	      VkImage           handle,
 	      const VkExtent3D &extent,
-	      VkFormat          format);
+	      VkFormat          format,
+	      VkImageUsageFlags image_usage);
 
 	Image(Device &              device,
 	      const VkExtent3D &    extent,
@@ -67,6 +68,8 @@ class Image : public NonCopyable
 
 	uint32_t get_array_layers() const;
 
+	VkImageUsageFlags get_usage() const;
+
   private:
 	Device &device;
 
@@ -79,6 +82,8 @@ class Image : public NonCopyable
 	VkExtent3D extent{};
 
 	VkFormat format{};
+
+	VkImageUsageFlags usage{};
 
 	VkSampleCountFlagBits sample_count{};
 

@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "utils.h"
+#include "render_pipeline.h"
 #include "vulkan_sample.h"
 
 #include "scene_graph/components/perspective_camera.h"
@@ -57,12 +57,9 @@ class RenderPassesSample : public vkb::VulkanSample
 	void draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, const vkb::RenderTarget &render_target) override;
 	void draw_scene(vkb::CommandBuffer &command_buffer) override;
 
-	vkb::VertPushConstant vs_push_constant;
-	vkb::FragPushConstant fs_push_constant;
+	std::unique_ptr<vkb::RenderPipeline> render_pipeline{nullptr};
 
-	vkb::sg::PerspectiveCamera* camera{nullptr};
-
-	vkb::PipelineLayout *pipeline_layout{nullptr};
+	vkb::sg::PerspectiveCamera *camera{nullptr};
 
 	RadioButtonGroup load{
 	    "Color attachment load operation",

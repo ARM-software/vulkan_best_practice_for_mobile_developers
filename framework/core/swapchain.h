@@ -93,16 +93,15 @@ class Swapchain : public NonCopyable
 
 	const VkExtent2D &get_extent() const;
 
-	const VkFormat &get_format() const;
+	VkFormat get_format() const;
 
 	const std::vector<VkImage> &get_images() const;
 
-	inline const VkSurfaceTransformFlagBitsKHR get_transform() const;
+	VkSurfaceTransformFlagBitsKHR get_transform() const;
 
-	inline const VkSurfaceKHR get_surface()
-	{
-		return surface;
-	}
+	VkSurfaceKHR get_surface() const;
+
+	VkImageUsageFlags get_usage() const;
 
   private:
 	Device &device;
@@ -125,9 +124,4 @@ class Swapchain : public NonCopyable
 
 	VkImageUsageFlags image_usage{};
 };
-
-const VkSurfaceTransformFlagBitsKHR Swapchain::get_transform() const
-{
-	return transform;
-}
 }        // namespace vkb

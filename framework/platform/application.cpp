@@ -31,27 +31,24 @@ Application::Application() :
 
 bool Application::prepare(Platform &platform)
 {
+	timer.start();
 	return true;
 }
 
 void Application::step()
 {
-	auto current_time = std::chrono::system_clock::now();
-
-	float delta_time = std::chrono::duration<float>(current_time - last_frame_time).count();
+	auto delta_time = timer.tick<Timer::Seconds>();
 
 	if (is_focused())
 	{
 		update(delta_time);
 	}
 
-	last_frame_time = current_time;
-
-	float elapsed_time = std::chrono::duration<float>(current_time - start_time).count();
+	auto elapsed_time = timer.elapsed<Timer::Seconds>();
 
 	frame_count++;
 
-	if (elapsed_time > 0.5)
+	if (elapsed_time > 0.5f)
 	{
 		fps        = frame_count / elapsed_time;
 		frame_time = delta_time * 1000.0f;
@@ -59,12 +56,14 @@ void Application::step()
 		LOGI("FPS: {:.1f}", fps);
 
 		frame_count = 0;
-		start_time  = current_time;
+		timer.lap();
 	}
 }
 
 void Application::finish()
 {
+	auto execution_time = timer.stop();
+	LOGI("Closing App (Runtime: {:.1f})", execution_time);
 }
 
 void Application::resize(const uint32_t width, const uint32_t height)

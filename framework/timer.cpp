@@ -18,31 +18,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-
-#include <memory>
-#include <unordered_map>
+#include "timer.h"
 
 namespace vkb
 {
-/// Mananger of resources based on the given hasher function.
-template <typename T>
-class CacheResource
+Timer::Timer() :
+    start_time{Clock::now()},
+    previous_tick{Clock::now()}
 {
-  public:
-	/// Create a new resource or return the cached resource
-	template <typename... Args>
-	T &request_resource(Args &&... args);
+}
 
-	/*
-	 * @brief Removes cached resources. 
-	 */
-	void clear();
+void Timer::start()
+{
+	if (!running)
+	{
+		running    = true;
+		start_time = Clock::now();
+	}
+}
 
-  private:
-	/// Map of resource's hash and the resource object
-	std::unordered_map<size_t, T> cache_resources;
-};
+void Timer::lap()
+{
+	lapping  = true;
+	lap_time = Clock::now();
+}
 }        // namespace vkb
-
-#include "cache_resource.inl"

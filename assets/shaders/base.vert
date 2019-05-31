@@ -23,10 +23,12 @@ layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 texcoord_0;
 layout(location = 2) in vec3 normal;
 
-layout(push_constant, std430) uniform PushConstant {
+layout(set = 0, binding = 1) uniform GlobalUniform {
     mat4 model;
     mat4 view_proj;
-} vs_push_constant;
+    vec4 light_pos;
+    vec4 light_color;
+} global_uniform;
 
 layout (location = 0) out vec4 o_pos;
 layout (location = 1) out vec2 o_uv;
@@ -34,11 +36,11 @@ layout (location = 2) out vec3 o_normal;
 
 void main(void)
 {
-    o_pos = vs_push_constant.model * vec4(position, 1.0);
+    o_pos = global_uniform.model * vec4(position, 1.0);
 
     o_uv = texcoord_0;
 
-    o_normal = mat3(vs_push_constant.model) * normal;
+    o_normal = mat3(global_uniform.model) * normal;
 
-    gl_Position = vs_push_constant.view_proj * o_pos;
+    gl_Position = global_uniform.view_proj * o_pos;
 }

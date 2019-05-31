@@ -35,6 +35,19 @@ namespace sg
 {
 class Texture;
 
+/**
+ * @brief How the alpha value of the main factor and texture should be interpreted
+ */
+enum class AlphaMode
+{
+	/// Alpha value is ignored
+	Opaque,
+	/// Either full opaque or fully transparent
+	Mask,
+	/// Output is combined with the background
+	Blend
+};
+
 class Material : public Component
 {
   public:
@@ -46,15 +59,19 @@ class Material : public Component
 
 	virtual std::type_index get_type() override;
 
-	Texture *base_color_texture{nullptr};
+	std::unordered_map<std::string, Texture *> textures;
 
-	Texture *metallic_roughness_texture{nullptr};
+	/// Emissive color of the material
+	glm::vec3 emissive{0.0f, 0.0f, 0.0f};
 
-	Texture *normal_texture{nullptr};
+	/// Whether the material is double sided
+	bool double_sided{false};
 
-	Texture *occlusion_texture{nullptr};
+	/// Cutoff threshold when in Mask mode
+	float alpha_cutoff{0.5f};
 
-	Texture *emissive_texture{nullptr};
+	/// Alpha rendering mode
+	AlphaMode alpha_mode{AlphaMode::Opaque};
 };
 
 }        // namespace sg
