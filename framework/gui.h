@@ -53,8 +53,12 @@ struct Font
 	    data{vkb::file::read_asset("fonts/" + name + ".ttf")},
 	    size{size}
 	{
+		// Keep ownership of the font data to avoid a double delete
+		ImFontConfig font_config{};
+		font_config.FontDataOwnedByAtlas = false;
+
 		ImGuiIO &io = ImGui::GetIO();
-		handle      = io.Fonts->AddFontFromMemoryTTF(data.data(), data.size(), size);
+		handle      = io.Fonts->AddFontFromMemoryTTF(data.data(), data.size(), size, &font_config);
 	}
 
 	ImFont *handle{nullptr};
