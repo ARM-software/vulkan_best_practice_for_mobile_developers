@@ -158,6 +158,7 @@ void SurfaceRotation::draw_scene(vkb::CommandBuffer &cmd_buf)
 	// mode the aspect ratio never changes
 	VkExtent2D extent = render_context->get_swapchain().get_extent();
 	camera->set_aspect_ratio(static_cast<float>(extent.width) / extent.height);
+	camera->set_pre_rotation(pre_rotate_mat);
 
 	render_pipeline->draw_scene(cmd_buf, *camera);
 }
