@@ -24,11 +24,12 @@
 
 #include <queue>
 
+#include "platform/thread_pool.h"
+
 #include "core/image.h"
 
 #include "core/device.h"
 #include "platform/file.h"
-#include "platform/thread_pool.h"
 
 #include "scene_graph/components/image/astc.h"
 #include "scene_graph/components/perspective_camera.h"
@@ -365,23 +366,15 @@ sg::Scene GLTFLoader::load_scene()
 
 	scene.set_name("gltf_scene");
 
-	ThreadPool thread_pool;
-
 	// Load samplers
-	std::vector<std::unique_ptr<sg::Sampler>> sampler_components(model.samplers.size());
+	std::vector<std::unique_ptr<sg::Sampler>>
+	    sampler_components(model.samplers.size());
 
 	for (size_t sampler_index = 0; sampler_index < model.samplers.size(); sampler_index++)
 	{
-		thread_pool.run(
-		    [&](size_t sampler_index) {
-			    auto sampler = parse_sampler(model.samplers.at(sampler_index));
-
-			    sampler_components[sampler_index] = std::move(sampler);
-		    },
-		    sampler_index);
+		auto sampler                      = parse_sampler(model.samplers.at(sampler_index));
+		sampler_components[sampler_index] = std::move(sampler);
 	}
-
-	thread_pool.wait();
 
 	scene.set_components(std::move(sampler_components));
 
@@ -389,6 +382,8 @@ sg::Scene GLTFLoader::load_scene()
 	timer.start();
 
 	// Load images
+	ThreadPool thread_pool;
+
 	std::vector<std::unique_ptr<sg::Image>> image_components(model.images.size());
 
 	for (size_t image_index = 0; image_index < model.images.size(); image_index++)
@@ -454,13 +449,14 @@ sg::Scene GLTFLoader::load_scene()
 
 		texture->set_image(*images.at(gltf_texture.source));
 
-		if (gltf_texture.sampler < 0)
+		if (0 <= gltf_texture.sampler && gltf_texture.sampler < samplers.size())
 		{
-			texture->set_sampler(*default_sampler);
+			texture->set_sampler(*samplers.at(gltf_texture.sampler));
 		}
 		else
 		{
-			texture->set_sampler(*samplers.at(gltf_texture.sampler));
+			LOGW("Sampler not found for texture {}, possible GLTF error", gltf_texture.name);
+			texture->set_sampler(*default_sampler);
 		}
 
 		scene.add_component(std::move(texture));
