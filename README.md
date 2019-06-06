@@ -57,12 +57,12 @@ The Vulkan Best Practice for Mobile Developers is collection of resources to hel
   - [How does Vulkan compare to OpenGL ES? What should you expect when targeting Vulkan?](./samples/vulkan_basics.md)
 - **Vulkan Swapchains**  
 More detailed look at swapchains, and how you might want to use them
-  - [Appropriate use of N-buffering](./samples/swapchain_images/swapchain_images_tutorial.md)
-  - [Appropriate use of surface rotation](./samples/surface_rotation/surface_rotation_tutorial.md)
+  - [Appropriate use of N-buffering](./samples/advanced/swapchain_images/swapchain_images_tutorial.md)
+  - [Appropriate use of surface rotation](./samples/advanced/surface_rotation/surface_rotation_tutorial.md)
 - **Render Passes**
-  - [Appropriate use of load/store operations, and use of transient attachments](./samples/render_passes/render_passes_tutorial.md)
+  - [Appropriate use of load/store operations, and use of transient attachments](./samples/advanced/render_passes/render_passes_tutorial.md)
 - **AFBC**
-  - [Appropriate use of AFBC](./samples/afbc/afbc_tutorial.md)
+  - [Appropriate use of AFBC](./samples/advanced/afbc/afbc_tutorial.md)
 
 ## Setup
 

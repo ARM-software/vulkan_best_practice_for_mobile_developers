@@ -54,7 +54,9 @@ class SampleController : public Application
 
 	std::vector<SampleInfo>::const_iterator current_sample;
 
-	bool automatic_demo_mode = true;
+	std::vector<SampleInfo> samples_to_run;
+
+	bool automate = true;
 
 	bool skipped_first_frame = false;
 

@@ -29,9 +29,15 @@ else
 fi
 
 if [ "$#" -lt 2 ]; then
-    BUILD_DIR=$ROOT_DIR/samples
+    CATEGORY=basic
 else
-    BUILD_DIR="$2"
+    CATEGORY="$2"
+fi
+
+if [ "$#" -lt 3 ]; then
+    BUILD_DIR=$ROOT_DIR/samples/$CATEGORY
+else
+    BUILD_DIR="$3"
 fi
 
 cmake -DSAMPLE_NAME=$SAMPLE_NAME \

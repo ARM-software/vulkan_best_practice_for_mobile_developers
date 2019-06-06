@@ -50,15 +50,18 @@ function(generate_samples_header)
     set(SAMPLE_INCLUDE_FILES)
     set(SAMPLE_NAME_FUNC_PAIRS)
     set(SAMPLE_INFO_LIST)
+    set(CATEGORY_LIST)
 
     foreach(SAMPLE_ID ${TARGET_SAMPLE_ID_LIST})
         if (${VKB_${SAMPLE_ID}} AND TARGET ${SAMPLE_ID})
             get_target_property(SAMPLE_NAME ${SAMPLE_ID} SAMPLE_NAME)
+            get_target_property(SAMPLE_CATEGORY ${SAMPLE_ID} SAMPLE_CATEGORY)
             get_target_property(SAMPLE_DESCRIPTION ${SAMPLE_ID} SAMPLE_DESCRIPTION)
 
-            list(APPEND SAMPLE_INFO_LIST "\tSampleInfo{\"${SAMPLE_ID}\", \"${SAMPLE_NAME}\"\, \"${SAMPLE_DESCRIPTION}\"},")
-            list(APPEND SAMPLE_INCLUDE_FILES "#include \"${SAMPLE_ID}/${SAMPLE_ID}.h\"")
+            list(APPEND SAMPLE_INFO_LIST "\tSampleInfo{\"${SAMPLE_ID}\", \"${SAMPLE_CATEGORY}\"\, \"${SAMPLE_NAME}\"\, \"${SAMPLE_DESCRIPTION}\"},")
+            list(APPEND SAMPLE_INCLUDE_FILES "#include \"${SAMPLE_CATEGORY}/${SAMPLE_ID}/${SAMPLE_ID}.h\"")
             list(APPEND SAMPLE_NAME_FUNC_PAIRS "\t{ \"${SAMPLE_ID}\", create_${SAMPLE_ID} },")
+            list(APPEND CATEGORY_LIST "\t\"${SAMPLE_CATEGORY}\"\,")
         endif()
     endforeach()
 
@@ -77,6 +80,12 @@ function(generate_samples_header)
         INPUT ${SAMPLE_NAME_FUNC_PAIRS}
         OUTPUT SAMPLE_NAME_FUNC_PAIRS)
 
+    list(REMOVE_DUPLICATES CATEGORY_LIST)
+    string_join(
+        GLUE "\n"
+        INPUT ${CATEGORY_LIST}
+        OUTPUT CATEGORY_LIST)
+
     set(CONFIG_FILE ${SCRIPT_DIR}/template/samples.h.in)
 
     if(EXISTS ${CONFIG_FILE})
@@ -88,7 +97,7 @@ endfunction()
 
 function(add_sample_project)
     set(options)  
-    set(oneValueArgs ID NAME DESCRIPTION)
+    set(oneValueArgs ID CATEGORY TYPE NAME DESCRIPTION)
     set(multiValueArgs FILES)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -118,13 +127,19 @@ function(add_sample_project)
     target_compile_definitions(${PROJECT_NAME} PUBLIC 
         $<TARGET_PROPERTY:framework,COMPILE_DEFINITIONS>)
 
+    # capitalise the first letter of the category  (performance -> Performance) 
+    string(SUBSTRING ${TARGET_CATEGORY} 0 1 FIRST_LETTER)
+    string(TOUPPER ${FIRST_LETTER} FIRST_LETTER)
+    string(REGEX REPLACE "^.(.*)" "${FIRST_LETTER}\\1" CATEGORY "${TARGET_CATEGORY}")
+
     # add sample project to a folder
-    set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Samples")
+    set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Samples//${CATEGORY}")
 
     # set sample properties
     set_target_properties(${PROJECT_NAME}
         PROPERTIES 
             SAMPLE_NAME ${TARGET_NAME}
+            SAMPLE_CATEGORY ${TARGET_CATEGORY}
             SAMPLE_DESCRIPTION ${TARGET_DESCRIPTION})
 
     if(NOT ANDROID AND ${VKB_SAMPLE_ENTRYPOINT})
@@ -153,7 +168,7 @@ function(add_sample_project)
         target_link_libraries(${PROJECT_NAME} PUBLIC framework)
 
         # add sample app project to a folder
-        set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Entrypoints")
+        set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Entrypoints//${CATEGORY}")
 
         if(${VKB_ASSETS_SYMLINK})
             create_symlink(

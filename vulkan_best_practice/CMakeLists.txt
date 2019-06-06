@@ -27,7 +27,7 @@ project(vulkan_best_practice LANGUAGES C CXX)
 
 # generate header file (sample name + create function name)
 generate_samples_header(
-    SAMPLE_ID_LIST ${SAMPLE_ID_LIST}
+    SAMPLE_ID_LIST ${TOTAL_SAMPLE_ID_LIST}
     OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 # generate entrypoint file (main function with per platform support)
@@ -44,7 +44,7 @@ set(PROJECT_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/sample_controller.cpp)
     
 # add object files from samples
-foreach(SAMPLE_ID ${SAMPLE_ID_LIST})
+foreach(SAMPLE_ID ${TOTAL_SAMPLE_ID_LIST})
     if(TARGET ${SAMPLE_ID})
         get_target_property(TARGET_TYPE ${SAMPLE_ID} TYPE)
 

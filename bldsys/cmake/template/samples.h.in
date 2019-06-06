@@ -35,6 +35,7 @@ using SampleCreateFunc = std::function<std::unique_ptr<vkb::Application>()>;
 struct SampleInfo
 {
 	std::string id;
+	std::string category;
 	std::string name;
 	std::string description;
 };
@@ -45,4 +46,8 @@ const std::vector<SampleInfo> sample_list = {
 
 const std::unordered_map<std::string, SampleCreateFunc> sample_create_functions = {
 @SAMPLE_NAME_FUNC_PAIRS@
+};
+
+const std::vector<std::string> category_list = {
+@CATEGORY_LIST@
 };

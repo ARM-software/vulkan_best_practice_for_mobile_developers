@@ -20,28 +20,41 @@
 
 cmake_minimum_required(VERSION 3.8)
 
+# Creates a list of the subdirectories within this folder
 scan_dirs(
     DIR ${CMAKE_CURRENT_SOURCE_DIR}
-    LIST SAMPLE_ID_LIST)
+    LIST SUB_DIRS)
 
-# Add each sample from the filtered list
-foreach(SAMPLE_ID ${SAMPLE_ID_LIST})
-    add_subdirectory(${SAMPLE_ID})
+# List of all samples
+set(TOTAL_SAMPLE_ID_LIST)
+
+# For each directory, add all the samples that exist within
+foreach(SUB_DIR ${SUB_DIRS})
+    scan_dirs(
+        DIR ${CMAKE_CURRENT_SOURCE_DIR}/${SUB_DIR}
+        LIST SAMPLE_ID_LIST)
+
+    foreach(SAMPLE_ID ${SAMPLE_ID_LIST})
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${SUB_DIR}/${SAMPLE_ID})
+    endforeach()
+
+    list(APPEND TOTAL_SAMPLE_ID_LIST ${SAMPLE_ID_LIST})
 endforeach()
 
 # Order of the sample ids
-set(ORDER_LIST 
+set(ORDER_LIST
     "hello_triangle"
     "swapchain_images"
     "surface_rotation"
     "render_passes"
+    "pipeline_cache"
     "afbc")
 
 # Orders the sample ids by the order list above
 order_sample_list(
-    INPUT ${SAMPLE_ID_LIST}
-    OUTPUT SAMPLE_ID_LIST
+    INPUT ${TOTAL_SAMPLE_ID_LIST}
+    OUTPUT TOTAL_SAMPLE_ID_LIST
     ORDER ${ORDER_LIST})
 
 # Make sample list visible parent scope (required by vulkan_best_practice project)
-set(SAMPLE_ID_LIST ${SAMPLE_ID_LIST} PARENT_SCOPE)
+set(TOTAL_SAMPLE_ID_LIST ${TOTAL_SAMPLE_ID_LIST} PARENT_SCOPE)

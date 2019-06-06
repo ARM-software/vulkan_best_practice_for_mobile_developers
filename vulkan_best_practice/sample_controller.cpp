@@ -33,18 +33,19 @@ extern "C"
 	    Java_com_arm_vulkan_1best_1practice_BPSampleActivity_getSamples(JNIEnv *env, jobject thiz)
 	{
 		jclass       c             = env->FindClass("com/arm/vulkan_best_practice/Sample");
-		jmethodID    constructor   = env->GetMethodID(c, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
-		jobjectArray j_sample_list = env->NewObjectArray(sample_list.size(), c, env->NewObject(c, constructor, env->NewStringUTF(""), env->NewStringUTF(""), env->NewStringUTF("")));
+		jmethodID    constructor   = env->GetMethodID(c, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+		jobjectArray j_sample_list = env->NewObjectArray(sample_list.size(), c, env->NewObject(c, constructor, env->NewStringUTF(""), env->NewStringUTF(""), env->NewStringUTF(""), env->NewStringUTF("")));
 
 		for (int sample_index = 0; sample_index < sample_list.size(); sample_index++)
 		{
 			const SampleInfo &sample_info = sample_list[sample_index];
 
-			jstring id   = env->NewStringUTF(sample_info.id.c_str());
-			jstring name = env->NewStringUTF(sample_info.name.c_str());
-			jstring desc = env->NewStringUTF(sample_info.description.c_str());
+			jstring id       = env->NewStringUTF(sample_info.id.c_str());
+			jstring category = env->NewStringUTF(sample_info.category.c_str());
+			jstring name     = env->NewStringUTF(sample_info.name.c_str());
+			jstring desc     = env->NewStringUTF(sample_info.description.c_str());
 
-			env->SetObjectArrayElement(j_sample_list, sample_index, env->NewObject(c, constructor, id, name, desc));
+			env->SetObjectArrayElement(j_sample_list, sample_index, env->NewObject(c, constructor, id, category, name, desc));
 		}
 
 		return j_sample_list;
@@ -106,7 +107,15 @@ inline void print_usage()
 inline std::vector<SampleInfo>::const_iterator find_sample(const std::string &sample_id)
 {
 	return std::find_if(sample_list.begin(), sample_list.end(),
-	                    [&sample_id](const SampleInfo &sample) -> bool { return sample.id == sample_id; });
+	                    [&sample_id](const SampleInfo &sample) { return sample.id == sample_id; });
+}
+
+inline std::vector<SampleInfo> find_samples_by_category(const std::string &category)
+{
+	std::vector<SampleInfo> runnable_sample_list;
+	std::copy_if(sample_list.begin(), sample_list.end(), std::back_inserter(runnable_sample_list),
+	             [category](const SampleInfo &sample) { return sample.category == category; });
+	return runnable_sample_list;
 }
 
 inline const SampleCreateFunc &get_sample_create_func(const std::string &sample_id)
@@ -125,7 +134,8 @@ inline const SampleCreateFunc &get_sample_create_func(const std::string &sample_
 
 bool SampleController::prepare(Platform &platform)
 {
-	this->platform = &platform;
+	this->platform       = &platform;
+	this->samples_to_run = sample_list;
 
 	bool result{true};
 
@@ -140,7 +150,7 @@ bool SampleController::prepare(Platform &platform)
 		return false;
 	}
 
-	if (current_sample == sample_list.end())
+	if (current_sample == samples_to_run.end())
 	{
 		LOGE("No sample name defined to run.");
 
@@ -195,15 +205,23 @@ bool SampleController::parse_arguments(const std::vector<std::string> &args)
 
 	if (!args.empty())
 	{
-		automatic_demo_mode = false;
-
-		current_sample = find_sample(*args.begin());
+		auto &arg = *args.begin();
+		if (std::find(category_list.begin(), category_list.end(), arg) != category_list.end())
+		{
+			samples_to_run = find_samples_by_category(arg);
+			automate       = true;
+			current_sample = samples_to_run.begin();
+		}
+		else
+		{
+			automate       = false;
+			current_sample = find_sample(arg);
+		}
 	}
 	else
 	{
-		automatic_demo_mode = true;
-
-		current_sample = sample_list.begin();
+		automate       = true;
+		current_sample = samples_to_run.begin();
 	}
 
 	return true;
@@ -219,7 +237,7 @@ void SampleController::update(float delta_time)
 	elapsed_time += skipped_first_frame ? delta_time : 0.0f;
 	skipped_first_frame = true;
 
-	if (automatic_demo_mode)
+	if (automate)
 	{
 		auto &configuration = active_sample->get_configuration();
 
@@ -230,9 +248,9 @@ void SampleController::update(float delta_time)
 			if (!configuration.next())
 			{
 				++current_sample;
-				if (current_sample == sample_list.end())
+				if (current_sample == samples_to_run.end())
 				{
-					current_sample = sample_list.begin();
+					current_sample = samples_to_run.begin();
 				}
 
 				skipped_first_frame = false;
@@ -268,7 +286,7 @@ void SampleController::resize(const uint32_t width, const uint32_t height)
 
 void SampleController::input_event(const InputEvent &input_event)
 {
-	if (active_sample && !automatic_demo_mode)
+	if (active_sample && !automate)
 	{
 		active_sample->input_event(input_event);
 	}

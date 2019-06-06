@@ -17,13 +17,16 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
- 
+
 get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
+get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
+get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 
 add_sample_project(
     ID ${FOLDER_NAME}
-    NAME "Swapchain Images"
-    DESCRIPTION "Using triple buffering over double buffering."
+    CATEGORY ${CATEGORY_NAME}
+    NAME "Surface Rotation"
+    DESCRIPTION "The benefits of pre rotating your scene."
     FILES
         ${FOLDER_NAME}.h
         ${FOLDER_NAME}.cpp)

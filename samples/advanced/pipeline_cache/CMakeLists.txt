@@ -19,11 +19,14 @@
 #
 
 get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
+get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
+get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 
 add_sample_project(
     ID ${FOLDER_NAME}
-    NAME "AFBC Sample"
-    DESCRIPTION "Using framebuffer compression to reduce bandwidth."
+    CATEGORY ${CATEGORY_NAME}
+    NAME "Pipeline Management"
+    DESCRIPTION "Pipeline creation and caching."
     FILES
         ${FOLDER_NAME}.h
         ${FOLDER_NAME}.cpp)
