@@ -96,8 +96,8 @@ if(ANDROID)
     # Sync assets
     set(SYNC_COMMAND ${CMAKE_COMMAND}
             -DCMAKE_MODULE_PATH=${CMAKE_MODULE_PATH}
-            -DASSETS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/../assets
-            -DDEVICE_DIR=/sdcard/Android/data/com.arm.${PROJECT_NAME}/files/
+            -DASSETS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/../assets/.
+            -DDEVICE_DIR=/sdcard/Android/data/com.arm.${PROJECT_NAME}/files/assets/
             -P "${CMAKE_CURRENT_SOURCE_DIR}/../bldsys/cmake/android_sync_assets.cmake")
 
     add_custom_target(
