@@ -115,6 +115,8 @@ VulkanSample::VulkanSample()
 
 VulkanSample::~VulkanSample()
 {
+	render_context.reset();
+
 	if (surface != VK_NULL_HANDLE)
 	{
 		vkDestroySurfaceKHR(instance, surface, nullptr);
@@ -303,6 +305,12 @@ void VulkanSample::input_event(const InputEvent &input_event)
 			}
 		}
 	}
+}
+
+void VulkanSample::finish()
+{
+	Application::finish();
+	vkDeviceWaitIdle(device->get_handle());
 }
 
 VkPhysicalDevice VulkanSample::get_gpu(size_t i)

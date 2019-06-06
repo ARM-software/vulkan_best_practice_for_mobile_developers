@@ -51,6 +51,8 @@ class VulkanSample : public Application
 
 	virtual void input_event(const InputEvent &input_event) override;
 
+	virtual void finish() override;
+
 	VkPhysicalDevice get_gpu(size_t i);
 
 	VkSurfaceKHR get_surface();
