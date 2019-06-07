@@ -25,6 +25,11 @@
 # Contents <!-- omit in toc -->
 
 - [CMake Options](#cmake-options)
+  - [VKB_<sample_name>](#vkb_sample_name)
+  - [VKB_ASSETS_SYMLINK](#vkb_assets_symlink)
+  - [VKB_SAMPLE_ENTRYPOINT](#vkb_sample_entrypoint)
+  - [VKB_VALIDATION_LAYERS](#vkb_validation_layers)
+  - [VKB_WARNINGS_AS_ERRORS](#vkb_warnings_as_errors)
 - [3D models](#3d-models)
 - [Performance data](#performance-data)
 - [Windows](#windows)
@@ -37,6 +42,9 @@
   - [Dependencies](#dependencies-2)
   - [Build with Gradle](#build-with-gradle)
   - [Build with CMake](#build-with-cmake-2)
+- [Building Individual Samples](#building-individual-samples)
+  - [CMake](#cmake)
+  - [Visual Studio](#visual-studio)
 
 
 
@@ -44,21 +52,33 @@
 
 The following options are used to change the build configuration
 
-#### VKB_sample_name <!-- omit in toc -->
+#### VKB_<sample_name>
 Choose whether to include a sample at build time.
 - `ON` - Build Sample
 - `OFF` - Exclude Sample
 
 **Default:** `ON`
 
-#### VKB_ASSETS_SYMLINK <!-- omit in toc -->
+#### VKB_ASSETS_SYMLINK
 Rather than changing the working directory inside the IDE, `VKB_ASSETS_SYMLINK` will enable symlink creation pointing to the root directory which exposes the assets folder to the samples.
 
 **Default:** `OFF`
 
-#### VKB_SAMPLE_ENTRYPOINT <!-- omit in toc -->
+#### VKB_SAMPLE_ENTRYPOINT
 
 Generate a build project for each sample so that they can be run separately
+
+**Default:** `OFF`
+
+#### VKB_VALIDATION_LAYERS
+
+Enable Validation Layers
+
+**Default:** `OFF`
+
+#### VKB_WARNINGS_AS_ERRORS
+
+Treat all warnings as errors
 
 **Default:** `OFF`
 
@@ -118,7 +138,7 @@ cmake --build build/windows --config Release --target vulkan_best_practice
 `Step 3.` Run the **Vulkan Best Practice** application
 
 ```
-build\windows\vulkan_best_practice\bin\debug\AMD64\Release\vulkan_best_practice.exe
+build\windows\vulkan_best_practice\bin\release\AMD64\Release\vulkan_best_practice.exe
 ```
 
 
@@ -146,13 +166,13 @@ cmake -G "Unix Makefiles" -H. -Bbuild/linux -DCMAKE_BUILD_TYPE=Release
 `Step 2.` Build the project
 
 ```
-cmake --build build/linux --target vulkan_best_practice --parallel
+cmake --build build/linux --config Release --target vulkan_best_practice -- -j4
 ```
 
 `Step 3.` Run the **Vulkan Best Practice** application to display the help message
 
 ```
-./build/linux/vulkan_best_practice/bin/x86_64/vulkan_best_practice --help
+./build/linux/vulkan_best_practice/bin/Release/x86_64/vulkan_best_practice --help
 ```
 
 # Android
@@ -226,3 +246,23 @@ cmake --build build/android --config Release --target vulkan_best_practice_packa
 cd build/android/vulkan_best_practice/vulkan_best_practice_package
 adb install build/outputs/apk/debug/vulkan_best_practice-debug.apk
 ```
+
+# Building Individual Samples
+
+`Step 1.` When generating cmake set the `VKB_SAMPLE_ENTRYPOINTS` flag to `ON`
+
+```
+cmake -B"build" -H"." -DVKB_SAMPLE_ENTRYPOINTS=ON
+```
+
+### CMake
+
+`Step 2.` Set the target to `<samplename>_app`. For example:
+
+```
+cmake --build build --config Debug --target afbc_app
+```
+
+### Visual Studio
+
+`Step 2.` In the Solution Explorer there now is an Entrypoints folder. Select the `<sample>_app` you would like to run and set it as the `Start Up Project`

@@ -35,6 +35,7 @@
 - [License](#license)
   - [Trademarks](#trademarks)
 - [Contributions](#contributions)
+- [Related resources](#related-resources)
 
 ## Introduction
 
@@ -59,6 +60,8 @@ The Vulkan Best Practice for Mobile Developers is collection of resources to hel
 More detailed look at swapchains, and how you might want to use them
   - [Appropriate use of N-buffering](./samples/advanced/swapchain_images/swapchain_images_tutorial.md)
   - [Appropriate use of surface rotation](./samples/advanced/surface_rotation/surface_rotation_tutorial.md)
+- **Pipelines**
+  - [Use of pipeline caches to avoid startup latency](./samples/advanced/pipeline_cache/pipeline_cache_tutorial.md)
 - **Render Passes**
   - [Appropriate use of load/store operations, and use of transient attachments](./samples/advanced/render_passes/render_passes_tutorial.md)
 - **AFBC**

@@ -176,6 +176,10 @@ function(add_sample_project)
                 DIR ${CMAKE_SOURCE_DIR}/assets 
                 LINK ${CMAKE_CURRENT_BINARY_DIR}/assets)
         endif()
+        
+        if(MSVC)
+            set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+        endif()
     endif()
 endfunction()
 
