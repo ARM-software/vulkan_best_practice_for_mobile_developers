@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "render_pipeline.h"
+#include "rendering/render_pipeline.h"
 #include "vulkan_sample.h"
 
 #include "scene_graph/components/camera.h"

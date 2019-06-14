@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,35 +18,38 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#include "rendering/render_pipeline.h"
 
-#include "common.h"
-#include "rendering/graphics_pipeline_state.h"
-#include "rendering/render_context.h"
-
+#include "scene_graph/components/camera.h"
+#include "scene_graph/components/image.h"
+#include "scene_graph/components/material.h"
+#include "scene_graph/components/mesh.h"
+#include "scene_graph/components/pbr_material.h"
+#include "scene_graph/components/sampler.h"
 #include "scene_graph/components/sub_mesh.h"
-#include "scene_graph/scene.h"
+#include "scene_graph/components/texture.h"
+#include "scene_graph/node.h"
 
 namespace vkb
 {
-/**
- * @brief Extracts the extension from an uri
- * @param uri An uniform Resource Identifier
- * @return The extension
- */
-std::string get_extension(const std::string &uri);
+RenderPipeline::RenderPipeline(std::vector<std::unique_ptr<Subpass>> &&subpasses) :
+    subpasses{std::move(subpasses)}
+{
+}
 
-/**
- * @brief Calculates the vulkan style projection matrix
- * @param proj The projection matrix
- * @return @ref The vulkan style projection matrix
- */
-glm::mat4 vulkan_style_projection(const glm::mat4 &proj);
+void RenderPipeline::add_subpass(std::unique_ptr<Subpass> &&subpass)
+{
+	subpasses.emplace_back(std::move(subpass));
+}
 
-/**
- * @param name String to convert to snake case
- * @return a snake case version of the string
- */
-std::string to_snake_case(const std::string &name);
+void RenderPipeline::draw(CommandBuffer &command_buffer)
+{
+	assert(!subpasses.empty() && "Render pipeline should contain at least one sub-pass");
+
+	for (auto &subpass : subpasses)
+	{
+		subpass->draw(command_buffer);
+	}
+}
 
 }        // namespace vkb

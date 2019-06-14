@@ -18,34 +18,33 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "render_context.h"
+#include "rendering/render_context.h"
 
 namespace vkb
 {
-RenderContext::RenderContext(Device &d, std::unique_ptr<Swapchain> &&s) :
-    device{d},
+RenderContext::RenderContext(std::unique_ptr<Swapchain> &&s, RenderTarget::CreateFunc create_rt) :
+    device{s->get_device()},
     swapchain{std::move(s)},
-    present_queue{device.get_queue_by_present(0)}
+    present_queue{device.get_queue_by_present(0)},
+    create_render_target{create_rt}
 {
-}
-
-void RenderContext::prepare(RenderFrame::CreateFunc render_frame_create_func)
-{
-	device.wait_idle();
 	// Prepare is an expensive operation, we want to be sure it happens only once
 	assert(frames.empty());
 
-	VkExtent2D swapchain_extent = swapchain->get_extent();
+	// Create the render frames
+	device.wait_idle();
+	auto &     swapchain_extent = swapchain->get_extent();
 	VkExtent3D extent{swapchain_extent.width, swapchain_extent.height, 1};
 
 	for (auto &image_handle : swapchain->get_images())
 	{
-		core::Image swapchain_image{device, image_handle,
-		                            extent,
-		                            swapchain->get_format(),
-		                            swapchain->get_usage()};
-
-		frames.push_back(render_frame_create_func(device, std::move(swapchain_image)));
+		auto swapchain_image = core::Image{
+		    device, image_handle,
+		    extent,
+		    swapchain->get_format(),
+		    swapchain->get_usage()};
+		auto render_target = create_render_target(std::move(swapchain_image));
+		frames.emplace_back(RenderFrame{device, std::move(render_target)});
 	}
 }
 
@@ -54,7 +53,7 @@ VkSemaphore RenderContext::begin_frame()
 	handle_surface_changes();
 	assert(!frame_active && "Frame is still active, please call end_frame");
 
-	auto &prev_frame = *frames.at(active_frame_index);
+	auto &prev_frame = frames.at(active_frame_index);
 
 	auto fence = prev_frame.get_fence_pool().request_fence();
 
@@ -158,7 +157,7 @@ void RenderContext::end_frame(VkSemaphore semaphore)
 RenderFrame &RenderContext::get_active_frame()
 {
 	assert(frame_active && "Frame is not active, please call begin_frame");
-	return *frames.at(active_frame_index);
+	return frames.at(active_frame_index);
 }
 
 CommandBuffer &RenderContext::request_frame_command_buffer(const Queue &queue)
@@ -197,7 +196,8 @@ void RenderContext::update_swapchain(std::unique_ptr<Swapchain> &&new_swapchain)
 		                            swapchain->get_format(),
 		                            swapchain->get_usage()};
 
-		(*frame_it)->update_render_target(std::move(swapchain_image));
+		auto render_target = create_render_target(std::move(swapchain_image));
+		frame_it->update_render_target(std::move(render_target));
 
 		++frame_it;
 	}

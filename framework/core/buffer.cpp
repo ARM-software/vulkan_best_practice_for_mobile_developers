@@ -39,10 +39,10 @@ Buffer::Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usag
 	memory_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
 	VmaAllocationInfo alloc_info{};
-	auto result = vmaCreateBuffer(device.get_memory_allocator(),
-	                              &buffer_info, &memory_info,
-	                              &handle, &memory,
-	                              &alloc_info);
+	auto              result = vmaCreateBuffer(device.get_memory_allocator(),
+                                  &buffer_info, &memory_info,
+                                  &handle, &memory,
+                                  &alloc_info);
 
 	mapped_data = static_cast<uint8_t *>(alloc_info.pMappedData);
 
@@ -95,7 +95,12 @@ VkDeviceSize Buffer::get_size() const
 
 void Buffer::update(size_t offset, const std::vector<uint8_t> &data)
 {
-	std::copy(std::begin(data), std::end(data), mapped_data + offset);
+	update(offset, data.data(), data.size());
+}
+
+void Buffer::update(const size_t offset, const uint8_t *src, const size_t size)
+{
+	std::copy(src, src + size, mapped_data + offset);
 }
 
 }        // namespace core

@@ -21,6 +21,7 @@
 #include "image.h"
 
 #include "device.h"
+#include "image_view.h"
 
 namespace vkb
 {
@@ -142,6 +143,12 @@ Image::Image(Image &&other) :
 {
 	other.handle = VK_NULL_HANDLE;
 	other.memory = VK_NULL_HANDLE;
+
+	// Update image views references to this image to avoid dangling pointers
+	for (auto &view : views)
+	{
+		view->set_image(*this);
+	}
 }
 
 Image::~Image()
@@ -152,7 +159,7 @@ Image::~Image()
 	}
 }
 
-const Device &Image::get_device() const
+Device &Image::get_device()
 {
 	return device;
 }
@@ -201,5 +208,11 @@ VkImageUsageFlags Image::get_usage() const
 {
 	return usage;
 }
+
+std::unordered_set<ImageView *> &Image::get_views()
+{
+	return views;
+}
+
 }        // namespace core
 }        // namespace vkb

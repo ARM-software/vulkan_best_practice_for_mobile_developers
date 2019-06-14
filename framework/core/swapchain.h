@@ -87,6 +87,11 @@ class Swapchain : public NonCopyable
 	 */
 	Swapchain(Swapchain &&other);
 
+	Device &get_device()
+	{
+		return device;
+	}
+
 	VkSwapchainKHR get_handle() const;
 
 	VkResult acquire_next_image(uint32_t &image_index, VkSemaphore image_acquired_semaphore, VkFence fence);

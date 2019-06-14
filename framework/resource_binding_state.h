@@ -49,6 +49,8 @@ class ResourceInfo
 
 	void bind_image(const ImageView &image_view, const core::Sampler &sampler);
 
+	void bind_input(const ImageView &image_view);
+
 	VkDescriptorBufferInfo get_buffer_info() const;
 
 	VkDescriptorImageInfo get_image_info() const;
@@ -84,6 +86,8 @@ class SetBindings
 
 	void bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t binding, uint32_t array_element);
 
+	void bind_input(const ImageView &image_view, uint32_t binding, uint32_t array_element);
+
 	const BindingMap<ResourceInfo> &get_resource_bindings() const;
 
   private:
@@ -106,6 +110,8 @@ class ResourceBindingState
 	void bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element);
 
 	void bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element);
+
+	void bind_input(const ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
 
 	const std::unordered_map<uint32_t, SetBindings> &get_set_bindings();
 

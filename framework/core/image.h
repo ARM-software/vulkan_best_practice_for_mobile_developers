@@ -25,6 +25,7 @@
 namespace vkb
 {
 class Device;
+class ImageView;
 
 namespace core
 {
@@ -50,7 +51,7 @@ class Image : public NonCopyable
 
 	~Image();
 
-	const Device &get_device() const;
+	Device &get_device();
 
 	VkImage get_handle() const;
 
@@ -69,6 +70,8 @@ class Image : public NonCopyable
 	uint32_t get_array_layers() const;
 
 	VkImageUsageFlags get_usage() const;
+
+	std::unordered_set<ImageView *> &get_views();
 
   private:
 	Device &device;
@@ -90,6 +93,9 @@ class Image : public NonCopyable
 	uint32_t mip_levels{1};
 
 	uint32_t array_layers{1};
+
+	/// Image views referring to this image
+	std::unordered_set<ImageView *> views;
 };
 }        // namespace core
 }        // namespace vkb

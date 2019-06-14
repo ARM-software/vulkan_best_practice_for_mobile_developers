@@ -25,17 +25,18 @@
 
 namespace vkb
 {
-ImageView::ImageView(core::Image &image, VkImageViewType view_type, VkFormat format) :
-    image{image},
+ImageView::ImageView(core::Image &img, VkImageViewType view_type, VkFormat format) :
+    device{img.get_device()},
+    image{&img},
     format{format}
 {
 	if (format == VK_FORMAT_UNDEFINED)
 	{
-		this->format = format = image.get_format();
+		this->format = format = image->get_format();
 	}
 
-	subresource_range.levelCount = image.get_mip_levels();
-	subresource_range.layerCount = image.get_array_layers();
+	subresource_range.levelCount = image->get_mip_levels();
+	subresource_range.layerCount = image->get_array_layers();
 
 	if (is_depth_only_format(format))
 	{
@@ -52,25 +53,35 @@ ImageView::ImageView(core::Image &image, VkImageViewType view_type, VkFormat for
 
 	VkImageViewCreateInfo view_info{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
 
-	view_info.image            = image.get_handle();
+	view_info.image            = image->get_handle();
 	view_info.viewType         = view_type;
 	view_info.format           = format;
 	view_info.subresourceRange = subresource_range;
 
-	auto result = vkCreateImageView(image.get_device().get_handle(), &view_info, nullptr, &handle);
+	auto result = vkCreateImageView(device.get_handle(), &view_info, nullptr, &handle);
 
 	if (result != VK_SUCCESS)
 	{
 		throw VulkanException{result, "Cannot create ImageView"};
 	}
+
+	// Register this image view to its image
+	// in order to be notified when it gets moved
+	image->get_views().emplace(this);
 }
 
 ImageView::ImageView(ImageView &&other) :
+    device{other.device},
     image{other.image},
     handle{other.handle},
     format{other.format},
     subresource_range{other.subresource_range}
 {
+	// Remove old view from image set and add this new one
+	auto &views = image->get_views();
+	views.erase(&other);
+	views.emplace(this);
+
 	other.handle = VK_NULL_HANDLE;
 }
 
@@ -78,13 +89,19 @@ ImageView::~ImageView()
 {
 	if (handle != VK_NULL_HANDLE)
 	{
-		vkDestroyImageView(image.get_device().get_handle(), handle, nullptr);
+		vkDestroyImageView(device.get_handle(), handle, nullptr);
 	}
 }
 
 const core::Image &ImageView::get_image() const
 {
-	return image;
+	assert(image && "Image view is referring an invalid image");
+	return *image;
+}
+
+void ImageView::set_image(core::Image &img)
+{
+	image = &img;
 }
 
 VkImageView ImageView::get_handle() const

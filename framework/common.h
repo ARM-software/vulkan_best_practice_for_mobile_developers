@@ -256,55 +256,61 @@ struct ImageMemoryBarrier
 	VkImageLayout new_layout{VK_IMAGE_LAYOUT_UNDEFINED};
 };
 
-/*
+/**
  * @brief Helper class to disable the copy constructor and copy 
  *        assignment operator of any inherited a class to be non copyable.
  */
 class NonCopyable
 {
   public:
-	/*
+	/**
 	 * @brief Constructor
 	 */
 	NonCopyable() = default;
-	/*
+
+	/**
 	 * @brief Destructor
 	 */
 	~NonCopyable() = default;
-	/*
+
+	/**
 	 * @brief Move constructor
 	 */
 	NonCopyable(NonCopyable &&) = default;
-	/*
+
+	/**
 	 * @brief Move assignment operator
 	 */
-	NonCopyable &operator=(NonCopyable &&) = default;
+	NonCopyable &operator=(NonCopyable &&) noexcept = default;
 
   private:
-	/*
+	/**
 	 * @brief Deleted copy constructor
 	 */
 	NonCopyable(const NonCopyable &) = delete;
-	/*
+
+	/**
 	 * @brief Deleted copy assignment operator
 	 */
 	NonCopyable &operator=(const NonCopyable &) = delete;
 };
-/*
+
+/**
  * @brief Vulkan exception structure
  */
 class VulkanException : std::runtime_error
 {
   public:
-	/*
+	/**
 	 * @brief Vulkan exception constructor
 	 */
-	VulkanException(const VkResult result, const std::string &msg = "Vulkan error");
-	/*
+	VulkanException(VkResult result, const std::string &msg = "Vulkan error");
+
+	/**
 	 * @brief Returns the Vulkan error code as string
 	 * @return String message of exception
 	 */
-	virtual const char *what() const noexcept override;
+	const char *what() const noexcept override;
 
   private:
 	std::string error_message;

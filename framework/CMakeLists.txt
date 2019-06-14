@@ -37,16 +37,11 @@ set(FRAMEWORK_FILES
     semaphore_pool.h
     command_record.h
     command_replay.h
-    render_target.h
-    graphics_pipeline_state.h
     resource_binding_state.h
     resource_cache.h
     resource_record.h
     resource_replay.h
-    render_frame.h
-    render_context.h
     vulkan_sample.h
-    render_pipeline.h
     timer.h
     # Source Files
     common.cpp
@@ -62,17 +57,34 @@ set(FRAMEWORK_FILES
     semaphore_pool.cpp
     command_record.cpp
     command_replay.cpp
-    render_target.cpp
-    graphics_pipeline_state.cpp
     resource_binding_state.cpp
     resource_cache.cpp
     resource_record.cpp
     resource_replay.cpp
-    render_frame.cpp
-    render_context.cpp
     vulkan_sample.cpp
-    render_pipeline.cpp
     timer.cpp)
+
+set(RENDERING_FILES
+    # Header files
+    rendering/graphics_pipeline_state.h
+    rendering/render_context.h
+    rendering/render_frame.h
+    rendering/render_pipeline.h
+    rendering/render_target.h
+    rendering/subpass.h
+    # Source files
+    rendering/graphics_pipeline_state.cpp
+    rendering/render_context.cpp
+    rendering/render_frame.cpp
+    rendering/render_pipeline.cpp
+    rendering/render_target.cpp
+    rendering/subpass.cpp)
+
+set(RENDERING_SUBPASSES_FILES
+    # Header files
+    rendering/subpasses/scene_subpass.h
+    # Source files
+    rendering/subpasses/scene_subpass.cpp)
 
 set(SCENE_GRAPH_FILES
     # Header Files
@@ -218,6 +230,8 @@ endif()
 source_group("\\" FILES ${FRAMEWORK_FILES})
 source_group("platform\\" FILES ${PLATFORM_FILES})
 source_group("core\\" FILES ${CORE_FILES})
+source_group("rendering\\" FILES ${RENDERING_FILES})
+source_group("rendering\\subpasses" FILES ${RENDERING_SUBPASSES_FILES})
 source_group("scene_graph\\" FILES ${SCENE_GRAPH_FILES})
 source_group("scene_graph\\components\\" FILES ${SCENE_GRAPH_COMPONENT_FILES})
 source_group("scene_graph\\scripts\\" FILES ${SCENE_GRAPH_SCRIPTS_FILES})
@@ -226,6 +240,8 @@ set(PROJECT_FILES
     ${PLATFORM_FILES}
     ${FRAMEWORK_FILES}
     ${CORE_FILES}
+    ${RENDERING_FILES}
+    ${RENDERING_SUBPASSES_FILES}
     ${SCENE_GRAPH_FILES}
     ${SCENE_GRAPH_COMPONENT_FILES}
     ${SCENE_GRAPH_SCRIPTS_FILES})

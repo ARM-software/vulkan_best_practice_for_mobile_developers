@@ -32,9 +32,9 @@
 #include "core/shader_module.h"
 #include "core/swapchain.h"
 
-#include "graphics_pipeline_state.h"
-#include "render_frame.h"
-#include "render_target.h"
+#include "rendering/graphics_pipeline_state.h"
+#include "rendering/render_frame.h"
+#include "rendering/render_target.h"
 #include "resource_cache.h"
 
 namespace vkb
@@ -42,11 +42,9 @@ namespace vkb
 class RenderContext : public NonCopyable
 {
   public:
-	RenderContext(Device &device, std::unique_ptr<Swapchain> &&swapchain);
+	RenderContext(std::unique_ptr<Swapchain> &&swapchain, RenderTarget::CreateFunc create_render_target = RenderTarget::DEFAULT_CREATE_FUNC);
 
 	virtual ~RenderContext() = default;
-
-	void prepare(RenderFrame::CreateFunc render_frame_create_func = RenderFrame::DEFAULT_CREATE_FUNC);
 
 	/**
 	 * @brief begin_frame
@@ -109,10 +107,12 @@ class RenderContext : public NonCopyable
 	/// Whether a frame is active or not
 	bool frame_active{false};
 
-	std::vector<std::unique_ptr<RenderFrame>> frames;
+	std::vector<RenderFrame> frames;
 
 	/// Queue to submit commands for rendering our frames
 	const Queue &present_queue;
+
+	RenderTarget::CreateFunc create_render_target = RenderTarget::DEFAULT_CREATE_FUNC;
 };
 
 }        // namespace vkb

@@ -28,8 +28,8 @@
 #include "core/image.h"
 #include "core/image_view.h"
 #include "core/sampler.h"
-#include "graphics_pipeline_state.h"
-#include "render_target.h"
+#include "rendering/graphics_pipeline_state.h"
+#include "rendering/render_target.h"
 
 namespace vkb
 {
@@ -87,6 +87,8 @@ class CommandBuffer : public NonCopyable
 	void bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element);
 
 	void bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element);
+
+	void bind_input(const ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
 
 	void bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::Buffer>> &buffers, const std::vector<VkDeviceSize> &offsets);
 

@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "render_pipeline.h"
+#include "rendering/render_pipeline.h"
 #include "vulkan_sample.h"
 
 #include "scene_graph/components/perspective_camera.h"
@@ -54,7 +54,7 @@ class RenderPassesSample : public vkb::VulkanSample
 
   private:
 	void reset_stats_view() override;
-	void draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, const vkb::RenderTarget &render_target) override;
+	void draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
 	void draw_scene(vkb::CommandBuffer &command_buffer) override;
 
 	std::unique_ptr<vkb::RenderPipeline> render_pipeline{nullptr};

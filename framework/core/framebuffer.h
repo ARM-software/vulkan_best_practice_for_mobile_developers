@@ -21,7 +21,7 @@
 #pragma once
 
 #include "core/render_pass.h"
-#include "render_target.h"
+#include "rendering/render_target.h"
 
 namespace vkb
 {

@@ -24,7 +24,7 @@
 #include "core/device.h"
 #include "core/shader_module.h"
 
-#include "render_context.h"
+#include "rendering/render_context.h"
 
 namespace vkb
 {
@@ -83,7 +83,9 @@ void CommandRecord::end()
 	write(stream, CommandType::End);
 }
 
-void vkb::CommandRecord::begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values)
+void vkb::CommandRecord::begin_render_pass(const RenderTarget &              render_target,
+                                           const std::vector<LoadStoreInfo> &load_store_infos,
+                                           const std::vector<VkClearValue> & clear_values)
 {
 	// Reset graphics pipeline state
 	graphics_pipeline_state.reset();
@@ -95,7 +97,8 @@ void vkb::CommandRecord::begin_render_pass(const RenderTarget &render_target, co
 	render_pass_binding.clear_values     = clear_values;
 
 	// Add first subpass to render pass
-	render_pass_binding.subpasses.push_back(SubpassDesc{stream.tellp()});
+	auto &subpass              = render_pass_binding.subpasses.emplace_back(SubpassDesc{stream.tellp()});
+	subpass.output_attachments = render_target.get_output_attachments();
 
 	// Add render pass
 	render_pass_bindings.push_back(render_pass_binding);
@@ -105,6 +108,15 @@ void CommandRecord::next_subpass()
 {
 	// Increment subpass index
 	graphics_pipeline_state.set_subpass_index(graphics_pipeline_state.get_subpass_index() + 1);
+
+	// Add subpass to render pass
+	auto &render_pass_desc     = render_pass_bindings.back();
+	auto &subpass              = render_pass_desc.subpasses.emplace_back(SubpassDesc{stream.tellp()});
+	subpass.output_attachments = render_pass_desc.render_target.get_output_attachments();
+
+	// Descriptor set
+	descriptor_set_layout_state.clear();
+	resource_binding_state.reset();
 
 	// Write command parameters
 	write(stream, CommandType::NextSubpass);
@@ -176,6 +188,11 @@ void CommandRecord::bind_buffer(const core::Buffer &buffer, VkDeviceSize offset,
 void CommandRecord::bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element)
 {
 	resource_binding_state.bind_image(image_view, sampler, set, binding, array_element);
+}
+
+void CommandRecord::bind_input(const ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element)
+{
+	resource_binding_state.bind_input(image_view, set, binding, array_element);
 }
 
 void CommandRecord::bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::Buffer>> &buffers, const std::vector<VkDeviceSize> &offsets)
@@ -327,20 +344,16 @@ void CommandRecord::FlushPipelineState()
 	// Add graphics state to the current subpass
 	subpass.pipeline_states.push_back({stream.tellp(), graphics_pipeline_state});
 
-	const auto &resources = pipeline_layout.get_fragment_output_attachments();
-
-	for (auto &resource : resources)
-	{
-		// Add output location to subpass's output attachments
-		subpass.output_attachments.emplace(resource.location);
-	}
+	// Ensure all output attachments are there
+	auto output_attachments_count = pipeline_layout.get_fragment_output_attachments().size();
+	assert(subpass.output_attachments.size() == output_attachments_count && "Output attachments mismatch");
 
 	const auto &input_resource = pipeline_layout.get_fragment_input_attachments();
 
 	for (auto &resource : input_resource)
 	{
 		// Add input attachment index to current subpass.
-		subpass.input_attachments.emplace(resource.input_attachment_index);
+		subpass.input_attachments.emplace_back(resource.input_attachment_index);
 	}
 }
 
@@ -473,7 +486,6 @@ void CommandRecord::FlushDescriptorState()
 										image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 									}
 									break;
-
 								case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
 									image_info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 									break;

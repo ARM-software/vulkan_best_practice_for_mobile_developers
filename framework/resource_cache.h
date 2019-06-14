@@ -48,7 +48,7 @@ class ResourceCache : public NonCopyable
 
 	void set_pipeline_cache(VkPipelineCache pipeline_cache);
 
-	ShaderModule &request_shader_module(VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const ShaderVariant &shader_variant);
+	ShaderModule &request_shader_module(VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const ShaderVariant &shader_variant = {});
 
 	PipelineLayout &request_pipeline_layout(const std::vector<ShaderModule *> &shader_modules);
 

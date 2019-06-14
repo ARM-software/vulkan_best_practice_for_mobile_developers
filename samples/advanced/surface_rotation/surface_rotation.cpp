@@ -29,6 +29,8 @@
 #include "core/pipeline_layout.h"
 #include "core/shader_module.h"
 
+#include "rendering/subpasses/scene_subpass.h"
+
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
 #endif
@@ -62,19 +64,18 @@ bool SurfaceRotation::prepare(vkb::Platform &platform)
 
 	auto swapchain = std::make_unique<vkb::Swapchain>(*device, get_surface());
 
-	render_context = std::make_unique<SurfaceRotationRenderContext>(*device, std::move(swapchain), pre_rotate);
-	render_context->prepare();
+	render_context = std::make_unique<SurfaceRotationRenderContext>(std::move(swapchain), pre_rotate);
+
+	load_scene("scenes/sponza/Sponza01.gltf");
+	auto &camera_node = add_free_camera("main_camera");
+	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
 	vkb::ShaderSource vert_shader(vkb::file::read_asset("shaders/base.vert"));
 	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/base.frag"));
+	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), scene, *camera);
 
-	load_scene("scenes/sponza/Sponza01.gltf");
-
-	render_pipeline = std::make_unique<vkb::RenderPipeline>(*render_context, scene, std::move(vert_shader), std::move(frag_shader));
-
-	auto &camera_node = add_free_camera("main_camera");
-
-	camera = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
+	render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	render_pipeline->add_subpass(std::move(scene_subpass));
 
 	gui = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor());
 
@@ -160,7 +161,7 @@ void SurfaceRotation::draw_scene(vkb::CommandBuffer &cmd_buf)
 	camera->set_aspect_ratio(static_cast<float>(extent.width) / extent.height);
 	camera->set_pre_rotation(pre_rotate_mat);
 
-	render_pipeline->draw_scene(cmd_buf, *camera);
+	render_pipeline->draw(cmd_buf);
 }
 
 void SurfaceRotation::trigger_swapchain_recreation()
@@ -210,10 +211,9 @@ std::unique_ptr<vkb::VulkanSample> create_surface_rotation()
 	return std::make_unique<SurfaceRotation>();
 }
 
-SurfaceRotationRenderContext::SurfaceRotationRenderContext(vkb::Device &                     device,
-                                                           std::unique_ptr<vkb::Swapchain> &&swapchain,
+SurfaceRotationRenderContext::SurfaceRotationRenderContext(std::unique_ptr<vkb::Swapchain> &&swapchain,
                                                            bool                              pre_rotate) :
-    RenderContext(device, std::move(swapchain)),
+    RenderContext(std::move(swapchain)),
     pre_rotate{pre_rotate}
 {
 }

@@ -842,7 +842,7 @@ std::unique_ptr<sg::Image> GLTFLoader::parse_image(tinygltf::Image &gltf_image)
 	{
 		if (device.get_features().textureCompressionASTC_LDR == VK_FALSE)
 		{
-			LOGW("%s %s", "ASTC not supported: decoding", image->get_name());
+			LOGW("ASTC not supported: decoding {}", image->get_name());
 			image = std::make_unique<sg::Astc>(*image);
 			image->generate_mipmaps();
 		}

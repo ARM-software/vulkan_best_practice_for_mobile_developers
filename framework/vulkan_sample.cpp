@@ -43,19 +43,19 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
 {
 	if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
 	{
-		LOGE("Validation Layer: Error: {}: {}", layer_prefix, message);
+		LOGE("{}: {}", layer_prefix, message);
 	}
 	else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
 	{
-		LOGE("Validation Layer: Warning: {}: {}", layer_prefix, message);
+		LOGW("{}: {}", layer_prefix, message);
 	}
 	else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
 	{
-		LOGI("Validation Layer: Performance warning: {}: {}", layer_prefix, message);
+		LOGW("{}: {}", layer_prefix, message);
 	}
 	else
 	{
-		LOGI("Validation Layer: Information: {}: {}", layer_prefix, message);
+		LOGI("{}: {}", layer_prefix, message);
 	}
 	return VK_FALSE;
 }
@@ -211,9 +211,11 @@ void VulkanSample::update(float delta_time)
 		gui->update(delta_time);
 	}
 
-	const RenderTarget &render_target = render_context->get_active_frame().get_render_target();
+	auto &render_target = render_context->get_active_frame().get_render_target();
 
 	cmd_buf.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+	auto &views = render_target.get_views();
 
 	{
 		ImageMemoryBarrier memory_barrier{};
@@ -223,7 +225,13 @@ void VulkanSample::update(float delta_time)
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-		cmd_buf.image_memory_barrier(render_target.get_views().at(0), memory_barrier);
+		cmd_buf.image_memory_barrier(views.at(0), memory_barrier);
+
+		// Skip 1 as it is handled later as a depth-stencil attachment
+		for (size_t i = 2; i < views.size(); ++i)
+		{
+			cmd_buf.image_memory_barrier(views.at(i), memory_barrier);
+		}
 	}
 
 	{
@@ -234,7 +242,7 @@ void VulkanSample::update(float delta_time)
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
-		cmd_buf.image_memory_barrier(render_target.get_views().at(1), memory_barrier);
+		cmd_buf.image_memory_barrier(views.at(1), memory_barrier);
 	}
 
 	draw_swapchain_renderpass(cmd_buf, render_target);
@@ -247,7 +255,7 @@ void VulkanSample::update(float delta_time)
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 
-		cmd_buf.image_memory_barrier(render_target.get_views().at(0), memory_barrier);
+		cmd_buf.image_memory_barrier(views.at(0), memory_barrier);
 	}
 
 	cmd_buf.end();
@@ -498,7 +506,7 @@ VkInstance VulkanSample::create_instance(const std::vector<const char *> &requir
 	return instance;
 }
 
-void VulkanSample::draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, const RenderTarget &render_target)
+void VulkanSample::draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, RenderTarget &render_target)
 {
 	std::vector<vkb::LoadStoreInfo> load_store{2};
 	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;

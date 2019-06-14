@@ -22,7 +22,7 @@
 
 #include "gui.h"
 #include "platform/application.h"
-#include "render_context.h"
+#include "rendering/render_context.h"
 #include "scene_graph/scene.h"
 #include "scene_graph/scripts/node_animation.h"
 #include "stats.h"
@@ -88,7 +88,7 @@ class VulkanSample : public Application
 	 */
 	virtual void reset_stats_view(){};
 
-	virtual void draw_swapchain_renderpass(CommandBuffer &command_buffer, const RenderTarget &render_target);
+	virtual void draw_swapchain_renderpass(CommandBuffer &command_buffer, RenderTarget &render_target);
 
 	/**
 	 * @brief Draw scene meshes to the command buffer

@@ -150,7 +150,7 @@ bool SampleController::prepare(Platform &platform)
 		return false;
 	}
 
-	if (current_sample == samples_to_run.end())
+	if (std::find_if(std::begin(samples_to_run), std::end(samples_to_run), [this](auto &sample) { return sample.id == current_sample->id; }) == std::end(samples_to_run))
 	{
 		LOGE("No sample name defined to run.");
 

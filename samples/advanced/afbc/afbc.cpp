@@ -26,6 +26,8 @@
 #include "platform/file.h"
 #include "stats.h"
 
+#include "rendering/subpasses/scene_subpass.h"
+
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
 #endif
@@ -50,30 +52,29 @@ bool AFBCSample::prepare(vkb::Platform &platform)
 
 	device = std::make_unique<vkb::Device>(get_gpu(0), get_surface(), extensions);
 
-	std::unique_ptr<vkb::Swapchain> swapchain = std::make_unique<vkb::Swapchain>(*device,
-	                                                                             get_surface(),
-	                                                                             VkExtent2D({}),
-	                                                                             3,
-	                                                                             VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
-	                                                                             VK_PRESENT_MODE_FIFO_KHR,
-	                                                                             /* We want AFBC disabled by default, hence we create swapchain with VK_IMAGE_USAGE_STORAGE_BIT. */
-	                                                                             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT);
+	auto swapchain = std::make_unique<vkb::Swapchain>(*device,
+	                                                  get_surface(),
+	                                                  VkExtent2D({}),
+	                                                  3,
+	                                                  VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+	                                                  VK_PRESENT_MODE_FIFO_KHR,
+	                                                  /* We want AFBC disabled by default, hence we create swapchain with VK_IMAGE_USAGE_STORAGE_BIT. */
+	                                                  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT);
 
 	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::l2_ext_write_bytes});
 
-	render_context = std::make_unique<vkb::RenderContext>(*device, std::move(swapchain));
-	render_context->prepare();
+	render_context = std::make_unique<vkb::RenderContext>(std::move(swapchain));
+
+	load_scene("scenes/sponza/Sponza01.gltf");
+	auto &camera_node = add_free_camera("main_camera");
+	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
 	vkb::ShaderSource vert_shader(vkb::file::read_asset("shaders/base.vert"));
 	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/base.frag"));
+	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), scene, *camera);
 
-	load_scene("scenes/sponza/Sponza01.gltf");
-
-	render_pipeline = std::make_unique<vkb::RenderPipeline>(*render_context, scene, std::move(vert_shader), std::move(frag_shader));
-
-	auto &camera_node = add_free_camera("main_camera");
-
-	camera = &camera_node.get_component<vkb::sg::Camera>();
+	render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	render_pipeline->add_subpass(std::move(scene_subpass));
 
 	gui = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor());
 
@@ -116,7 +117,7 @@ void AFBCSample::draw_gui()
 
 void AFBCSample::draw_scene(vkb::CommandBuffer &cmd_buf)
 {
-	render_pipeline->draw_scene(cmd_buf, *camera);
+	render_pipeline->draw(cmd_buf);
 }
 
 std::unique_ptr<vkb::VulkanSample> create_afbc()

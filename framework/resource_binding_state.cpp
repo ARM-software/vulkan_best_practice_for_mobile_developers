@@ -58,6 +58,13 @@ void ResourceBindingState::bind_image(const ImageView &image_view, const core::S
 	dirty = true;
 }
 
+void ResourceBindingState::bind_input(const ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element)
+{
+	set_bindings[set].bind_input(image_view, binding, array_element);
+
+	dirty = true;
+}
+
 const std::unordered_map<uint32_t, SetBindings> &ResourceBindingState::get_set_bindings()
 {
 	return set_bindings;
@@ -67,7 +74,8 @@ VkDescriptorImageInfo ResourceInfo::get_image_info() const
 {
 	VkDescriptorImageInfo image_info{};
 
-	image_info.sampler   = sampler->get_handle();
+	// Can be null for input attachments
+	image_info.sampler   = sampler ? sampler->get_handle() : VK_NULL_HANDLE;
 	image_info.imageView = image_view->get_handle();
 
 	return image_info;
@@ -143,6 +151,12 @@ void ResourceInfo::bind_image(const ImageView &image_view, const core::Sampler &
 	dirty = true;
 }
 
+void ResourceInfo::bind_input(const ImageView &iv)
+{
+	image_view = &iv;
+	dirty      = true;
+}
+
 VkDescriptorBufferInfo ResourceInfo::get_buffer_info() const
 {
 	VkDescriptorBufferInfo buffer_info{};
@@ -187,6 +201,12 @@ void SetBindings::bind_image(const ImageView &image_view, const core::Sampler &s
 {
 	resource_bindings[binding][array_element].bind_image(image_view, sampler);
 
+	dirty = true;
+}
+
+void SetBindings::bind_input(const ImageView &image_view, const uint32_t binding, const uint32_t array_element)
+{
+	resource_bindings[binding][array_element].bind_input(image_view);
 	dirty = true;
 }
 

@@ -18,7 +18,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "render_target.h"
+#include "rendering/render_target.h"
 
 namespace vkb
 {
@@ -39,11 +39,39 @@ Attachment::Attachment(VkFormat format, VkSampleCountFlagBits samples, VkImageUs
     usage{usage}
 {
 }
+const RenderTarget::CreateFunc RenderTarget::DEFAULT_CREATE_FUNC = [](core::Image &&swapchain_image) -> RenderTarget {
+	core::Image depth_image{swapchain_image.get_device(), swapchain_image.get_extent(),
+	                        VK_FORMAT_D32_SFLOAT,
+	                        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
+	                        VMA_MEMORY_USAGE_GPU_ONLY};
 
-vkb::RenderTarget::RenderTarget(Device &device, std::vector<core::Image> &&images) :
-    device{device},
+	std::vector<core::Image> images;
+	images.push_back(std::move(swapchain_image));
+	images.push_back(std::move(depth_image));
+
+	return RenderTarget{std::move(images)};
+};
+
+RenderTarget &RenderTarget::operator=(RenderTarget &&other) noexcept
+{
+	if (this != &other)
+	{
+		assert(&device == &other.device && "Cannot move assign with a render target created with a different device");
+		extent             = std::move(other.extent);
+		images             = std::move(other.images);
+		views              = std::move(other.views);
+		attachments        = std::move(other.attachments);
+		output_attachments = std::move(other.output_attachments);
+	}
+	return *this;
+}
+
+vkb::RenderTarget::RenderTarget(std::vector<core::Image> &&images) :
+    device{images.back().get_device()},
     images{std::move(images)}
 {
+	assert(!this->images.empty() && "Should specify at least 1 image");
+
 	std::set<VkExtent2D, CompareExtent2D> unique_extent;
 
 	// Returns the image extent as a VkExtent2D structure from a VkExtent3D
@@ -75,14 +103,26 @@ vkb::RenderTarget::RenderTarget(Device &device, std::vector<core::Image> &&image
 
 RenderTarget::RenderTarget(Device &device, const VkExtent2D &extent, const std::vector<Attachment> &attachments) :
     device{device},
-    extent{extent},
-    attachments{attachments}
+    extent{extent}
 {
+	add_attachments(attachments);
+}
+
+void RenderTarget::add_attachments(const std::vector<Attachment> &attachments)
+{
+	assert(this->attachments.empty() && "Attachments already added");
+	assert(!attachments.empty() && "Add at least 1 attachment");
+
+	// Images should not be moved or views will end up with dangling pointers
+	// So reserve space for vectors
+	images.reserve(attachments.size());
+	views.reserve(attachments.size());
+
 	VkExtent3D image_extent = {extent.width, extent.height, 1};
 
 	for (auto &attachment : attachments)
 	{
-		VkImageUsageFlags usage = attachment.usage;
+		auto usage = attachment.usage;
 
 		if (is_depth_stencil_format(attachment.format))
 		{
@@ -93,14 +133,11 @@ RenderTarget::RenderTarget(Device &device, const VkExtent2D &extent, const std::
 			usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 		}
 
-		images.emplace_back(device, image_extent, attachment.format,
-		                    usage, VMA_MEMORY_USAGE_GPU_ONLY);
+		images.emplace_back(device, image_extent, attachment.format, usage, VMA_MEMORY_USAGE_GPU_ONLY);
+		views.emplace_back(images.back(), VK_IMAGE_VIEW_TYPE_2D);
 	}
 
-	for (auto &image : images)
-	{
-		views.emplace_back(image, VK_IMAGE_VIEW_TYPE_2D);
-	}
+	std::copy(std::begin(attachments), std::end(attachments), std::back_inserter(this->attachments));
 }
 
 const VkExtent2D &RenderTarget::get_extent() const
@@ -116,6 +153,16 @@ const std::vector<ImageView> &RenderTarget::get_views() const
 const std::vector<Attachment> &RenderTarget::get_attachments() const
 {
 	return attachments;
+}
+
+void RenderTarget::set_output_attachments(std::vector<uint32_t> &&output)
+{
+	output_attachments = std::move(output);
+}
+
+const std::vector<uint32_t> &RenderTarget::get_output_attachments() const
+{
+	return output_attachments;
 }
 
 }        // namespace vkb

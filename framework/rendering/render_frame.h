@@ -28,7 +28,7 @@
 
 #include "buffer_pool.h"
 #include "fence_pool.h"
-#include "render_target.h"
+#include "rendering/render_target.h"
 #include "semaphore_pool.h"
 
 namespace vkb
@@ -41,20 +41,12 @@ namespace vkb
 class RenderFrame : public NonCopyable
 {
   public:
-	using CreateFunc = std::function<std::unique_ptr<RenderFrame>(Device &, core::Image &&)>;
-
-	static const CreateFunc DEFAULT_CREATE_FUNC;
-
 	/**
 	 * @brief Block size of a buffer pool in kilobytes
 	 */
 	static constexpr uint32_t BUFFER_POOL_BLOCK_SIZE = 256;
 
-	RenderFrame(Device &device, core::Image &&swapchain_image);
-
-	virtual ~RenderFrame();
-
-	RenderFrame(RenderFrame &&other) = default;
+	RenderFrame(Device &device, RenderTarget &&render_target);
 
 	void reset();
 
@@ -69,9 +61,13 @@ class RenderFrame : public NonCopyable
 
 	SemaphorePool &get_semaphore_pool();
 
-	void update_render_target(core::Image &&swapchain_image);
+	/**
+	 * @brief Called when the swapchain changes
+	 * @param render_target A new render target with updated images
+	 */
+	void update_render_target(RenderTarget &&render_target);
 
-	const RenderTarget &get_render_target() const;
+	RenderTarget &get_render_target();
 
 	/**
 	 * @param usage Usage of the buffer
@@ -90,7 +86,7 @@ class RenderFrame : public NonCopyable
 
 	SemaphorePool semaphore_pool;
 
-	std::unique_ptr<RenderTarget> swapchain_render_target;
+	RenderTarget swapchain_render_target;
 
 	std::map<VkBufferUsageFlags, std::pair<BufferPool, BufferBlock *>> buffer_pools;
 };

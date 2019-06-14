@@ -147,6 +147,11 @@ void CommandBuffer::bind_image(const ImageView &image_view, const core::Sampler 
 	recorder.bind_image(image_view, sampler, set, binding, array_element);
 }
 
+void CommandBuffer::bind_input(const ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element)
+{
+	recorder.bind_input(image_view, set, binding, array_element);
+}
+
 void CommandBuffer::bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::Buffer>> &buffers, const std::vector<VkDeviceSize> &offsets)
 {
 	recorder.bind_vertex_buffers(first_binding, buffers, offsets);

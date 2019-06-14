@@ -18,66 +18,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-
-#include "core/buffer.h"
-
-#include "render_frame.h"
-
-#include "scene_graph/components/camera.h"
-#include "scene_graph/components/mesh.h"
-#include "scene_graph/scene.h"
-
-#include "utils.h"
+#include "rendering/subpass.h"
 
 namespace vkb
 {
-/**
- * @brief Global uniform structure for base shader
- */
-struct alignas(16) GlobalUniform
-{
-	glm::mat4 model;
-
-	glm::mat4 camera_view_proj;
-
-	glm::vec4 light_pos;
-
-	glm::vec4 light_color;
-};
-
-/**
- * @brief PBR material uniform for base shader
- */
-struct PBRMaterialUniform
-{
-	glm::vec4 base_color_factor;
-
-	float metallic_factor;
-
-	float roughness_factor;
-};
-
-class RenderPipeline : public NonCopyable
-{
-  public:
-	RenderPipeline(RenderContext &render_context, sg::Scene &scene, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader);
-
-	void draw_scene(CommandBuffer &command_buffer, sg::Camera &camera);
-
-  protected:
-	virtual void draw_scene_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh);
-
-  private:
-	RenderContext &render_context;
-
-	std::vector<sg::Mesh *> meshes;
-
-	ShaderSource vertex_shader;
-
-	ShaderSource fragment_shader;
-
-	GlobalUniform global_uniform;
-};
+Subpass::Subpass(RenderContext &render_context, ShaderSource &&vertex_source, ShaderSource &&fragment_source) :
+    render_context{render_context},
+    vertex_shader{std::move(vertex_source)},
+    fragment_shader{std::move(fragment_source)}
+{}
 
 }        // namespace vkb

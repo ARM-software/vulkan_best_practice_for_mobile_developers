@@ -31,8 +31,8 @@
 #include "core/pipeline_layout.h"
 #include "core/render_pass.h"
 #include "core/sampler.h"
-#include "graphics_pipeline_state.h"
-#include "render_target.h"
+#include "rendering/graphics_pipeline_state.h"
+#include "rendering/render_target.h"
 #include "resource_binding_state.h"
 
 namespace vkb
@@ -58,9 +58,9 @@ struct SubpassDesc
 {
 	std::streampos event_id{};
 
-	std::set<uint32_t> input_attachments;
+	std::vector<uint32_t> input_attachments;
 
-	std::set<uint32_t> output_attachments;
+	std::vector<uint32_t> output_attachments;
 
 	std::list<PipelineDesc> pipeline_states;
 };
@@ -188,9 +188,35 @@ class CommandRecord
 
 	void push_constants(uint32_t offset, const std::vector<uint8_t> &values);
 
+	/**
+	 * @brief It binds a buffer to an uniform
+	 * @param buffer Buffer to bind
+	 * @param offset Offset to apply to the buffer
+	 * @param range Memory size to bind
+	 * @param set Destination descriptor set
+	 * @param binding Descriptor binding within that set
+	 * @param array_element The starting element in that array
+	 */
 	void bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element);
 
+	/**
+	 * @brief It binds an image view to an uniform sampler
+	 * @param image_view Image view to bind
+	 * @param sampler Samper to use
+	 * @param set Destination descriptor set
+	 * @param binding Descriptor binding within that set
+	 * @param array_element The starting element in that array
+	 */
 	void bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element);
+
+	/**
+	 * @brief Like bind_image, it binds an image view to an input attachment
+	 * @param image_view Image view to bind
+	 * @param set Destination descriptor set
+	 * @param binding Descriptor binding within that set
+	 * @param array_element The starting element in that array
+	 */
+	void bind_input(const ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
 
 	void bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::Buffer>> &buffers, const std::vector<VkDeviceSize> &offsets);
 

@@ -20,48 +20,59 @@
 
 #pragma once
 
-#include "core/image.h"
-#include "core/image_view.h"
+#include "core/command_buffer.h"
+#include "core/shader_module.h"
 
 namespace vkb
 {
-class Device;
+class RenderContext;
 
-struct Attachment
-{
-	VkFormat format{VK_FORMAT_UNDEFINED};
-
-	VkSampleCountFlagBits samples{VK_SAMPLE_COUNT_1_BIT};
-
-	VkImageUsageFlags usage{VK_IMAGE_USAGE_SAMPLED_BIT};
-
-	Attachment() = default;
-
-	Attachment(VkFormat format, VkSampleCountFlagBits samples, VkImageUsageFlags usage);
-};
-
-class RenderTarget : public NonCopyable
+/**
+ * @brief This class defines an interface for subpasses
+ *        where they need to implement the draw function.
+ *        It is used to construct a RenderPipeline
+ */
+class Subpass : public NonCopyable
 {
   public:
-	RenderTarget(Device &device, std::vector<core::Image> &&images);
+	Subpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader);
 
-	RenderTarget(Device &device, const VkExtent2D &extent, const std::vector<Attachment> &attachments);
+	virtual ~Subpass() = default;
 
-	const VkExtent2D &get_extent() const;
+	/**
+	 * @brief Draw virtual function
+	 * @param command_buffer Command buffer to use to record draw commands
+	 */
+	virtual void draw(CommandBuffer &command_buffer) = 0;
 
-	const std::vector<ImageView> &get_views() const;
+	RenderContext &get_render_context()
+	{
+		return render_context;
+	}
 
-	const std::vector<Attachment> &get_attachments() const;
+	const ShaderSource &get_vertex_shader() const
+	{
+		return vertex_shader;
+	}
+
+	const ShaderSource &get_fragment_shader() const
+	{
+		return fragment_shader;
+	}
+
+	DepthStencilState &get_depth_stencil_state()
+	{
+		return depth_stencil_state;
+	}
 
   private:
-	Device &device;
+	RenderContext &render_context;
 
-	VkExtent2D extent{};
+	ShaderSource vertex_shader;
 
-	std::vector<core::Image> images;
+	ShaderSource fragment_shader;
 
-	std::vector<ImageView> views;
-
-	std::vector<Attachment> attachments;
+	DepthStencilState depth_stencil_state{};
 };
+
 }        // namespace vkb

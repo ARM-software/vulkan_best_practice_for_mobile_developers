@@ -33,7 +33,7 @@
 
 #include "platform/file.h"
 #include "platform/input_events.h"
-#include "render_context.h"
+#include "rendering/render_context.h"
 #include "stats.h"
 
 namespace vkb

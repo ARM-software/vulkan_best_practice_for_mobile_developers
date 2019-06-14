@@ -55,8 +55,7 @@ class Buffer : public NonCopyable
 	template <class T>
 	void update(size_t offset, const T &value)
 	{
-		update(offset, std::vector<uint8_t>{reinterpret_cast<const uint8_t *>(&value),
-		                                    reinterpret_cast<const uint8_t *>(&value) + sizeof(T)});
+		update(offset, reinterpret_cast<const uint8_t *>(&value), sizeof(T));
 	}
 
 	const uint8_t *get_data() const
@@ -65,6 +64,8 @@ class Buffer : public NonCopyable
 	}
 
   private:
+	void update(size_t offset, const uint8_t *src, size_t size);
+
 	Device &device;
 
 	VkBuffer handle{VK_NULL_HANDLE};

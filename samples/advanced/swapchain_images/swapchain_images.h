@@ -23,7 +23,7 @@
 #include "utils.h"
 #include "vulkan_sample.h"
 
-#include "render_pipeline.h"
+#include "rendering/render_pipeline.h"
 #include "scene_graph/components/camera.h"
 
 class SwapchainImages : public vkb::VulkanSample

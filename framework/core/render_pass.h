@@ -36,9 +36,9 @@ struct LoadStoreInfo
 
 struct SubpassInfo
 {
-	std::set<uint32_t> input_attachments;
+	std::vector<uint32_t> input_attachments;
 
-	std::set<uint32_t> output_attachments;
+	std::vector<uint32_t> output_attachments;
 };
 
 class RenderPass : public NonCopyable

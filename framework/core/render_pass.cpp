@@ -18,10 +18,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "render_pass.h"
+#include "core/render_pass.h"
 
 #include "device.h"
-#include "render_target.h"
+#include "rendering/render_target.h"
+#include <numeric>
 
 namespace vkb
 {
@@ -60,17 +61,28 @@ RenderPass::RenderPass(Device &device, const std::vector<Attachment> &attachment
 		attachment_descriptions.push_back(std::move(attachment));
 	}
 
-	std::vector<VkSubpassDescription>  subpass_descriptions;
+	std::vector<VkSubpassDescription> subpass_descriptions;
+	subpass_descriptions.reserve(subpasses.size());
+
 	std::vector<VkAttachmentReference> input_attachments;
 	std::vector<VkAttachmentReference> color_attachments;
 	std::vector<VkAttachmentReference> depth_stencil_attachments;
 
-	for (uint32_t i = 0U; i < subpasses.size(); ++i)
+	// Reserve space for the vectors
+	auto input_attachments_count = std::accumulate(std::begin(subpasses), std::end(subpasses), 0,
+	                                               [](size_t count, auto &subpass) { return count + subpass.input_attachments.size(); });
+	input_attachments.reserve(input_attachments_count);
+	auto color_attachments_count = subpasses.size();
+	color_attachments.reserve(color_attachments_count);
+	auto ds_attachments_count = depth_stencil_attachment == VK_ATTACHMENT_UNUSED ? 0 : subpasses.size();
+	depth_stencil_attachments.reserve(ds_attachments_count);
+
+	for (auto &subpass : subpasses)
 	{
 		VkSubpassDescription subpass_description{};
 		subpass_description.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
-		for (uint32_t k : subpasses[i].input_attachments)
+		for (uint32_t k : subpass.input_attachments)
 		{
 			if (is_depth_stencil_format(attachment_descriptions[k].format))
 			{
@@ -87,16 +99,16 @@ RenderPass::RenderPass(Device &device, const std::vector<Attachment> &attachment
 			}
 		}
 
-		subpass_description.inputAttachmentCount = to_u32(subpasses[i].input_attachments.size());
+		subpass_description.inputAttachmentCount = to_u32(subpass.input_attachments.size());
 
-		for (auto k : subpasses[i].output_attachments)
+		for (auto output_attachment : subpass.output_attachments)
 		{
-			if (k == depth_stencil_attachment)
+			if (output_attachment == depth_stencil_attachment)
 			{
 				continue;
 			}
 
-			color_attachments.push_back({k, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL});
+			color_attachments.push_back({output_attachment, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL});
 
 			if (!subpass_description.pColorAttachments)
 			{
@@ -111,7 +123,7 @@ RenderPass::RenderPass(Device &device, const std::vector<Attachment> &attachment
 			subpass_description.pDepthStencilAttachment = &(*depth_stencil_attachments.rbegin());
 		}
 
-		subpass_description.colorAttachmentCount = to_u32(subpasses[i].output_attachments.size());
+		subpass_description.colorAttachmentCount = to_u32(subpass.output_attachments.size());
 
 		subpass_descriptions.push_back(subpass_description);
 	}
@@ -146,35 +158,46 @@ RenderPass::RenderPass(Device &device, const std::vector<Attachment> &attachment
 		subpass_descriptions.push_back(subpass_description);
 	}
 
-	// Make the initial layout same as the first subpass layout
+	// Make the initial layout same as in the first subpass using that attachment
+	for (auto &subpass : subpass_descriptions)
 	{
-		const VkSubpassDescription &subpass = subpass_descriptions.front();
-
 		for (uint32_t k = 0U; k < subpass.colorAttachmentCount; ++k)
 		{
-			VkAttachmentReference reference = subpass.pColorAttachments[k];
-
-			attachment_descriptions[reference.attachment].initialLayout = reference.layout;
+			auto reference = subpass.pColorAttachments[k];
+			// Set it only if not defined yet
+			if (attachment_descriptions[reference.attachment].initialLayout == VK_IMAGE_LAYOUT_UNDEFINED)
+			{
+				attachment_descriptions[reference.attachment].initialLayout = reference.layout;
+			}
 		}
 
 		for (uint32_t k = 0U; k < subpass.inputAttachmentCount; ++k)
 		{
-			VkAttachmentReference reference = subpass.pInputAttachments[k];
-
-			attachment_descriptions[reference.attachment].initialLayout = reference.layout;
+			auto reference = subpass.pInputAttachments[k];
+			// Set it only if not defined yet
+			if (attachment_descriptions[reference.attachment].initialLayout == VK_IMAGE_LAYOUT_UNDEFINED)
+			{
+				attachment_descriptions[reference.attachment].initialLayout = reference.layout;
+			}
 		}
 
 		if (subpass.pDepthStencilAttachment)
 		{
-			VkAttachmentReference reference = *subpass.pDepthStencilAttachment;
-
-			attachment_descriptions[reference.attachment].initialLayout = reference.layout;
+			auto reference = *subpass.pDepthStencilAttachment;
+			// Set it only if not defined yet
+			if (attachment_descriptions[reference.attachment].initialLayout == VK_IMAGE_LAYOUT_UNDEFINED)
+			{
+				attachment_descriptions[reference.attachment].initialLayout = reference.layout;
+			}
 		}
 	}
+
+	// Swapchain image final layout should be present
+	attachment_descriptions[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
 	// Make the final layout same as the last subpass layout
 	{
-		const VkSubpassDescription &subpass = subpass_descriptions.back();
+		VkSubpassDescription &subpass = subpass_descriptions.back();
 
 		for (uint32_t k = 0U; k < subpass.colorAttachmentCount; ++k)
 		{
@@ -188,6 +211,12 @@ RenderPass::RenderPass(Device &device, const std::vector<Attachment> &attachment
 			VkAttachmentReference reference = subpass.pInputAttachments[k];
 
 			attachment_descriptions[reference.attachment].finalLayout = reference.layout;
+
+			// Do not use depth attachment if used as input
+			if (reference.attachment == depth_stencil_attachment)
+			{
+				subpass.pDepthStencilAttachment = nullptr;
+			}
 		}
 
 		if (subpass.pDepthStencilAttachment)
@@ -198,12 +227,36 @@ RenderPass::RenderPass(Device &device, const std::vector<Attachment> &attachment
 		}
 	}
 
+	// Set subpass dependencies
+	auto subpass_count = to_u32(subpass_descriptions.size());
+
+	std::vector<VkSubpassDependency> dependencies;
+	if (subpass_count > 1)
+	{
+		dependencies.resize(subpass_count - 1);
+
+		for (uint32_t i = 0; i < dependencies.size(); ++i)
+		{
+			// Transition input attachments from color attachment to shader read
+			dependencies[i].srcSubpass      = i;
+			dependencies[i].dstSubpass      = i + 1;
+			dependencies[i].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			dependencies[i].dstStageMask    = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+			dependencies[i].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			dependencies[i].dstAccessMask   = VK_ACCESS_SHADER_READ_BIT;
+			dependencies[i].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+		}
+	}
+
+	// Create render pass
 	VkRenderPassCreateInfo create_info{VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
 
 	create_info.attachmentCount = to_u32(attachment_descriptions.size());
 	create_info.pAttachments    = attachment_descriptions.data();
-	create_info.subpassCount    = to_u32(subpass_descriptions.size());
+	create_info.subpassCount    = subpass_count;
 	create_info.pSubpasses      = subpass_descriptions.data();
+	create_info.dependencyCount = to_u32(dependencies.size());
+	create_info.pDependencies   = dependencies.data();
 
 	auto result = vkCreateRenderPass(device.get_handle(), &create_info, nullptr, &handle);
 

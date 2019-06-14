@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "render_pipeline.h"
+#include "rendering/render_pipeline.h"
 #include "vulkan_sample.h"
 
 #include "scene_graph/components/perspective_camera.h"
@@ -31,13 +31,13 @@
 class SurfaceRotationRenderContext : public vkb::RenderContext
 {
   public:
-	SurfaceRotationRenderContext(vkb::Device &device, std::unique_ptr<vkb::Swapchain> &&swapchain, bool pre_rotate);
+	SurfaceRotationRenderContext(std::unique_ptr<vkb::Swapchain> &&swapchain, bool pre_rotate);
 
 	virtual ~SurfaceRotationRenderContext() = default;
 
-	virtual void handle_surface_changes() override;
+	void handle_surface_changes() override;
 
-	inline void set_pre_rotate(bool pre_rotate)
+	void set_pre_rotate(bool pre_rotate)
 	{
 		this->pre_rotate = pre_rotate;
 	}

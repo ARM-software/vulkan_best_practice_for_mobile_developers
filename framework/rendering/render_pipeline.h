@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,33 +20,35 @@
 
 #pragma once
 
-#include "common.h"
-#include "rendering/graphics_pipeline_state.h"
-#include "rendering/render_context.h"
+#include "core/buffer.h"
 
-#include "scene_graph/components/sub_mesh.h"
-#include "scene_graph/scene.h"
+#include "rendering/render_frame.h"
+#include "rendering/subpass.h"
+
+#include "utils.h"
 
 namespace vkb
 {
 /**
- * @brief Extracts the extension from an uri
- * @param uri An uniform Resource Identifier
- * @return The extension
+ * @brief A RenderPipeline is a collection of Subpasses
+ *        specified according to the user's needs
  */
-std::string get_extension(const std::string &uri);
+class RenderPipeline : public NonCopyable
+{
+  public:
+	RenderPipeline(std::vector<std::unique_ptr<Subpass>> &&subpasses = {});
 
-/**
- * @brief Calculates the vulkan style projection matrix
- * @param proj The projection matrix
- * @return @ref The vulkan style projection matrix
- */
-glm::mat4 vulkan_style_projection(const glm::mat4 &proj);
+	virtual ~RenderPipeline() = default;
 
-/**
- * @param name String to convert to snake case
- * @return a snake case version of the string
- */
-std::string to_snake_case(const std::string &name);
+	/**
+	 * @brief Appends a subpass to the pipeline
+	 * @param subpass Subpass to append
+	 */
+	void add_subpass(std::unique_ptr<Subpass> &&subpass);
 
+	void draw(CommandBuffer &command_buffer);
+
+  private:
+	std::vector<std::unique_ptr<Subpass>> subpasses;
+};
 }        // namespace vkb

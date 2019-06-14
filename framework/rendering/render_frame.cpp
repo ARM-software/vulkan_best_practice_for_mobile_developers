@@ -18,44 +18,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "render_frame.h"
+#include "rendering/render_frame.h"
 
 namespace vkb
 {
-const RenderFrame::CreateFunc RenderFrame::DEFAULT_CREATE_FUNC =
-    [](Device &device, core::Image &&swapchain_image) {
-	    return std::make_unique<RenderFrame>(device, std::move(swapchain_image));
-    };
-
-RenderFrame::RenderFrame(Device &device, core::Image &&swapchain_image) :
+RenderFrame::RenderFrame(Device &device, RenderTarget &&render_target) :
     device{device},
     fence_pool{device},
-    semaphore_pool{device}
+    semaphore_pool{device},
+    swapchain_render_target{std::move(render_target)}
 {
-	update_render_target(std::move(swapchain_image));
-
 	buffer_pools.emplace(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, std::make_pair(BufferPool{device, BUFFER_POOL_BLOCK_SIZE * 1024, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT}, nullptr));
 	buffer_pools.emplace(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, std::make_pair(BufferPool{device, BUFFER_POOL_BLOCK_SIZE * 1024, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT}, nullptr));
 	buffer_pools.emplace(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, std::make_pair(BufferPool{device, BUFFER_POOL_BLOCK_SIZE * 1024, VK_BUFFER_USAGE_INDEX_BUFFER_BIT}, nullptr));
 }
 
-RenderFrame::~RenderFrame()
+void RenderFrame::update_render_target(RenderTarget &&render_target)
 {
-	reset();
-}
-
-void RenderFrame::update_render_target(core::Image &&swapchain_image)
-{
-	core::Image depth_image{device, swapchain_image.get_extent(),
-	                        VK_FORMAT_D32_SFLOAT,
-	                        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
-	                        VMA_MEMORY_USAGE_GPU_ONLY};
-
-	std::vector<core::Image> main_images;
-	main_images.push_back(std::move(swapchain_image));
-	main_images.push_back(std::move(depth_image));
-
-	swapchain_render_target = std::make_unique<RenderTarget>(device, std::move(main_images));
+	swapchain_render_target = std::move(render_target);
 }
 
 void RenderFrame::reset()
@@ -112,9 +92,9 @@ SemaphorePool &RenderFrame::get_semaphore_pool()
 	return semaphore_pool;
 }
 
-const RenderTarget &RenderFrame::get_render_target() const
+RenderTarget &RenderFrame::get_render_target()
 {
-	return *swapchain_render_target;
+	return swapchain_render_target;
 }
 
 BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, const VkDeviceSize size)

@@ -18,46 +18,47 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "render_pipeline.h"
+#include "rendering/subpasses/scene_subpass.h"
 
+#include "rendering/render_context.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/pbr_material.h"
-#include "scene_graph/components/sampler.h"
-#include "scene_graph/components/sub_mesh.h"
 #include "scene_graph/components/texture.h"
 #include "scene_graph/node.h"
+#include "scene_graph/scene.h"
+#include "utils.h"
 
 namespace vkb
 {
-RenderPipeline::RenderPipeline(RenderContext &render_context, sg::Scene &scene, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader) :
-    render_context{render_context},
+SceneSubpass::SceneSubpass(RenderContext &render_context, ShaderSource &&vertex_source, ShaderSource &&fragment_source, sg::Scene &scene, sg::Camera &camera) :
+    Subpass{render_context, std::move(vertex_source), std::move(fragment_source)},
     meshes{scene.get_components<sg::Mesh>()},
-    vertex_shader{std::move(vertex_shader)},
-    fragment_shader{std::move(fragment_shader)}
+    camera{camera}
 {
+	// Default light
 	global_uniform.light_pos   = glm::vec4(500.0f, 1550.0f, 0.0f, 1.0);
 	global_uniform.light_color = glm::vec4(1.0, 1.0, 1.0, 1.0);
 
-	Device &device = render_context.get_device();
-
 	// Build all shader variance upfront
+	auto &device = render_context.get_device();
 	for (auto &mesh : meshes)
 	{
 		for (auto &sub_mesh : mesh->get_submeshes())
 		{
-			ShaderModule &vert_shader_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, this->vertex_shader, sub_mesh->get_shader_variant());
-			ShaderModule &frag_shader_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, this->fragment_shader, sub_mesh->get_shader_variant());
+			auto &variant     = sub_mesh->get_shader_variant();
+			auto &vert_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), variant);
+			auto &frag_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), variant);
 
-			vert_shader_module.set_resource_dynamic("GlobalUniform");
-			frag_shader_module.set_resource_dynamic("GlobalUniform");
+			vert_module.set_resource_dynamic("GlobalUniform");
+			frag_module.set_resource_dynamic("GlobalUniform");
 		}
 	}
 }
 
-void RenderPipeline::draw_scene(CommandBuffer &command_buffer, sg::Camera &camera)
+void SceneSubpass::draw(CommandBuffer &command_buffer)
 {
 	std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> opaque_nodes;
 	std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> transparent_nodes;
@@ -94,7 +95,7 @@ void RenderPipeline::draw_scene(CommandBuffer &command_buffer, sg::Camera &camer
 
 	global_uniform.camera_view_proj = vkb::vulkan_style_projection(camera.get_projection()) * camera.get_view();
 
-	auto &render_frame = render_context.get_active_frame();
+	auto &render_frame = get_render_context().get_active_frame();
 
 	// Draw opaque objects in front-to-back order
 	for (auto node_it = opaque_nodes.begin(); node_it != opaque_nodes.end(); node_it++)
@@ -109,7 +110,7 @@ void RenderPipeline::draw_scene(CommandBuffer &command_buffer, sg::Camera &camer
 
 		command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
 
-		draw_scene_submesh(command_buffer, *node_it->second.second);
+		draw_submesh(command_buffer, *node_it->second.second);
 	}
 
 	// Enable alpha blending
@@ -124,10 +125,7 @@ void RenderPipeline::draw_scene(CommandBuffer &command_buffer, sg::Camera &camer
 
 	command_buffer.set_color_blend_state(color_blend_state);
 
-	DepthStencilState depth_stencil_state{};
-	depth_stencil_state.depth_write_enable = VK_FALSE;
-
-	command_buffer.set_depth_stencil_state(depth_stencil_state);
+	command_buffer.set_depth_stencil_state(get_depth_stencil_state());
 
 	// Draw transparent objects in back-to-front order
 	for (auto node_it = transparent_nodes.rbegin(); node_it != transparent_nodes.rend(); node_it++)
@@ -142,13 +140,13 @@ void RenderPipeline::draw_scene(CommandBuffer &command_buffer, sg::Camera &camer
 
 		command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
 
-		draw_scene_submesh(command_buffer, *node_it->second.second);
+		draw_submesh(command_buffer, *node_it->second.second);
 	}
 }
 
-void RenderPipeline::draw_scene_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh)
+void SceneSubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh)
 {
-	Device &device = command_buffer.get_device();
+	auto &device = command_buffer.get_device();
 
 	RasterizationState rasterization_state{};
 
@@ -159,8 +157,8 @@ void RenderPipeline::draw_scene_submesh(CommandBuffer &command_buffer, sg::SubMe
 
 	command_buffer.set_rasterization_state(rasterization_state);
 
-	ShaderModule &vert_shader_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vertex_shader, sub_mesh.get_shader_variant());
-	ShaderModule &frag_shader_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, fragment_shader, sub_mesh.get_shader_variant());
+	auto &vert_shader_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), sub_mesh.get_shader_variant());
+	auto &frag_shader_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), sub_mesh.get_shader_variant());
 
 	std::vector<ShaderModule *> shader_modules{&vert_shader_module, &frag_shader_module};
 
@@ -251,4 +249,5 @@ void RenderPipeline::draw_scene_submesh(CommandBuffer &command_buffer, sg::SubMe
 		command_buffer.draw(sub_mesh.vertices_count, 1, 0, 0);
 	}
 }
+
 }        // namespace vkb

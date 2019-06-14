@@ -21,7 +21,7 @@
 #pragma once
 
 #include "common.h"
-#include "graphics_pipeline_state.h"
+#include "rendering/graphics_pipeline_state.h"
 
 namespace vkb
 {

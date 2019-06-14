@@ -26,7 +26,7 @@
 
 #include "buffer_pool.h"
 #include "platform/file.h"
-#include "render_context.h"
+#include "rendering/render_context.h"
 #include "utils.h"
 
 #include "core/descriptor_set.h"

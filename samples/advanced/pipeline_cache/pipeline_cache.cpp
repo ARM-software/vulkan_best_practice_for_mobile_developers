@@ -27,6 +27,8 @@
 #include "platform/platform.h"
 #include "stats.h"
 
+#include "rendering/subpasses/scene_subpass.h"
+
 #include "scene_graph/node.h"
 
 #include "imgui_internal.h"
@@ -107,8 +109,7 @@ bool PipelineCache::prepare(vkb::Platform &platform)
 
 	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times});
 
-	render_context = std::make_unique<vkb::RenderContext>(*device, std::move(swapchain));
-	render_context->prepare();
+	render_context = std::make_unique<vkb::RenderContext>(std::move(swapchain));
 
 	float dpi_factor = platform.get_dpi_factor();
 
@@ -117,16 +118,16 @@ bool PipelineCache::prepare(vkb::Platform &platform)
 
 	gui = std::make_unique<vkb::Gui>(*render_context, dpi_factor);
 
+	load_scene("scenes/sponza/Sponza01.gltf");
+	auto &camera_node = add_free_camera("main_camera");
+	camera            = &camera_node.get_component<vkb::sg::Camera>();
+
 	vkb::ShaderSource vert_shader(vkb::file::read_asset("shaders/base.vert"));
 	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/base.frag"));
+	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), scene, *camera);
 
-	load_scene("scenes/sponza/Sponza01.gltf");
-
-	render_pipeline = std::make_unique<vkb::RenderPipeline>(*render_context, scene, std::move(vert_shader), std::move(frag_shader));
-
-	auto &camera_node = add_free_camera("main_camera");
-
-	camera = &camera_node.get_component<vkb::sg::Camera>();
+	render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	render_pipeline->add_subpass(std::move(scene_subpass));
 
 	return true;
 }
@@ -165,7 +166,7 @@ void PipelineCache::draw_gui()
 
 void PipelineCache::draw_scene(vkb::CommandBuffer &cmd_buf)
 {
-	render_pipeline->draw_scene(cmd_buf, *camera);
+	render_pipeline->draw(cmd_buf);
 }
 
 std::unique_ptr<vkb::VulkanSample> create_pipeline_cache()

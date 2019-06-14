@@ -35,6 +35,12 @@ class ImageView : public NonCopyable
 
 	const core::Image &get_image() const;
 
+	/**
+	 * @brief Update the image this view is referring to
+	 *        Used on image move
+	 */
+	void set_image(core::Image &image);
+
 	VkImageView get_handle() const;
 
 	VkFormat get_format() const;
@@ -44,7 +50,9 @@ class ImageView : public NonCopyable
 	VkImageSubresourceLayers get_subresource_layers() const;
 
   private:
-	core::Image &image;
+	Device &device;
+
+	core::Image *image{};
 
 	VkImageView handle{VK_NULL_HANDLE};
 

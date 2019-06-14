@@ -22,7 +22,6 @@
 
 #include "common.h"
 
-#include "command_pool.h"
 #include "core/command_buffer.h"
 #include "core/command_pool.h"
 #include "core/descriptor_set.h"
@@ -36,8 +35,8 @@
 #include "core/swapchain.h"
 #include "fence_pool.h"
 
-#include "graphics_pipeline_state.h"
-#include "render_target.h"
+#include "rendering/graphics_pipeline_state.h"
+#include "rendering/render_target.h"
 #include "resource_cache.h"
 
 namespace vkb

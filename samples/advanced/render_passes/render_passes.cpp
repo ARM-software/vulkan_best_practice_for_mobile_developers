@@ -28,6 +28,8 @@
 #include "platform/file.h"
 #include "stats.h"
 
+#include "rendering/subpasses/scene_subpass.h"
+
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
 #endif
@@ -117,26 +119,25 @@ bool RenderPassesSample::prepare(vkb::Platform &platform)
 
 	auto swapchain = std::make_unique<vkb::Swapchain>(*device, get_surface());
 
-	render_context = std::make_unique<vkb::RenderContext>(*device, std::move(swapchain));
-	render_context->prepare();
+	render_context = std::make_unique<vkb::RenderContext>(std::move(swapchain));
+
+	load_scene("scenes/sponza/Sponza01.gltf");
+	auto &camera_node = add_free_camera("main_camera");
+	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
 	vkb::ShaderSource vert_shader(vkb::file::read_asset("shaders/base.vert"));
 	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/base.frag"));
+	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), scene, *camera);
 
-	load_scene("scenes/sponza/Sponza01.gltf");
-
-	render_pipeline = std::make_unique<vkb::RenderPipeline>(*render_context, scene, std::move(vert_shader), std::move(frag_shader));
-
-	auto &camera_node = add_free_camera("main_camera");
-
-	camera = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
+	render_pipeline = std::make_unique<vkb::RenderPipeline>();
+	render_pipeline->add_subpass(std::move(scene_subpass));
 
 	gui = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor());
 
 	return true;
 }
 
-void RenderPassesSample::draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, const vkb::RenderTarget &render_target)
+void RenderPassesSample::draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
 {
 	std::vector<vkb::LoadStoreInfo> load_store{2};
 
@@ -181,7 +182,7 @@ void RenderPassesSample::draw_swapchain_renderpass(vkb::CommandBuffer &command_b
 
 void RenderPassesSample::draw_scene(vkb::CommandBuffer &command_buffer)
 {
-	render_pipeline->draw_scene(command_buffer, *camera);
+	render_pipeline->draw(command_buffer);
 }
 
 void RenderPassesSample::update(float delta_time)
