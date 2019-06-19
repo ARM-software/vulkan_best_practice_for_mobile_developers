@@ -36,6 +36,7 @@ else()
     set(TARGET_ARCH ${CMAKE_SYSTEM_PROCESSOR})
 endif()
 
+set(VKB_WARNINGS_AS_ERRORS ON CACHE BOOL "Enable Warnings as Errors")
 set(VKB_SAMPLE_ENTRYPOINT OFF CACHE BOOL "Enable create entrypoint project for every sample.")
 set(VKB_ASSETS_SYMLINK OFF CACHE BOOL "Enable create symlink assets folder for every sample.")
 set(VKB_VALIDATION_LAYERS OFF CACHE BOOL "Enable validation layers for every sample.")

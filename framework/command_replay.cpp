@@ -166,19 +166,19 @@ void CommandReplay::begin(CommandBuffer &command_buffer, std::istringstream &str
 	vkBeginCommandBuffer(command_buffer.get_handle(), &begin_info);
 }
 
-void CommandReplay::end(CommandBuffer &command_buffer, std::istringstream &stream)
+void CommandReplay::end(CommandBuffer &command_buffer, std::istringstream & /*stream*/)
 {
 	// Call Vulkan function
 	vkEndCommandBuffer(command_buffer.get_handle());
 }
 
-void CommandReplay::next_subpass(CommandBuffer &command_buffer, std::istringstream &stream)
+void CommandReplay::next_subpass(CommandBuffer &command_buffer, std::istringstream & /*stream*/)
 {
 	// Call Vulkan function
 	vkCmdNextSubpass(command_buffer.get_handle(), VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void CommandReplay::end_render_pass(CommandBuffer &command_buffer, std::istringstream &stream)
+void CommandReplay::end_render_pass(CommandBuffer &command_buffer, std::istringstream & /*stream*/)
 {
 	// Call Vulkan function
 	vkCmdEndRenderPass(command_buffer.get_handle());

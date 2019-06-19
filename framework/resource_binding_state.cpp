@@ -131,22 +131,22 @@ bool ResourceInfo::is_image_sampler() const
 	return image_view != nullptr && sampler != VK_NULL_HANDLE;
 }
 
-void ResourceInfo::bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range)
+void ResourceInfo::bind_buffer(const core::Buffer &buffer_, VkDeviceSize offset_, VkDeviceSize range_)
 {
-	this->buffer = &buffer;
+	buffer = &buffer_;
 
-	this->offset = offset;
+	offset = offset_;
 
-	this->range = range;
+	range = range_;
 
 	dirty = true;
 }
 
-void ResourceInfo::bind_image(const ImageView &image_view, const core::Sampler &sampler)
+void ResourceInfo::bind_image(const ImageView &image_view_, const core::Sampler &sampler_)
 {
-	this->image_view = &image_view;
+	image_view = &image_view_;
 
-	this->sampler = &sampler;
+	sampler = &sampler_;
 
 	dirty = true;
 }

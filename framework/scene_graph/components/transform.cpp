@@ -43,23 +43,23 @@ std::type_index Transform::get_type()
 	return typeid(Transform);
 }
 
-void Transform::set_translation(const glm::vec3 &translation)
+void Transform::set_translation(const glm::vec3 &new_translation)
 {
-	this->translation = translation;
+	translation = new_translation;
 
 	invalidate_world_matrix();
 }
 
-void Transform::set_rotation(const glm::quat &rotation)
+void Transform::set_rotation(const glm::quat &new_rotation)
 {
-	this->rotation = rotation;
+	rotation = new_rotation;
 
 	invalidate_world_matrix();
 }
 
-void Transform::set_scale(const glm::vec3 &scale)
+void Transform::set_scale(const glm::vec3 &new_scale)
 {
-	this->scale = scale;
+	scale = new_scale;
 
 	invalidate_world_matrix();
 }

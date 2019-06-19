@@ -168,9 +168,9 @@ inline void SpecializationInfo::set_constant(std::uint32_t constant_id, const T 
 }
 
 template <>
-inline void SpecializationInfo::set_constant<bool>(std::uint32_t constant_id, const bool &data)
+inline void SpecializationInfo::set_constant<bool>(std::uint32_t constant_id, const bool &data_)
 {
-	std::uint32_t value = static_cast<std::uint32_t>(data);
+	std::uint32_t value = static_cast<std::uint32_t>(data_);
 
 	set_constant(
 	    constant_id,

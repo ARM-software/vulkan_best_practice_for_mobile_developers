@@ -143,119 +143,119 @@ void GraphicsPipelineState::reset()
 	subpass_index = {0U};
 }
 
-void GraphicsPipelineState::set_pipeline_layout(PipelineLayout &pipeline_layout)
+void GraphicsPipelineState::set_pipeline_layout(PipelineLayout &new_pipeline_layout)
 {
-	if (this->pipeline_layout)
+	if (pipeline_layout)
 	{
-		if (this->pipeline_layout->get_handle() != pipeline_layout.get_handle())
+		if (pipeline_layout->get_handle() != new_pipeline_layout.get_handle())
 		{
-			this->pipeline_layout = &pipeline_layout;
+			pipeline_layout = &new_pipeline_layout;
 
 			dirty = true;
 		}
 	}
 	else
 	{
-		this->pipeline_layout = &pipeline_layout;
+		pipeline_layout = &new_pipeline_layout;
 
 		dirty = true;
 	}
 }
 
-void GraphicsPipelineState::set_render_pass(const RenderPass &render_pass)
+void GraphicsPipelineState::set_render_pass(const RenderPass &new_render_pass)
 {
-	if (this->render_pass)
+	if (render_pass)
 	{
-		if (this->render_pass->get_handle() != render_pass.get_handle())
+		if (render_pass->get_handle() != new_render_pass.get_handle())
 		{
-			this->render_pass = &render_pass;
+			render_pass = &new_render_pass;
 
 			dirty = true;
 		}
 	}
 	else
 	{
-		this->render_pass = &render_pass;
+		render_pass = &new_render_pass;
 
 		dirty = true;
 	}
 }
 
-void GraphicsPipelineState::set_vertex_input_state(const VertexInputState &vertex_input_sate)
+void GraphicsPipelineState::set_vertex_input_state(const VertexInputState &new_vertex_input_sate)
 {
-	if (this->vertex_input_sate != vertex_input_sate)
+	if (vertex_input_sate != new_vertex_input_sate)
 	{
-		this->vertex_input_sate = vertex_input_sate;
+		vertex_input_sate = new_vertex_input_sate;
 
 		dirty = true;
 	}
 }
 
-void GraphicsPipelineState::set_input_assembly_state(const InputAssemblyState &input_assembly_state)
+void GraphicsPipelineState::set_input_assembly_state(const InputAssemblyState &new_input_assembly_state)
 {
-	if (this->input_assembly_state != input_assembly_state)
+	if (input_assembly_state != new_input_assembly_state)
 	{
-		this->input_assembly_state = input_assembly_state;
+		input_assembly_state = new_input_assembly_state;
 
 		dirty = true;
 	}
 }
 
-void GraphicsPipelineState::set_rasterization_state(const RasterizationState &rasterization_state)
+void GraphicsPipelineState::set_rasterization_state(const RasterizationState &new_rasterization_state)
 {
-	if (this->rasterization_state != rasterization_state)
+	if (rasterization_state != new_rasterization_state)
 	{
-		this->rasterization_state = rasterization_state;
+		rasterization_state = new_rasterization_state;
 
 		dirty = true;
 	}
 }
 
-void GraphicsPipelineState::set_viewport_state(const ViewportState &viewport_state)
+void GraphicsPipelineState::set_viewport_state(const ViewportState &new_viewport_state)
 {
-	if (this->viewport_state != viewport_state)
+	if (viewport_state != new_viewport_state)
 	{
-		this->viewport_state = viewport_state;
+		viewport_state = new_viewport_state;
 
 		dirty = true;
 	}
 }
 
-void GraphicsPipelineState::set_multisample_state(const MultisampleState &multisample_state)
+void GraphicsPipelineState::set_multisample_state(const MultisampleState &new_multisample_state)
 {
-	if (this->multisample_state != multisample_state)
+	if (multisample_state != new_multisample_state)
 	{
-		this->multisample_state = multisample_state;
+		multisample_state = new_multisample_state;
 
 		dirty = true;
 	}
 }
 
-void GraphicsPipelineState::set_depth_stencil_state(const DepthStencilState &depth_stencil_state)
+void GraphicsPipelineState::set_depth_stencil_state(const DepthStencilState &new_depth_stencil_state)
 {
-	if (this->depth_stencil_state != depth_stencil_state)
+	if (depth_stencil_state != new_depth_stencil_state)
 	{
-		this->depth_stencil_state = depth_stencil_state;
+		depth_stencil_state = new_depth_stencil_state;
 
 		dirty = true;
 	}
 }
 
-void GraphicsPipelineState::set_color_blend_state(const ColorBlendState &color_blend_state)
+void GraphicsPipelineState::set_color_blend_state(const ColorBlendState &new_color_blend_state)
 {
-	if (this->color_blend_state != color_blend_state)
+	if (color_blend_state != new_color_blend_state)
 	{
-		this->color_blend_state = color_blend_state;
+		color_blend_state = new_color_blend_state;
 
 		dirty = true;
 	}
 }
 
-void GraphicsPipelineState::set_subpass_index(uint32_t subpass_index)
+void GraphicsPipelineState::set_subpass_index(uint32_t new_subpass_index)
 {
-	if (this->subpass_index != subpass_index)
+	if (subpass_index != new_subpass_index)
 	{
-		this->subpass_index = subpass_index;
+		subpass_index = new_subpass_index;
 
 		dirty = true;
 	}

@@ -46,20 +46,21 @@
   - [CMake](#cmake)
   - [Visual Studio](#visual-studio)
 
-
-
 # CMake Options
 
 The following options are used to change the build configuration
 
-#### VKB_<sample_name>
+#### VKB\_<sample_name>
+
 Choose whether to include a sample at build time.
+
 - `ON` - Build Sample
 - `OFF` - Exclude Sample
 
 **Default:** `ON`
 
 #### VKB_ASSETS_SYMLINK
+
 Rather than changing the working directory inside the IDE, `VKB_ASSETS_SYMLINK` will enable symlink creation pointing to the root directory which exposes the assets folder to the samples.
 
 **Default:** `OFF`
@@ -80,7 +81,7 @@ Enable Validation Layers
 
 Treat all warnings as errors
 
-**Default:** `OFF`
+**Default:** `ON`
 
 # 3D models
 
@@ -89,10 +90,10 @@ Before you build the project make sure you download the 3D models this project u
 On Android CMake will use `adb` to sync assets to the device, ensure that the target device is connected before building with CMake.
 
 Alternatively, they may be synced manually:
+
 ```
 adb push --sync assets /sdcard/Android/data/com.arm.vulkan_best_practice/files/
 ```
-
 
 # Performance data
 
@@ -120,7 +121,8 @@ adb shell setprop security.perf_harden 0
 ## Build with CMake
 
 > Please make sure, when running any sample, that you either:
->  - Enable [Developer Mode](https://docs.microsoft.com/en-us/windows/uwp/get-started/enable-your-device-for-development "Microsoft Tutorial to Enable Developer Mode 'docs.microsoft.com'")
+>
+> - Enable [Developer Mode](https://docs.microsoft.com/en-us/windows/uwp/get-started/enable-your-device-for-development "Microsoft Tutorial to Enable Developer Mode 'docs.microsoft.com'")
 > - Run Command Prompt or Visual Studio as administrator
 
 `Step 1.` The following command will generate the VS project
@@ -140,7 +142,6 @@ cmake --build build/windows --config Release --target vulkan_best_practice
 ```
 build\windows\vulkan_best_practice\bin\release\AMD64\Release\vulkan_best_practice.exe
 ```
-
 
 # Linux
 
@@ -194,13 +195,13 @@ For all dependencies set the following environment variables.
 
 `Step 1.` Generate the gradle project using the internal script by running the following command
 
-##### Windows  <!-- omit in toc -->
+##### Windows <!-- omit in toc -->
 
 ```
 bldsys/scripts/generate_android_gradle.bat
 ```
 
-##### Linux  <!-- omit in toc -->
+##### Linux <!-- omit in toc -->
 
 ```
 ./bldsys/scripts/generate_android_gradle.sh
@@ -224,7 +225,6 @@ adb install build/outputs/apk/debug/vulkan_best_practice-debug.apk
 > Alternatively, you may open the `build/android_gradle` folder in Android Studio and run the project from here
 
 ## Build with CMake
-
 
 `Step 1.` Select a generator which supports custom compiler like `Unix Makefiles` or `Ninja`.
 

@@ -113,17 +113,17 @@ BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, co
 	{
 		// If there is no block associated with the pool
 		// Request one with that size
-		buffer_block = &buffer_pool.request_buffer_block(size);
+		buffer_block = &buffer_pool.request_buffer_block(static_cast<size_t>(size));
 	}
 
-	auto data = buffer_block->allocate(size);
+	auto data = buffer_block->allocate(static_cast<size_t>(size));
 
 	// Check if the buffer block can allocate the requested size
 	if (data.empty())
 	{
-		buffer_block = &buffer_pool.request_buffer_block(size);
+		buffer_block = &buffer_pool.request_buffer_block(static_cast<size_t>(size));
 
-		data = buffer_block->allocate(size);
+		data = buffer_block->allocate(static_cast<size_t>(size));
 	}
 
 	return data;

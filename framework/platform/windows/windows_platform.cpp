@@ -26,8 +26,8 @@
 
 namespace vkb
 {
-WindowsPlatform::WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                                 PSTR lpCmdLine, INT nCmdShow)
+WindowsPlatform::WindowsPlatform(HINSTANCE /*hInstance*/, HINSTANCE /*hPrevInstance*/,
+                                 PSTR /*lpCmdLine*/, INT /*nCmdShow*/)
 {
 	if (!AllocConsole())
 	{

@@ -22,6 +22,31 @@
 
 #define VKBP_TAG "VulkanBestPractice"
 
+#if defined(__clang__)
+// CLANG ENABLE/DISABLE WARNING DEFINITION
+#	define VKBP_DISABLE_WARNINGS        \
+		_Pragma("clang diagnostic push") \
+		    _Pragma("clang diagnostic ignored \"-Wall\"")
+
+#	define VKBP_ENABLE_WARNINGS \
+		_Pragma("clang diagnostic pop")
+#elif defined(__GNUC__) || defined(__GNUG__)
+// GCC ENABLE/DISABLE WARNING DEFINITION
+#	define VKBP_DISABLE_WARNINGS      \
+		_Pragma("GCC diagnostic push") \
+		    _Pragma("GCC diagnostic ignored \"-Wall\"")
+
+#	define VKBP_ENABLE_WARNINGS \
+		_Pragma("GCC diagnostic pop")
+#elif defined(_MSC_VER)
+// MSVC ENABLE/DISABLE WARNING DEFINITION
+#	define VKBP_DISABLE_WARNINGS \
+		__pragma(warning(push, 0))
+
+#	define VKBP_ENABLE_WARNINGS \
+		__pragma(warning(pop))
+#endif
+
 #include <algorithm>
 #include <array>
 #include <cstdio>
@@ -42,6 +67,7 @@
 #include <vk_mem_alloc.h>
 #include <volk.h>
 
+VKBP_DISABLE_WARNINGS
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -49,6 +75,7 @@
 #include <glm/gtx/hash.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/transform.hpp>
+VKBP_ENABLE_WARNINGS
 
 #include <spdlog/spdlog.h>
 
@@ -298,7 +325,7 @@ class NonCopyable
 /**
  * @brief Vulkan exception structure
  */
-class VulkanException : std::runtime_error
+class VulkanException : public std::runtime_error
 {
   public:
 	/**

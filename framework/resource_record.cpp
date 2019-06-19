@@ -81,7 +81,6 @@ size_t ResourceRecord::register_pipeline_layout(const std::vector<ShaderModule *
 	std::vector<size_t> shader_indices(shader_modules.size());
 	std::transform(shader_modules.begin(), shader_modules.end(), shader_indices.begin(),
 	               [this](ShaderModule *shader_module) { return shader_module_to_index.at(shader_module); });
-
 	write(stream,
 	      ResourceType::PipelineLayout,
 	      shader_indices);
@@ -103,7 +102,7 @@ size_t ResourceRecord::register_render_pass(const std::vector<Attachment> &attac
 	return render_pass_indices.back();
 }
 
-size_t ResourceRecord::register_graphics_pipeline(VkPipelineCache pipeline_cache, GraphicsPipelineState &graphics_state, const ShaderStageMap<SpecializationInfo> &specialization_infos)
+size_t ResourceRecord::register_graphics_pipeline(VkPipelineCache /*pipeline_cache*/, GraphicsPipelineState &graphics_state, const ShaderStageMap<SpecializationInfo> & /*specialization_infos*/)
 {
 	graphics_pipeline_indices.push_back(graphics_pipeline_indices.size());
 

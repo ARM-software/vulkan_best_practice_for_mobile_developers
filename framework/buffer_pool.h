@@ -55,7 +55,7 @@ class BufferAllocation : public NonCopyable
   private:
 	core::Buffer *buffer{nullptr};
 
-	VkDeviceSize offset{0};
+	VkDeviceSize base_offset{0};
 
 	VkDeviceSize size{0};
 };

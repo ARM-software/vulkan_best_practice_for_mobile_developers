@@ -27,10 +27,10 @@
 
 #include "core/shader_module.h"
 
-// Disable warnings for external header
-#pragma clang diagnostic ignored "-Wall"
+VKBP_DISABLE_WARNINGS
 #include <spirv_glsl.hpp>
-#pragma clang diagnostic pop
+VKBP_ENABLE_WARNINGS
+
 #include <unordered_map>
 
 namespace vkb

@@ -43,7 +43,7 @@ static std::vector<uint8_t> read_binary_file(const std::string &filename, const 
 		file.seekg(0, std::ios::beg);
 	}
 
-	data.resize(read_count);
+	data.resize(static_cast<size_t>(read_count));
 	file.read(reinterpret_cast<char *>(data.data()), read_count);
 	file.close();
 

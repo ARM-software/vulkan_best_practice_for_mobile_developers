@@ -257,6 +257,15 @@ if(${VKB_VALIDATION_LAYERS})
     target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS)
 endif()
 
+if(${VKB_WARNINGS_AS_ERRORS} AND NOT ${CMAKE_EXPORT_COMPILE_COMMANDS})
+    message(STATUS "Warnings as Errors Enabled")
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+        target_compile_options(${PROJECT_NAME} PRIVATE -Werror)
+    elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+        target_compile_options(${PROJECT_NAME} PRIVATE /W3 /WX)
+    endif()
+endif()
+
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Link third party libraries

@@ -33,9 +33,9 @@ inline void read_shader_resource(const spirv_cross::Compiler &compiler,
 }
 
 template <spv::Decoration T>
-inline void read_resource_decoration(const spirv_cross::Compiler &compiler,
-                                     const spirv_cross::Resource &resource,
-                                     ShaderResource &             shader_resource)
+inline void read_resource_decoration(const spirv_cross::Compiler & /*compiler*/,
+                                     const spirv_cross::Resource & /*resource*/,
+                                     ShaderResource & /*shader_resource*/)
 {
 	LOGE("Not implemented! Read resources decoration of type.");
 }
@@ -150,7 +150,7 @@ inline void read_shader_resource<ShaderResourceType::Input>(const spirv_cross::C
 
 template <>
 inline void read_shader_resource<ShaderResourceType::InputAttachment>(const spirv_cross::Compiler &compiler,
-                                                                      VkShaderStageFlagBits        stage,
+                                                                      VkShaderStageFlagBits /*stage*/,
                                                                       std::vector<ShaderResource> &resources)
 {
 	auto subpass_resources = compiler.get_shader_resources().subpass_inputs;

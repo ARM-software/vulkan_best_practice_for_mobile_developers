@@ -110,7 +110,7 @@ void BufferPool::reset()
 BufferAllocation::BufferAllocation(core::Buffer &buffer, VkDeviceSize size, VkDeviceSize offset) :
     buffer{&buffer},
     size{size},
-    offset{offset}
+    base_offset{offset}
 {
 }
 
@@ -120,7 +120,7 @@ void BufferAllocation::update(uint32_t offset, const std::vector<uint8_t> &data)
 
 	if (offset + data.size() <= size)
 	{
-		buffer->update(this->offset + offset, data);
+		buffer->update(static_cast<size_t>(base_offset) + offset, data);
 	}
 	else
 	{
@@ -140,7 +140,7 @@ VkDeviceSize BufferAllocation::get_size() const
 
 VkDeviceSize BufferAllocation::get_offset() const
 {
-	return offset;
+	return base_offset;
 }
 
 core::Buffer &BufferAllocation::get_buffer()

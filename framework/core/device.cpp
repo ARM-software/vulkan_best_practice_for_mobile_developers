@@ -21,10 +21,10 @@
 #include "device.h"
 
 #define VMA_IMPLEMENTATION
-// Disable warnings for external header
-#pragma clang diagnostic ignored "-Wall"
+
+VKBP_DISABLE_WARNINGS
 #include "vk_mem_alloc.h"
-#pragma clang diagnostic pop
+VKBP_ENABLE_WARNINGS
 
 namespace vkb
 {
@@ -35,16 +35,16 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const std
 	// Gpu properties
 	vkGetPhysicalDeviceProperties(physical_device, &properties);
 
-	uint32_t queue_family_count = 0;
-	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, nullptr);
+	uint32_t queue_family_properties_count = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_properties_count, nullptr);
 
-	std::vector<VkQueueFamilyProperties> queue_family_properties(queue_family_count);
-	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_family_properties.data());
+	std::vector<VkQueueFamilyProperties> queue_family_properties(queue_family_properties_count);
+	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_properties_count, queue_family_properties.data());
 
-	std::vector<VkDeviceQueueCreateInfo> queue_create_infos(queue_family_count, {VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO});
-	std::vector<std::vector<float>>      queue_priorities(queue_family_count);
+	std::vector<VkDeviceQueueCreateInfo> queue_create_infos(queue_family_properties_count, {VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO});
+	std::vector<std::vector<float>>      queue_priorities(queue_family_properties_count);
 
-	for (uint32_t queue_family_index = 0U; queue_family_index < queue_family_count; ++queue_family_index)
+	for (uint32_t queue_family_index = 0U; queue_family_index < queue_family_properties_count; ++queue_family_index)
 	{
 		const VkQueueFamilyProperties &queue_family_property = queue_family_properties[queue_family_index];
 
@@ -72,9 +72,9 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const std
 		throw VulkanException{result, "Cannot create device"};
 	}
 
-	queues.resize(queue_family_count);
+	queues.resize(queue_family_properties_count);
 
-	for (uint32_t queue_family_index = 0U; queue_family_index < queue_family_count; ++queue_family_index)
+	for (uint32_t queue_family_index = 0U; queue_family_index < queue_family_properties_count; ++queue_family_index)
 	{
 		const VkQueueFamilyProperties &queue_family_property = queue_family_properties[queue_family_index];
 
@@ -174,7 +174,7 @@ const Queue &Device::get_queue(uint32_t queue_family_index, uint32_t queue_index
 	return queues[queue_family_index][queue_index];
 }
 
-const Queue &Device::get_queue_by_flags(VkQueueFlags queue_flags, uint32_t queue_index)
+const Queue &Device::get_queue_by_flags(VkQueueFlags required_queue_flags, uint32_t queue_index)
 {
 	for (uint32_t queue_family_index = 0U; queue_family_index < queues.size(); ++queue_family_index)
 	{
@@ -183,7 +183,7 @@ const Queue &Device::get_queue_by_flags(VkQueueFlags queue_flags, uint32_t queue
 		VkQueueFlags queue_flags = first_queue.get_properties().queueFlags;
 		uint32_t     queue_count = first_queue.get_properties().queueCount;
 
-		if (((queue_flags & queue_flags) == queue_flags) && queue_index < queue_count)
+		if (((queue_flags & required_queue_flags) == required_queue_flags) && queue_index < queue_count)
 		{
 			return queues[queue_family_index][queue_index];
 		}

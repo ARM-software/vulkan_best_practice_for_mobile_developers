@@ -19,9 +19,9 @@
  */
 
 #define TINYGLTF_IMPLEMENTATION
-
 #include "gltf_loader.h"
 
+#include <limits>
 #include <queue>
 
 #include "platform/thread_pool.h"
@@ -449,12 +449,17 @@ sg::Scene GLTFLoader::load_scene()
 
 		texture->set_image(*images.at(gltf_texture.source));
 
-		if (0 <= gltf_texture.sampler && gltf_texture.sampler < samplers.size())
+		if (gltf_texture.sampler >= 0 && gltf_texture.sampler < static_cast<int>(samplers.size()))
 		{
 			texture->set_sampler(*samplers.at(gltf_texture.sampler));
 		}
 		else
 		{
+			if (gltf_texture.name.empty())
+			{
+				gltf_texture.name = images.at(gltf_texture.source)->get_name();
+			}
+
 			LOGW("Sampler not found for texture {}, possible GLTF error", gltf_texture.name);
 			texture->set_sampler(*default_sampler);
 		}
@@ -581,15 +586,15 @@ sg::Scene GLTFLoader::load_scene()
 			auto node_it = traverse_nodes.front();
 			traverse_nodes.pop();
 
-			auto &current_node = *nodes.at(node_it.second);
-			auto &root_node    = node_it.first;
+			auto &current_node       = *nodes.at(node_it.second);
+			auto &traverse_root_node = node_it.first;
 
-			current_node.set_parent(root_node);
-			root_node.add_child(current_node);
+			current_node.set_parent(traverse_root_node);
+			traverse_root_node.add_child(current_node);
 
 			for (auto child_node_index : model.nodes[node_it.second].children)
 			{
-				traverse_nodes.push(std::make_pair(std::ref(root_node), child_node_index));
+				traverse_nodes.push(std::make_pair(std::ref(traverse_root_node), child_node_index));
 			}
 		}
 
@@ -624,7 +629,7 @@ std::unique_ptr<sg::Node> GLTFLoader::parse_node(const tinygltf::Node &gltf_node
 	{
 		glm::vec3 translation;
 
-		std::copy(gltf_node.translation.begin(), gltf_node.translation.end(), glm::value_ptr(translation));
+		std::transform(gltf_node.translation.begin(), gltf_node.translation.end(), glm::value_ptr(translation), TypeCast<double, float>{});
 
 		transform.set_translation(translation);
 	}
@@ -633,7 +638,7 @@ std::unique_ptr<sg::Node> GLTFLoader::parse_node(const tinygltf::Node &gltf_node
 	{
 		glm::quat rotation;
 
-		std::copy(gltf_node.rotation.begin(), gltf_node.rotation.end(), glm::value_ptr(rotation));
+		std::transform(gltf_node.rotation.begin(), gltf_node.rotation.end(), glm::value_ptr(rotation), TypeCast<double, float>{});
 
 		transform.set_rotation(rotation);
 	}
@@ -642,7 +647,7 @@ std::unique_ptr<sg::Node> GLTFLoader::parse_node(const tinygltf::Node &gltf_node
 	{
 		glm::vec3 scale;
 
-		std::copy(gltf_node.scale.begin(), gltf_node.scale.end(), glm::value_ptr(scale));
+		std::transform(gltf_node.scale.begin(), gltf_node.scale.end(), glm::value_ptr(scale), TypeCast<double, float>{});
 
 		transform.set_scale(scale);
 	}
@@ -651,7 +656,7 @@ std::unique_ptr<sg::Node> GLTFLoader::parse_node(const tinygltf::Node &gltf_node
 	{
 		glm::mat4 matrix;
 
-		std::copy(gltf_node.matrix.begin(), gltf_node.matrix.end(), glm::value_ptr(matrix));
+		std::transform(gltf_node.matrix.begin(), gltf_node.matrix.end(), glm::value_ptr(matrix), TypeCast<double, float>{});
 
 		transform.set_matrix(matrix);
 	}
@@ -667,10 +672,10 @@ std::unique_ptr<sg::Camera> GLTFLoader::parse_camera(const tinygltf::Camera &glt
 	{
 		auto perspective_camera = std::make_unique<sg::PerspectiveCamera>(gltf_camera.name);
 
-		perspective_camera->set_aspect_ratio(gltf_camera.perspective.aspectRatio);
-		perspective_camera->set_field_of_view(gltf_camera.perspective.yfov);
-		perspective_camera->set_near_plane(gltf_camera.perspective.znear);
-		perspective_camera->set_far_plane(gltf_camera.perspective.zfar);
+		perspective_camera->set_aspect_ratio(static_cast<float>(gltf_camera.perspective.aspectRatio));
+		perspective_camera->set_field_of_view(static_cast<float>(gltf_camera.perspective.yfov));
+		perspective_camera->set_near_plane(static_cast<float>(gltf_camera.perspective.znear));
+		perspective_camera->set_far_plane(static_cast<float>(gltf_camera.perspective.zfar));
 
 		camera = std::move(perspective_camera);
 	}
@@ -695,7 +700,6 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primiti
 	{
 		std::string attrib_name = attribute.first;
 		std::transform(attrib_name.begin(), attrib_name.end(), attrib_name.begin(), ::tolower);
-
 		auto vertex_data = get_attribute_data(&model, attribute.second);
 
 		if (attrib_name == "position")
@@ -875,7 +879,7 @@ std::unique_ptr<sg::Sampler> GLTFLoader::parse_sampler(const tinygltf::Sampler &
 	sampler_info.addressModeV = address_mode_v;
 	sampler_info.addressModeW = address_mode_w;
 	sampler_info.borderColor  = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	sampler_info.maxLod       = VK_REMAINING_MIP_LEVELS;
+	sampler_info.maxLod       = std::numeric_limits<float>::max();
 
 	core::Sampler vk_sampler{device, sampler_info};
 

@@ -36,7 +36,7 @@ float DebugInfo::get_longest_label() const
 
 		if (label.size() > column_width)
 		{
-			column_width = label.size();
+			column_width = static_cast<float>(label.size());
 		}
 	}
 	return column_width;

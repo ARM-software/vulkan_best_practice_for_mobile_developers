@@ -203,7 +203,7 @@ void Stats::update()
 	}
 
 	// Compute the number of samples to show this frame
-	size_t sample_count = sampling_config.speed * delta_time * pending_samples.size();
+	size_t sample_count = static_cast<size_t>(sampling_config.speed * delta_time) * pending_samples.size();
 
 	// Clamp the number of samples
 	sample_count = std::max<size_t>(1, std::min(sample_count, pending_samples.size()));
@@ -229,7 +229,7 @@ void Stats::continuous_sampling_worker(std::future<void> should_terminate)
 		if (delta_time < interval)
 		{
 			std::this_thread::sleep_for(std::chrono::duration<float>(interval - delta_time));
-			delta_time += worker_timer.tick();
+			delta_time += static_cast<float>(worker_timer.tick());
 		}
 
 		// Sample counters

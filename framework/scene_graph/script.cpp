@@ -34,11 +34,11 @@ std::type_index Script::get_type()
 	return typeid(Script);
 }
 
-void Script::input_event(const InputEvent &input_event)
+void Script::input_event(const InputEvent & /*input_event*/)
 {
 }
 
-void Script::resize(uint32_t width, uint32_t height)
+void Script::resize(uint32_t /*width*/, uint32_t /*height*/)
 {
 }
 

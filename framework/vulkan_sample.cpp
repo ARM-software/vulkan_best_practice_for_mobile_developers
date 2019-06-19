@@ -37,9 +37,9 @@ namespace vkb
 namespace
 {
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT type,
-                                                     uint64_t object, size_t location, int32_t message_code,
-                                                     const char *layer_prefix, const char *message, void *user_data)
+static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT /*type*/,
+                                                     uint64_t /*object*/, size_t /*location*/, int32_t /*message_code*/,
+                                                     const char *layer_prefix, const char *message, void * /*user_data*/)
 {
 	if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
 	{
@@ -331,7 +331,7 @@ VkSurfaceKHR VulkanSample::get_surface()
 	return surface;
 }
 
-void VulkanSample::draw_scene(vkb::CommandBuffer &command_buffer)
+void VulkanSample::draw_scene(vkb::CommandBuffer & /*command_buffer*/)
 {
 }
 
@@ -481,14 +481,14 @@ VkInstance VulkanSample::create_instance(const std::vector<const char *> &requir
 
 	// Create the Vulkan instance
 
-	VkInstance instance;
-	result = vkCreateInstance(&instance_info, nullptr, &instance);
+	VkInstance new_instance;
+	result = vkCreateInstance(&instance_info, nullptr, &new_instance);
 	if (result != VK_SUCCESS)
 	{
 		throw VulkanException(result, "Could not create Vulkan instance");
 	}
 
-	volkLoadInstance(instance);
+	volkLoadInstance(new_instance);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	VkDebugReportCallbackCreateInfoEXT info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
@@ -496,14 +496,14 @@ VkInstance VulkanSample::create_instance(const std::vector<const char *> &requir
 	info.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
 	info.pfnCallback = debug_callback;
 
-	result = vkCreateDebugReportCallbackEXT(instance, &info, nullptr, &debug_report_callback);
+	result = vkCreateDebugReportCallbackEXT(new_instance, &info, nullptr, &debug_report_callback);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Could not create debug callback.");
 	}
 #endif
 
-	return instance;
+	return new_instance;
 }
 
 void VulkanSample::draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, RenderTarget &render_target)

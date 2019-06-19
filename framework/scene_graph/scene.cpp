@@ -23,7 +23,6 @@
 #include "component.h"
 #include "node.h"
 
-#include <algorithm>
 #include <queue>
 
 namespace vkb
@@ -34,9 +33,9 @@ Scene::Scene(const std::string &name) :
     name{name}
 {}
 
-void Scene::set_name(const std::string &name)
+void Scene::set_name(const std::string &new_name)
 {
-	this->name = name;
+	name = new_name;
 }
 
 const std::string &Scene::get_name() const
@@ -83,9 +82,9 @@ void Scene::add_component(std::unique_ptr<Component> &&component)
 	}
 }
 
-void Scene::set_components(const std::type_index &type_info, std::vector<std::unique_ptr<Component>> &&components)
+void Scene::set_components(const std::type_index &type_info, std::vector<std::unique_ptr<Component>> &&new_components)
 {
-	this->components[type_info] = std::move(components);
+	components[type_info] = std::move(new_components);
 }
 
 const std::vector<std::unique_ptr<Component>> &Scene::get_components(const std::type_index &type_info) const
@@ -98,7 +97,7 @@ bool Scene::has_component(const std::type_index &type_info) const
 	return components.count(type_info) != 0 ? true : false;
 }
 
-Node *Scene::find_node(const std::string &name)
+Node *Scene::find_node(const std::string &node_name)
 {
 	for (auto root_node : children)
 	{
@@ -110,7 +109,7 @@ Node *Scene::find_node(const std::string &name)
 			auto node = traverse_nodes.front();
 			traverse_nodes.pop();
 
-			if (node->get_name() == name)
+			if (node->get_name() == node_name)
 			{
 				return node;
 			}

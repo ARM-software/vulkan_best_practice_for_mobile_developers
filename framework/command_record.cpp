@@ -200,7 +200,6 @@ void CommandRecord::bind_vertex_buffers(uint32_t first_binding, const std::vecto
 	std::vector<VkBuffer> native_buffers(buffers.size(), VK_NULL_HANDLE);
 	std::transform(buffers.begin(), buffers.end(), native_buffers.begin(),
 	               [](const core::Buffer &buffer) { return buffer.get_handle(); });
-
 	// Write command parameters
 	write(stream, CommandType::BindVertexBuffers, first_binding, native_buffers, offsets);
 }
@@ -456,7 +455,7 @@ void CommandRecord::FlushDescriptorState()
 
 						if (is_dynamic_buffer_descriptor_type(binding_info.descriptorType))
 						{
-							dynamic_offsets.push_back(buffer_info.offset);
+							dynamic_offsets.push_back(static_cast<size_t>(buffer_info.offset));
 
 							buffer_info.offset = 0;
 						}

@@ -196,11 +196,11 @@ void FreeCamera::input_event(const InputEvent &input_event)
 
 void FreeCamera::resize(uint32_t width, uint32_t height)
 {
-	auto &node = get_node();
+	auto &camera_node = get_node();
 
-	if (node.has_component<Camera>())
+	if (camera_node.has_component<Camera>())
 	{
-		if (auto camera = dynamic_cast<PerspectiveCamera *>(&node.get_component<Camera>()))
+		if (auto camera = dynamic_cast<PerspectiveCamera *>(&camera_node.get_component<Camera>()))
 		{
 			camera->set_aspect_ratio(static_cast<float>(width) / height);
 		}

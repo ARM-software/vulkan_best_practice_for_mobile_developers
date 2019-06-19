@@ -33,7 +33,7 @@ inline void hash_param(size_t &seed, const T &value)
 }
 
 template <>
-inline void hash_param(size_t &seed, const VkPipelineCache &value)
+inline void hash_param(size_t & /*seed*/, const VkPipelineCache & /*value*/)
 {
 }
 
@@ -157,12 +157,12 @@ inline void hash_param(size_t &seed, const T &first_arg, const Args &... args)
 template <class T, class... A>
 struct RecordHelper
 {
-	size_t record(ResourceRecord &recorder, A &... args)
+	size_t record(ResourceRecord & /*recorder*/, A &... /*args*/)
 	{
 		return 0;
 	}
 
-	void index(ResourceRecord &recorder, size_t index, T &resource)
+	void index(ResourceRecord & /*recorder*/, size_t /*index*/, T & /*resource*/)
 	{
 	}
 };
@@ -288,9 +288,9 @@ std::vector<uint8_t> ResourceCache::serialize()
 	return recorder.get_data();
 }
 
-void ResourceCache::set_pipeline_cache(VkPipelineCache pipeline_cache)
+void ResourceCache::set_pipeline_cache(VkPipelineCache new_pipeline_cache)
 {
-	this->pipeline_cache = pipeline_cache;
+	pipeline_cache = new_pipeline_cache;
 }
 
 ShaderModule &ResourceCache::request_shader_module(VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const ShaderVariant &shader_variant)
@@ -299,9 +299,9 @@ ShaderModule &ResourceCache::request_shader_module(VkShaderStageFlagBits stage, 
 	return request_resource(device, recorder, shader_modules, stage, glsl_source, entry_point, shader_variant);
 }
 
-PipelineLayout &ResourceCache::request_pipeline_layout(const std::vector<ShaderModule *> &shader_modules)
+PipelineLayout &ResourceCache::request_pipeline_layout(const std::vector<ShaderModule *> &requested_shader_modules)
 {
-	return request_resource(device, recorder, pipeline_layouts, shader_modules);
+	return request_resource(device, recorder, pipeline_layouts, requested_shader_modules);
 }
 
 DescriptorSetLayout &ResourceCache::request_descriptor_set_layout(const std::vector<ShaderResource> &set_resources)

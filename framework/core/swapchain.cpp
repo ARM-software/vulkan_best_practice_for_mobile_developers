@@ -253,10 +253,10 @@ Swapchain::Swapchain(Swapchain &                         old_swapchain,
 	create_info.minImageCount = choose_image_count(image_count, surface_capabilities.minImageCount, surface_capabilities.maxImageCount);
 	create_info.imageExtent   = choose_extent(extent, surface_capabilities.minImageExtent, surface_capabilities.maxImageExtent, surface_capabilities.currentExtent);
 
-	VkSurfaceFormatKHR format = choose_surface_format({VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}, surface_formats);
+	VkSurfaceFormatKHR surface_format = choose_surface_format({VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}, surface_formats);
 
-	create_info.imageFormat     = format.format;
-	create_info.imageColorSpace = format.colorSpace;
+	create_info.imageFormat     = surface_format.format;
+	create_info.imageColorSpace = surface_format.colorSpace;
 
 	create_info.imageArrayLayers = choose_image_array_layers(1U, surface_capabilities.maxImageArrayLayers);
 	create_info.imageUsage       = choose_image_usage(image_usage, surface_capabilities.supportedUsageFlags);
