@@ -68,6 +68,8 @@ class Image : public Component
 
 	const std::vector<uint8_t> &get_data() const;
 
+	void clear_data();
+
 	VkFormat get_format() const;
 
 	const VkExtent3D &get_extent() const;

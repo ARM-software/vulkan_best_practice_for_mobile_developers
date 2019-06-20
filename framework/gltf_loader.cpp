@@ -415,6 +415,9 @@ sg::Scene GLTFLoader::load_scene()
 		core::Buffer stage_buffer{device, image->get_data().size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU};
 		stage_buffer.update(0, image->get_data());
 
+		// Clean up the image data, as they are copied in the staging buffer
+		image->clear_data();
+
 		upload_image(command_buffer, stage_buffer, *image);
 
 		transient_buffers.push_back(std::move(stage_buffer));

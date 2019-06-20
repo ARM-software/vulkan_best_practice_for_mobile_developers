@@ -86,6 +86,12 @@ const std::vector<uint8_t> &Image::get_data() const
 	return data;
 }
 
+void Image::clear_data()
+{
+	data.clear();
+	data.shrink_to_fit();
+}
+
 VkFormat Image::get_format() const
 {
 	return format;
