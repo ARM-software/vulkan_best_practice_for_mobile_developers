@@ -36,6 +36,9 @@ class Platform
   public:
 	virtual ~Platform() = default;
 
+	/**
+	 * @brief Sets up windowing system and logging
+	 */
 	virtual bool initialize(std::unique_ptr<Application> &&app);
 
 	virtual VkSurfaceKHR create_surface(VkInstance instance) = 0;
@@ -46,7 +49,9 @@ class Platform
 
 	virtual void close() const = 0;
 
-	/// @return The dot-per-inch scale factor
+	/**
+	 * @return The dot-per-inch scale factor
+	 */
 	virtual float get_dpi_factor() const;
 
 	const std::vector<std::string> &get_arguments();

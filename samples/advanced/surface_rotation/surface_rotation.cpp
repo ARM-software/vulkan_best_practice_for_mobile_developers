@@ -64,7 +64,7 @@ bool SurfaceRotation::prepare(vkb::Platform &platform)
 
 	auto swapchain = std::make_unique<vkb::Swapchain>(*device, get_surface());
 
-	render_context = std::make_unique<SurfaceRotationRenderContext>(std::move(swapchain), pre_rotate);
+	render_context = std::make_unique<SurfaceRotation::RenderContext>(std::move(swapchain), pre_rotate);
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 	auto &camera_node = add_free_camera("main_camera");
@@ -166,7 +166,7 @@ void SurfaceRotation::draw_scene(vkb::CommandBuffer &cmd_buf)
 
 void SurfaceRotation::trigger_swapchain_recreation()
 {
-	SurfaceRotationRenderContext &context = dynamic_cast<SurfaceRotationRenderContext &>(*render_context);
+	SurfaceRotation::RenderContext &context = dynamic_cast<SurfaceRotation::RenderContext &>(*render_context);
 	context.set_pre_rotate(pre_rotate);
 	context.recreate_swapchain();
 
@@ -211,14 +211,14 @@ std::unique_ptr<vkb::VulkanSample> create_surface_rotation()
 	return std::make_unique<SurfaceRotation>();
 }
 
-SurfaceRotationRenderContext::SurfaceRotationRenderContext(std::unique_ptr<vkb::Swapchain> &&swapchain,
-                                                           bool                              pre_rotate) :
-    RenderContext(std::move(swapchain)),
+SurfaceRotation::RenderContext::RenderContext(std::unique_ptr<vkb::Swapchain> &&swapchain,
+                                              bool                              pre_rotate) :
+    vkb::RenderContext(std::move(swapchain)),
     pre_rotate{pre_rotate}
 {
 }
 
-void SurfaceRotationRenderContext::recreate_swapchain()
+void SurfaceRotation::RenderContext::recreate_swapchain()
 {
 	VkSurfaceCapabilitiesKHR surface_properties;
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_physical_device(),
@@ -258,7 +258,7 @@ void SurfaceRotationRenderContext::recreate_swapchain()
 	update_swapchain(std::move(new_swapchain));
 }
 
-void SurfaceRotationRenderContext::handle_surface_changes()
+void SurfaceRotation::RenderContext::handle_surface_changes()
 {
 	VkSurfaceCapabilitiesKHR surface_properties;
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_physical_device(),

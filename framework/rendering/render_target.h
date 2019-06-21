@@ -27,6 +27,10 @@ namespace vkb
 {
 class Device;
 
+/**
+ * @brief Description of render pass attachments.
+ * Attachment descriptions can be used to automatically create render target images.
+ */
 struct Attachment
 {
 	VkFormat format{VK_FORMAT_UNDEFINED};
@@ -41,8 +45,13 @@ struct Attachment
 };
 
 /**
- * @brief A RenderTarget is a collection of attachments used to create a RenderPass,
- *        and images, with their image views used to create Framebuffers
+ * @brief RenderTarget contains three vectors for: core::Image, core::ImageView and Attachment.
+ * The first two are Vulkan images and corresponding image views respectively.
+ * Attachment (s) contain a description of the images, which has two main purposes:
+ * - RenderPass creation only needs a list of Attachment (s), not the actual images, so we keep
+ *   the minimum amount of information necessary
+ * - Creation of a RenderTarget becomes simpler, because the caller can just ask for some
+ *   Attachment (s) without having to create the images
  */
 class RenderTarget : public NonCopyable
 {

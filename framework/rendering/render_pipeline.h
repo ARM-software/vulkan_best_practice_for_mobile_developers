@@ -30,8 +30,13 @@
 namespace vkb
 {
 /**
- * @brief A RenderPipeline is a collection of Subpasses
- *        specified according to the user's needs
+ * @brief A RenderPipeline is a sequence of Subpass objects.
+ * The most basic one is SceneSubpass.
+ * Subpass holds shaders and can draw the core::sg::Scene.
+ * SceneSubpass holds a GlobalUniform for uniform data across all meshes.
+ * More subpasses can be added to the sequence if required.
+ * For example, postprocessing can be implemented with two pipelines which
+ * share render targets.
  */
 class RenderPipeline : public NonCopyable
 {
@@ -46,6 +51,9 @@ class RenderPipeline : public NonCopyable
 	 */
 	void add_subpass(std::unique_ptr<Subpass> &&subpass);
 
+	/**
+	 * @brief Record draw commands for each Subpass
+	 */
 	void draw(CommandBuffer &command_buffer);
 
   private:

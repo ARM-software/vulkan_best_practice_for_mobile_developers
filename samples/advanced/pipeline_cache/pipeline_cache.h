@@ -26,6 +26,9 @@
 #include "rendering/render_pipeline.h"
 #include "scene_graph/components/camera.h"
 
+/**
+ * @brief Pipeline creation and caching
+ */
 class PipelineCache : public vkb::VulkanSample
 {
   public:

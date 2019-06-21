@@ -26,6 +26,9 @@
 #include "rendering/render_pipeline.h"
 #include "scene_graph/components/camera.h"
 
+/**
+ * @brief Using triple buffering over double buffering
+ */
 class SwapchainImages : public vkb::VulkanSample
 {
   public:

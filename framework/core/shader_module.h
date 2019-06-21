@@ -133,7 +133,12 @@ class ShaderSource
 
 /**
  * @brief Contains shader code, with an entry point, for a specific shader stage.
- *        It is needed by a @ref PipelineLayout to create a @ref Pipeline
+ * It is needed by a PipelineLayout to create a Pipeline.
+ * ShaderModule can do auto-pairing between shader code and textures.
+ * The low level code can change bindings, just keeping the name of the texture.
+ * Variants for each texture are also generated, such as HAS_BASE_COLOR_TEX.
+ * It works similarly for attribute locations. A current limitation is that only set 0
+ * is considered. Uniform buffers are currently hardcoded as well.
  */
 class ShaderModule : public NonCopyable
 {

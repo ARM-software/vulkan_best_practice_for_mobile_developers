@@ -25,6 +25,9 @@
 
 #include "scene_graph/components/camera.h"
 
+/**
+ * @brief Using framebuffer compression to reduce bandwidth
+ */
 class AFBCSample : public vkb::VulkanSample
 {
   public:

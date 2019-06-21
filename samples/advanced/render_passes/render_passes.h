@@ -28,6 +28,9 @@
 #include <iomanip>        // setprecision
 #include <sstream>        // stringstream
 
+/**
+ * @brief Appropriate use of render pass attachment operations
+ */
 class RenderPassesSample : public vkb::VulkanSample
 {
   public:

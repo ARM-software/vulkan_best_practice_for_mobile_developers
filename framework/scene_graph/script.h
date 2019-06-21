@@ -47,6 +47,9 @@ class Script : public Component
 
 	virtual std::type_index get_type() override;
 
+	/**
+	 * @brief Main loop script events
+	 */
 	virtual void update(float delta_time) = 0;
 
 	virtual void input_event(const InputEvent &input_event);

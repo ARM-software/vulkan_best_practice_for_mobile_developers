@@ -52,14 +52,14 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
 
 /**
  * @brief Validates a list of required extensions, comparing it with the available ones.
- * 
- * @param required A vector containing required extension names. 
- * @param available A VkExtensionProperties object containing available extensions. 
+ *
+ * @param required A vector containing required extension names.
+ * @param available A VkExtensionProperties object containing available extensions.
  * @return true if all required extensions are available
  * @return false otherwise
  */
-bool validate_extensions(const std::vector<const char *> &         required,
-                         const std::vector<VkExtensionProperties> &available)
+bool HelloTriangle::validate_extensions(const std::vector<const char *> &         required,
+                                        const std::vector<VkExtensionProperties> &available)
 {
 	for (auto extension : required)
 	{
@@ -84,14 +84,14 @@ bool validate_extensions(const std::vector<const char *> &         required,
 
 /**
  * @brief Validates a list of required layers, comparing it with the available ones.
- * 
- * @param required A vector containing required layer names. 
- * @param available A VkLayerProperties object containing available layers. 
+ *
+ * @param required A vector containing required layer names.
+ * @param available A VkLayerProperties object containing available layers.
  * @return true if all required extensions are available
  * @return false otherwise
  */
-bool validate_layers(const std::vector<const char *> &     required,
-                     const std::vector<VkLayerProperties> &available)
+bool HelloTriangle::validate_layers(const std::vector<const char *> &     required,
+                                    const std::vector<VkLayerProperties> &available)
 {
 	for (auto extension : required)
 	{
@@ -116,11 +116,11 @@ bool validate_layers(const std::vector<const char *> &     required,
 
 /**
  * @brief Find the vulkan shader stage for a given a string.
- * 
- * @param ext A string containing the shader stage name. 
+ *
+ * @param ext A string containing the shader stage name.
  * @return VkShaderStageFlagBits The shader stage mapping from the given string, VK_SHADER_STAGE_VERTEX_BIT otherwise.
  */
-VkShaderStageFlagBits find_shader_stage(const std::string &ext)
+VkShaderStageFlagBits HelloTriangle::find_shader_stage(const std::string &ext)
 {
 	if (ext == "vert")
 	{
@@ -152,14 +152,14 @@ VkShaderStageFlagBits find_shader_stage(const std::string &ext)
 
 /**
  * @brief Initializes the Vulkan instance.
- * 
- * @param context A newly created Vulkan context. 
- * @param required_instance_extensions The required Vulkan instance extensions. 
- * @param required_instance_layers 
+ *
+ * @param context A newly created Vulkan context.
+ * @param required_instance_extensions The required Vulkan instance extensions.
+ * @param required_instance_layers
  */
-void init_instance(Context &                        context,
-                   const std::vector<const char *> &required_instance_extensions,
-                   const std::vector<const char *> &required_instance_layers)
+void HelloTriangle::init_instance(Context &                        context,
+                                  const std::vector<const char *> &required_instance_extensions,
+                                  const std::vector<const char *> &required_instance_layers)
 {
 	LOGI("Initializing vulkan instance.");
 
@@ -244,12 +244,12 @@ void init_instance(Context &                        context,
 
 /**
  * @brief Initializes the Vulkan physical device and logical device.
- * 
- * @param context A Vulkan context with an instance already set up. 
- * @param required_device_extensions The required Vulkan device extensions. 
+ *
+ * @param context A Vulkan context with an instance already set up.
+ * @param required_device_extensions The required Vulkan device extensions.
  */
-void init_device(Context &                        context,
-                 const std::vector<const char *> &required_device_extensions)
+void HelloTriangle::init_device(Context &                        context,
+                                const std::vector<const char *> &required_device_extensions)
 {
 	LOGI("Initializing vulkan device.");
 
@@ -327,11 +327,11 @@ void init_device(Context &                        context,
 }
 
 /**
-* @brief Initializes per frame data.
-* @param context A newly created Vulkan context.
-* @param per_frame The data of a frame.
-*/
-void init_per_frame(Context &context, PerFrame &per_frame)
+ * @brief Initializes per frame data.
+ * @param context A newly created Vulkan context.
+ * @param per_frame The data of a frame.
+ */
+void HelloTriangle::init_per_frame(Context &context, PerFrame &per_frame)
 {
 	VkFenceCreateInfo info{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
 	info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
@@ -352,9 +352,12 @@ void init_per_frame(Context &context, PerFrame &per_frame)
 	per_frame.queue_index = context.graphics_queue_index;
 }
 
-/// @brief Tears down the frame data.
-/// @param context The Vulkan context.
-void teardown_per_frame(Context &context, PerFrame &per_frame)
+/**
+ * @brief Tears down the frame data.
+ * @param context The Vulkan context.
+ * @param per_frame The data of a frame.
+ */
+void HelloTriangle::teardown_per_frame(Context &context, PerFrame &per_frame)
 {
 	if (per_frame.queue_submit_fence != VK_NULL_HANDLE)
 	{
@@ -395,9 +398,11 @@ void teardown_per_frame(Context &context, PerFrame &per_frame)
 	per_frame.queue_index = -1;
 }
 
-/// @brief Initializes the Vulkan swapchain.
-/// @param context A Vulkan context with a physical device already set up.
-void init_swapchain(Context &context)
+/**
+ * @brief Initializes the Vulkan swapchain.
+ * @param context A Vulkan context with a physical device already set up.
+ */
+void HelloTriangle::init_swapchain(Context &context)
 {
 	VkSurfaceCapabilitiesKHR surface_properties;
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.gpu, context.surface, &surface_properties));
@@ -568,9 +573,11 @@ void init_swapchain(Context &context)
 	}
 }
 
-/// @brief Initializes the Vulkan render pass.
-/// @param context A Vulkan context with a device already set up.
-void init_render_pass(Context &context)
+/**
+ * @brief Initializes the Vulkan render pass.
+ * @param context A Vulkan context with a device already set up.
+ */
+void HelloTriangle::init_render_pass(Context &context)
 {
 	VkAttachmentDescription attachment = {0};
 	// Backbuffer format.
@@ -631,11 +638,13 @@ void init_render_pass(Context &context)
 	VK_CHECK(vkCreateRenderPass(context.device, &rp_info, nullptr, &context.render_pass));
 }
 
-/// @brief Helper function to load a shader module.
-/// @param context A Vulkan context with a device.
-/// @param path The path for the shader (relative to the assets directory).
-/// @returns A VkShaderModule handle. Aborts execution if shader creation fails.
-VkShaderModule load_shader_module(Context &context, const char *path)
+/**
+ * @brief Helper function to load a shader module.
+ * @param context A Vulkan context with a device.
+ * @param path The path for the shader (relative to the assets directory).
+ * @returns A VkShaderModule handle. Aborts execution if shader creation fails.
+ */
+VkShaderModule HelloTriangle::load_shader_module(Context &context, const char *path)
 {
 	vkb::GLSLCompiler glsl_compiler;
 
@@ -666,9 +675,11 @@ VkShaderModule load_shader_module(Context &context, const char *path)
 	return shader_module;
 }
 
-/// @brief Initializes the Vulkan pipeline.
-/// @param context A Vulkan context with a device and a render pass already set up.
-void init_pipeline(Context &context)
+/**
+ * @brief Initializes the Vulkan pipeline.
+ * @param context A Vulkan context with a device and a render pass already set up.
+ */
+void HelloTriangle::init_pipeline(Context &context)
 {
 	// Create a blank pipeline layout.
 	// We are not binding any resources to the pipeline in this first sample.
@@ -752,11 +763,13 @@ void init_pipeline(Context &context)
 	vkDestroyShaderModule(context.device, shader_stages[1].module, nullptr);
 }
 
-/// @brief Acquires an image from the swapchain.
-/// @param context A Vulkan context with a swapchain already set up.
-/// @param[out] image The swapchain index for the acquired image.
-/// @returns Vulkan result code
-VkResult acquire_next_image(Context &context, uint32_t *image)
+/**
+ * @brief Acquires an image from the swapchain.
+ * @param context A Vulkan context with a swapchain already set up.
+ * @param[out] image The swapchain index for the acquired image.
+ * @returns Vulkan result code
+ */
+VkResult HelloTriangle::acquire_next_image(Context &context, uint32_t *image)
 {
 	VkSemaphore acquire_semaphore;
 	if (context.recycled_semaphores.empty())
@@ -810,11 +823,12 @@ VkResult acquire_next_image(Context &context, uint32_t *image)
 	return VK_SUCCESS;
 }
 
-/// @brief Renders a triangle to the specified swapchain image.
-/// @param context A Vulkan context set up for rendering.
-/// @param swapchain_index The swapchain index for the image being rendered.
-/// @param delta_time The delta time from last frame.
-void render_triangle(Context &context, uint32_t swapchain_index)
+/**
+ * @brief Renders a triangle to the specified swapchain image.
+ * @param context A Vulkan context set up for rendering.
+ * @param swapchain_index The swapchain index for the image being rendered.
+ */
+void HelloTriangle::render_triangle(Context &context, uint32_t swapchain_index)
 {
 	// Render to this framebuffer.
 	VkFramebuffer framebuffer = context.swapchain_framebuffers[swapchain_index];
@@ -891,11 +905,13 @@ void render_triangle(Context &context, uint32_t swapchain_index)
 	VK_CHECK(vkQueueSubmit(context.queue, 1, &info, context.per_frame[swapchain_index].queue_submit_fence));
 }
 
-/// @brief Presents an image to the swapchain.
-/// @param context The Vulkan context, with a swapchain and per-frame resources already set up.
-/// @param index The swapchain index previously obtained from @ref acquire_next_image.
-/// @returns Vulkan result code
-VkResult present_image(Context &context, uint32_t index)
+/**
+ * @brief Presents an image to the swapchain.
+ * @param context The Vulkan context, with a swapchain and per-frame resources already set up.
+ * @param index The swapchain index previously obtained from @ref acquire_next_image.
+ * @returns Vulkan result code
+ */
+VkResult HelloTriangle::present_image(Context &context, uint32_t index)
 {
 	VkPresentInfoKHR present{VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
 	present.swapchainCount     = 1;
@@ -907,9 +923,11 @@ VkResult present_image(Context &context, uint32_t index)
 	return vkQueuePresentKHR(context.queue, &present);
 }
 
-/// @brief Initializes the Vulkan frambuffers.
-/// @param context A Vulkan context with the render pass already set up.
-void init_framebuffers(Context &context)
+/**
+ * @brief Initializes the Vulkan frambuffers.
+ * @param context A Vulkan context with the render pass already set up.
+ */
+void HelloTriangle::init_framebuffers(Context &context)
 {
 	VkDevice device = context.device;
 
@@ -932,9 +950,11 @@ void init_framebuffers(Context &context)
 	}
 }
 
-/// @brief Tears down the framebuffers. If our swapchain changes, we will call this, and create a new swapchain.
-/// @param context The Vulkan context.
-void teardown_framebuffers(Context &context)
+/**
+ * @brief Tears down the framebuffers. If our swapchain changes, we will call this, and create a new swapchain.
+ * @param context The Vulkan context.
+ */
+void HelloTriangle::teardown_framebuffers(Context &context)
 {
 	// Wait until device is idle before teardown.
 	vkQueueWaitIdle(context.queue);
@@ -947,9 +967,11 @@ void teardown_framebuffers(Context &context)
 	context.swapchain_framebuffers.clear();
 }
 
-/// @brief Tears down the Vulkan context.
-/// @param context The Vulkan context.
-void teardown(Context &context)
+/**
+ * @brief Tears down the Vulkan context.
+ * @param context The Vulkan context.
+ */
+void HelloTriangle::teardown(Context &context)
 {
 	// Don't release anything until the GPU is completely idle.
 	vkDeviceWaitIdle(context.device);

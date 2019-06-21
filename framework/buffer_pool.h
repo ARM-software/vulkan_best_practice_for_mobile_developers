@@ -88,8 +88,20 @@ class BufferBlock : public NonCopyable
 };
 
 /**
- * @brief A pool of buffer blocks for a specific usage
- *        It may contain inactive blocks that can be recycled
+ * @brief A pool of buffer blocks for a specific usage.
+ * It may contain inactive blocks that can be recycled.
+ *
+ * BufferPool is a linear allocator for buffer chunks, it gives you a view of the size you want.
+ * A BufferBlock is the corresponding VkBuffer and you can get smaller offsets inside it.
+ * Since a shader cannot specify dynamic UBOs, it has to be done from the code
+ * (set_resource_dynamic).
+ *
+ * When a new frame starts, buffer blocks are returned: the offset is reset and contents are
+ * overwritten. The minimum allocation size is 256 kb, if you ask for more you get a dedicated
+ * buffer allocation.
+ *
+ * We re-use descriptor sets: we only need one for the corresponding buffer infos (and we only
+ * have one VkBuffer per BufferBlock), then it is bound and we use dynamic offsets.
  */
 class BufferPool : public NonCopyable
 {

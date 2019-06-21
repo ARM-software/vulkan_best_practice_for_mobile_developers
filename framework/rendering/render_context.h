@@ -39,6 +39,19 @@
 
 namespace vkb
 {
+/**
+ * @brief RenderContext acts as a frame manager for the sample, with a lifetime that is the
+ * same as that of the Application itself. It acts as a container for RenderFrame objects,
+ * swapping between them (begin_frame, end_frame) and forwarding requests for Vulkan resources
+ * to the active frame. Note that it's guaranteed that there is always an active frame.
+ * More than one frame can be in-flight in the GPU, thus the need for per-frame resources.
+ *
+ * It requires a Device to be valid on creation and will take control of the Swapchain, so a
+ * RenderFrame can be created for each Swapchain image.
+ *
+ * A RenderContext can be extended for headless mode (i.e. not presenting rendered images to
+ * a display) by removing the swapchain part and overriding begin_frame and end_frame.
+ */
 class RenderContext : public NonCopyable
 {
   public:

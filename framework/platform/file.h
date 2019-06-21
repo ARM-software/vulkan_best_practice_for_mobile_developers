@@ -29,10 +29,17 @@
 namespace vkb::file
 {
 /**
+ * @file file.h
+ *
+ * @brief Cross-platform helper functions to manipulate files in well-defined locations
+ */
+
+/**
  * @brief Helper to read an asset file into a byte-array
  *
  * @param filename The path to the file (relative to the assets directory)
- * @param count (optional, must be >0) How many bytes to read, all by default
+ * @param count (optional) How many bytes to read. If 0 or not specified, the size
+ * of the file will be used.
  * @return A vector filled with data read from the file
  */
 std::vector<uint8_t> read_asset(const std::string &filename, const uint32_t count = 0);

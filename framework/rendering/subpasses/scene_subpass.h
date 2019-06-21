@@ -76,6 +76,9 @@ class SceneSubpass : public Subpass
 
 	virtual ~SceneSubpass() = default;
 
+	/**
+	 * @brief record draw commands
+	 */
 	void draw(CommandBuffer &command_buffer) override;
 
   private:

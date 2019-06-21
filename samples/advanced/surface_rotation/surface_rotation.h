@@ -28,28 +28,31 @@
 #include <iomanip>        // setprecision
 #include <sstream>        // stringstream
 
-class SurfaceRotationRenderContext : public vkb::RenderContext
-{
-  public:
-	SurfaceRotationRenderContext(std::unique_ptr<vkb::Swapchain> &&swapchain, bool pre_rotate);
-
-	virtual ~SurfaceRotationRenderContext() = default;
-
-	void handle_surface_changes() override;
-
-	void set_pre_rotate(bool pre_rotate)
-	{
-		this->pre_rotate = pre_rotate;
-	}
-
-	void recreate_swapchain();
-
-  private:
-	bool pre_rotate = false;
-};
-
+/**
+ * @brief Appropriate use of surface rotation
+ */
 class SurfaceRotation : public vkb::VulkanSample
 {
+	class RenderContext : public vkb::RenderContext
+	{
+	  public:
+		RenderContext(std::unique_ptr<vkb::Swapchain> &&swapchain, bool pre_rotate);
+
+		virtual ~RenderContext() = default;
+
+		virtual void handle_surface_changes() override;
+
+		inline void set_pre_rotate(bool pre_rotate)
+		{
+			this->pre_rotate = pre_rotate;
+		}
+
+		void recreate_swapchain();
+
+	  private:
+		bool pre_rotate = false;
+	};
+
   public:
 	SurfaceRotation();
 
