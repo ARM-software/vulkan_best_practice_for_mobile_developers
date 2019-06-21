@@ -85,8 +85,8 @@ void FreeCamera::update(float delta_time)
 	}
 	else if (mouse_button_pressed[MouseButton::Right])
 	{
-		delta_rotation.x += ROTATION_MOVE_WEIGHT * mouse_move_delta.y;
-		delta_rotation.y += ROTATION_MOVE_WEIGHT * mouse_move_delta.x;
+		delta_rotation.x -= ROTATION_MOVE_WEIGHT * mouse_move_delta.y;
+		delta_rotation.y -= ROTATION_MOVE_WEIGHT * mouse_move_delta.x;
 	}
 	else if (mouse_button_pressed[MouseButton::Left])
 	{
@@ -96,8 +96,8 @@ void FreeCamera::update(float delta_time)
 
 	if (touch_pointer_pressed[0])
 	{
-		delta_rotation.x += ROTATION_MOVE_WEIGHT * touch_move_delta.y;
-		delta_rotation.y += ROTATION_MOVE_WEIGHT * touch_move_delta.x;
+		delta_rotation.x -= ROTATION_MOVE_WEIGHT * touch_move_delta.y;
+		delta_rotation.y -= ROTATION_MOVE_WEIGHT * touch_move_delta.x;
 
 		if (touch_pointer_time > TOUCH_DOWN_MOVE_FORWARD_WAIT_TIME)
 		{
