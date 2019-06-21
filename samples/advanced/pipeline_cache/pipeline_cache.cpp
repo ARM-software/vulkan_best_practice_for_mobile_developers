@@ -157,11 +157,31 @@ void PipelineCache::draw_gui()
 		    if (ImGui::Button("Destroy Pipelines", button_size))
 		    {
 			    device->wait_idle();
-
 			    device->get_resource_cache().clear_pipelines();
+			    record_frame_time_next_frame = true;
+		    }
+
+		    if (rebuild_pipelines_frame_time_ms > 0.0f)
+		    {
+			    ImGui::Text("Pipeline rebuild frame time: %.1f ms", rebuild_pipelines_frame_time_ms);
+		    }
+		    else
+		    {
+			    ImGui::Text("Pipeline rebuild frame time: N/A");
 		    }
 	    },
-	    /* lines = */ 1);
+	    /* lines = */ 2);
+}
+
+void PipelineCache::update(float delta_time)
+{
+	if (record_frame_time_next_frame)
+	{
+		rebuild_pipelines_frame_time_ms = delta_time * 1000.0f;
+		record_frame_time_next_frame    = false;
+	}
+
+	VulkanSample::update(delta_time);
 }
 
 void PipelineCache::draw_scene(vkb::CommandBuffer &cmd_buf)

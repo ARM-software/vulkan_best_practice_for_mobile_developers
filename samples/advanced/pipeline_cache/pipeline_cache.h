@@ -33,6 +33,8 @@ class PipelineCache : public vkb::VulkanSample
 
 	virtual bool prepare(vkb::Platform &platform) override;
 
+	virtual void update(float delta_time) override;
+
   private:
 	std::unique_ptr<vkb::RenderPipeline> render_pipeline{nullptr};
 
@@ -43,6 +45,10 @@ class PipelineCache : public vkb::VulkanSample
 	ImVec2 button_size{150, 30};
 
 	bool enable_pipeline_cache{true};
+
+	bool record_frame_time_next_frame{false};
+
+	float rebuild_pipelines_frame_time_ms{0.0f};
 
 	virtual void draw_gui() override;
 
