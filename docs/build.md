@@ -249,10 +249,10 @@ adb install build/outputs/apk/debug/vulkan_best_practice-debug.apk
 
 # Building Individual Samples
 
-`Step 1.` When generating cmake set the `VKB_SAMPLE_ENTRYPOINTS` flag to `ON`
+`Step 1.` When generating cmake set the `VKB_SAMPLE_ENTRYPOINT` flag to `ON`
 
 ```
-cmake -B"build" -H"." -DVKB_SAMPLE_ENTRYPOINTS=ON
+cmake -B"build" -H"." -DVKB_SAMPLE_ENTRYPOINT=ON
 ```
 
 ### CMake
