@@ -116,7 +116,7 @@ void Image::create_vk_image(Device &device)
 	                                         format,
 	                                         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
 	                                         VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT,
-	                                         mipmaps.size());
+	                                         to_u32(mipmaps.size()));
 
 	vk_image_view = std::make_unique<ImageView>(*vk_image, VK_IMAGE_VIEW_TYPE_2D);
 }
@@ -156,7 +156,7 @@ void Image::generate_mipmaps()
 	while (true)
 	{
 		// Make space for next mipmap
-		auto old_size = data.size();
+		auto old_size = to_u32(data.size());
 		data.resize(old_size + next_size);
 
 		auto &prev_mipmap = mipmaps.back();

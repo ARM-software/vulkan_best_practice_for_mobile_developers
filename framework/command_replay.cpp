@@ -119,7 +119,7 @@ void CommandReplay::play(CommandBuffer &command_buffer, CommandRecord &recorder)
 				                        descriptor_set_binding_it->pipeline_layout.get_handle(),
 				                        descriptor_set_binding_it->set_index,
 				                        1, &descriptor_set,
-				                        descriptor_set_binding_it->dynamic_offsets.size(),
+				                        to_u32(descriptor_set_binding_it->dynamic_offsets.size()),
 				                        descriptor_set_binding_it->dynamic_offsets.data());
 
 				// Move to the next descriptor set binding
@@ -195,7 +195,7 @@ void CommandReplay::push_constants(CommandBuffer &command_buffer, std::istringst
 	read(stream, pipeline_layout, shader_stage, offset, values);
 
 	// Call Vulkan function
-	vkCmdPushConstants(command_buffer.get_handle(), pipeline_layout, shader_stage, offset, values.size(), values.data());
+	vkCmdPushConstants(command_buffer.get_handle(), pipeline_layout, shader_stage, offset, to_u32(values.size()), values.data());
 }
 
 void CommandReplay::bind_vertex_buffers(CommandBuffer &command_buffer, std::istringstream &stream)
@@ -208,7 +208,7 @@ void CommandReplay::bind_vertex_buffers(CommandBuffer &command_buffer, std::istr
 	read(stream, first_binding, buffers, offsets);
 
 	// Call Vulkan function
-	vkCmdBindVertexBuffers(command_buffer.get_handle(), first_binding, buffers.size(), buffers.data(), offsets.data());
+	vkCmdBindVertexBuffers(command_buffer.get_handle(), first_binding, to_u32(buffers.size()), buffers.data(), offsets.data());
 }
 
 void CommandReplay::bind_index_buffer(CommandBuffer &command_buffer, std::istringstream &stream)
@@ -233,7 +233,7 @@ void CommandReplay::set_viewport(CommandBuffer &command_buffer, std::istringstre
 	read(stream, first_viewport, viewports);
 
 	// Call Vulkan function
-	vkCmdSetViewport(command_buffer.get_handle(), first_viewport, viewports.size(), viewports.data());
+	vkCmdSetViewport(command_buffer.get_handle(), first_viewport, to_u32(viewports.size()), viewports.data());
 }
 
 void CommandReplay::set_scissor(CommandBuffer &command_buffer, std::istringstream &stream)
@@ -245,7 +245,7 @@ void CommandReplay::set_scissor(CommandBuffer &command_buffer, std::istringstrea
 	read(stream, first_scissor, scissors);
 
 	// Call Vulkan function
-	vkCmdSetScissor(command_buffer.get_handle(), first_scissor, scissors.size(), scissors.data());
+	vkCmdSetScissor(command_buffer.get_handle(), first_scissor, to_u32(scissors.size()), scissors.data());
 }
 
 void CommandReplay::set_line_width(CommandBuffer &command_buffer, std::istringstream &stream)
@@ -344,7 +344,7 @@ void CommandReplay::copy_image(CommandBuffer &command_buffer, std::istringstream
 	read(stream, src_image, dst_image, regions);
 
 	// Call Vulkan function
-	vkCmdCopyImage(command_buffer.get_handle(), src_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, regions.size(), regions.data());
+	vkCmdCopyImage(command_buffer.get_handle(), src_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, to_u32(regions.size()), regions.data());
 }
 
 void CommandReplay::copy_buffer_to_image(CommandBuffer &command_buffer, std::istringstream &stream)
@@ -357,7 +357,7 @@ void CommandReplay::copy_buffer_to_image(CommandBuffer &command_buffer, std::ist
 	read(stream, buffer, image, regions);
 
 	// Call Vulkan function
-	vkCmdCopyBufferToImage(command_buffer.get_handle(), buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, regions.size(), regions.data());
+	vkCmdCopyBufferToImage(command_buffer.get_handle(), buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, to_u32(regions.size()), regions.data());
 }
 
 void CommandReplay::image_memory_barrier(CommandBuffer &command_buffer, std::istringstream &stream)

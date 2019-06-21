@@ -97,7 +97,7 @@ inline void read_resource_size(const spirv_cross::Compiler &compiler,
 {
 	const auto &spirv_type = compiler.get_type_from_variable(resource.id);
 
-	shader_resource.size = compiler.get_declared_struct_size(spirv_type);
+	shader_resource.size = to_u32(compiler.get_declared_struct_size(spirv_type));
 }
 
 inline void read_resource_size(const spirv_cross::Compiler &    compiler,

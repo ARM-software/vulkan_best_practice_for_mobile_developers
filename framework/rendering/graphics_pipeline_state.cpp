@@ -93,7 +93,7 @@ void SpecializationInfo::set_constant(uint32_t constant_id, const std::vector<ui
 
 	specialization_entry.constantID = constant_id;
 	specialization_entry.size       = value.size();
-	specialization_entry.offset     = data.size();
+	specialization_entry.offset     = to_u32(data.size());
 
 	map_entries.push_back(specialization_entry);
 
@@ -114,7 +114,7 @@ const VkSpecializationInfo &SpecializationInfo::get_handle() const
 {
 	handle.dataSize      = data.size();
 	handle.pData         = data.data();
-	handle.mapEntryCount = map_entries.size();
+	handle.mapEntryCount = to_u32(map_entries.size());
 	handle.pMapEntries   = map_entries.data();
 
 	return handle;

@@ -66,15 +66,6 @@ std::ostream &operator<<(std::ostream &os, const VkResult result)
 
 namespace vkb
 {
-uint32_t to_u32(const size_t value)
-{
-	if (value > std::numeric_limits<uint32_t>::max())
-	{
-		throw std::runtime_error("Value of type size_t too big to be converted to uint32_t");
-	}
-	return static_cast<uint32_t>(value);
-}
-
 bool is_depth_only_format(VkFormat format)
 {
 	return format == VK_FORMAT_D16_UNORM ||

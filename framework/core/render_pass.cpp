@@ -70,7 +70,7 @@ RenderPass::RenderPass(Device &device, const std::vector<Attachment> &attachment
 
 	// Reserve space for the vectors
 	auto input_attachments_count = std::accumulate(std::begin(subpasses), std::end(subpasses), 0,
-	                                               [](size_t count, auto &subpass) { return count + subpass.input_attachments.size(); });
+	                                               [](size_t count, auto &subpass) { return to_u32(count) + to_u32(subpass.input_attachments.size()); });
 	input_attachments.reserve(input_attachments_count);
 	auto color_attachments_count = subpasses.size();
 	color_attachments.reserve(color_attachments_count);

@@ -167,7 +167,7 @@ void CommandRecord::push_constants(uint32_t offset, const std::vector<uint8_t> &
 {
 	const PipelineLayout &pipeline_layout = graphics_pipeline_state.get_pipeline_layout();
 
-	VkShaderStageFlags shader_stage = pipeline_layout.get_push_constant_range_stage(offset, values.size());
+	VkShaderStageFlags shader_stage = pipeline_layout.get_push_constant_range_stage(offset, to_u32(values.size()));
 
 	if (shader_stage)
 	{
@@ -455,7 +455,7 @@ void CommandRecord::FlushDescriptorState()
 
 						if (is_dynamic_buffer_descriptor_type(binding_info.descriptorType))
 						{
-							dynamic_offsets.push_back(static_cast<size_t>(buffer_info.offset));
+							dynamic_offsets.push_back(to_u32(buffer_info.offset));
 
 							buffer_info.offset = 0;
 						}

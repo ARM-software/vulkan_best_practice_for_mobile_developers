@@ -73,7 +73,7 @@ void RenderPassesSample::draw_gui()
 		    for (size_t i = 0; i < radio_buttons.size(); ++i)
 		    {
 			    // Avoid conflicts between buttons with identical labels
-			    ImGui::PushID(i);
+			    ImGui::PushID(vkb::to_u32(i));
 
 			    auto &radio_button = radio_buttons[i];
 
@@ -88,7 +88,7 @@ void RenderPassesSample::draw_gui()
 			    // For every option
 			    for (size_t j = 0; j < radio_button->options.size(); ++j)
 			    {
-				    ImGui::RadioButton(radio_button->options[j], &radio_button->value, j);
+				    ImGui::RadioButton(radio_button->options[j], &radio_button->value, vkb::to_u32(j));
 
 				    if (j < radio_button->options.size() - 1)
 				    {
@@ -99,7 +99,7 @@ void RenderPassesSample::draw_gui()
 			    ImGui::PopID();
 		    }
 	    },
-	    /* lines = */ lines);
+	    /* lines = */ vkb::to_u32(lines));
 }
 
 bool RenderPassesSample::prepare(vkb::Platform &platform)
