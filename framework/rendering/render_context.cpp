@@ -160,6 +160,12 @@ RenderFrame &RenderContext::get_active_frame()
 	return frames.at(active_frame_index);
 }
 
+RenderFrame &RenderContext::get_last_rendered_frame()
+{
+	assert(!frame_active && "Frame is still active, please call end_frame");
+	return frames.at(active_frame_index);
+}
+
 CommandBuffer &RenderContext::request_frame_command_buffer(const Queue &queue)
 {
 	RenderFrame &frame = get_active_frame();

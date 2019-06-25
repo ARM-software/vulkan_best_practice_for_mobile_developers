@@ -169,6 +169,13 @@ const VkPhysicalDeviceProperties &Device::get_properties() const
 	return properties;
 }
 
+const VkFormatProperties Device::get_format_properties(VkFormat format) const
+{
+	VkFormatProperties format_properties;
+	vkGetPhysicalDeviceFormatProperties(physical_device, format, &format_properties);
+	return format_properties;
+}
+
 const Queue &Device::get_queue(uint32_t queue_family_index, uint32_t queue_index)
 {
 	return queues[queue_family_index][queue_index];

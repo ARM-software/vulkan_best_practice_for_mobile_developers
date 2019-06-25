@@ -44,6 +44,7 @@ CommandReplay::CommandReplay()
 	stream_commands[CommandType::Draw]               = std::bind(&CommandReplay::draw, this, std::placeholders::_1, std::placeholders::_2);
 	stream_commands[CommandType::DrawIndexed]        = std::bind(&CommandReplay::draw_indexed, this, std::placeholders::_1, std::placeholders::_2);
 	stream_commands[CommandType::UpdateBuffer]       = std::bind(&CommandReplay::update_buffer, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::BlitImage]          = std::bind(&CommandReplay::blit_image, this, std::placeholders::_1, std::placeholders::_2);
 	stream_commands[CommandType::CopyImage]          = std::bind(&CommandReplay::copy_image, this, std::placeholders::_1, std::placeholders::_2);
 	stream_commands[CommandType::CopyBufferToImage]  = std::bind(&CommandReplay::copy_buffer_to_image, this, std::placeholders::_1, std::placeholders::_2);
 	stream_commands[CommandType::ImageMemoryBarrier] = std::bind(&CommandReplay::image_memory_barrier, this, std::placeholders::_1, std::placeholders::_2);
@@ -332,6 +333,19 @@ void CommandReplay::update_buffer(CommandBuffer &command_buffer, std::istringstr
 
 	// Call Vulkan function
 	vkCmdUpdateBuffer(command_buffer.get_handle(), buffer, offset, data.size(), data.data());
+}
+
+void CommandReplay::blit_image(CommandBuffer &command_buffer, std::istringstream &stream)
+{
+	VkImage                  src_image;
+	VkImage                  dst_image;
+	std::vector<VkImageBlit> regions;
+
+	// Read command parameters
+	read(stream, src_image, dst_image, regions);
+
+	// Call Vulkan function
+	vkCmdBlitImage(command_buffer.get_handle(), src_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, to_u32(regions.size()), regions.data(), VK_FILTER_NEAREST);
 }
 
 void CommandReplay::copy_image(CommandBuffer &command_buffer, std::istringstream &stream)

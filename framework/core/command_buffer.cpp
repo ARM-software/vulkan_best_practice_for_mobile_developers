@@ -242,6 +242,11 @@ void CommandBuffer::update_buffer(const core::Buffer &buffer, VkDeviceSize offse
 	recorder.update_buffer(buffer, offset, data);
 }
 
+void CommandBuffer::blit_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageBlit> &regions)
+{
+	recorder.blit_image(src_img, dst_img, regions);
+}
+
 void CommandBuffer::copy_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageCopy> &regions)
 {
 	recorder.copy_image(src_img, dst_img, regions);

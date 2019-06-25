@@ -62,7 +62,7 @@ class Swapchain : public NonCopyable
 	          const uint32_t                      image_count  = 3,
 	          const VkSurfaceTransformFlagBitsKHR transform    = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
 	          const VkPresentModeKHR              present_mode = VK_PRESENT_MODE_FIFO_KHR,
-	          const VkImageUsageFlags             image_usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+	          const VkImageUsageFlags             image_usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
 	/**
 	 * @brief Constructor to create a swapchain from the old swapchain
@@ -75,7 +75,7 @@ class Swapchain : public NonCopyable
 	          const uint32_t                      image_count  = 3,
 	          const VkSurfaceTransformFlagBitsKHR transform    = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
 	          const VkPresentModeKHR              present_mode = VK_PRESENT_MODE_FIFO_KHR,
-	          const VkImageUsageFlags             image_usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+	          const VkImageUsageFlags             image_usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
 	/**
 	 * @brief Destructor

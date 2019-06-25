@@ -110,11 +110,16 @@ if(ANDROID)
 
     add_dependencies(${PROJECT_NAME} sync.assets.stamp)
 else()
-    if(${VKB_ASSETS_SYMLINK})
+    if(${VKB_SYMLINKS})
         create_symlink(
             NAME ${PROJECT_NAME}
             DIR ${CMAKE_CURRENT_SOURCE_DIR}/../assets
             LINK ${CMAKE_CURRENT_BINARY_DIR}/assets)
+            
+        create_symlink(
+            NAME ${PROJECT_NAME}
+            DIR ${CMAKE_SOURCE_DIR}/../outputs
+            LINK ${CMAKE_CURRENT_BINARY_DIR}/outputs)
     endif()
 endif()
 

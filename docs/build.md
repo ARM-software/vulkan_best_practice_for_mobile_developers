@@ -26,7 +26,7 @@
 
 - [CMake Options](#cmake-options)
   - [VKB_<sample_name>](#vkb_sample_name)
-  - [VKB_ASSETS_SYMLINK](#vkb_assets_symlink)
+  - [VKB_SYMLINKS](#vkb_symlinks)
   - [VKB_SAMPLE_ENTRYPOINT](#vkb_sample_entrypoint)
   - [VKB_VALIDATION_LAYERS](#vkb_validation_layers)
   - [VKB_WARNINGS_AS_ERRORS](#vkb_warnings_as_errors)
@@ -59,9 +59,8 @@ Choose whether to include a sample at build time.
 
 **Default:** `ON`
 
-#### VKB_ASSETS_SYMLINK
-
-Rather than changing the working directory inside the IDE, `VKB_ASSETS_SYMLINK` will enable symlink creation pointing to the root directory which exposes the assets folder to the samples.
+#### VKB_SYMLINKS
+Rather than changing the working directory inside the IDE, `VKB_SYMLINKS` will enable symlink creation pointing to the root directory which exposes the assets and outputs folders to the samples.
 
 **Default:** `OFF`
 

@@ -77,28 +77,32 @@ Image::Image(Device &              device,
              VmaMemoryUsage        memory_usage,
              VkSampleCountFlagBits sample_count,
              const uint32_t        mip_levels,
-             const uint32_t        array_layers) :
+             const uint32_t        array_layers,
+             VkImageTiling         tiling) :
     device{device},
     type{find_image_type(extent)},
     extent{extent},
     format{format},
     sample_count{sample_count},
     usage{image_usage},
-    mip_levels{mip_levels},
-    array_layers{array_layers}
+    tiling{tiling}
 {
 	assert(mip_levels > 0 && "Image should have at least one level");
 	assert(array_layers > 0 && "Image should have at least one layer");
+
+	subresource.mipLevel   = mip_levels;
+	subresource.arrayLayer = array_layers;
 
 	VkImageCreateInfo image_info{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
 
 	image_info.imageType   = type;
 	image_info.format      = format;
 	image_info.extent      = extent;
-	image_info.samples     = sample_count;
-	image_info.usage       = image_usage;
 	image_info.mipLevels   = mip_levels;
 	image_info.arrayLayers = array_layers;
+	image_info.samples     = sample_count;
+	image_info.tiling      = tiling;
+	image_info.usage       = image_usage;
 
 	VmaAllocationCreateInfo memory_info{};
 	memory_info.usage = memory_usage;
@@ -127,7 +131,10 @@ Image::Image(Device &device, VkImage handle, const VkExtent3D &extent, VkFormat 
     format{format},
     sample_count{VK_SAMPLE_COUNT_1_BIT},
     usage{image_usage}
-{}
+{
+	subresource.mipLevel   = 1;
+	subresource.arrayLayer = 1;
+}
 
 Image::Image(Image &&other) :
     device{other.device},
@@ -138,8 +145,8 @@ Image::Image(Image &&other) :
     format{other.format},
     sample_count{other.sample_count},
     usage{other.usage},
-    mip_levels{other.mip_levels},
-    array_layers{other.array_layers}
+    tiling{other.tiling},
+    subresource{other.subresource}
 {
 	other.handle = VK_NULL_HANDLE;
 	other.memory = VK_NULL_HANDLE;
@@ -189,24 +196,24 @@ VkFormat Image::get_format() const
 	return format;
 }
 
-VkSampleCountFlagBits Image::get_samples() const
+VkSampleCountFlagBits Image::get_sample_count() const
 {
 	return sample_count;
-}
-
-uint32_t Image::get_mip_levels() const
-{
-	return mip_levels;
-}
-
-uint32_t Image::get_array_layers() const
-{
-	return array_layers;
 }
 
 VkImageUsageFlags Image::get_usage() const
 {
 	return usage;
+}
+
+VkImageTiling Image::get_tiling() const
+{
+	return tiling;
+}
+
+VkImageSubresource Image::get_subresource() const
+{
+	return subresource;
 }
 
 std::unordered_set<ImageView *> &Image::get_views()

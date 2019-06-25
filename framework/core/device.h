@@ -58,6 +58,8 @@ class Device : public NonCopyable
 
 	const VkPhysicalDeviceProperties &get_properties() const;
 
+	const VkFormatProperties get_format_properties(VkFormat format) const;
+
 	const Queue &get_queue(uint32_t queue_family_index, uint32_t queue_index);
 
 	const Queue &get_queue_by_flags(VkQueueFlags queue_flags, uint32_t queue_index);

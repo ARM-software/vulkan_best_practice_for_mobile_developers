@@ -307,6 +307,12 @@ void CommandRecord::update_buffer(const core::Buffer &buffer, VkDeviceSize offse
 	write(stream, CommandType::UpdateBuffer, buffer.get_handle(), offset, data);
 }
 
+void CommandRecord::blit_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageBlit> &regions)
+{
+	// Write command parameters
+	write(stream, CommandType::BlitImage, src_img.get_handle(), dst_img.get_handle(), regions);
+}
+
 void CommandRecord::copy_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageCopy> &regions)
 {
 	// Write command parameters

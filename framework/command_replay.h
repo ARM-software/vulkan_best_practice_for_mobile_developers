@@ -80,6 +80,8 @@ class CommandReplay
 
 	void update_buffer(CommandBuffer &command_buffer, std::istringstream &stream);
 
+	void blit_image(CommandBuffer &command_buffer, std::istringstream &stream);
+
 	void copy_image(CommandBuffer &command_buffer, std::istringstream &stream);
 
 	void copy_buffer_to_image(CommandBuffer &command_buffer, std::istringstream &stream);

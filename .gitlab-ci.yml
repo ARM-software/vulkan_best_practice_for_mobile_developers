@@ -65,7 +65,7 @@ Linux:
     - linux
     - docker
   script:
-    - cmake -H. -Bbuild
+    - cmake -G "Unix Makefiles" -H. -Bbuild -DCMAKE_BUILD_TYPE=Release
     - cmake --build build --target vulkan_best_practice --config Release
 
 Windows:
@@ -88,8 +88,8 @@ Android:
     - linux
     - docker
   script:
-    - cmake -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake -H. -Bbuild
-    - cmake --build build --target vulkan_best_practice_package --config Release
+    - cmake -G "Unix Makefiles" -H. -Bbuild -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake
+    - cmake --build build --config Release --target vulkan_best_practice_package
 
 LinuxExternalProject:
   stage: Test

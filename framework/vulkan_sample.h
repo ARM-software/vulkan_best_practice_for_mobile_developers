@@ -26,6 +26,7 @@
 #include "scene_graph/scene.h"
 #include "scene_graph/scripts/node_animation.h"
 #include "stats.h"
+#include "utils.h"
 
 #include <algorithm>
 #include <memory>

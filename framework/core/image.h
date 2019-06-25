@@ -45,7 +45,8 @@ class Image : public NonCopyable
 	      VmaMemoryUsage        memory_usage,
 	      VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT,
 	      uint32_t              mip_levels   = 1,
-	      uint32_t              array_layers = 1);
+	      uint32_t              array_layers = 1,
+	      VkImageTiling         tiling       = VK_IMAGE_TILING_OPTIMAL);
 
 	Image(Image &&other);
 
@@ -63,13 +64,13 @@ class Image : public NonCopyable
 
 	VkFormat get_format() const;
 
-	VkSampleCountFlagBits get_samples() const;
-
-	uint32_t get_mip_levels() const;
-
-	uint32_t get_array_layers() const;
+	VkSampleCountFlagBits get_sample_count() const;
 
 	VkImageUsageFlags get_usage() const;
+
+	VkImageTiling get_tiling() const;
+
+	VkImageSubresource get_subresource() const;
 
 	std::unordered_set<ImageView *> &get_views();
 
@@ -90,9 +91,9 @@ class Image : public NonCopyable
 
 	VkSampleCountFlagBits sample_count{};
 
-	uint32_t mip_levels{1};
+	VkImageTiling tiling{};
 
-	uint32_t array_layers{1};
+	VkImageSubresource subresource{};
 
 	/// Image views referring to this image
 	std::unordered_set<ImageView *> views;

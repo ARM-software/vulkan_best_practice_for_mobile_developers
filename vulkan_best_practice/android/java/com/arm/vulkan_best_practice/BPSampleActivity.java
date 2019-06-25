@@ -69,10 +69,11 @@ public class BPSampleActivity extends AppCompatActivity {
 
         if (loadNativeLibrary(getResources().getString(R.string.native_lib_name))) {
             sampleList = Arrays.asList(getSamples());
-            File external_files_dir = getExternalFilesDir("assets");
+            File asset_files_dir = getExternalFilesDir("assets");
             File temp_files_dir = getCacheDir();
-            if (external_files_dir != null && temp_files_dir != null){
-                initFilePath(external_files_dir.toString(), temp_files_dir.toString());
+            File storage_files_dir = getExternalFilesDir("outputs");
+            if (asset_files_dir != null && temp_files_dir != null && storage_files_dir != null){
+                initFilePath(asset_files_dir.toString(), temp_files_dir.toString(), storage_files_dir.toString());
             }
         }
 
@@ -220,5 +221,5 @@ public class BPSampleActivity extends AppCompatActivity {
 
     private native void setArguments(String []args);
 
-    private native void initFilePath(String asset_path, String temp_path);
+    private native void initFilePath(String asset_path, String temp_path, String storage_path);
 }

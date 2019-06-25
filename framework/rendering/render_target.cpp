@@ -97,7 +97,7 @@ vkb::RenderTarget::RenderTarget(std::vector<core::Image> &&images) :
 
 		views.emplace_back(image, VK_IMAGE_VIEW_TYPE_2D);
 
-		attachments.emplace_back(Attachment{image.get_format(), image.get_samples(), image.get_usage()});
+		attachments.emplace_back(Attachment{image.get_format(), image.get_sample_count(), image.get_usage()});
 	}
 }
 

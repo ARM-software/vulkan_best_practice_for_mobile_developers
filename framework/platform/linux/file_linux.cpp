@@ -24,17 +24,35 @@ namespace vkb::file
 {
 std::string Path::get_asset_path()
 {
-	return "assets/";
+	static std::string assets = "assets/";
+
+	if (!is_directory(assets))
+	{
+		mkdir(assets.c_str(), 0777);
+	}
+
+	return assets;
 }
 
 std::string Path::get_temp_path()
 {
-	// Use the temp path from environment variables
 	std::string temp_path = "/tmp/";
 	if (const char *env_ptr = std::getenv("TMPDIR"))
 	{
 		temp_path = std::string(env_ptr) + "/";
 	}
 	return temp_path;
+}
+
+std::string Path::get_storage_path()
+{
+	static std::string storage = "outputs/";
+
+	if (!is_directory(storage))
+	{
+		mkdir(storage.c_str(), 0777);
+	}
+
+	return storage;
 }
 }        // namespace vkb::file

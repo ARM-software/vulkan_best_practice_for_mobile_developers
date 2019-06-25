@@ -82,14 +82,21 @@ class RenderContext : public NonCopyable
 
 	/**
 	 * @brief An error should be raised if the frame is not active.
-	 * 		  A frame is active after @ref begin_frame has been called.
+	 *        A frame is active after @ref begin_frame has been called.
 	 * @return The current active frame
 	 */
 	RenderFrame &get_active_frame();
 
 	/**
+	 * @brief An error should be raised if a frame is active.
+	 *        A frame is active after @ref begin_frame has been called.
+	 * @return The previous frame
+	 */
+	RenderFrame &get_last_rendered_frame();
+
+	/**
 	 * @brief Requests a command buffer to the command pool of the active frame
-	 * A frame should be active at the moment of requesting it
+	 *        A frame should be active at the moment of requesting it
 	 * @return A command buffer related to the current active frame
 	 */
 	CommandBuffer &request_frame_command_buffer(const Queue &queue);

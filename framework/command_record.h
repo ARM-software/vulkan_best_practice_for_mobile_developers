@@ -148,6 +148,7 @@ enum class CommandType
 	Draw,
 	DrawIndexed,
 	UpdateBuffer,
+	BlitImage,
 	CopyImage,
 	CopyBufferToImage,
 	ImageMemoryBarrier
@@ -323,6 +324,8 @@ class CommandRecord
 	void draw_indexed(uint32_t index_count, uint32_t instance_count, uint32_t first_index, int32_t vertex_offset, uint32_t first_instance);
 
 	void update_buffer(const core::Buffer &buffer, VkDeviceSize offset, const std::vector<uint8_t> &data);
+
+	void blit_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageBlit> &regions);
 
 	void copy_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageCopy> &regions);
 

@@ -20,19 +20,24 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <fstream>
 #include <stdexcept>
 #include <string>
+#include <sys/stat.h>
+#include <unordered_map>
 #include <vector>
 
 namespace vkb::file
 {
 /**
- * @file file.h
+ * @brief Helper to tell if a given path is a directory
  *
- * @brief Cross-platform helper functions to manipulate files in well-defined locations
+ * @param path A path to a directory
+ * @return True if the path points to a valid directory, false if not
  */
+bool is_directory(const std::string &path);
 
 /**
  * @brief Helper to read an asset file into a byte-array
@@ -65,6 +70,18 @@ std::vector<uint8_t> read_temp(const std::string &filename, const uint32_t count
 void write_temp(const std::vector<uint8_t> &data, const std::string &filename, const uint32_t count = 0);
 
 /**
+ * @brief Helper to write to a png image in permanent storage
+ *
+ * @param data       A vector filled with pixel data to write in (R, G, B, A) format
+ * @param filename   The name of the image file without an extension
+ * @param width      The width of the image
+ * @param height     The height of the image
+ * @param components The number of bytes per element
+ * @param row_stride The stride in bytes of a row of pixels
+ */
+void write_image(const std::vector<uint8_t> &data, const std::string &filename, const uint32_t width, const uint32_t height, const uint32_t components, const uint32_t row_stride);
+
+/**
  * @brief Manages initialization of platform-dependent file paths
  */
 class Path
@@ -82,10 +99,18 @@ class Path
 	 */
 	static const std::string &temp();
 
+	/**
+	 * @brief Platform dependent, for use with storage files
+	 * @return Path to permanent storage
+	 */
+	static const std::string &storage();
+
   private:
 	static std::string get_asset_path();
 
 	static std::string get_temp_path();
+
+	static std::string get_storage_path();
 };
 
 }        // namespace vkb::file

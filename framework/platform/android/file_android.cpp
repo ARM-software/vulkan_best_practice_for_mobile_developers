@@ -26,11 +26,12 @@ namespace vkb::file
 {
 std::string android_asset_path;
 std::string android_temp_path;
+std::string android_storage_path;
 
 extern "C"
 {
 	JNIEXPORT void JNICALL
-	    Java_com_arm_vulkan_1best_1practice_BPSampleActivity_initFilePath(JNIEnv *env, jobject thiz, jstring asset_path, jstring temp_path)
+	    Java_com_arm_vulkan_1best_1practice_BPSampleActivity_initFilePath(JNIEnv *env, jobject thiz, jstring asset_path, jstring temp_path, jstring storage_path)
 	{
 		const char *asset_path_cstr = env->GetStringUTFChars(asset_path, 0);
 		android_asset_path          = std::string(asset_path_cstr) + "/";
@@ -39,6 +40,10 @@ extern "C"
 		const char *temp_path_cstr = env->GetStringUTFChars(temp_path, 0);
 		android_temp_path          = std::string(temp_path_cstr) + "/";
 		env->ReleaseStringUTFChars(temp_path, temp_path_cstr);
+
+		const char *storage_path_cstr = env->GetStringUTFChars(storage_path, 0);
+		android_storage_path          = std::string(storage_path_cstr) + "/";
+		env->ReleaseStringUTFChars(storage_path, storage_path_cstr);
 	}
 }
 
@@ -50,5 +55,10 @@ std::string Path::get_asset_path()
 std::string Path::get_temp_path()
 {
 	return android_temp_path;
+}
+
+std::string Path::get_storage_path()
+{
+	return android_storage_path;
 }
 }        // namespace vkb::file

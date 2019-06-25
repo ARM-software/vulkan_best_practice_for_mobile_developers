@@ -27,6 +27,8 @@
 #include "scene_graph/components/sub_mesh.h"
 #include "scene_graph/scene.h"
 
+#include "platform/file.h"
+
 namespace vkb
 {
 /**
@@ -48,5 +50,11 @@ glm::mat4 vulkan_style_projection(const glm::mat4 &proj);
  * @return a snake case version of the string
  */
 std::string to_snake_case(const std::string &name);
+
+/**
+ * @brief Takes a screenshot of the app by writing the swapchain image to file (slow function)
+ * @param filename The name of the file to save the output to
+ */
+void screenshot(RenderContext &render_context, const std::string &filename);
 
 }        // namespace vkb

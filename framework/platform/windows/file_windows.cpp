@@ -26,12 +26,18 @@ namespace vkb::file
 {
 std::string Path::get_asset_path()
 {
-	return "assets/";
+	static std::string assets = "assets/";
+
+	if (!is_directory(assets))
+	{
+		CreateDirectory(assets.c_str(), NULL);
+	}
+
+	return assets;
 }
 
 std::string Path::get_temp_path()
 {
-	// Use the temp path from environment variables
 	TCHAR       temp_buffer[MAX_PATH];
 	DWORD       temp_path_ret = GetTempPath(MAX_PATH, temp_buffer);
 	std::string temp_path;
@@ -45,5 +51,17 @@ std::string Path::get_temp_path()
 	}
 
 	return temp_path;
+}
+
+std::string Path::get_storage_path()
+{
+	static std::string storage = "outputs/";
+
+	if (!is_directory(storage))
+	{
+		CreateDirectory(storage.c_str(), NULL);
+	}
+
+	return storage;
 }
 }        // namespace vkb::file
