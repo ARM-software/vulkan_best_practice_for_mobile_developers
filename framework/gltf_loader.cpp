@@ -412,12 +412,15 @@ sg::Scene GLTFLoader::load_scene()
 	{
 		auto &image = image_components.at(image_index);
 
-		core::Buffer stage_buffer{device, image->get_data().size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU};
-		stage_buffer.update(0, image->get_data());
+		core::Buffer stage_buffer{device,
+		                          image->get_data().size(),
+		                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		                          VMA_MEMORY_USAGE_CPU_ONLY,
+		                          0};
 
+		stage_buffer.update(0, image->get_data());
 		// Clean up the image data, as they are copied in the staging buffer
 		image->clear_data();
-
 		upload_image(command_buffer, stage_buffer, *image);
 
 		transient_buffers.push_back(std::move(stage_buffer));
@@ -710,8 +713,11 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primiti
 			submesh->vertices_count = to_u32(model.accessors.at(attribute.second).count);
 		}
 
-		core::Buffer buffer{device, vertex_data.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU};
-
+		core::Buffer buffer{device,
+		                    vertex_data.size(),
+		                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		                    VMA_MEMORY_USAGE_CPU_TO_GPU,
+		                    VMA_ALLOCATION_CREATE_MAPPED_BIT};
 		buffer.update(0, vertex_data);
 
 		auto pair = std::make_pair(attrib_name, std::move(buffer));
@@ -752,8 +758,11 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primiti
 				break;
 		}
 
-		submesh->index_buffer = std::make_unique<core::Buffer>(device, index_data.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-
+		submesh->index_buffer = std::make_unique<core::Buffer>(device,
+		                                                       index_data.size(),
+		                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+		                                                       VMA_MEMORY_USAGE_CPU_TO_GPU,
+		                                                       VMA_ALLOCATION_CREATE_MAPPED_BIT);
 		submesh->index_buffer->update(0, index_data);
 	}
 	else

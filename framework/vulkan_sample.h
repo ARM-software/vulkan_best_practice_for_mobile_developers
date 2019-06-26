@@ -127,7 +127,10 @@ class VulkanSample : public Application
 
 	virtual void finish() override;
 
-	VkPhysicalDevice get_gpu(size_t i);
+	/**
+	 * @return A suitable GPU
+	 */
+	VkPhysicalDevice get_gpu();
 
 	VkSurfaceKHR get_surface();
 

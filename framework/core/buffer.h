@@ -31,7 +31,7 @@ namespace core
 class Buffer : public NonCopyable
 {
   public:
-	Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage);
+	Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaAllocationCreateFlags flags);
 
 	Buffer(Buffer &&other);
 
@@ -43,6 +43,25 @@ class Buffer : public NonCopyable
 
 	VmaAllocation get_memory() const;
 
+	/**
+	 * @brief Maps vulkan memory to an host visible address
+	 * @return Pointer to host visible memory
+	 */
+	uint8_t *map();
+
+	/**
+	 * @brief Unmaps vulkan memory from the host visible address
+	 */
+	void unmap();
+
+	/**
+	 * @brief Flushes if memory is HOST_VISIBLE or it is not HOST_COHERENT
+	 */
+	void flush() const;
+
+	/**
+	 * @return The size of the buffer
+	 */
 	VkDeviceSize get_size() const;
 
 	/**

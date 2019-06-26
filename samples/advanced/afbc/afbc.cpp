@@ -50,7 +50,7 @@ bool AFBCSample::prepare(vkb::Platform &platform)
 
 	std::vector<const char *> extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
-	device = std::make_unique<vkb::Device>(get_gpu(0), get_surface(), extensions);
+	device = std::make_unique<vkb::Device>(get_gpu(), get_surface(), extensions);
 
 	auto swapchain = std::make_unique<vkb::Swapchain>(*device,
 	                                                  get_surface(),

@@ -321,9 +321,21 @@ void VulkanSample::finish()
 	vkDeviceWaitIdle(device->get_handle());
 }
 
-VkPhysicalDevice VulkanSample::get_gpu(size_t i)
+VkPhysicalDevice VulkanSample::get_gpu()
 {
-	return gpus.at(i);
+	// Find a discrete GPU
+	for (auto gpu : gpus)
+	{
+		VkPhysicalDeviceProperties properties{};
+		vkGetPhysicalDeviceProperties(gpu, &properties);
+		if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+		{
+			return gpu;
+		}
+	}
+
+	// Otherwise just pick the first one
+	return gpus.at(0);
 }
 
 VkSurfaceKHR VulkanSample::get_surface()

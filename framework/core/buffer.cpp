@@ -26,7 +26,7 @@ namespace vkb
 {
 namespace core
 {
-Buffer::Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage) :
+Buffer::Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaAllocationCreateFlags flags) :
     device{device},
     size{size}
 {
@@ -36,7 +36,7 @@ Buffer::Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usag
 
 	VmaAllocationCreateInfo memory_info{};
 	memory_info.usage = memory_usage;
-	memory_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+	memory_info.flags = flags;
 
 	VmaAllocationInfo alloc_info{};
 	auto              result = vmaCreateBuffer(device.get_memory_allocator(),
@@ -48,7 +48,7 @@ Buffer::Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usag
 
 	if (result != VK_SUCCESS)
 	{
-		throw VulkanException{result, "Cannote create Buffer"};
+		throw VulkanException{result, "Cannot create Buffer"};
 	}
 }
 
@@ -93,6 +93,29 @@ VkDeviceSize Buffer::get_size() const
 	return size;
 }
 
+uint8_t *Buffer::map()
+{
+	if (!mapped_data)
+	{
+		VK_CHECK(vmaMapMemory(device.get_memory_allocator(), memory, reinterpret_cast<void **>(&mapped_data)));
+	}
+	return mapped_data;
+}
+
+void Buffer::flush() const
+{
+	vmaFlushAllocation(device.get_memory_allocator(), memory, 0, size);
+}
+
+void Buffer::unmap()
+{
+	if (mapped_data)
+	{
+		vmaUnmapMemory(device.get_memory_allocator(), memory);
+		mapped_data = nullptr;
+	}
+}
+
 void Buffer::update(size_t offset, const std::vector<uint8_t> &data)
 {
 	update(offset, data.data(), data.size());
@@ -100,7 +123,12 @@ void Buffer::update(size_t offset, const std::vector<uint8_t> &data)
 
 void Buffer::update(const size_t offset, const uint8_t *src, const size_t size)
 {
+	map();
 	std::copy(src, src + size, mapped_data + offset);
+	flush();
+#ifdef VK_USE_PLATFORM_MACOS_MVK
+	unmap();        // Mac MoltenVK requires unmapping
+#endif              // VK_USE_PLATFORM_MACOS_MVK
 }
 
 }        // namespace core

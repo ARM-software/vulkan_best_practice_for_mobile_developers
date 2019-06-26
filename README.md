@@ -83,8 +83,8 @@ Follow build instructions for your platform below.
 ### Supported Platforms
 - Windows - [Build Guide](./docs/build.md#windows "Windows Build Guide")
 - Linux - [Build Guide](./docs/build.md#linux "Linux Build Guide")
+- Mac OSX - [Build Guide](./docs/build.md#mac "Mac OSX Build Guide")
 - Android - [Build Guide](./docs/build.md#android "Android Build Guide")
-<!-- - Mac OSX (Experimental) - [Build Guide](./build.md#mac "Mac OSX Build Guide") --> 
 
 > Tested on: Samsung Galaxy S9, Samsung Galaxy S10, Huawei Mate 20 Pro, OPPO R15
 

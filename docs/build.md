@@ -38,10 +38,13 @@
 - [Linux](#linux)
   - [Dependencies](#dependencies-1)
   - [Build with CMake](#build-with-cmake-1)
-- [Android](#android)
+- [Mac](#mac)
   - [Dependencies](#dependencies-2)
-  - [Build with Gradle](#build-with-gradle)
   - [Build with CMake](#build-with-cmake-2)
+- [Android](#android)
+  - [Dependencies](#dependencies-3)
+  - [Build with Gradle](#build-with-gradle)
+  - [Build with CMake](#build-with-cmake-3)
 - [Building Individual Samples](#building-individual-samples)
   - [CMake](#cmake)
   - [Visual Studio](#visual-studio)
@@ -174,6 +177,36 @@ cmake --build build/linux --config Release --target vulkan_best_practice -- -j4
 ```
 ./build/linux/vulkan_best_practice/bin/Release/x86_64/vulkan_best_practice --help
 ```
+
+# Mac
+
+## Dependencies
+
+- CMake v3.8+
+- Command Line Tools (CLT) for Xcode: `xcode-select --install`
+- [CMake Options](#cmake-options)
+- [3D models](#3d-models)
+
+## Build with CMake
+
+`Step 1.` The following command will generate the project
+
+```
+cmake H. -Bbuild/mac -DCMAKE_BUILD_TYPE=Release
+```
+
+`Step 2.` Build the project
+
+```
+cmake --build build/mac --config Release --target vulkan_best_practice -- -j4
+```
+
+`Step 3.` Run the **Vulkan Best Practice** application to display the help message
+
+```
+./build/mac/vulkan_best_practice/bin/Release/x86_64/vulkan_best_practice --help
+```
+
 
 # Android
 

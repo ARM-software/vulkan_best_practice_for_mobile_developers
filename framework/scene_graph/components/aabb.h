@@ -58,7 +58,7 @@ class AABB : public Component
 	 * @brief Update the bounding box based on the given submesh vertices
 	 * @param submesh The submesh object
 	 */
-	void update(const SubMesh &submesh);
+	void update(SubMesh &submesh);
 
 	/**
 	 * @brief Apply a given matrix transformation to the bounding box

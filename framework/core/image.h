@@ -58,6 +58,17 @@ class Image : public NonCopyable
 
 	VmaAllocation get_memory() const;
 
+	/**
+	 * @brief Maps vulkan memory to an host visible address
+	 * @return Pointer to host visible memory
+	 */
+	uint8_t *map();
+
+	/**
+	 * @brief Unmaps vulkan memory from the host visible address
+	 */
+	void unmap();
+
 	VkImageType get_type() const;
 
 	const VkExtent3D &get_extent() const;
@@ -97,6 +108,8 @@ class Image : public NonCopyable
 
 	/// Image views referring to this image
 	std::unordered_set<ImageView *> views;
+
+	uint8_t *mapped_data{nullptr};
 };
 }        // namespace core
 }        // namespace vkb

@@ -44,7 +44,7 @@ namespace vkb
 class Device : public NonCopyable
 {
   public:
-	Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const std::vector<const char *> extensions = {}, const VkPhysicalDeviceFeatures &features = {});
+	Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vector<const char *> extensions = {}, const VkPhysicalDeviceFeatures &features = {});
 
 	~Device();
 

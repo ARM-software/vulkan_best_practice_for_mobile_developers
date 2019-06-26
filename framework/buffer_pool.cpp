@@ -23,7 +23,7 @@
 namespace vkb
 {
 BufferBlock::BufferBlock(Device &device, VkDeviceSize size, VkBufferUsageFlags usage) :
-    buffer{device, size, usage, VMA_MEMORY_USAGE_CPU_TO_GPU}
+    buffer{device, size, usage, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT}
 {
 	if (usage == VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
 	{

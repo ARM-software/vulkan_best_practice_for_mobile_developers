@@ -46,7 +46,7 @@ void AABB::update(const glm::vec3 &point)
 	max = glm::max(max, point);
 }
 
-void AABB::update(const SubMesh &submesh)
+void AABB::update(SubMesh &submesh)
 {
 	// Find vertex position attribute of submesh
 	auto position_buffer = submesh.vertex_buffers.find("position");
@@ -59,12 +59,12 @@ void AABB::update(const SubMesh &submesh)
 	}
 
 	// Get buffer data of the vertex position
-	const glm::vec3 *vertices = reinterpret_cast<const glm::vec3 *>(position_buffer->second.get_data());
+	const glm::vec3 *vertices = reinterpret_cast<const glm::vec3 *>(position_buffer->second.map());
 
 	// Check if submesh is indexed
 	if (submesh.vertex_indices > 0)
 	{
-		const uint16_t *indices = reinterpret_cast<const uint16_t *>(submesh.index_buffer->get_data());
+		const uint16_t *indices = reinterpret_cast<const uint16_t *>(submesh.index_buffer->map());
 
 		// Update bounding box for each indexed vertex
 		for (uint32_t vertex_id = 0; vertex_id < submesh.vertex_indices; vertex_id++)

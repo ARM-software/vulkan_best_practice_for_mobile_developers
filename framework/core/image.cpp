@@ -181,6 +181,28 @@ VmaAllocation Image::get_memory() const
 	return memory;
 }
 
+uint8_t *Image::map()
+{
+	if (!mapped_data)
+	{
+		if (tiling != VK_IMAGE_TILING_LINEAR)
+		{
+			LOGW("Mapping image memory that is not linear");
+		}
+		VK_CHECK(vmaMapMemory(device.get_memory_allocator(), memory, reinterpret_cast<void **>(&mapped_data)));
+	}
+	return mapped_data;
+}
+
+void Image::unmap()
+{
+	if (mapped_data)
+	{
+		vmaUnmapMemory(device.get_memory_allocator(), memory);
+		mapped_data = nullptr;
+	}
+}
+
 VkImageType Image::get_type() const
 {
 	return type;

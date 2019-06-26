@@ -122,7 +122,7 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 
 	// Upload font data into the vulkan image memory
 	{
-		core::Buffer stage_buffer{device, upload_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY};
+		core::Buffer stage_buffer{device, upload_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, 0};
 		stage_buffer.update(0, {font_data, font_data + upload_size});
 
 		auto &command_buffer = device.request_command_buffer();

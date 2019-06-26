@@ -185,8 +185,7 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 
 	queue.wait_idle();
 
-	const char *raw_data;
-	vmaMapMemory(render_context.get_device().get_memory_allocator(), dst_image.get_memory(), (void **) &raw_data);
+	auto raw_data = dst_image.map();
 
 	// Android requires the sub resource to be queried while the memory is mapped
 	VkImageSubresource  subresource{VK_IMAGE_ASPECT_COLOR_BIT};
@@ -199,9 +198,9 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 	size_t j = 0;
 	for (size_t i = 0; i < width * height * 4; i += 4)
 	{
-		image_data[j]     = static_cast<uint8_t>(raw_data[i]);
-		image_data[j + 1] = static_cast<uint8_t>(raw_data[i + 1]);
-		image_data[j + 2] = static_cast<uint8_t>(raw_data[i + 2]);
+		image_data[j]     = raw_data[i];
+		image_data[j + 1] = raw_data[i + 1];
+		image_data[j + 2] = raw_data[i + 2];
 
 		// Switch B and R components of each pixel if swapchain image format isn't RGB
 		if (swizzle)
@@ -212,7 +211,7 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 		j += 3;
 	}
 
-	vmaUnmapMemory(render_context.get_device().get_memory_allocator(), dst_image.get_memory());
+	dst_image.unmap();
 
 	vkb::file::write_image(image_data,
 	                       filename,

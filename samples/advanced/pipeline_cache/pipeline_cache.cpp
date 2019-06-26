@@ -76,7 +76,7 @@ bool PipelineCache::prepare(vkb::Platform &platform)
 
 	std::vector<const char *> extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
-	device = std::make_unique<vkb::Device>(get_gpu(0), get_surface(), extensions);
+	device = std::make_unique<vkb::Device>(get_gpu(), get_surface(), extensions);
 
 	/* Add initial pipeline cache data from the cached file */
 	VkPipelineCacheCreateInfo create_info{VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO};
