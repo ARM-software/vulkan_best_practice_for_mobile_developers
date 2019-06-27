@@ -94,6 +94,9 @@ class Buffer : public NonCopyable
 	VkDeviceSize size{0};
 
 	uint8_t *mapped_data{nullptr};
+
+	/// Whether it has been mapped with vmaMapMemory
+	bool mapped = false;
 };
 }        // namespace core
 }        // namespace vkb

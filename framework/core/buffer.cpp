@@ -44,7 +44,11 @@ Buffer::Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usag
                                   &handle, &memory,
                                   &alloc_info);
 
-	mapped_data = static_cast<uint8_t *>(alloc_info.pMappedData);
+	if (flags & VMA_ALLOCATION_CREATE_MAPPED_BIT)
+	{
+		// No need to unmap in this case
+		mapped_data = static_cast<uint8_t *>(alloc_info.pMappedData);
+	}
 
 	if (result != VK_SUCCESS)
 	{
@@ -57,18 +61,21 @@ Buffer::Buffer(Buffer &&other) :
     handle{other.handle},
     memory{other.memory},
     size{other.size},
-    mapped_data{other.mapped_data}
+    mapped_data{other.mapped_data},
+    mapped{other.mapped}
 {
 	// Reset other handles to avoid releasing on destruction
 	other.handle      = VK_NULL_HANDLE;
 	other.memory      = VK_NULL_HANDLE;
 	other.mapped_data = nullptr;
+	other.mapped      = false;
 }
 
 Buffer::~Buffer()
 {
 	if (handle != VK_NULL_HANDLE && memory != VK_NULL_HANDLE)
 	{
+		unmap();
 		vmaDestroyBuffer(device.get_memory_allocator(), handle, memory);
 	}
 }
@@ -98,6 +105,7 @@ uint8_t *Buffer::map()
 	if (!mapped_data)
 	{
 		VK_CHECK(vmaMapMemory(device.get_memory_allocator(), memory, reinterpret_cast<void **>(&mapped_data)));
+		mapped = true;
 	}
 	return mapped_data;
 }
@@ -109,10 +117,11 @@ void Buffer::flush() const
 
 void Buffer::unmap()
 {
-	if (mapped_data)
+	if (mapped)
 	{
 		vmaUnmapMemory(device.get_memory_allocator(), memory);
 		mapped_data = nullptr;
+		mapped      = false;
 	}
 }
 

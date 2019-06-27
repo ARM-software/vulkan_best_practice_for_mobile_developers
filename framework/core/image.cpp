@@ -146,10 +146,14 @@ Image::Image(Image &&other) :
     sample_count{other.sample_count},
     usage{other.usage},
     tiling{other.tiling},
-    subresource{other.subresource}
+    subresource{other.subresource},
+    mapped_data{other.mapped_data},
+    mapped{other.mapped}
 {
-	other.handle = VK_NULL_HANDLE;
-	other.memory = VK_NULL_HANDLE;
+	other.handle      = VK_NULL_HANDLE;
+	other.memory      = VK_NULL_HANDLE;
+	other.mapped_data = nullptr;
+	other.mapped      = false;
 
 	// Update image views references to this image to avoid dangling pointers
 	for (auto &view : views)
@@ -162,6 +166,7 @@ Image::~Image()
 {
 	if (handle != VK_NULL_HANDLE && memory != VK_NULL_HANDLE)
 	{
+		unmap();
 		vmaDestroyImage(device.get_memory_allocator(), handle, memory);
 	}
 }
@@ -190,16 +195,18 @@ uint8_t *Image::map()
 			LOGW("Mapping image memory that is not linear");
 		}
 		VK_CHECK(vmaMapMemory(device.get_memory_allocator(), memory, reinterpret_cast<void **>(&mapped_data)));
+		mapped = true;
 	}
 	return mapped_data;
 }
 
 void Image::unmap()
 {
-	if (mapped_data)
+	if (mapped)
 	{
 		vmaUnmapMemory(device.get_memory_allocator(), memory);
 		mapped_data = nullptr;
+		mapped      = false;
 	}
 }
 

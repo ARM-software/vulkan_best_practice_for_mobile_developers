@@ -110,6 +110,9 @@ class Image : public NonCopyable
 	std::unordered_set<ImageView *> views;
 
 	uint8_t *mapped_data{nullptr};
+
+	/// Whether it was mapped with vmaMapMemory
+	bool mapped{false};
 };
 }        // namespace core
 }        // namespace vkb
