@@ -183,7 +183,8 @@ cmake --build build/linux --config Release --target vulkan_best_practice -- -j4
 ## Dependencies
 
 - CMake v3.8+
-- Command Line Tools (CLT) for Xcode: `xcode-select --install`
+- Command Line Tools (CLT) for Xcode `xcode-select --install`
+- [Vulkan SDK](https://vulkan.lunarg.com/doc/sdk/latest/mac/getting_started.html) `./install_vulkan.py`
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
 
