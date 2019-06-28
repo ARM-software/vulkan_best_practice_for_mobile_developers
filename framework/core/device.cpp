@@ -194,6 +194,20 @@ const VkPhysicalDeviceProperties &Device::get_properties() const
 	return properties;
 }
 
+bool Device::is_image_format_supported(VkFormat format) const
+{
+	VkImageFormatProperties format_properties;
+
+	auto result = vkGetPhysicalDeviceImageFormatProperties(physical_device,
+	                                                       format,
+	                                                       VK_IMAGE_TYPE_2D,
+	                                                       VK_IMAGE_TILING_OPTIMAL,
+	                                                       VK_IMAGE_USAGE_SAMPLED_BIT,
+	                                                       0,        // no create flags
+	                                                       &format_properties);
+	return result != VK_ERROR_FORMAT_NOT_SUPPORTED;
+}
+
 const VkFormatProperties Device::get_format_properties(VkFormat format) const
 {
 	VkFormatProperties format_properties;
