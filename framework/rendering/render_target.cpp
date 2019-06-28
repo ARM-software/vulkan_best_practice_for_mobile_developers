@@ -145,7 +145,7 @@ const VkExtent2D &RenderTarget::get_extent() const
 	return extent;
 }
 
-const std::vector<ImageView> &RenderTarget::get_views() const
+const std::vector<core::ImageView> &RenderTarget::get_views() const
 {
 	return views;
 }

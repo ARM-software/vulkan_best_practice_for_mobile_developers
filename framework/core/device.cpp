@@ -142,7 +142,7 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vect
 		throw VulkanException{result, "Cannot create allocator"};
 	}
 
-	command_pool = std::make_unique<CommandPool>(*this, get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0).get_family_index());
+	command_pool = std::make_unique<CommandPool>(*this, get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, 0).get_family_index());
 	fence_pool   = std::make_unique<FencePool>(*this);
 }
 

@@ -141,7 +141,7 @@ bool VulkanSample::prepare(Platform &platform)
 
 	LOGI("Initializing context");
 
-	instance = create_instance({VK_KHR_SURFACE_EXTENSION_NAME});
+	instance = create_instance({VK_KHR_SURFACE_EXTENSION_NAME}, get_sample_additional_layers());
 	surface  = platform.create_surface(instance);
 
 	uint32_t physical_device_count{0};
@@ -522,6 +522,11 @@ VkInstance VulkanSample::create_instance(const std::vector<const char *> &requir
 #endif
 
 	return new_instance;
+}
+
+std::vector<const char *> VulkanSample::get_sample_additional_layers()
+{
+	return {};
 }
 
 void VulkanSample::draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, RenderTarget &render_target)

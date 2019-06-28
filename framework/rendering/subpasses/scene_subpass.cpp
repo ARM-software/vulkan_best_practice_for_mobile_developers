@@ -234,6 +234,11 @@ void SceneSubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_
 		}
 	}
 
+	draw_submesh_command(command_buffer, sub_mesh);
+}
+
+void SceneSubpass::draw_submesh_command(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh)
+{
 	// Draw submesh indexed if indices exists
 	if (sub_mesh.vertex_indices != 0)
 	{

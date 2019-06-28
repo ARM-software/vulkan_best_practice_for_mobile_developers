@@ -28,10 +28,10 @@
 namespace vkb
 {
 class Device;
-class ImageView;
 
 namespace core
 {
+class ImageView;
 class Image : public NonCopyable
 {
   public:

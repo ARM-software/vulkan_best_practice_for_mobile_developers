@@ -135,31 +135,33 @@ struct ColorBlendState
 	std::vector<ColorBlendAttachmentState> attachments;
 };
 
-/// Helper class to create specialization constants for a vulkan pipeline
-class SpecializationInfo
+/// Helper class to create specialization constants for a Vulkan pipeline. The state tracks a pipeline globally, and not per shader. Two shaders using the same constant_id will have the same data.
+class SpecializationConstantState
 {
   public:
-	const VkSpecializationInfo &get_handle() const;
+	void reset();
+
+	bool is_dirty() const;
+
+	void clear_dirty();
 
 	template <class T>
 	void set_constant(uint32_t constant_id, const T &data);
 
 	void set_constant(uint32_t constant_id, const std::vector<uint8_t> &data);
 
-	const std::vector<uint8_t> &get_data() const;
+	void set_specialization_constant_state(const std::map<uint32_t, std::vector<uint8_t>> &state);
 
-	const std::vector<VkSpecializationMapEntry> &get_map_entries() const;
+	const std::map<uint32_t, std::vector<uint8_t>> &get_specialization_constant_state() const;
 
   private:
-	mutable VkSpecializationInfo handle;
-
-	std::vector<VkSpecializationMapEntry> map_entries;
-
-	std::vector<uint8_t> data;
+	bool dirty{false};
+	// Map tracking state of the Specialization Constants
+	std::map<uint32_t, std::vector<uint8_t>> specialization_constant_state;
 };
 
 template <class T>
-inline void SpecializationInfo::set_constant(std::uint32_t constant_id, const T &data)
+inline void SpecializationConstantState::set_constant(std::uint32_t constant_id, const T &data)
 {
 	std::uint32_t value = static_cast<std::uint32_t>(data);
 
@@ -169,17 +171,16 @@ inline void SpecializationInfo::set_constant(std::uint32_t constant_id, const T 
 }
 
 template <>
-inline void SpecializationInfo::set_constant<bool>(std::uint32_t constant_id, const bool &data_)
+inline void SpecializationConstantState::set_constant<bool>(std::uint32_t constant_id, const bool &data_)
 {
 	std::uint32_t value = static_cast<std::uint32_t>(data_);
 
-	set_constant(
-	    constant_id,
-	    {reinterpret_cast<const uint8_t *>(&value),
-	     reinterpret_cast<const uint8_t *>(&value) + sizeof(std::uint32_t)});
+	set_constant(constant_id,
+	             {reinterpret_cast<const uint8_t *>(&value),
+	              reinterpret_cast<const uint8_t *>(&value) + sizeof(std::uint32_t)});
 }
 
-class GraphicsPipelineState
+class PipelineState
 {
   public:
 	void reset();
@@ -187,6 +188,8 @@ class GraphicsPipelineState
 	void set_pipeline_layout(PipelineLayout &pipeline_layout);
 
 	void set_render_pass(const RenderPass &render_pass);
+
+	void set_specialization_constant(uint32_t constant_id, const std::vector<uint8_t> &data);
 
 	void set_vertex_input_state(const VertexInputState &vertex_input_sate);
 
@@ -206,7 +209,9 @@ class GraphicsPipelineState
 
 	const PipelineLayout &get_pipeline_layout() const;
 
-	const RenderPass &get_render_pass() const;
+	const RenderPass *get_render_pass() const;
+
+	const SpecializationConstantState &get_specialization_constant_state() const;
 
 	const VertexInputState &get_vertex_input_state() const;
 
@@ -234,6 +239,8 @@ class GraphicsPipelineState
 	PipelineLayout *pipeline_layout{nullptr};
 
 	const RenderPass *render_pass{nullptr};
+
+	SpecializationConstantState specialization_constant_state{};
 
 	VertexInputState vertex_input_sate{};
 

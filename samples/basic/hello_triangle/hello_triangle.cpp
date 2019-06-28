@@ -992,6 +992,26 @@ void HelloTriangle::teardown(Context &context)
 		vkDestroySemaphore(context.device, semaphore, nullptr);
 	}
 
+	if (context.pipeline != VK_NULL_HANDLE)
+	{
+		vkDestroyPipeline(context.device, context.pipeline, nullptr);
+	}
+
+	if (context.pipeline_layout != VK_NULL_HANDLE)
+	{
+		vkDestroyPipelineLayout(context.device, context.pipeline_layout, nullptr);
+	}
+
+	if (context.render_pass != VK_NULL_HANDLE)
+	{
+		vkDestroyRenderPass(context.device, context.render_pass, nullptr);
+	}
+
+	for (VkImageView image_view : context.swapchain_image_views)
+	{
+		vkDestroyImageView(context.device, image_view, nullptr);
+	}
+
 	if (context.swapchain != VK_NULL_HANDLE)
 	{
 		vkDestroySwapchainKHR(context.device, context.swapchain, nullptr);

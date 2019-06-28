@@ -28,7 +28,7 @@
 #include "core/image.h"
 #include "core/image_view.h"
 #include "core/sampler.h"
-#include "rendering/graphics_pipeline_state.h"
+#include "rendering/pipeline_state.h"
 #include "rendering/render_target.h"
 
 namespace vkb
@@ -74,6 +74,11 @@ class CommandBuffer : public NonCopyable
 
 	void bind_pipeline_layout(PipelineLayout &pipeline_layout);
 
+	template <class T>
+	void set_specialization_constant(uint32_t constant_id, const T &data);
+
+	void set_specialization_constant(uint32_t constant_id, const std::vector<uint8_t> &data);
+
 	void push_constants(uint32_t offset, const std::vector<uint8_t> &values);
 
 	template <typename T>
@@ -86,9 +91,9 @@ class CommandBuffer : public NonCopyable
 
 	void bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element);
 
-	void bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element);
+	void bind_image(const core::ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element);
 
-	void bind_input(const ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
+	void bind_input(const core::ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
 
 	void bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::Buffer>> &buffers, const std::vector<VkDeviceSize> &offsets);
 
@@ -124,6 +129,12 @@ class CommandBuffer : public NonCopyable
 
 	void draw_indexed(uint32_t index_count, uint32_t instance_count, uint32_t first_index, int32_t vertex_offset, uint32_t first_instance);
 
+	void draw_indexed_indirect(const core::Buffer &buffer, VkDeviceSize offset, uint32_t draw_count, uint32_t stride);
+
+	void dispatch(uint32_t group_count_x, uint32_t group_count_y, uint32_t group_count_z);
+
+	void dispatch_indirect(const core::Buffer &buffer, VkDeviceSize offset);
+
 	void update_buffer(const core::Buffer &buffer, VkDeviceSize offset, const std::vector<uint8_t> &data);
 
 	void blit_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageBlit> &regions);
@@ -132,7 +143,9 @@ class CommandBuffer : public NonCopyable
 
 	void copy_buffer_to_image(const core::Buffer &buffer, const core::Image &image, const std::vector<VkBufferImageCopy> &regions);
 
-	void image_memory_barrier(const ImageView &image_view, const ImageMemoryBarrier &memory_barrier);
+	void image_memory_barrier(const core::ImageView &image_view, const ImageMemoryBarrier &memory_barrier);
+
+	void buffer_memory_barrier(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier);
 
   private:
 	bool recording_commands{false};
@@ -145,4 +158,23 @@ class CommandBuffer : public NonCopyable
 
 	CommandReplay replayer;
 };
+
+template <class T>
+inline void CommandBuffer::set_specialization_constant(uint32_t constant_id, const T &data)
+{
+	set_specialization_constant(constant_id,
+	                            {reinterpret_cast<const uint8_t *>(&data),
+	                             reinterpret_cast<const uint8_t *>(&data) + sizeof(T)});
+}
+
+template <>
+inline void CommandBuffer::set_specialization_constant<bool>(std::uint32_t constant_id, const bool &data)
+{
+	std::uint32_t value = static_cast<std::uint32_t>(data);
+
+	set_specialization_constant(
+	    constant_id,
+	    {reinterpret_cast<const uint8_t *>(&value),
+	     reinterpret_cast<const uint8_t *>(&value) + sizeof(std::uint32_t)});
+}
 }        // namespace vkb

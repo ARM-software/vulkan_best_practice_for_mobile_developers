@@ -86,7 +86,7 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 	                      1, 1,
 	                      VK_IMAGE_TILING_LINEAR};
 
-	ImageView dst_image_view{dst_image, VK_IMAGE_VIEW_TYPE_2D};
+	core::ImageView dst_image_view{dst_image, VK_IMAGE_VIEW_TYPE_2D};
 
 	const auto &queue = render_context.get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 

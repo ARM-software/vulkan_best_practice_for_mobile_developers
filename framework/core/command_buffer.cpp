@@ -133,6 +133,11 @@ void CommandBuffer::bind_pipeline_layout(PipelineLayout &pipeline_layout)
 	recorder.bind_pipeline_layout(pipeline_layout);
 }
 
+void CommandBuffer::set_specialization_constant(uint32_t constant_id, const std::vector<uint8_t> &data)
+{
+	recorder.set_specialization_constant(constant_id, data);
+}
+
 void CommandBuffer::push_constants(uint32_t offset, const std::vector<uint8_t> &values)
 {
 	recorder.push_constants(offset, values);
@@ -143,12 +148,12 @@ void CommandBuffer::bind_buffer(const core::Buffer &buffer, VkDeviceSize offset,
 	recorder.bind_buffer(buffer, offset, range, set, binding, array_element);
 }
 
-void CommandBuffer::bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element)
+void CommandBuffer::bind_image(const core::ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element)
 {
 	recorder.bind_image(image_view, sampler, set, binding, array_element);
 }
 
-void CommandBuffer::bind_input(const ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element)
+void CommandBuffer::bind_input(const core::ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element)
 {
 	recorder.bind_input(image_view, set, binding, array_element);
 }
@@ -238,6 +243,21 @@ void CommandBuffer::draw_indexed(uint32_t index_count, uint32_t instance_count, 
 	recorder.draw_indexed(index_count, instance_count, first_index, vertex_offset, first_instance);
 }
 
+void CommandBuffer::draw_indexed_indirect(const core::Buffer &buffer, VkDeviceSize offset, uint32_t draw_count, uint32_t stride)
+{
+	recorder.draw_indexed_indirect(buffer, offset, draw_count, stride);
+}
+
+void CommandBuffer::dispatch(uint32_t group_count_x, uint32_t group_count_y, uint32_t group_count_z)
+{
+	recorder.dispatch(group_count_x, group_count_y, group_count_z);
+}
+
+void CommandBuffer::dispatch_indirect(const core::Buffer &buffer, VkDeviceSize offset)
+{
+	recorder.dispatch_indirect(buffer, offset);
+}
+
 void CommandBuffer::update_buffer(const core::Buffer &buffer, VkDeviceSize offset, const std::vector<uint8_t> &data)
 {
 	recorder.update_buffer(buffer, offset, data);
@@ -258,8 +278,13 @@ void CommandBuffer::copy_buffer_to_image(const core::Buffer &buffer, const core:
 	recorder.copy_buffer_to_image(buffer, image, regions);
 }
 
-void CommandBuffer::image_memory_barrier(const ImageView &image_view, const ImageMemoryBarrier &memory_barriers)
+void CommandBuffer::image_memory_barrier(const core::ImageView &image_view, const ImageMemoryBarrier &memory_barriers)
 {
 	recorder.image_memory_barrier(image_view, memory_barriers);
+}
+
+void CommandBuffer::buffer_memory_barrier(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier)
+{
+	recorder.buffer_memory_barrier(buffer, offset, size, memory_barrier);
 }
 }        // namespace vkb

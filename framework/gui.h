@@ -304,8 +304,8 @@ class Gui
 
 	std::vector<Font> fonts;
 
-	std::unique_ptr<core::Image> font_image;
-	std::unique_ptr<ImageView>   font_image_view;
+	std::unique_ptr<core::Image>     font_image;
+	std::unique_ptr<core::ImageView> font_image_view;
 
 	std::unique_ptr<core::Sampler> sampler{nullptr};
 

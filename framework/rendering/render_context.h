@@ -33,7 +33,7 @@
 #include "core/render_pass.h"
 #include "core/shader_module.h"
 #include "core/swapchain.h"
-#include "rendering/graphics_pipeline_state.h"
+#include "rendering/pipeline_state.h"
 #include "rendering/render_frame.h"
 #include "rendering/render_target.h"
 #include "resource_cache.h"

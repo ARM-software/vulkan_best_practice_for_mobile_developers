@@ -30,7 +30,7 @@
 #include "core/pipeline_layout.h"
 #include "core/render_pass.h"
 #include "core/sampler.h"
-#include "rendering/graphics_pipeline_state.h"
+#include "rendering/pipeline_state.h"
 #include "rendering/render_target.h"
 #include "resource_binding_state.h"
 
@@ -46,7 +46,7 @@ struct PipelineDesc
 {
 	std::streampos event_id{};
 
-	GraphicsPipelineState graphics_pipeline_state;
+	PipelineState pipeline_state;
 };
 
 /*
@@ -61,7 +61,7 @@ struct SubpassDesc
 
 	std::vector<uint32_t> output_attachments;
 
-	std::list<PipelineDesc> pipeline_states;
+	std::list<PipelineDesc> pipeline_descs;
 };
 
 /*
@@ -146,11 +146,15 @@ enum class CommandType
 	SetDepthBounds,
 	Draw,
 	DrawIndexed,
+	DrawIndexedIndirect,
+	Dispatch,
+	DispatchIndirect,
 	UpdateBuffer,
 	BlitImage,
 	CopyImage,
 	CopyBufferToImage,
-	ImageMemoryBarrier
+	ImageMemoryBarrier,
+	BufferMemoryBarrier
 };
 
 /*
@@ -186,6 +190,8 @@ class CommandRecord
 
 	void bind_pipeline_layout(PipelineLayout &pipeline_layout);
 
+	void set_specialization_constant(uint32_t constant_id, const std::vector<uint8_t> &value);
+
 	void push_constants(uint32_t offset, const std::vector<uint8_t> &values);
 
 	/**
@@ -207,7 +213,7 @@ class CommandRecord
 	 * @param binding Descriptor binding within that set
 	 * @param array_element The starting element in that array
 	 */
-	void bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element);
+	void bind_image(const core::ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element);
 
 	/**
 	 * @brief Like bind_image, it binds an image view to an input attachment
@@ -216,7 +222,7 @@ class CommandRecord
 	 * @param binding Descriptor binding within that set
 	 * @param array_element The starting element in that array
 	 */
-	void bind_input(const ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
+	void bind_input(const core::ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
 
 	void bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::Buffer>> &buffers, const std::vector<VkDeviceSize> &offsets);
 
@@ -322,6 +328,12 @@ class CommandRecord
 
 	void draw_indexed(uint32_t index_count, uint32_t instance_count, uint32_t first_index, int32_t vertex_offset, uint32_t first_instance);
 
+	void draw_indexed_indirect(const core::Buffer &buffer, VkDeviceSize offset, uint32_t draw_count, uint32_t stride);
+
+	void dispatch(uint32_t group_count_x, uint32_t group_count_y, uint32_t group_count_z);
+
+	void dispatch_indirect(const core::Buffer &buffer, VkDeviceSize offset);
+
 	void update_buffer(const core::Buffer &buffer, VkDeviceSize offset, const std::vector<uint8_t> &data);
 
 	void blit_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageBlit> &regions);
@@ -330,7 +342,9 @@ class CommandRecord
 
 	void copy_buffer_to_image(const core::Buffer &buffer, const core::Image &image, const std::vector<VkBufferImageCopy> &regions);
 
-	void image_memory_barrier(const ImageView &image_view, const ImageMemoryBarrier &memory_barrier);
+	void image_memory_barrier(const core::ImageView &image_view, const ImageMemoryBarrier &memory_barrier);
+
+	void buffer_memory_barrier(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier);
 
   private:
 	Device &device;
@@ -343,7 +357,7 @@ class CommandRecord
 
 	std::vector<PipelineBinding> pipeline_bindings;
 
-	GraphicsPipelineState graphics_pipeline_state;
+	PipelineState pipeline_state;
 
 	ResourceBindingState resource_binding_state;
 
@@ -353,12 +367,12 @@ class CommandRecord
 	 * @brief Flush the piplines state
 	 * 
 	 */
-	void FlushPipelineState();
+	void FlushPipelineState(VkPipelineBindPoint pipeline_bind_point);
 
 	/**
 	 * @brief Flush the descriptor set State
 	 * 
 	 */
-	void FlushDescriptorState();
+	void FlushDescriptorState(VkPipelineBindPoint pipeline_bind_point);
 };
 }        // namespace vkb

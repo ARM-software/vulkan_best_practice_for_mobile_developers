@@ -87,6 +87,9 @@ class SceneSubpass : public Subpass
 	 */
 	void draw(CommandBuffer &command_buffer) override;
 
+  protected:
+	void draw_submesh_command(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh);
+
   private:
 	void draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh);
 

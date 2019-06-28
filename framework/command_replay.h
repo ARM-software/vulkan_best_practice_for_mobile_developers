@@ -76,6 +76,12 @@ class CommandReplay
 
 	void draw_indexed(CommandBuffer &command_buffer, std::istringstream &stream);
 
+	void draw_indexed_indirect(CommandBuffer &command_buffer, std::istringstream &stream);
+
+	void dispatch(CommandBuffer &command_buffer, std::istringstream &stream);
+
+	void dispatch_indirect(CommandBuffer &command_buffer, std::istringstream &stream);
+
 	void update_buffer(CommandBuffer &command_buffer, std::istringstream &stream);
 
 	void blit_image(CommandBuffer &command_buffer, std::istringstream &stream);
@@ -85,5 +91,7 @@ class CommandReplay
 	void copy_buffer_to_image(CommandBuffer &command_buffer, std::istringstream &stream);
 
 	void image_memory_barrier(CommandBuffer &command_buffer, std::istringstream &stream);
+
+	void buffer_memory_barrier(CommandBuffer &command_buffer, std::istringstream &stream);
 };
 }        // namespace vkb

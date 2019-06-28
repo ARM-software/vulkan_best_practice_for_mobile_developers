@@ -31,8 +31,8 @@ class Pipeline;
 class Device;
 class ShaderModule;
 class DescriptorSetLayout;
-class SpecializationInfo;
-class GraphicsPipelineState;
+class SpecializationConstantState;
+class PipelineState;
 
 class PipelineLayout : public NonCopyable
 {

@@ -87,6 +87,22 @@ inline void read(std::istringstream &is, std::vector<T> &value)
 	is.read(reinterpret_cast<char *>(value.data()), value.size() * sizeof(T));
 }
 
+template <class T, class S>
+inline void read(std::istringstream &is, std::map<T, S> &value)
+{
+	std::size_t size;
+	read(is, size);
+
+	for (uint32_t i = 0; i < size; i++)
+	{
+		std::pair<T, S> item;
+		read(is, item.first);
+		read(is, item.second);
+
+		value.insert(std::move(item));
+	}
+}
+
 template <class T, uint32_t N>
 inline void read(std::istringstream &is, std::array<T, N> &value)
 {
@@ -128,6 +144,18 @@ inline void write(std::ostringstream &os, const std::vector<T> &value)
 {
 	write(os, value.size());
 	os.write(reinterpret_cast<const char *>(value.data()), value.size() * sizeof(T));
+}
+
+template <class T, class S>
+inline void write(std::ostringstream &os, const std::map<T, S> &value)
+{
+	write(os, value.size());
+
+	for (const std::pair<T, S> &item : value)
+	{
+		write(os, item.first);
+		write(os, item.second);
+	}
 }
 
 template <class T, uint32_t N>

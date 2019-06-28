@@ -35,7 +35,7 @@
 #include "core/shader_module.h"
 #include "core/swapchain.h"
 #include "fence_pool.h"
-#include "rendering/graphics_pipeline_state.h"
+#include "rendering/pipeline_state.h"
 #include "rendering/render_target.h"
 #include "resource_cache.h"
 

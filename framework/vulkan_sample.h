@@ -161,6 +161,13 @@ class VulkanSample : public Application
 	std::unique_ptr<Stats> stats{nullptr};
 
 	/**
+	 * @brief Get sample-specific instance layers.
+	 * 
+	 * @return Vector of additional instance layers. Default is empty vector.
+	 */
+	virtual std::vector<const char *> get_sample_additional_layers();
+
+	/**
 	 * @brief Resets the stats view max values for high demanding configs
 	 *        Should be overriden by the samples since they
 	 *        know which configuration is resource demanding

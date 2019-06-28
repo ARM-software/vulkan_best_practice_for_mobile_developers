@@ -98,13 +98,13 @@ CommandBuffer &CommandPool::request_command_buffer(VkCommandBufferLevel level)
 {
 	if (active_command_buffer_count < command_buffers.size())
 	{
-		return command_buffers.at(active_command_buffer_count++);
+		return *command_buffers.at(active_command_buffer_count++);
 	}
 
-	command_buffers.emplace_back(CommandBuffer{*this, level});
+	command_buffers.emplace_back(std::make_unique<CommandBuffer>(*this, level));
 
 	active_command_buffer_count++;
 
-	return command_buffers.back();
+	return *command_buffers.back();
 }
 }        // namespace vkb

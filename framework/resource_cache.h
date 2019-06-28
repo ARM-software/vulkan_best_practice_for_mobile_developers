@@ -61,11 +61,9 @@ class ResourceCache : public NonCopyable
 
 	DescriptorSetLayout &request_descriptor_set_layout(const std::vector<ShaderResource> &set_resources);
 
-	GraphicsPipeline &request_graphics_pipeline(GraphicsPipelineState &                   graphics_state,
-	                                            const ShaderStageMap<SpecializationInfo> &specialization_infos);
+	GraphicsPipeline &request_graphics_pipeline(PipelineState &pipeline_state);
 
-	ComputePipeline &request_compute_pipeline(const PipelineLayout &    pipeline_layout,
-	                                          const SpecializationInfo &specialization_info);
+	ComputePipeline &request_compute_pipeline(PipelineState &pipeline_state);
 
 	DescriptorSet &request_descriptor_set(DescriptorSetLayout &                     descriptor_set_layout,
 	                                      const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
@@ -241,19 +239,19 @@ struct hash<vkb::SubpassInfo>
 };
 
 template <>
-struct hash<vkb::SpecializationInfo>
+struct hash<vkb::SpecializationConstantState>
 {
-	std::size_t operator()(const vkb::SpecializationInfo &specialization_info) const
+	std::size_t operator()(const vkb::SpecializationConstantState &specialization_constant_state) const
 	{
 		std::size_t result = 0;
 
-		auto data = specialization_info.get_data();
-
-		vkb::hash_combine(result, std::string(data.begin(), data.end()));
-
-		for (auto &map_entry : specialization_info.get_map_entries())
+		for (auto constants : specialization_constant_state.get_specialization_constant_state())
 		{
-			vkb::hash_combine(result, map_entry);
+			vkb::hash_combine(result, constants.first);
+			for (const auto data : constants.second)
+			{
+				vkb::hash_combine(result, data);
+			}
 		}
 
 		return result;
@@ -278,21 +276,6 @@ struct hash<vkb::ShaderResource>
 		vkb::hash_combine(result, shader_resource.set);
 		vkb::hash_combine(result, shader_resource.binding);
 		vkb::hash_combine(result, static_cast<std::underlying_type<vkb::ShaderResourceType>::type>(shader_resource.type));
-
-		return result;
-	}
-};
-
-template <>
-struct hash<VkSpecializationMapEntry>
-{
-	std::size_t operator()(const VkSpecializationMapEntry &specialization_map_entry) const
-	{
-		std::size_t result = 0;
-
-		vkb::hash_combine(result, specialization_map_entry.constantID);
-		vkb::hash_combine(result, specialization_map_entry.offset);
-		vkb::hash_combine(result, specialization_map_entry.size);
 
 		return result;
 	}
@@ -472,75 +455,78 @@ struct hash<vkb::RenderTarget>
 };
 
 template <>
-struct hash<vkb::GraphicsPipelineState>
+struct hash<vkb::PipelineState>
 {
-	std::size_t operator()(const vkb::GraphicsPipelineState &graphics_state) const
+	std::size_t operator()(const vkb::PipelineState &pipeline_state) const
 	{
 		std::size_t result = 0;
 
-		vkb::hash_combine(result, graphics_state.get_pipeline_layout().get_handle());
-		vkb::hash_combine(result, graphics_state.get_render_pass().get_handle());
-		vkb::hash_combine(result, graphics_state.get_subpass_index());
+		vkb::hash_combine(result, pipeline_state.get_pipeline_layout().get_handle());
 
-		for (auto stage : graphics_state.get_pipeline_layout().get_stages())
+		// For graphics only
+		if (auto render_pass = pipeline_state.get_render_pass())
+		{
+			vkb::hash_combine(result, render_pass->get_handle());
+		}
+
+		vkb::hash_combine(result, pipeline_state.get_specialization_constant_state());
+
+		vkb::hash_combine(result, pipeline_state.get_subpass_index());
+
+		for (auto stage : pipeline_state.get_pipeline_layout().get_stages())
 		{
 			vkb::hash_combine(result, stage->get_id());
 		}
 
 		// VkPipelineVertexInputStateCreateInfo
-		for (auto &attribute : graphics_state.get_vertex_input_state().attributes)
+		for (auto &attribute : pipeline_state.get_vertex_input_state().attributes)
 		{
 			vkb::hash_combine(result, attribute);
 		}
 
-		for (auto &binding : graphics_state.get_vertex_input_state().bindings)
+		for (auto &binding : pipeline_state.get_vertex_input_state().bindings)
 		{
 			vkb::hash_combine(result, binding);
 		}
 
 		// VkPipelineInputAssemblyStateCreateInfo
-
-		vkb::hash_combine(result, graphics_state.get_input_assembly_state().primitive_restart_enable);
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkPrimitiveTopology>::type>(graphics_state.get_input_assembly_state().topology));
+		vkb::hash_combine(result, pipeline_state.get_input_assembly_state().primitive_restart_enable);
+		vkb::hash_combine(result, static_cast<std::underlying_type<VkPrimitiveTopology>::type>(pipeline_state.get_input_assembly_state().topology));
 
 		//VkPipelineViewportStateCreateInfo
-		vkb::hash_combine(result, graphics_state.get_viewport_state().viewport_count);
-		vkb::hash_combine(result, graphics_state.get_viewport_state().scissor_count);
+		vkb::hash_combine(result, pipeline_state.get_viewport_state().viewport_count);
+		vkb::hash_combine(result, pipeline_state.get_viewport_state().scissor_count);
 
 		// VkPipelineRasterizationStateCreateInfo
-
-		vkb::hash_combine(result, graphics_state.get_rasterization_state().cull_mode);
-		vkb::hash_combine(result, graphics_state.get_rasterization_state().depth_bias_enable);
-		vkb::hash_combine(result, graphics_state.get_rasterization_state().depth_clamp_enable);
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkFrontFace>::type>(graphics_state.get_rasterization_state().front_face));
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkPolygonMode>::type>(graphics_state.get_rasterization_state().polygon_mode));
-		vkb::hash_combine(result, graphics_state.get_rasterization_state().rasterizer_discard_enable);
+		vkb::hash_combine(result, pipeline_state.get_rasterization_state().cull_mode);
+		vkb::hash_combine(result, pipeline_state.get_rasterization_state().depth_bias_enable);
+		vkb::hash_combine(result, pipeline_state.get_rasterization_state().depth_clamp_enable);
+		vkb::hash_combine(result, static_cast<std::underlying_type<VkFrontFace>::type>(pipeline_state.get_rasterization_state().front_face));
+		vkb::hash_combine(result, static_cast<std::underlying_type<VkPolygonMode>::type>(pipeline_state.get_rasterization_state().polygon_mode));
+		vkb::hash_combine(result, pipeline_state.get_rasterization_state().rasterizer_discard_enable);
 
 		// VkPipelineMultisampleStateCreateInfo
-
-		vkb::hash_combine(result, graphics_state.get_multisample_state().alpha_to_coverage_enable);
-		vkb::hash_combine(result, graphics_state.get_multisample_state().alpha_to_one_enable);
-		vkb::hash_combine(result, graphics_state.get_multisample_state().min_sample_shading);
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkSampleCountFlagBits>::type>(graphics_state.get_multisample_state().rasterization_samples));
-		vkb::hash_combine(result, graphics_state.get_multisample_state().sample_shading_enable);
-		vkb::hash_combine(result, graphics_state.get_multisample_state().sample_mask);
+		vkb::hash_combine(result, pipeline_state.get_multisample_state().alpha_to_coverage_enable);
+		vkb::hash_combine(result, pipeline_state.get_multisample_state().alpha_to_one_enable);
+		vkb::hash_combine(result, pipeline_state.get_multisample_state().min_sample_shading);
+		vkb::hash_combine(result, static_cast<std::underlying_type<VkSampleCountFlagBits>::type>(pipeline_state.get_multisample_state().rasterization_samples));
+		vkb::hash_combine(result, pipeline_state.get_multisample_state().sample_shading_enable);
+		vkb::hash_combine(result, pipeline_state.get_multisample_state().sample_mask);
 
 		// VkPipelineDepthStencilStateCreateInfo
-
-		vkb::hash_combine(result, graphics_state.get_depth_stencil_state().back);
-		vkb::hash_combine(result, graphics_state.get_depth_stencil_state().depth_bounds_test_enable);
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkCompareOp>::type>(graphics_state.get_depth_stencil_state().depth_compare_op));
-		vkb::hash_combine(result, graphics_state.get_depth_stencil_state().depth_test_enable);
-		vkb::hash_combine(result, graphics_state.get_depth_stencil_state().depth_write_enable);
-		vkb::hash_combine(result, graphics_state.get_depth_stencil_state().front);
-		vkb::hash_combine(result, graphics_state.get_depth_stencil_state().stencil_test_enable);
+		vkb::hash_combine(result, pipeline_state.get_depth_stencil_state().back);
+		vkb::hash_combine(result, pipeline_state.get_depth_stencil_state().depth_bounds_test_enable);
+		vkb::hash_combine(result, static_cast<std::underlying_type<VkCompareOp>::type>(pipeline_state.get_depth_stencil_state().depth_compare_op));
+		vkb::hash_combine(result, pipeline_state.get_depth_stencil_state().depth_test_enable);
+		vkb::hash_combine(result, pipeline_state.get_depth_stencil_state().depth_write_enable);
+		vkb::hash_combine(result, pipeline_state.get_depth_stencil_state().front);
+		vkb::hash_combine(result, pipeline_state.get_depth_stencil_state().stencil_test_enable);
 
 		// VkPipelineColorBlendStateCreateInfo
+		vkb::hash_combine(result, static_cast<std::underlying_type<VkLogicOp>::type>(pipeline_state.get_color_blend_state().logic_op));
+		vkb::hash_combine(result, pipeline_state.get_color_blend_state().logic_op_enable);
 
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkLogicOp>::type>(graphics_state.get_color_blend_state().logic_op));
-		vkb::hash_combine(result, graphics_state.get_color_blend_state().logic_op_enable);
-
-		for (auto &attachment : graphics_state.get_color_blend_state().attachments)
+		for (auto &attachment : pipeline_state.get_color_blend_state().attachments)
 		{
 			vkb::hash_combine(result, attachment);
 		}

@@ -125,7 +125,7 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 	font_image      = std::make_unique<core::Image>(device, font_extent, VK_FORMAT_R8G8B8A8_UNORM,
                                                VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
                                                VMA_MEMORY_USAGE_GPU_ONLY);
-	font_image_view = std::make_unique<ImageView>(*font_image, VK_IMAGE_VIEW_TYPE_2D);
+	font_image_view = std::make_unique<core::ImageView>(*font_image, VK_IMAGE_VIEW_TYPE_2D);
 
 	// Upload font data into the vulkan image memory
 	{

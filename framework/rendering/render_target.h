@@ -72,7 +72,7 @@ class RenderTarget : public NonCopyable
 
 	const VkExtent2D &get_extent() const;
 
-	const std::vector<ImageView> &get_views() const;
+	const std::vector<core::ImageView> &get_views() const;
 
 	const std::vector<Attachment> &get_attachments() const;
 
@@ -94,7 +94,7 @@ class RenderTarget : public NonCopyable
 
 	std::vector<core::Image> images;
 
-	std::vector<ImageView> views;
+	std::vector<core::ImageView> views;
 
 	std::vector<Attachment> attachments;
 

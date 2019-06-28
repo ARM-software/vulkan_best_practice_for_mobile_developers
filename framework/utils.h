@@ -27,7 +27,7 @@ VKBP_DISABLE_WARNINGS
 VKBP_ENABLE_WARNINGS
 
 #include "platform/file.h"
-#include "rendering/graphics_pipeline_state.h"
+#include "rendering/pipeline_state.h"
 #include "rendering/render_context.h"
 #include "scene_graph/components/sub_mesh.h"
 #include "scene_graph/scene.h"

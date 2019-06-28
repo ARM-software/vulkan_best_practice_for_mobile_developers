@@ -51,14 +51,14 @@ void ResourceBindingState::bind_buffer(const core::Buffer &buffer, VkDeviceSize 
 	dirty = true;
 }
 
-void ResourceBindingState::bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element)
+void ResourceBindingState::bind_image(const core::ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element)
 {
 	set_bindings[set].bind_image(image_view, sampler, binding, array_element);
 
 	dirty = true;
 }
 
-void ResourceBindingState::bind_input(const ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element)
+void ResourceBindingState::bind_input(const core::ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element)
 {
 	set_bindings[set].bind_input(image_view, binding, array_element);
 
@@ -81,7 +81,7 @@ VkDescriptorImageInfo ResourceInfo::get_image_info() const
 	return image_info;
 }
 
-const ImageView &ResourceInfo::get_image_view() const
+const core::ImageView &ResourceInfo::get_image_view() const
 {
 	return *image_view;
 }
@@ -142,7 +142,7 @@ void ResourceInfo::bind_buffer(const core::Buffer &buffer_, VkDeviceSize offset_
 	dirty = true;
 }
 
-void ResourceInfo::bind_image(const ImageView &image_view_, const core::Sampler &sampler_)
+void ResourceInfo::bind_image(const core::ImageView &image_view_, const core::Sampler &sampler_)
 {
 	image_view = &image_view_;
 
@@ -151,7 +151,7 @@ void ResourceInfo::bind_image(const ImageView &image_view_, const core::Sampler 
 	dirty = true;
 }
 
-void ResourceInfo::bind_input(const ImageView &iv)
+void ResourceInfo::bind_input(const core::ImageView &iv)
 {
 	image_view = &iv;
 	dirty      = true;
@@ -197,14 +197,14 @@ void SetBindings::bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, V
 	dirty = true;
 }
 
-void SetBindings::bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t binding, uint32_t array_element)
+void SetBindings::bind_image(const core::ImageView &image_view, const core::Sampler &sampler, uint32_t binding, uint32_t array_element)
 {
 	resource_bindings[binding][array_element].bind_image(image_view, sampler);
 
 	dirty = true;
 }
 
-void SetBindings::bind_input(const ImageView &image_view, const uint32_t binding, const uint32_t array_element)
+void SetBindings::bind_input(const core::ImageView &image_view, const uint32_t binding, const uint32_t array_element)
 {
 	resource_bindings[binding][array_element].bind_input(image_view);
 	dirty = true;

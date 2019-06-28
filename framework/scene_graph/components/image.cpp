@@ -121,7 +121,7 @@ void Image::create_vk_image(Device &device)
 	                                         VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT,
 	                                         to_u32(mipmaps.size()));
 
-	vk_image_view = std::make_unique<ImageView>(*vk_image, VK_IMAGE_VIEW_TYPE_2D);
+	vk_image_view = std::make_unique<core::ImageView>(*vk_image, VK_IMAGE_VIEW_TYPE_2D);
 }
 
 const core::Image &Image::get_vk_image() const
@@ -130,7 +130,7 @@ const core::Image &Image::get_vk_image() const
 	return *vk_image;
 }
 
-const ImageView &Image::get_vk_image_view() const
+const core::ImageView &Image::get_vk_image_view() const
 {
 	assert(vk_image_view && "Vulkan image view was not created");
 	return *vk_image_view;

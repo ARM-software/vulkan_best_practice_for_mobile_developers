@@ -74,14 +74,14 @@ set(COMMON_FILES
 
 set(RENDERING_FILES
     # Header files
-    rendering/graphics_pipeline_state.h
+    rendering/pipeline_state.h
     rendering/render_context.h
     rendering/render_frame.h
     rendering/render_pipeline.h
     rendering/render_target.h
     rendering/subpass.h
     # Source files
-    rendering/graphics_pipeline_state.cpp
+    rendering/pipeline_state.cpp
     rendering/render_context.cpp
     rendering/render_frame.cpp
     rendering/render_pipeline.cpp

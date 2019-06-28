@@ -23,9 +23,9 @@
 #include "core/image.h"
 #include "device.h"
 
-namespace vkb
+namespace vkb::core
 {
-ImageView::ImageView(core::Image &img, VkImageViewType view_type, VkFormat format) :
+ImageView::ImageView(Image &img, VkImageViewType view_type, VkFormat format) :
     device{img.get_device()},
     image{&img},
     format{format}
@@ -93,13 +93,13 @@ ImageView::~ImageView()
 	}
 }
 
-const core::Image &ImageView::get_image() const
+const Image &ImageView::get_image() const
 {
 	assert(image && "Image view is referring an invalid image");
 	return *image;
 }
 
-void ImageView::set_image(core::Image &img)
+void ImageView::set_image(Image &img)
 {
 	image = &img;
 }
@@ -128,5 +128,4 @@ VkImageSubresourceLayers ImageView::get_subresource_layers() const
 	subresource.mipLevel       = subresource_range.baseMipLevel;
 	return subresource;
 }
-
-}        // namespace vkb
+}        // namespace vkb::core

@@ -18,7 +18,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "graphics_pipeline_state.h"
+#include "pipeline_state.h"
 
 bool operator==(const VkVertexInputAttributeDescription &lhs, const VkVertexInputAttributeDescription &rhs)
 {
@@ -87,46 +87,55 @@ bool operator!=(const vkb::ColorBlendState &lhs, const vkb::ColorBlendState &rhs
 
 namespace vkb
 {
-void SpecializationInfo::set_constant(uint32_t constant_id, const std::vector<uint8_t> &value)
+void SpecializationConstantState::reset()
 {
-	VkSpecializationMapEntry specialization_entry;
-
-	specialization_entry.constantID = constant_id;
-	specialization_entry.size       = value.size();
-	specialization_entry.offset     = to_u32(data.size());
-
-	map_entries.push_back(specialization_entry);
-
-	data.insert(data.end(), value.begin(), value.end());
+	dirty = false;
+	specialization_constant_state.clear();
 }
 
-const std::vector<uint8_t> &SpecializationInfo::get_data() const
+bool SpecializationConstantState::is_dirty() const
 {
-	return data;
+	return dirty;
 }
 
-const std::vector<VkSpecializationMapEntry> &SpecializationInfo::get_map_entries() const
+void SpecializationConstantState::clear_dirty()
 {
-	return map_entries;
+	dirty = false;
 }
 
-const VkSpecializationInfo &SpecializationInfo::get_handle() const
+void SpecializationConstantState::set_constant(uint32_t constant_id, const std::vector<uint8_t> &value)
 {
-	handle.dataSize      = data.size();
-	handle.pData         = data.data();
-	handle.mapEntryCount = to_u32(map_entries.size());
-	handle.pMapEntries   = map_entries.data();
+	auto data = specialization_constant_state.find(constant_id);
 
-	return handle;
+	if (data != specialization_constant_state.end() && data->second == value)
+	{
+		return;
+	}
+
+	dirty = true;
+
+	specialization_constant_state[constant_id] = value;
 }
 
-void GraphicsPipelineState::reset()
+void SpecializationConstantState::set_specialization_constant_state(const std::map<uint32_t, std::vector<uint8_t>> &state)
+{
+	specialization_constant_state = state;
+}
+
+const std::map<uint32_t, std::vector<uint8_t>> &SpecializationConstantState::get_specialization_constant_state() const
+{
+	return specialization_constant_state;
+}
+
+void PipelineState::reset()
 {
 	clear_dirty();
 
 	pipeline_layout = nullptr;
 
 	render_pass = nullptr;
+
+	specialization_constant_state.reset();
 
 	vertex_input_sate = {};
 
@@ -143,7 +152,7 @@ void GraphicsPipelineState::reset()
 	subpass_index = {0U};
 }
 
-void GraphicsPipelineState::set_pipeline_layout(PipelineLayout &new_pipeline_layout)
+void PipelineState::set_pipeline_layout(PipelineLayout &new_pipeline_layout)
 {
 	if (pipeline_layout)
 	{
@@ -162,7 +171,7 @@ void GraphicsPipelineState::set_pipeline_layout(PipelineLayout &new_pipeline_lay
 	}
 }
 
-void GraphicsPipelineState::set_render_pass(const RenderPass &new_render_pass)
+void PipelineState::set_render_pass(const RenderPass &new_render_pass)
 {
 	if (render_pass)
 	{
@@ -181,7 +190,17 @@ void GraphicsPipelineState::set_render_pass(const RenderPass &new_render_pass)
 	}
 }
 
-void GraphicsPipelineState::set_vertex_input_state(const VertexInputState &new_vertex_input_sate)
+void PipelineState::set_specialization_constant(uint32_t constant_id, const std::vector<uint8_t> &data)
+{
+	specialization_constant_state.set_constant(constant_id, data);
+
+	if (specialization_constant_state.is_dirty())
+	{
+		dirty = true;
+	}
+}
+
+void PipelineState::set_vertex_input_state(const VertexInputState &new_vertex_input_sate)
 {
 	if (vertex_input_sate != new_vertex_input_sate)
 	{
@@ -191,7 +210,7 @@ void GraphicsPipelineState::set_vertex_input_state(const VertexInputState &new_v
 	}
 }
 
-void GraphicsPipelineState::set_input_assembly_state(const InputAssemblyState &new_input_assembly_state)
+void PipelineState::set_input_assembly_state(const InputAssemblyState &new_input_assembly_state)
 {
 	if (input_assembly_state != new_input_assembly_state)
 	{
@@ -201,7 +220,7 @@ void GraphicsPipelineState::set_input_assembly_state(const InputAssemblyState &n
 	}
 }
 
-void GraphicsPipelineState::set_rasterization_state(const RasterizationState &new_rasterization_state)
+void PipelineState::set_rasterization_state(const RasterizationState &new_rasterization_state)
 {
 	if (rasterization_state != new_rasterization_state)
 	{
@@ -211,7 +230,7 @@ void GraphicsPipelineState::set_rasterization_state(const RasterizationState &ne
 	}
 }
 
-void GraphicsPipelineState::set_viewport_state(const ViewportState &new_viewport_state)
+void PipelineState::set_viewport_state(const ViewportState &new_viewport_state)
 {
 	if (viewport_state != new_viewport_state)
 	{
@@ -221,7 +240,7 @@ void GraphicsPipelineState::set_viewport_state(const ViewportState &new_viewport
 	}
 }
 
-void GraphicsPipelineState::set_multisample_state(const MultisampleState &new_multisample_state)
+void PipelineState::set_multisample_state(const MultisampleState &new_multisample_state)
 {
 	if (multisample_state != new_multisample_state)
 	{
@@ -231,7 +250,7 @@ void GraphicsPipelineState::set_multisample_state(const MultisampleState &new_mu
 	}
 }
 
-void GraphicsPipelineState::set_depth_stencil_state(const DepthStencilState &new_depth_stencil_state)
+void PipelineState::set_depth_stencil_state(const DepthStencilState &new_depth_stencil_state)
 {
 	if (depth_stencil_state != new_depth_stencil_state)
 	{
@@ -241,7 +260,7 @@ void GraphicsPipelineState::set_depth_stencil_state(const DepthStencilState &new
 	}
 }
 
-void GraphicsPipelineState::set_color_blend_state(const ColorBlendState &new_color_blend_state)
+void PipelineState::set_color_blend_state(const ColorBlendState &new_color_blend_state)
 {
 	if (color_blend_state != new_color_blend_state)
 	{
@@ -251,7 +270,7 @@ void GraphicsPipelineState::set_color_blend_state(const ColorBlendState &new_col
 	}
 }
 
-void GraphicsPipelineState::set_subpass_index(uint32_t new_subpass_index)
+void PipelineState::set_subpass_index(uint32_t new_subpass_index)
 {
 	if (subpass_index != new_subpass_index)
 	{
@@ -261,64 +280,70 @@ void GraphicsPipelineState::set_subpass_index(uint32_t new_subpass_index)
 	}
 }
 
-const PipelineLayout &GraphicsPipelineState::get_pipeline_layout() const
+const PipelineLayout &PipelineState::get_pipeline_layout() const
 {
 	assert(pipeline_layout && "Graphics state Pipeline layout is not set");
 	return *pipeline_layout;
 }
 
-const RenderPass &GraphicsPipelineState::get_render_pass() const
+const RenderPass *PipelineState::get_render_pass() const
 {
-	return *render_pass;
+	return render_pass;
 }
 
-const VertexInputState &GraphicsPipelineState::get_vertex_input_state() const
+const SpecializationConstantState &PipelineState::get_specialization_constant_state() const
+{
+	return specialization_constant_state;
+}
+
+const VertexInputState &PipelineState::get_vertex_input_state() const
 {
 	return vertex_input_sate;
 }
 
-const InputAssemblyState &GraphicsPipelineState::get_input_assembly_state() const
+const InputAssemblyState &PipelineState::get_input_assembly_state() const
 {
 	return input_assembly_state;
 }
 
-const RasterizationState &GraphicsPipelineState::get_rasterization_state() const
+const RasterizationState &PipelineState::get_rasterization_state() const
 {
 	return rasterization_state;
 }
 
-const ViewportState &GraphicsPipelineState::get_viewport_state() const
+const ViewportState &PipelineState::get_viewport_state() const
 {
 	return viewport_state;
 }
 
-const MultisampleState &GraphicsPipelineState::get_multisample_state() const
+const MultisampleState &PipelineState::get_multisample_state() const
 {
 	return multisample_state;
 }
 
-const DepthStencilState &GraphicsPipelineState::get_depth_stencil_state() const
+const DepthStencilState &PipelineState::get_depth_stencil_state() const
 {
 	return depth_stencil_state;
 }
 
-const ColorBlendState &GraphicsPipelineState::get_color_blend_state() const
+const ColorBlendState &PipelineState::get_color_blend_state() const
 {
 	return color_blend_state;
 }
 
-uint32_t GraphicsPipelineState::get_subpass_index() const
+uint32_t PipelineState::get_subpass_index() const
 {
 	return subpass_index;
 }
 
-bool GraphicsPipelineState::is_dirty() const
+bool PipelineState::is_dirty() const
 {
-	return dirty;
+	return dirty || specialization_constant_state.is_dirty();
 }
 
-void GraphicsPipelineState::clear_dirty()
+void PipelineState::clear_dirty()
 {
 	dirty = false;
+	specialization_constant_state.clear_dirty();
 }
 }        // namespace vkb

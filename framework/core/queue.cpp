@@ -20,8 +20,8 @@
 
 #include "queue.h"
 
-#include "device.h"
 #include "command_buffer.h"
+#include "device.h"
 
 namespace vkb
 {

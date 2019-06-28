@@ -97,4 +97,20 @@ struct ImageMemoryBarrier
 
 	VkImageLayout new_layout{VK_IMAGE_LAYOUT_UNDEFINED};
 };
+
+/**
+* @brief Buffer memory barrier structure used to define
+*        memory access for a buffer during command recording.
+*/
+struct BufferMemoryBarrier
+{
+	VkPipelineStageFlags src_stage_mask{VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT};
+
+	VkPipelineStageFlags dst_stage_mask{VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT};
+
+	VkAccessFlags src_access_mask{0};
+
+	VkAccessFlags dst_access_mask{0};
+};
+
 }        // namespace vkb
