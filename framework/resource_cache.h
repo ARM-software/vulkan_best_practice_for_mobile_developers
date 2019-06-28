@@ -20,14 +20,13 @@
 
 #pragma once
 
-#include "common.h"
-
-#include "resource_record.h"
-#include "resource_replay.h"
-
+#include "common/helpers.h"
+#include "common/vk_common.h"
 #include "core/descriptor_set.h"
 #include "core/descriptor_set_layout.h"
 #include "core/framebuffer.h"
+#include "resource_record.h"
+#include "resource_replay.h"
 
 namespace vkb
 {

@@ -20,16 +20,19 @@
 
 #include "glfw_platform.h"
 
-#include "application.h"
-#include "common.h"
-#include "input_events.h"
-
-#include <GLFW/glfw3.h>
-#include <GLFW/glfw3native.h>
-
 #include <unordered_map>
 
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS
+#include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+VKBP_ENABLE_WARNINGS
+
+#include "application.h"
+#include "common/logging.h"
+#include "input_events.h"
 
 namespace vkb
 {

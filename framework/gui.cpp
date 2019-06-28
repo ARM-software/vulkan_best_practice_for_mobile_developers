@@ -19,21 +19,28 @@
  */
 
 #include "gui.h"
-#include "imgui_internal.h"
 
 #include <map>
 #include <numeric>
 
-#include "buffer_pool.h"
-#include "platform/file.h"
-#include "rendering/render_context.h"
-#include "utils.h"
+#include "common/error.h"
 
+VKBP_DISABLE_WARNINGS
+#include <glm/glm.hpp>
+VKBP_ENABLE_WARNINGS
+
+#include "buffer_pool.h"
+#include "common/logging.h"
+#include "common/vk_common.h"
 #include "core/descriptor_set.h"
 #include "core/descriptor_set_layout.h"
 #include "core/pipeline.h"
 #include "core/pipeline_layout.h"
 #include "core/shader_module.h"
+#include "imgui_internal.h"
+#include "platform/file.h"
+#include "rendering/render_context.h"
+#include "utils.h"
 #include "vulkan_sample.h"
 
 namespace vkb

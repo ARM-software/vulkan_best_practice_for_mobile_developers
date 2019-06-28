@@ -20,13 +20,12 @@
 
 #pragma once
 
-#include "rendering/render_pipeline.h"
-#include "vulkan_sample.h"
-
-#include "scene_graph/components/perspective_camera.h"
-
 #include <iomanip>        // setprecision
 #include <sstream>        // stringstream
+
+#include "rendering/render_pipeline.h"
+#include "scene_graph/components/perspective_camera.h"
+#include "vulkan_sample.h"
 
 /**
  * @brief Appropriate use of render pass attachment operations

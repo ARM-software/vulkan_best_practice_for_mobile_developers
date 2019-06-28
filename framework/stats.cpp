@@ -20,7 +20,7 @@
 
 #include "stats.h"
 
-#include "common.h"
+#include "common/error.h"
 
 namespace vkb
 {

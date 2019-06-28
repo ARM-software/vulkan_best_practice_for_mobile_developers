@@ -20,6 +20,7 @@
 
 #include "application.h"
 
+#include "common/logging.h"
 #include "platform/platform.h"
 
 namespace vkb

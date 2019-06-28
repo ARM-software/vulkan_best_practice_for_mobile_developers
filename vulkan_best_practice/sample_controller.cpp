@@ -20,6 +20,7 @@
 
 #include "sample_controller.h"
 
+#include "common/logging.h"
 #include "platform/platform.h"
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)

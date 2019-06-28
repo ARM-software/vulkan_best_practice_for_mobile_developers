@@ -20,18 +20,16 @@
 
 #include "pipeline_cache.h"
 
-#include "core/device.h"
+#include <imgui_internal.h>
 
+#include "common/logging.h"
+#include "core/device.h"
 #include "gui.h"
 #include "platform/file.h"
 #include "platform/platform.h"
-#include "stats.h"
-
 #include "rendering/subpasses/scene_subpass.h"
-
 #include "scene_graph/node.h"
-
-#include "imgui_internal.h"
+#include "stats.h"
 
 PipelineCache::~PipelineCache()
 {

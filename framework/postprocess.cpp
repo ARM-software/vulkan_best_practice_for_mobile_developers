@@ -20,6 +20,7 @@
 
 #include "postprocess.h"
 
+#include "common/logging.h"
 #include "core/pipeline.h"
 #include "core/pipeline_layout.h"
 

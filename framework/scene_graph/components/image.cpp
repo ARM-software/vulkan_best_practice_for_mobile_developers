@@ -22,15 +22,18 @@
 
 #include <mutex>
 
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+#include <stb_image_resize.h>
+VKBP_ENABLE_WARNINGS
+
+#include "platform/file.h"
 #include "scene_graph/components/image/astc.h"
 #include "scene_graph/components/image/ktx.h"
 #include "scene_graph/components/image/stb.h"
-
-#include "platform/file.h"
 #include "utils.h"
-
-#define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include "stb_image_resize.h"
 
 namespace vkb
 {

@@ -20,9 +20,9 @@
 
 #include "component.h"
 
-#include "node.h"
-
 #include <algorithm>
+
+#include "node.h"
 
 namespace vkb
 {

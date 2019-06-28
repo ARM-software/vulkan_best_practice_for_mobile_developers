@@ -20,10 +20,10 @@
 
 #pragma once
 
-#include "common.h"
-
 #include "command_record.h"
 #include "command_replay.h"
+#include "common/helpers.h"
+#include "common/vk_common.h"
 #include "core/buffer.h"
 #include "core/image.h"
 #include "core/image_view.h"

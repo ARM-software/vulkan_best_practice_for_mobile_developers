@@ -24,19 +24,23 @@
 #include <limits>
 #include <queue>
 
-#include "platform/thread_pool.h"
+#include "common/error.h"
 
-#include "core/image.h"
+VKBP_DISABLE_WARNINGS
+#include <glm/glm.hpp>
+VKBP_ENABLE_WARNINGS
 
+#include "common/logging.h"
+#include "common/vk_common.h"
 #include "core/device.h"
+#include "core/image.h"
 #include "platform/file.h"
-
+#include "platform/thread_pool.h"
 #include "scene_graph/components/image/astc.h"
 #include "scene_graph/components/perspective_camera.h"
 #include "scene_graph/components/texture.h"
 #include "scene_graph/components/transform.h"
 #include "scene_graph/node.h"
-
 #include "utils.h"
 
 namespace vkb

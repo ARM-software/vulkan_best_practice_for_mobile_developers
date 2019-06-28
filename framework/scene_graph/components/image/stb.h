@@ -22,8 +22,6 @@
 
 #include "scene_graph/components/image.h"
 
-#include "stb_image.h"
-
 namespace vkb
 {
 namespace sg

@@ -20,7 +20,8 @@
 
 #pragma once
 
-#include "common.h"
+#include "common/helpers.h"
+#include "common/vk_common.h"
 #include "descriptor_pool.h"
 
 namespace vkb

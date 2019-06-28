@@ -20,9 +20,11 @@
 
 #include "utils.h"
 
+#include <queue>
+#include <stdexcept>
+
 #include "core/pipeline_layout.h"
 #include "core/shader_module.h"
-
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/mesh.h"
@@ -32,9 +34,6 @@
 #include "scene_graph/components/texture.h"
 #include "scene_graph/components/transform.h"
 #include "scene_graph/node.h"
-
-#include <queue>
-#include <stdexcept>
 
 namespace vkb
 {

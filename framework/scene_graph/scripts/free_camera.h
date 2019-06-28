@@ -23,9 +23,15 @@
 #include <memory>
 #include <string>
 #include <typeinfo>
+#include <unordered_map>
 #include <vector>
 
-#include "common.h"
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS
+#include <glm/glm.hpp>
+VKBP_ENABLE_WARNINGS
+
 #include "scene_graph/script.h"
 
 namespace vkb
@@ -45,7 +51,7 @@ class FreeCamera : public Script
 
 	static const uint32_t TRANSLATION_MOVE_SPEED;
 
-	FreeCamera(Node& node);
+	FreeCamera(Node &node);
 
 	virtual ~FreeCamera() = default;
 

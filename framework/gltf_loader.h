@@ -20,12 +20,16 @@
 
 #pragma once
 
-#include "common.h"
-
-VKBP_DISABLE_WARNINGS
 #include <memory>
 #include <mutex>
 
+#define TINYGLTF_NO_STB_IMAGE
+#define TINYGLTF_NO_STB_IMAGE_WRITE
+#define TINYGLTF_NO_EXTERNAL_IMAGE
+#include <tiny_gltf.h>
+
+#include "core/device.h"
+#include "core/sampler.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/mesh.h"
@@ -35,19 +39,8 @@ VKBP_DISABLE_WARNINGS
 #include "scene_graph/components/texture.h"
 #include "scene_graph/node.h"
 #include "scene_graph/scene.h"
-
-#define TINYGLTF_NO_STB_IMAGE
-#define TINYGLTF_NO_STB_IMAGE_WRITE
-#define TINYGLTF_NO_EXTERNAL_IMAGE
-
-#include "tiny_gltf.h"
-
-#include "core/device.h"
-#include "core/sampler.h"
-
 #include "timer.h"
 
-VKBP_ENABLE_WARNINGS
 namespace vkb
 {
 /**

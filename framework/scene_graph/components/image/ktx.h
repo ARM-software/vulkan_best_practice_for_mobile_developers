@@ -19,12 +19,9 @@
  */
 
 #pragma once
-#include "common.h"
-#include "scene_graph/components/image.h"
 
-VKBP_DISABLE_WARNINGS
-#include <ktx.h>
-VKBP_ENABLE_WARNINGS
+#include "common/error.h"
+#include "scene_graph/components/image.h"
 
 namespace vkb
 {

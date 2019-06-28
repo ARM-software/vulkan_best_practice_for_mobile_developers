@@ -20,7 +20,11 @@
 
 #include "platform/file.h"
 
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS
 #include <jni.h>
+VKBP_ENABLE_WARNINGS
 
 namespace vkb::file
 {

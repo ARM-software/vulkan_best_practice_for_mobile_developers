@@ -23,11 +23,14 @@
 #include <string>
 #include <vector>
 
-#include "common.h"
+#include "common/error.h"
 
-#include "core/shader_module.h"
-
+VKBP_DISABLE_WARNINGS
 #include <glslang/Public/ShaderLang.h>
+VKBP_ENABLE_WARNINGS
+
+#include "common/vk_common.h"
+#include "core/shader_module.h"
 
 namespace vkb
 {

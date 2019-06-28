@@ -20,10 +20,11 @@
 
 #include "command_record.h"
 
+#include "common/error.h"
+#include "common/logging.h"
 #include "core/descriptor_set_layout.h"
 #include "core/device.h"
 #include "core/shader_module.h"
-
 #include "rendering/render_context.h"
 
 namespace vkb

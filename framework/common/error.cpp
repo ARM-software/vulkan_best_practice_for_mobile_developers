@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,47 +18,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-
-#include "common/helpers.h"
-#include "common/vk_common.h"
+#include "common/error.h"
+#include "helpers.h"
 
 namespace vkb
 {
-struct Attachment;
-class Device;
-
-struct LoadStoreInfo
+VulkanException::VulkanException(const VkResult result, const std::string &msg) :
+    std::runtime_error{msg}
 {
-	VkAttachmentLoadOp load_op = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	error_message = std::string(std::runtime_error::what()) + std::string{" : "} + to_string(result);
+}
 
-	VkAttachmentStoreOp store_op = VK_ATTACHMENT_STORE_OP_STORE;
-};
-
-struct SubpassInfo
+const char *VulkanException::what() const noexcept
 {
-	std::vector<uint32_t> input_attachments;
-
-	std::vector<uint32_t> output_attachments;
-};
-
-class RenderPass : public NonCopyable
-{
-  public:
-	VkRenderPass get_handle() const;
-
-	RenderPass(Device &                          device,
-	           const std::vector<Attachment> &   attachemnts,
-	           const std::vector<LoadStoreInfo> &load_store_infos,
-	           const std::vector<SubpassInfo> &  subpasses);
-
-	RenderPass(RenderPass &&other);
-
-	~RenderPass();
-
-  private:
-	Device &device;
-
-	VkRenderPass handle{VK_NULL_HANDLE};
-};
+	return error_message.c_str();
+}
 }        // namespace vkb

@@ -20,6 +20,8 @@
 
 #include "aabb.h"
 
+#include "common/logging.h"
+
 namespace vkb
 {
 namespace sg

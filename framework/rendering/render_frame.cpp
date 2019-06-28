@@ -20,6 +20,8 @@
 
 #include "rendering/render_frame.h"
 
+#include "common/logging.h"
+
 namespace vkb
 {
 RenderFrame::RenderFrame(Device &device, RenderTarget &&render_target) :

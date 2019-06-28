@@ -19,7 +19,7 @@
  */
 
 #include "rendering/subpasses/scene_subpass.h"
-
+#include "common/vk_common.h"
 #include "rendering/render_context.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"

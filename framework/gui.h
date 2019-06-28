@@ -30,7 +30,6 @@
 #include "core/command_buffer.h"
 #include "core/sampler.h"
 #include "debug_info.h"
-
 #include "platform/file.h"
 #include "platform/input_events.h"
 #include "rendering/render_context.h"

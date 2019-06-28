@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "common/helpers.h"
+#include "common/vk_common.h"
 #include "core/command_buffer.h"
 #include "core/command_pool.h"
 #include "core/descriptor_set.h"
@@ -31,7 +33,6 @@
 #include "core/render_pass.h"
 #include "core/shader_module.h"
 #include "core/swapchain.h"
-
 #include "rendering/graphics_pipeline_state.h"
 #include "rendering/render_frame.h"
 #include "rendering/render_target.h"

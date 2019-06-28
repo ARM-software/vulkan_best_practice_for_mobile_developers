@@ -22,6 +22,17 @@
 
 #include <mutex>
 
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS
+#include <glm/glm.hpp>
+#if defined(_WIN32) || defined(_WIN64)
+// Windows.h defines IGNORE, so we must #undef it to avoid clashes with astc header
+#	undef IGNORE
+#endif
+#include <astc_codec_internals.h>
+VKBP_ENABLE_WARNINGS
+
 #define MAGIC_FILE_CONSTANT 0x5CA1AB13
 
 namespace vkb

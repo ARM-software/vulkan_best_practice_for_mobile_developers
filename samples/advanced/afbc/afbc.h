@@ -21,9 +21,8 @@
 #pragma once
 
 #include "rendering/render_pipeline.h"
-#include "vulkan_sample.h"
-
 #include "scene_graph/components/camera.h"
+#include "vulkan_sample.h"
 
 /**
  * @brief Using framebuffer compression to reduce bandwidth

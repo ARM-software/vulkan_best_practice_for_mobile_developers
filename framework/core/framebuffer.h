@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "common/helpers.h"
+#include "common/vk_common.h"
 #include "core/render_pass.h"
 #include "rendering/render_target.h"
 

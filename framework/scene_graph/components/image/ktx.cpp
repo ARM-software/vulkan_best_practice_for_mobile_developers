@@ -20,7 +20,12 @@
 
 #include "scene_graph/components/image/ktx.h"
 
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS
+#include <ktx.h>
 #include <vk_format.h>
+VKBP_ENABLE_WARNINGS
 
 namespace vkb
 {

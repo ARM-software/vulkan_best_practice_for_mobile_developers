@@ -20,17 +20,20 @@
 
 #include "android_platform.h"
 
-#include "common.h"
-#include "platform/input_events.h"
-
-#include "vulkan_sample.h"
-
 #include <chrono>
-#include <imgui.h>
 #include <unistd.h>
 #include <unordered_map>
 
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS
+#include <imgui.h>
 #include <spdlog/sinks/android_sink.h>
+VKBP_ENABLE_WARNINGS
+
+#include "common/logging.h"
+#include "platform/input_events.h"
+#include "vulkan_sample.h"
 
 namespace vkb
 {

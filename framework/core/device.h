@@ -20,8 +20,9 @@
 
 #pragma once
 
-#include "common.h"
-
+#include "common/helpers.h"
+#include "common/logging.h"
+#include "common/vk_common.h"
 #include "core/command_buffer.h"
 #include "core/command_pool.h"
 #include "core/descriptor_set.h"
@@ -34,7 +35,6 @@
 #include "core/shader_module.h"
 #include "core/swapchain.h"
 #include "fence_pool.h"
-
 #include "rendering/graphics_pipeline_state.h"
 #include "rendering/render_target.h"
 #include "resource_cache.h"

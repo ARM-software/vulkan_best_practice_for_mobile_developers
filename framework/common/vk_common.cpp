@@ -18,10 +18,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "common.h"
-
-#include <limits>
-#include <stdexcept>
+#include "vk_common.h"
 
 std::ostream &operator<<(std::ostream &os, const VkResult result)
 {
@@ -531,16 +528,4 @@ const std::string convert_format_to_string(VkFormat format)
 			return "VK_FORMAT_INVALID";
 	}
 }
-
-VulkanException::VulkanException(const VkResult result, const std::string &msg) :
-    std::runtime_error{msg}
-{
-	error_message = std::string(std::runtime_error::what()) + std::string{" : "} + to_string(result);
-}
-
-const char *VulkanException::what() const noexcept
-{
-	return error_message.c_str();
-}
-
 }        // namespace vkb

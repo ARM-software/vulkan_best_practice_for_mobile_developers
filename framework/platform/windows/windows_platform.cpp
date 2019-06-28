@@ -19,9 +19,9 @@
  */
 
 #include "windows_platform.h"
-#include "common.h"
 
 #include <Windows.h>
+#include <shellapi.h>
 #include <stdexcept>
 
 namespace vkb

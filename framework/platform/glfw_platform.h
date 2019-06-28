@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "common/vk_common.h"
 #include "platform.h"
 
 struct GLFWwindow;

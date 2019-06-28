@@ -22,8 +22,7 @@
 
 #include <list>
 
-#include "common.h"
-
+#include "common/vk_common.h"
 #include "core/descriptor_set.h"
 #include "core/framebuffer.h"
 #include "core/image_view.h"

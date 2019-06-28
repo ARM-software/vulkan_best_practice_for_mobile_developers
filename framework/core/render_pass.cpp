@@ -20,9 +20,10 @@
 
 #include "core/render_pass.h"
 
+#include <numeric>
+
 #include "device.h"
 #include "rendering/render_target.h"
-#include <numeric>
 
 namespace vkb
 {

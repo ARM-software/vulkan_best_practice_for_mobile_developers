@@ -20,6 +20,12 @@
 
 #pragma once
 
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS
+#include <glm/glm.hpp>
+VKBP_ENABLE_WARNINGS
+
 #include "rendering/subpass.h"
 
 namespace vkb

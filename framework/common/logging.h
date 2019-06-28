@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,45 +20,11 @@
 
 #pragma once
 
-#include "common/helpers.h"
-#include "common/vk_common.h"
+#include <spdlog/spdlog.h>
 
-namespace vkb
-{
-struct Attachment;
-class Device;
+#define LOGGER_FORMAT "[%^%l%$] %v"
+#define PROJECT_NAME "VulkanBestPractice"
 
-struct LoadStoreInfo
-{
-	VkAttachmentLoadOp load_op = VK_ATTACHMENT_LOAD_OP_CLEAR;
-
-	VkAttachmentStoreOp store_op = VK_ATTACHMENT_STORE_OP_STORE;
-};
-
-struct SubpassInfo
-{
-	std::vector<uint32_t> input_attachments;
-
-	std::vector<uint32_t> output_attachments;
-};
-
-class RenderPass : public NonCopyable
-{
-  public:
-	VkRenderPass get_handle() const;
-
-	RenderPass(Device &                          device,
-	           const std::vector<Attachment> &   attachemnts,
-	           const std::vector<LoadStoreInfo> &load_store_infos,
-	           const std::vector<SubpassInfo> &  subpasses);
-
-	RenderPass(RenderPass &&other);
-
-	~RenderPass();
-
-  private:
-	Device &device;
-
-	VkRenderPass handle{VK_NULL_HANDLE};
-};
-}        // namespace vkb
+#define LOGI(...) spdlog::info(__VA_ARGS__);
+#define LOGW(...) spdlog::warn(__VA_ARGS__);
+#define LOGE(...) spdlog::error(__VA_ARGS__);

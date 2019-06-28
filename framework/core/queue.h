@@ -21,7 +21,8 @@
 #pragma once
 
 #include "command_buffer.h"
-#include "common.h"
+#include "common/helpers.h"
+#include "common/vk_common.h"
 #include "core/swapchain.h"
 
 namespace vkb

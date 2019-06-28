@@ -20,9 +20,10 @@
 
 #pragma once
 
-#include "platform/platform.h"
-
 #include <android_native_app_glue.h>
+
+#include "common/vk_common.h"
+#include "platform/platform.h"
 
 namespace vkb
 {

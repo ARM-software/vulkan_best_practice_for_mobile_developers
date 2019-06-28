@@ -24,7 +24,6 @@ project(framework LANGUAGES C CXX)
 
 set(FRAMEWORK_FILES
     # Header Files
-    common.h
     utils.h
     gui.h
     stats.h
@@ -44,7 +43,6 @@ set(FRAMEWORK_FILES
     vulkan_sample.h
     timer.h
     # Source Files
-    common.cpp
     utils.cpp
     gui.cpp
     stats.cpp
@@ -63,6 +61,16 @@ set(FRAMEWORK_FILES
     resource_replay.cpp
     vulkan_sample.cpp
     timer.cpp)
+
+set(COMMON_FILES
+    # Header Files
+    common/vk_common.h
+    common/logging.h
+    common/helpers.h
+    common/error.h
+    # Source Files
+    common/error.cpp
+    common/vk_common.cpp)
 
 set(RENDERING_FILES
     # Header files
@@ -228,6 +236,7 @@ else()
 endif()
 
 source_group("\\" FILES ${FRAMEWORK_FILES})
+source_group("common\\" FILES ${COMMON_FILES})
 source_group("platform\\" FILES ${PLATFORM_FILES})
 source_group("core\\" FILES ${CORE_FILES})
 source_group("rendering\\" FILES ${RENDERING_FILES})
@@ -238,6 +247,7 @@ source_group("scene_graph\\scripts\\" FILES ${SCENE_GRAPH_SCRIPTS_FILES})
 
 set(PROJECT_FILES
     ${PLATFORM_FILES}
+    ${COMMON_FILES}
     ${FRAMEWORK_FILES}
     ${CORE_FILES}
     ${RENDERING_FILES}

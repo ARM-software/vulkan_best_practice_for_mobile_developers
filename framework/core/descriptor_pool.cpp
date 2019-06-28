@@ -20,6 +20,7 @@
 
 #include "descriptor_pool.h"
 
+#include "common/error.h"
 #include "descriptor_set_layout.h"
 #include "device.h"
 

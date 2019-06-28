@@ -21,6 +21,7 @@
 #include "command_buffer.h"
 
 #include "command_pool.h"
+#include "common/error.h"
 #include "device.h"
 
 namespace vkb

@@ -20,12 +20,12 @@
 
 #pragma once
 
-#include "common.h"
-#include "core/Image.h"
-#include "framework.h"
-
 #include <map>
 #include <vector>
+
+#include "common/vk_common.h"
+#include "core/Image.h"
+#include "framework.h"
 
 namespace vkb
 {

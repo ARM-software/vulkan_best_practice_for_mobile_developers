@@ -20,10 +20,11 @@
 
 #include "scene.h"
 
+#include <queue>
+
+#include "common/error.h"
 #include "component.h"
 #include "node.h"
-
-#include <queue>
 
 namespace vkb
 {

@@ -21,10 +21,7 @@
 #include "device.h"
 
 #define VMA_IMPLEMENTATION
-
-VKBP_DISABLE_WARNINGS
-#include "vk_mem_alloc.h"
-VKBP_ENABLE_WARNINGS
+#include <vk_mem_alloc.h>
 
 namespace vkb
 {

@@ -20,6 +20,8 @@
 
 #include "resource_replay.h"
 
+#include "common/logging.h"
+#include "common/vk_common.h"
 #include "resource_cache.h"
 #include "resource_record.h"
 

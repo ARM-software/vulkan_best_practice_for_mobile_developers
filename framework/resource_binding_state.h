@@ -20,8 +20,7 @@
 
 #pragma once
 
-#include "common.h"
-
+#include "common/vk_common.h"
 #include "core/buffer.h"
 #include "core/image_view.h"
 #include "core/sampler.h"

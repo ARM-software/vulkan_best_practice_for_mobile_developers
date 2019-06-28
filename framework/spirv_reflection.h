@@ -21,17 +21,17 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
-#include "common.h"
-
-#include "core/shader_module.h"
+#include "common/error.h"
 
 VKBP_DISABLE_WARNINGS
 #include <spirv_glsl.hpp>
 VKBP_ENABLE_WARNINGS
 
-#include <unordered_map>
+#include "common/vk_common.h"
+#include "core/shader_module.h"
 
 namespace vkb
 {

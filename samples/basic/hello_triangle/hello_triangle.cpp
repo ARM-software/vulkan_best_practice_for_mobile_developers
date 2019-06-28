@@ -19,7 +19,9 @@
  */
 
 #include "hello_triangle.h"
-#include "common.h"
+
+#include "common/logging.h"
+#include "common/vk_common.h"
 #include "glsl_compiler.h"
 #include "platform/file.h"
 #include "platform/platform.h"

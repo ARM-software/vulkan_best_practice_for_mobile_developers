@@ -20,8 +20,6 @@
 
 #pragma once
 
-#include "common.h"
-
 #include "resource_record.h"
 
 namespace vkb

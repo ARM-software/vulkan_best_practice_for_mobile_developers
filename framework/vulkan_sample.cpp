@@ -20,17 +20,23 @@
 
 #include "vulkan_sample.h"
 
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS
+#include <glm/glm.hpp>
+#include <imgui.h>
+VKBP_ENABLE_WARNINGS
+
+#include "common/helpers.h"
+#include "common/logging.h"
+#include "common/vk_common.h"
 #include "gltf_loader.h"
 #include "platform/platform.h"
-
-#include <imgui.h>
-
+#include "scene_graph/script.h"
+#include "scene_graph/scripts/free_camera.h"
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
 #endif
-
-#include "scene_graph/script.h"
-#include "scene_graph/scripts/free_camera.h"
 
 namespace vkb
 {

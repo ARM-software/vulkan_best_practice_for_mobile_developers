@@ -20,8 +20,9 @@
 
 #pragma once
 
-#include "common.h"
+#include <vector>
 
+#include "common/vk_common.h"
 #include "core/pipeline_layout.h"
 #include "core/render_pass.h"
 

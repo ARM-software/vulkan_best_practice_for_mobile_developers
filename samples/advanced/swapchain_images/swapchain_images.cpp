@@ -20,25 +20,21 @@
 
 #include "swapchain_images.h"
 
-#include "gui.h"
-#include "platform/file.h"
-#include "platform/platform.h"
-#include "stats.h"
-
 #include "core/device.h"
 #include "core/pipeline_layout.h"
 #include "core/shader_module.h"
-
+#include "gltf_loader.h"
+#include "gui.h"
+#include "platform/file.h"
+#include "platform/platform.h"
 #include "rendering/subpasses/scene_subpass.h"
+#include "scene_graph/components/material.h"
+#include "scene_graph/components/pbr_material.h"
+#include "stats.h"
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
 #endif
-
-#include "scene_graph/components/material.h"
-#include "scene_graph/components/pbr_material.h"
-
-#include "gltf_loader.h"
 
 SwapchainImages::SwapchainImages()
 {

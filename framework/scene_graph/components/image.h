@@ -25,10 +25,11 @@
 #include <typeinfo>
 #include <vector>
 
-#include "scene_graph/component.h"
+#include <volk.h>
 
 #include "core/image.h"
 #include "core/image_view.h"
+#include "scene_graph/component.h"
 
 namespace vkb
 {

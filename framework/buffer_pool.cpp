@@ -20,6 +20,11 @@
 
 #include "buffer_pool.h"
 
+#include <cstddef>
+
+#include "common/error.h"
+#include "common/logging.h"
+
 namespace vkb
 {
 BufferBlock::BufferBlock(Device &device, VkDeviceSize size, VkBufferUsageFlags usage) :

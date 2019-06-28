@@ -20,6 +20,8 @@
 
 #include "command_replay.h"
 
+#include "common/logging.h"
+#include "common/vk_common.h"
 #include "core/command_buffer.h"
 #include "core/descriptor_set.h"
 #include "core/device.h"

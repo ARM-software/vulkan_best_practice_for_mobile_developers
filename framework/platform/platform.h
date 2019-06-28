@@ -25,7 +25,7 @@
 #include <vector>
 
 #include "application.h"
-#include "common.h"
+#include "common/vk_common.h"
 
 namespace vkb
 {

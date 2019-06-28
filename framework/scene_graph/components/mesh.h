@@ -26,7 +26,6 @@
 #include <vector>
 
 #include "scene_graph/component.h"
-
 #include "scene_graph/components/aabb.h"
 
 namespace vkb

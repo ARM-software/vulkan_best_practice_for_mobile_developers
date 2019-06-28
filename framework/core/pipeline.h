@@ -20,7 +20,8 @@
 
 #pragma once
 
-#include "common.h"
+#include "common/helpers.h"
+#include "common/vk_common.h"
 #include "rendering/graphics_pipeline_state.h"
 
 namespace vkb
