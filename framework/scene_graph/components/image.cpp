@@ -24,10 +24,10 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS
+VKBP_DISABLE_WARNINGS()
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize.h>
-VKBP_ENABLE_WARNINGS
+VKBP_ENABLE_WARNINGS()
 
 #include "platform/file.h"
 #include "scene_graph/components/image/astc.h"

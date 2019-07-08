@@ -22,9 +22,9 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS
+VKBP_DISABLE_WARNINGS()
 #include <jni.h>
-VKBP_ENABLE_WARNINGS
+VKBP_ENABLE_WARNINGS()
 
 namespace vkb::file
 {

@@ -24,11 +24,11 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS
+VKBP_DISABLE_WARNINGS()
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-VKBP_ENABLE_WARNINGS
+VKBP_ENABLE_WARNINGS()
 
 #include "application.h"
 #include "common/logging.h"

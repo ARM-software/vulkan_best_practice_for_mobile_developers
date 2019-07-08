@@ -26,9 +26,9 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS
+VKBP_DISABLE_WARNINGS()
 #include <spirv_glsl.hpp>
-VKBP_ENABLE_WARNINGS
+VKBP_ENABLE_WARNINGS()
 
 #include "common/vk_common.h"
 #include "core/shader_module.h"

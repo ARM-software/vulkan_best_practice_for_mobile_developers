@@ -22,10 +22,10 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS
+VKBP_DISABLE_WARNINGS()
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
-VKBP_ENABLE_WARNINGS
+VKBP_ENABLE_WARNINGS()
 
 namespace vkb::file
 {

@@ -28,9 +28,9 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS
+VKBP_DISABLE_WARNINGS()
 #include <glm/glm.hpp>
-VKBP_ENABLE_WARNINGS
+VKBP_ENABLE_WARNINGS()
 
 #include "scene_graph/components/camera.h"
 

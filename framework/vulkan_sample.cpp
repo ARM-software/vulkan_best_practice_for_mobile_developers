@@ -22,10 +22,10 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS
+VKBP_DISABLE_WARNINGS()
 #include <glm/glm.hpp>
 #include <imgui.h>
-VKBP_ENABLE_WARNINGS
+VKBP_ENABLE_WARNINGS()
 
 #include "common/helpers.h"
 #include "common/logging.h"

@@ -26,10 +26,10 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS
+VKBP_DISABLE_WARNINGS()
 #include <imgui.h>
 #include <spdlog/sinks/android_sink.h>
-VKBP_ENABLE_WARNINGS
+VKBP_ENABLE_WARNINGS()
 
 #include "common/logging.h"
 #include "platform/input_events.h"

@@ -22,9 +22,9 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS
+VKBP_DISABLE_WARNINGS()
 #include <glm/glm.hpp>
-VKBP_ENABLE_WARNINGS
+VKBP_ENABLE_WARNINGS()
 
 #include "platform/file.h"
 #include "rendering/pipeline_state.h"
