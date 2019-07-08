@@ -26,7 +26,6 @@ namespace vkb
 {
 Stats::Stats(const std::set<StatIndex> &enabled_stats, CounterSamplingConfig sampling_config,
              const size_t buffer_size) :
-    hwcpipe(std::make_unique<hwcpipe::HWCPipe>()),
     enabled_stats(enabled_stats),
     sampling_config(sampling_config),
     stop_worker(std::make_unique<std::promise<void>>())
@@ -56,6 +55,31 @@ Stats::Stats(const std::set<StatIndex> &enabled_stats, CounterSamplingConfig sam
 	    {StatIndex::l2_ext_read_bytes, {hwcpipe::GpuCounter::ExternalMemoryReadBytes}},
 	    {StatIndex::l2_ext_write_bytes, {hwcpipe::GpuCounter::ExternalMemoryWriteBytes}},
 	};
+
+	hwcpipe::CpuCounterSet enabled_cpu_counters{};
+	hwcpipe::GpuCounterSet enabled_gpu_counters{};
+
+	for (const auto &stat : enabled_stats)
+	{
+		auto res = stat_data.find(stat);
+		if (res != stat_data.end())
+		{
+			switch (res->second.type)
+			{
+				case StatType::Cpu:
+					enabled_cpu_counters.insert(res->second.cpu_counter);
+					break;
+				case StatType::Gpu:
+					enabled_gpu_counters.insert(res->second.gpu_counter);
+					break;
+				default:
+					break;
+			}
+		}
+	}
+
+	hwcpipe = std::make_unique<hwcpipe::HWCPipe>(enabled_cpu_counters, enabled_gpu_counters);
+	hwcpipe->run();
 
 	if (sampling_config.mode == CounterSamplingMode::Continuous)
 	{
