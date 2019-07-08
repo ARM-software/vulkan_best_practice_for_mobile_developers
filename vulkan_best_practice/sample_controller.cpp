@@ -26,7 +26,7 @@
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include <jni.h>
 
-std::vector<std::string> java_arguments;
+std::string java_argument_string = "";
 
 extern "C"
 {
@@ -53,22 +53,13 @@ extern "C"
 	}
 
 	JNIEXPORT void JNICALL
-	    Java_com_arm_vulkan_1best_1practice_BPSampleActivity_setArguments(JNIEnv *env, jobject thiz, jobjectArray args)
+	    Java_com_arm_vulkan_1best_1practice_BPSampleActivity_setArgumentString(JNIEnv *env, jobject thiz, jstring argument_string)
 	{
-		int args_count = env->GetArrayLength(args);
+		const char *arg = env->GetStringUTFChars(argument_string, 0);
 
-		java_arguments.clear();
+		java_argument_string = std::string(arg);
 
-		for (int i = 0; i < args_count; i++)
-		{
-			jstring arg_str = (jstring)(env->GetObjectArrayElement(args, i));
-
-			const char *arg = env->GetStringUTFChars(arg_str, 0);
-
-			java_arguments.push_back(std::string(arg));
-
-			env->ReleaseStringUTFChars(arg_str, arg);
-		}
+		env->ReleaseStringUTFChars(argument_string, arg);
 	}
 }
 #endif        // VK_USE_PLATFORM_ANDROID_KHR
@@ -119,7 +110,7 @@ inline std::vector<SampleInfo> find_samples_by_category(const std::string &categ
 	return runnable_sample_list;
 }
 
-inline const SampleCreateFunc &get_sample_create_func(const std::string &sample_id)
+inline const CreateAppFunc &get_sample_create_func(const std::string &sample_id)
 {
 	// Find the function to create sample
 	const auto sample_iter = sample_create_functions.find(sample_id);
@@ -141,10 +132,18 @@ bool SampleController::prepare(Platform &platform)
 	bool result{true};
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
-	result = parse_arguments(java_arguments);
-#else
-	result = parse_arguments(platform.get_arguments());
+	platform.parse_arguments(java_argument_string);
 #endif
+
+	auto &args = platform.get_arguments();
+
+	if (args.contains("test"))
+	{
+		run_test(args.at("test"));
+		return false;
+	}
+
+	result = process_arguments(args);
 
 	if (!result)
 	{
@@ -169,55 +168,54 @@ bool SampleController::prepare(Platform &platform)
 
 bool SampleController::prepare_sample(std::vector<SampleInfo>::const_iterator sample)
 {
-	active_sample.reset();
+	active_app.reset();
 
 	auto &create_sample_func = get_sample_create_func(sample->id);
 
-	active_sample = create_sample_func();
-	active_sample->set_name(sample->name);
+	active_app = create_sample_func();
+	active_app->set_name(sample->name);
 
-	if (!active_sample)
+	if (!active_app)
 	{
 		LOGE("Failed to create a valid vulkan sample.");
 
 		return false;
 	}
 
-	if (!active_sample->prepare(*platform))
+	if (!active_app->prepare(*platform))
 	{
 		LOGE("Failed to prepare vulkan sample.");
 
 		return false;
 	}
 
-	active_sample->get_configuration().reset();
+	active_app->get_configuration().reset();
 
 	return true;
 }
 
-bool SampleController::parse_arguments(const std::vector<std::string> &args)
+bool SampleController::process_arguments(const ArgumentParser &args)
 {
-	if (std::find(args.begin(), args.end(), "--help") != args.end())
+	if (args.contains("help"))
 	{
 		print_usage();
-
 		return false;
 	}
 
-	if (!args.empty())
+	if (args.contains("category"))
 	{
-		auto &arg = *args.begin();
-		if (std::find(category_list.begin(), category_list.end(), arg) != category_list.end())
+		auto &category_arg = args.at("category");
+		if (std::find(category_list.begin(), category_list.end(), category_arg) != category_list.end())
 		{
-			samples_to_run = find_samples_by_category(arg);
+			samples_to_run = find_samples_by_category(category_arg);
 			automate       = true;
 			current_sample = samples_to_run.begin();
 		}
-		else
-		{
-			automate       = false;
-			current_sample = find_sample(arg);
-		}
+	}
+	else if (args.contains("sample"))
+	{
+		automate       = false;
+		current_sample = find_sample(args.at("sample"));
 	}
 	else
 	{
@@ -228,11 +226,39 @@ bool SampleController::parse_arguments(const std::vector<std::string> &args)
 	return true;
 }
 
+bool SampleController::run_test(const std::string &test_name)
+{
+	// Run a test app
+	automate               = false;
+	auto &create_test_func = test_create_functions.at(test_name);
+
+	active_app = create_test_func();
+	active_app->set_name(test_name);
+
+	if (!active_app)
+	{
+		LOGE("Failed to create a test.");
+
+		return false;
+	}
+
+	if (!active_app->prepare(*platform))
+	{
+		LOGE("Failed to prepare vulkan test.");
+
+		return false;
+	}
+
+	active_app->step();
+
+	return true;
+}
+
 void SampleController::update(float delta_time)
 {
-	if (active_sample)
+	if (active_app)
 	{
-		active_sample->step();
+		active_app->step();
 	}
 
 	elapsed_time += skipped_first_frame ? delta_time : 0.0f;
@@ -240,7 +266,7 @@ void SampleController::update(float delta_time)
 
 	if (automate)
 	{
-		auto &configuration = active_sample->get_configuration();
+		auto &configuration = active_app->get_configuration();
 
 		if (elapsed_time >= sample_run_time_per_configuration)
 		{
@@ -271,25 +297,25 @@ void SampleController::update(float delta_time)
 
 void SampleController::finish()
 {
-	if (active_sample)
+	if (active_app)
 	{
-		active_sample->finish();
+		active_app->finish();
 	}
 }
 
 void SampleController::resize(const uint32_t width, const uint32_t height)
 {
-	if (active_sample)
+	if (active_app)
 	{
-		active_sample->resize(width, height);
+		active_app->resize(width, height);
 	}
 }
 
 void SampleController::input_event(const InputEvent &input_event)
 {
-	if (active_sample && !automate)
+	if (active_app && !automate)
 	{
-		active_sample->input_event(input_event);
+		active_app->input_event(input_event);
 	}
 	else
 	{

@@ -88,6 +88,11 @@ Follow build instructions for your platform below.
 
 > Tested on: Samsung Galaxy S9, Samsung Galaxy S10, Huawei Mate 20 Pro, OPPO R15
 
+## Testing
+
+- System Test - [Usage Guide](docs/testing.md#system-test "System Test Guide")
+
+
 ## License
 
 See [LICENSE](LICENSE).

@@ -24,6 +24,11 @@
 
 namespace vkb
 {
+Platform::Platform() :
+    arguments{""}
+{
+}
+
 bool Platform::initialize(std::unique_ptr<Application> &&app)
 {
 	assert(app && "Application is not valid");
@@ -37,7 +42,7 @@ void Platform::terminate()
 	active_app->finish();
 }
 
-const std::vector<std::string> &Platform::get_arguments()
+const ArgumentParser &Platform::get_arguments()
 {
 	return arguments;
 }
@@ -51,6 +56,11 @@ Application &Platform::get_app() const
 {
 	assert(active_app && "Application is not valid");
 	return *active_app;
+}
+
+void Platform::parse_arguments(const std::string &argument_string)
+{
+	arguments = ArgumentParser{argument_string};
 }
 
 }        // namespace vkb

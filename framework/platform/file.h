@@ -26,7 +26,6 @@
 #include <stdexcept>
 #include <string>
 #include <sys/stat.h>
-#include <unordered_map>
 #include <vector>
 
 namespace vkb::file
@@ -79,7 +78,7 @@ void write_temp(const std::vector<uint8_t> &data, const std::string &filename, c
  * @param components The number of bytes per element
  * @param row_stride The stride in bytes of a row of pixels
  */
-void write_image(const std::vector<uint8_t> &data, const std::string &filename, const uint32_t width, const uint32_t height, const uint32_t components, const uint32_t row_stride);
+void write_image(const uint8_t *data, const std::string &filename, const uint32_t width, const uint32_t height, const uint32_t components, const uint32_t row_stride);
 
 /**
  * @brief Manages initialization of platform-dependent file paths

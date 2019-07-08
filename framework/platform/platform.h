@@ -26,6 +26,8 @@
 
 #include "application.h"
 #include "common/vk_common.h"
+#include "platform/argument_parser.h"
+#include "utils.h"
 
 namespace vkb
 {
@@ -34,6 +36,8 @@ class Application;
 class Platform
 {
   public:
+	Platform();
+
 	virtual ~Platform() = default;
 
 	/**
@@ -54,13 +58,18 @@ class Platform
 	 */
 	virtual float get_dpi_factor() const;
 
-	const std::vector<std::string> &get_arguments();
+	const ArgumentParser &get_arguments();
 
 	Application &get_app() const;
+
+	/**
+	 * @brief Generates an argument map from a string of input arguments
+	 */
+	void parse_arguments(const std::string &argument_string);
 
   protected:
 	std::unique_ptr<Application> active_app;
 
-	std::vector<std::string> arguments;
+	ArgumentParser arguments{""};
 };
 }        // namespace vkb

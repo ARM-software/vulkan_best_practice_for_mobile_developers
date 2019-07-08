@@ -56,24 +56,6 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 	auto &frame          = render_context.get_last_rendered_frame();
 	auto &src_image_view = frame.get_render_target().get_views().at(0);
 
-	bool blit_supported = true;
-
-	// Check if device supports blitting from swapchain images to linear images
-	{
-		auto format_properties = render_context.get_device().get_format_properties(render_context.get_swapchain().get_format());
-
-		if (!(format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT))
-		{
-			blit_supported = false;
-		}
-
-		format_properties = render_context.get_device().get_format_properties(format);
-		if (!(format_properties.linearTilingFeatures & VK_FORMAT_FEATURE_BLIT_DST_BIT))
-		{
-			blit_supported = false;
-		}
-	}
-
 	auto width  = render_context.get_swapchain().get_extent().width;
 	auto height = render_context.get_swapchain().get_extent().height;
 
@@ -120,49 +102,29 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 
 	bool swizzle = false;
 
-	if (blit_supported)
-	{
-		// Blit whole swapchain image (does automatic format conversion)
-		VkImageBlit image_blit_region{};
-		image_blit_region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		image_blit_region.srcSubresource.layerCount = 1;
-		image_blit_region.srcOffsets[1]             = {static_cast<int32_t>(width), static_cast<int32_t>(height), 1};
-		image_blit_region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		image_blit_region.dstSubresource.layerCount = 1;
-		image_blit_region.dstOffsets[1]             = {static_cast<int32_t>(width), static_cast<int32_t>(height), 1};
+	// Check if swapchain images are in a BGR format
+	auto bgr_formats = {VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_SNORM};
+	swizzle          = std::find(bgr_formats.begin(), bgr_formats.end(), render_context.get_swapchain().get_format()) != bgr_formats.end();
 
-		cmd_buf.blit_image(src_image_view.get_image(), dst_image, {image_blit_region});
-	}
-	else
-	{
-		LOGW("Device does not support blitting of images, using a copy instead");
+	// Copy whole swapchain image
+	VkImageCopy image_copy_region{};
+	image_copy_region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	image_copy_region.srcSubresource.layerCount = 1;
+	image_copy_region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	image_copy_region.dstSubresource.layerCount = 1;
+	image_copy_region.extent.width              = width;
+	image_copy_region.extent.height             = height;
+	image_copy_region.extent.depth              = 1;
 
-		// Check if swapchain images are in a BGR format
-		auto bgr_formats = {VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_SNORM};
-		swizzle          = std::find(bgr_formats.begin(), bgr_formats.end(), render_context.get_swapchain().get_format()) != bgr_formats.end();
-
-		// Copy whole swapchain image
-		VkImageCopy image_copy_region{};
-		image_copy_region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		image_copy_region.srcSubresource.layerCount = 1;
-		image_copy_region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		image_copy_region.dstSubresource.layerCount = 1;
-		image_copy_region.extent.width              = width;
-		image_copy_region.extent.height             = height;
-		image_copy_region.extent.depth              = 1;
-
-		cmd_buf.copy_image(src_image_view.get_image(), dst_image, {image_copy_region});
-	}
+	cmd_buf.copy_image(src_image_view.get_image(), dst_image, {image_copy_region});
 
 	// Enable destination image to map image memory
 	{
 		ImageMemoryBarrier memory_barrier{};
-		memory_barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		memory_barrier.dst_access_mask = VK_ACCESS_MEMORY_READ_BIT;
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_GENERAL;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		memory_barrier.old_layout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		memory_barrier.new_layout     = VK_IMAGE_LAYOUT_GENERAL;
+		memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
 		cmd_buf.image_memory_barrier(dst_image_view, memory_barrier);
 	}
@@ -191,34 +153,63 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 	VkSubresourceLayout subresource_layout;
 	vkGetImageSubresourceLayout(render_context.get_device().get_handle(), dst_image.get_handle(), &subresource, &subresource_layout);
 
-	auto image_data = std::vector<uint8_t>(width * height * 3);
+	raw_data += subresource_layout.offset;
 
-	// Read in only RGB data
-	size_t j = 0;
-	for (size_t i = 0; i < width * height * 4; i += 4)
+	// Creates a pointer to the address of the first byte past the offset of the image data
+	// Replace the A component with 255 (remove transparency)
+	// If swapchain format is BGR, swapping the R and B components
+	uint8_t *data = raw_data;
+	if (swizzle)
 	{
-		image_data[j]     = raw_data[i];
-		image_data[j + 1] = raw_data[i + 1];
-		image_data[j + 2] = raw_data[i + 2];
-
-		// Switch B and R components of each pixel if swapchain image format isn't RGB
-		if (swizzle)
+		for (size_t i = 0; i < height; ++i)
 		{
-			std::swap(image_data[j], image_data[j + 2]);
-		}
+			// Gets the first pixel of the first row of the image (a pixel is 4 bytes)
+			unsigned int *pixel = (unsigned int *) data;
 
-		j += 3;
+			// Iterate over each pixel, swapping R and B components and writing the max value for alpha
+			for (size_t j = 0; j < width; ++j)
+			{
+				auto temp                = *((uint8_t *) pixel + 2);
+				*((uint8_t *) pixel + 2) = *((uint8_t *) pixel);
+				*((uint8_t *) pixel)     = temp;
+				*((uint8_t *) pixel + 3) = 255;
+
+				// Get next pixel
+				pixel++;
+			}
+			// Pointer arithmetic to get the first byte in the next row of pixels
+			data += subresource_layout.rowPitch;
+		}
+	}
+	else
+	{
+		for (size_t i = 0; i < height; ++i)
+		{
+			// Gets the first pixel of the first row of the image (a pixel is 4 bytes)
+			unsigned int *pixel = (unsigned int *) data;
+
+			// Iterate over each pixel, writing the max value for alpha
+			for (size_t j = 0; j < width; ++j)
+			{
+				*((uint8_t *) pixel + 3) = 255;
+
+				// Get next pixel
+				pixel++;
+			}
+			// Pointer arithmetic to get the first byte in the next row of pixels
+			data += subresource_layout.rowPitch;
+		}
 	}
 
-	dst_image.unmap();
-
-	vkb::file::write_image(image_data,
+	vkb::file::write_image(raw_data,
 	                       filename,
 	                       width,
 	                       height,
-	                       3,
-	                       static_cast<uint32_t>(subresource_layout.rowPitch) * 3 / 4);
-}
+	                       4,
+	                       static_cast<uint32_t>(subresource_layout.rowPitch));
+
+	dst_image.unmap();
+}        // namespace vkb
 
 namespace
 {

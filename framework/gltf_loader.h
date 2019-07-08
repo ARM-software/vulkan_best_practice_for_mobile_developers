@@ -66,7 +66,7 @@ class GLTFLoader
   public:
 	GLTFLoader(Device &device);
 
-	bool read_scene_from_file(const std::string &file_name, sg::Scene &scene);
+	std::unique_ptr<sg::Scene> read_scene_from_file(const std::string &file_name);
 
   protected:
 	virtual std::unique_ptr<sg::Node> parse_node(const tinygltf::Node &gltf_node);

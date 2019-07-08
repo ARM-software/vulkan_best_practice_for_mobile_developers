@@ -397,6 +397,7 @@ void AndroidPlatform::main_loop()
 
 void AndroidPlatform::terminate()
 {
+	Platform::terminate();
 	active_app.reset();
 	spdlog::drop_all();
 }
@@ -404,6 +405,7 @@ void AndroidPlatform::terminate()
 void AndroidPlatform::close() const
 {
 	ANativeActivity_finish(app->activity);
+	pthread_exit(0);
 }
 
 ANativeActivity *AndroidPlatform::get_activity()

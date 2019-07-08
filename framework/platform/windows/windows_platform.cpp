@@ -47,10 +47,14 @@ WindowsPlatform::WindowsPlatform(HINSTANCE /*hInstance*/, HINSTANCE /*hPrevInsta
 	// Ignore the first argument containing the application full path
 	std::vector<std::wstring> arguments_w(szArgList + 1, szArgList + argCount);
 
+	std::string argument_string = "";
+
 	for (auto &arg_w : arguments_w)
 	{
-		arguments.push_back(std::string(arg_w.begin(), arg_w.end()));
+		argument_string += std::string(arg_w.begin(), arg_w.end()) + " ";
 	}
+
+	parse_arguments(argument_string);
 }
 
 bool WindowsPlatform::initialize(std::unique_ptr<Application> &&app)

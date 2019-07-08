@@ -22,10 +22,12 @@ package com.arm.vulkan_best_practice;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
+import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
@@ -62,6 +64,8 @@ public class BPSampleActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.bp_sample_activity_main);
 
+        Bundle extras = this.getIntent().getExtras();
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -71,7 +75,7 @@ public class BPSampleActivity extends AppCompatActivity {
             sampleList = Arrays.asList(getSamples());
             File asset_files_dir = getExternalFilesDir("assets");
             File temp_files_dir = getCacheDir();
-            File storage_files_dir = getExternalFilesDir("outputs");
+            File storage_files_dir = getExternalFilesDir("output");
             if (asset_files_dir != null && temp_files_dir != null && storage_files_dir != null){
                 initFilePath(asset_files_dir.toString(), temp_files_dir.toString(), storage_files_dir.toString());
             }
@@ -79,7 +83,8 @@ public class BPSampleActivity extends AppCompatActivity {
 
         AdapterView.OnItemClickListener clickListener = new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                setArguments(new String[]{((Sample)parent.getItemAtPosition(position)).getId()});
+                String sampleId = ((Sample)parent.getItemAtPosition(position)).getId();
+                setArgumentString("--sample " + sampleId);
                 Intent intent = new Intent(BPSampleActivity.this, BPNativeActivity.class);
                 startActivity(intent);
             }
@@ -102,6 +107,21 @@ public class BPSampleActivity extends AppCompatActivity {
         });
         textPermissions = findViewById(R.id.text_permissions);
         checkPermissions();
+
+        if (extras != null) {
+            if (extras.containsKey("sample")) {
+                setArgumentString("--sample " + extras.getString("sample"));
+                Intent intent = new Intent(BPSampleActivity.this, BPNativeActivity.class);
+                startActivity(intent);
+            }
+
+            else if (extras.containsKey("test")) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                setArgumentString("--test " + extras.getString("test"));
+                Intent intent = new Intent(BPSampleActivity.this, BPNativeActivity.class);
+                startActivity(intent);
+            }
+        }
     }
 
     @Override
@@ -115,14 +135,14 @@ public class BPSampleActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
             case R.id.menu_run_samples:
-                String[] arguments = new String[1];
+                String category = "";
 
                 ViewPagerAdapter adapter = ((ViewPagerAdapter)viewPager.getAdapter());
                 if(adapter != null) {
-                    arguments[0] = adapter.getCurrentFragment().getCategory();
+                    category = adapter.getCurrentFragment().getCategory();
                 }
 
-                setArguments(arguments);
+                setArgumentString("--category " + category);
                 Intent intent = new Intent(BPSampleActivity.this, BPNativeActivity.class);
                 startActivity(intent);
                 return true;
@@ -219,7 +239,7 @@ public class BPSampleActivity extends AppCompatActivity {
 
     private native Sample[] getSamples();
 
-    private native void setArguments(String []args);
+    private native void setArgumentString(String argumentString);
 
     private native void initFilePath(String asset_path, String temp_path, String storage_path);
 }

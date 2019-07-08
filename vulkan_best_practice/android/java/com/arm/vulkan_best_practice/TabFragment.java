@@ -31,6 +31,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import java.util.List;
+import java.util.Objects;
 
 public class TabFragment extends Fragment {
 
@@ -66,8 +67,11 @@ public class TabFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         SampleArrayAdapter sampleArrayAdapter = new SampleArrayAdapter(view.getContext(), sampleList);
-
         ListView listView = view.findViewById(R.id.sample_list);
+        if(listView == null || sampleArrayAdapter == null) {
+            Objects.requireNonNull(getActivity()).finishAndRemoveTask();
+            return;
+        }
         listView.setAdapter(sampleArrayAdapter);
         listView.setOnItemClickListener(this.clickListener);
     }

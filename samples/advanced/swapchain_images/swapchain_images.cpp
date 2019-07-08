@@ -66,7 +66,7 @@ bool SwapchainImages::prepare(vkb::Platform &platform)
 
 	vkb::ShaderSource vert_shader(vkb::file::read_asset("shaders/base.vert"));
 	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/base.frag"));
-	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), scene, *camera);
+	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 
 	render_pipeline = std::make_unique<vkb::RenderPipeline>();
 	render_pipeline->add_subpass(std::move(scene_subpass));

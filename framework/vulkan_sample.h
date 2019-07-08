@@ -32,6 +32,7 @@
 #include "gui.h"
 #include "platform/application.h"
 #include "rendering/render_context.h"
+#include "scene_graph/node.h"
 #include "scene_graph/scene.h"
 #include "scene_graph/scripts/node_animation.h"
 #include "stats.h"
@@ -154,7 +155,7 @@ class VulkanSample : public Application
 
 	std::unique_ptr<RenderContext> render_context{nullptr};
 
-	sg::Scene scene;
+	std::unique_ptr<sg::Scene> scene{nullptr};
 
 	std::unique_ptr<Gui> gui{nullptr};
 

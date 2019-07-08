@@ -278,6 +278,11 @@ bool GlfwPlatform::initialize(std::unique_ptr<Application> &&app)
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
+	if (arguments.contains("offscreen"))
+	{
+		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+	}
+
 	window = glfwCreateWindow(1280, 720, app->get_name().c_str(), NULL, NULL);
 
 	if (!window)

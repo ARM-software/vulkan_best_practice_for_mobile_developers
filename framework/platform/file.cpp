@@ -110,9 +110,9 @@ void write_temp(const std::vector<uint8_t> &data, const std::string &filename, c
 	write_binary_file(data, Path::temp() + filename, count);
 }
 
-void write_image(const std::vector<uint8_t> &data, const std::string &filename, const uint32_t width, const uint32_t height, const uint32_t components, const uint32_t row_stride)
+void write_image(const uint8_t *data, const std::string &filename, const uint32_t width, const uint32_t height, const uint32_t components, const uint32_t row_stride)
 {
-	stbi_write_png((Path::storage() + "/" + filename + ".png").c_str(), width, height, components, data.data(), row_stride);
+	stbi_write_png((Path::storage() + "/" + filename + ".png").c_str(), width, height, components, data, row_stride);
 }
 
 const std::string &Path::assets()

@@ -20,8 +20,6 @@
 
  ]]
 
-set(CMAKE_BUILD_TYPE "debug" CACHE STRING "Build configuration")
-
 if(NOT CMAKE_ANDROID_NDK)
     set(CMAKE_ANDROID_NDK ${ANDROID_NDK})
 endif()
@@ -37,10 +35,11 @@ else()
 endif()
 
 set(VKB_WARNINGS_AS_ERRORS ON CACHE BOOL "Enable Warnings as Errors")
-set(VKB_SAMPLE_ENTRYPOINT OFF CACHE BOOL "Enable create entrypoint project for every sample.")
-set(VKB_SYMLINKS OFF CACHE BOOL "Enable create symlink folders for every sample.")
-set(VKB_VALIDATION_LAYERS OFF CACHE BOOL "Enable validation layers for every sample.")
+set(VKB_ENTRYPOINTS OFF CACHE BOOL "Enable create entrypoint project for every application.")
+set(VKB_SYMLINKS OFF CACHE BOOL "Enable create symlink folders for every application.")
+set(VKB_VALIDATION_LAYERS OFF CACHE BOOL "Enable validation layers for every application.")
 set(VKB_BUILD_SAMPLES ON CACHE BOOL "Enable generation and building of Vulkan best practice samples.")
+set(VKB_BUILD_TESTS OFF CACHE BOOL "Enable generation and building of Vulkan best practice tests.")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin/${CMAKE_BUILD_TYPE}/${TARGET_ARCH}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "lib/${CMAKE_BUILD_TYPE}/${TARGET_ARCH}")

@@ -121,11 +121,23 @@ VulkanSample::VulkanSample()
 
 VulkanSample::~VulkanSample()
 {
+	device->wait_idle();
+
+	scene.reset();
+
+	stats.reset();
+	gui.reset();
 	render_context.reset();
+	device.reset();
 
 	if (surface != VK_NULL_HANDLE)
 	{
 		vkDestroySurfaceKHR(instance, surface, nullptr);
+	}
+
+	if (instance != VK_NULL_HANDLE)
+	{
+		vkDestroyInstance(instance, nullptr);
 	}
 }
 
@@ -162,9 +174,9 @@ bool VulkanSample::prepare(Platform &platform)
 
 void VulkanSample::update(float delta_time)
 {
-	if (scene.has_component<sg::Script>())
+	if (scene->has_component<sg::Script>())
 	{
-		auto scripts = scene.get_components<sg::Script>();
+		auto scripts = scene->get_components<sg::Script>();
 
 		for (auto script : scripts)
 		{
@@ -280,9 +292,9 @@ void VulkanSample::resize(uint32_t width, uint32_t height)
 		gui->resize(width, height);
 	}
 
-	if (scene.has_component<sg::Script>())
+	if (scene->has_component<sg::Script>())
 	{
-		auto scripts = scene.get_components<sg::Script>();
+		auto scripts = scene->get_components<sg::Script>();
 
 		for (auto script : scripts)
 		{
@@ -309,9 +321,9 @@ void VulkanSample::input_event(const InputEvent &input_event)
 
 	if (!gui_captures_event)
 	{
-		if (scene.has_component<sg::Script>())
+		if (scene->has_component<sg::Script>())
 		{
-			auto scripts = scene.get_components<sg::Script>();
+			auto scripts = scene->get_components<sg::Script>();
 
 			for (auto script : scripts)
 			{
@@ -324,7 +336,7 @@ void VulkanSample::input_event(const InputEvent &input_event)
 void VulkanSample::finish()
 {
 	Application::finish();
-	vkDeviceWaitIdle(device->get_handle());
+	device->wait_idle();
 }
 
 VkPhysicalDevice VulkanSample::get_gpu()
@@ -367,11 +379,11 @@ void VulkanSample::update_debug_window()
 	                                                    convert_format_to_string(render_context->get_swapchain().get_format()) + " (" +
 	                                                        to_string(vkb::get_bits_per_pixel(render_context->get_swapchain().get_format())) + "bbp)");
 
-	get_debug_info().insert<field::Static, uint32_t>("mesh_count", to_u32(scene.get_components<sg::SubMesh>().size()));
+	get_debug_info().insert<field::Static, uint32_t>("mesh_count", to_u32(scene->get_components<sg::SubMesh>().size()));
 
-	get_debug_info().insert<field::Static, uint32_t>("texture_count", to_u32(scene.get_components<sg::Texture>().size()));
+	get_debug_info().insert<field::Static, uint32_t>("texture_count", to_u32(scene->get_components<sg::Texture>().size()));
 
-	if (auto camera = scene.get_components<vkb::sg::Camera>().at(0))
+	if (auto camera = scene->get_components<vkb::sg::Camera>().at(0))
 	{
 		if (auto camera_node = camera->get_node())
 		{
@@ -383,13 +395,13 @@ void VulkanSample::update_debug_window()
 
 sg::Node &VulkanSample::add_free_camera(const std::string &node_name)
 {
-	auto camera_node = scene.find_node(node_name);
+	auto camera_node = scene->find_node(node_name);
 
 	if (!camera_node)
 	{
 		LOGW("Camera node `{}` not found. Looking for `default_camera` node.", node_name.c_str());
 
-		camera_node = scene.find_node("default_camera");
+		camera_node = scene->find_node("default_camera");
 	}
 
 	if (!camera_node)
@@ -404,7 +416,7 @@ sg::Node &VulkanSample::add_free_camera(const std::string &node_name)
 
 	auto free_camera_script = std::make_unique<vkb::sg::FreeCamera>(*camera_node);
 
-	scene.add_component(std::move(free_camera_script), *camera_node);
+	scene->add_component(std::move(free_camera_script), *camera_node);
 
 	return *camera_node;
 }
@@ -413,9 +425,9 @@ void VulkanSample::load_scene(const std::string &path)
 {
 	vkb::GLTFLoader loader{*device};
 
-	bool status = loader.read_scene_from_file(path, scene);
+	scene = loader.read_scene_from_file(path);
 
-	if (!status)
+	if (!scene)
 	{
 		LOGE("Cannot load scene: {}", path.c_str());
 		throw std::runtime_error("Cannot load scene: " + path);

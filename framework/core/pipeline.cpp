@@ -94,7 +94,7 @@ ComputePipeline::ComputePipeline(Device &        device,
 	}
 
 	VkSpecializationInfo specialization_info{};
-	specialization_info.mapEntryCount = map_entries.size();
+	specialization_info.mapEntryCount = to_u32(map_entries.size());
 	specialization_info.pMapEntries   = map_entries.data();
 	specialization_info.dataSize      = data.size();
 	specialization_info.pData         = data.data();
@@ -138,7 +138,7 @@ GraphicsPipeline::GraphicsPipeline(Device &        device,
 	}
 
 	VkSpecializationInfo specialization_info{};
-	specialization_info.mapEntryCount = map_entries.size();
+	specialization_info.mapEntryCount = to_u32(map_entries.size());
 	specialization_info.pMapEntries   = map_entries.data();
 	specialization_info.dataSize      = data.size();
 	specialization_info.pData         = data.data();

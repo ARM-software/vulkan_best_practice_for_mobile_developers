@@ -22,19 +22,21 @@
 
 set(SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 
-function(generate_sample_entrypoint)
+function(generate_entrypoint)
     set(options)
-    set(oneValueArgs ID NAME OUTPUT_DIR)
+    set(oneValueArgs ID NAME CREATE_FUNC INCLUDE_PATH OUTPUT_PATH)
     set(multiValueArgs)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    set(SAMPLE_NAME ${TARGET_NAME})
+    if(NOT TARGET_CREATE_FUNC)
+        set(TARGET_CREATE_FUNC ${TARGET_ID})
+    endif()
 
-    set(CONFIG_FILE ${SCRIPT_DIR}/template/sample_main.cpp.in)
+    set(CONFIG_FILE ${SCRIPT_DIR}/template/entrypoint_main.cpp.in)
 
     if(EXISTS ${CONFIG_FILE})
-        configure_file(${CONFIG_FILE} ${TARGET_OUTPUT_DIR}/main.cpp)
+        configure_file(${CONFIG_FILE} ${TARGET_OUTPUT_PATH})
     else()
         message(FATAL_ERROR "No template file exists at `${CONFIG_FILE}`")
     endif()
@@ -95,66 +97,123 @@ function(generate_samples_header)
     endif()
 endfunction()
 
-function(add_sample_project)
+function(generate_tests_header)
+    set(options)
+    set(oneValueArgs OUTPUT_DIR)
+    set(multiValueArgs TEST_ID_LIST)
+
+    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    set(TEST_INCLUDE_FILES)
+    set(TEST_NAME_FUNC_PAIRS)
+
+    foreach(TEST_ID ${TARGET_TEST_ID_LIST})
+        if (TARGET ${TEST_ID})
+            list(APPEND TEST_INCLUDE_FILES "#include \"${TEST_ID}/${TEST_ID}.h\"")
+            list(APPEND TEST_NAME_FUNC_PAIRS "\t{ \"${TEST_ID}\", create_${TEST_ID}_test },")
+        endif()
+    endforeach()
+
+    string_join(
+        GLUE "\n"
+        INPUT ${TEST_INCLUDE_FILES}
+        OUTPUT TEST_INCLUDE_FILES)
+
+    string_join(
+        GLUE "\n"
+        INPUT ${TEST_NAME_FUNC_PAIRS}
+        OUTPUT TEST_NAME_FUNC_PAIRS)
+
+    set(CONFIG_FILE ${SCRIPT_DIR}/template/tests.h.in)
+
+    if(EXISTS ${CONFIG_FILE})
+        configure_file(${CONFIG_FILE} ${TARGET_OUTPUT_DIR}/tests.h)
+    else()
+        message(FATAL_ERROR "No template file exists at `${CONFIG_FILE}`")
+    endif()
+endfunction()
+
+function(add_project)
     set(options)  
-    set(oneValueArgs ID CATEGORY TYPE NAME DESCRIPTION)
+    set(oneValueArgs TYPE ID NAME CATEGORY DESCRIPTION)
     set(multiValueArgs FILES)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    set("VKB_${TARGET_ID}" ON CACHE BOOL "Build sample ${TARGET_ID}")
+    if(${TARGET_TYPE} STREQUAL "Sample")
+        set("VKB_${TARGET_ID}" ON CACHE BOOL "Build sample ${TARGET_ID}")
+    endif()
 
     if(NOT ${VKB_${TARGET_ID}})
-        message(STATUS "Sample `${TARGET_ID}` - DISABLED")
+        message(STATUS "${TARGET_TYPE} `${TARGET_ID}` - DISABLED")
         return()
     endif()
 
-    message(STATUS "Sample `${SAMPLE_ID}` - BUILD")
+    message(STATUS "${TARGET_TYPE} `${TARGET_ID}` - BUILD")
 
-    # create sample project (object target - reused by app target)
+    # create project (object target - reused by app target)
     project(${TARGET_ID} LANGUAGES C CXX)
 
     source_group("\\" FILES ${TARGET_FILES})
 
     add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES})
+    
+    # inherit compile definitions from framework target
+    target_compile_definitions(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:framework,COMPILE_DEFINITIONS>)
 
     # inherit include directories from framework target
     target_include_directories(${PROJECT_NAME} PUBLIC 
         $<TARGET_PROPERTY:framework,INCLUDE_DIRECTORIES>
         ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
-    # inherit compile definitions from framework target
-    target_compile_definitions(${PROJECT_NAME} PUBLIC 
-        $<TARGET_PROPERTY:framework,COMPILE_DEFINITIONS>)
+    # if test then add test framework as well
+    if(${TARGET_TYPE} STREQUAL "Test")
+        target_compile_definitions(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:test_framework,COMPILE_DEFINITIONS>)
+        target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:test_framework,INCLUDE_DIRECTORIES>)
+    endif()
 
     # capitalise the first letter of the category  (performance -> Performance) 
     string(SUBSTRING ${TARGET_CATEGORY} 0 1 FIRST_LETTER)
     string(TOUPPER ${FIRST_LETTER} FIRST_LETTER)
     string(REGEX REPLACE "^.(.*)" "${FIRST_LETTER}\\1" CATEGORY "${TARGET_CATEGORY}")
 
-    # add sample project to a folder
-    set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Samples//${CATEGORY}")
+    if(${TARGET_TYPE} STREQUAL "Sample")
+        # set sample properties
+        set_target_properties(${PROJECT_NAME}
+            PROPERTIES 
+                SAMPLE_NAME ${TARGET_NAME}
+                SAMPLE_CATEGORY ${TARGET_CATEGORY}
+                SAMPLE_DESCRIPTION ${TARGET_DESCRIPTION})
 
-    # set sample properties
-    set_target_properties(${PROJECT_NAME}
-        PROPERTIES 
-            SAMPLE_NAME ${TARGET_NAME}
-            SAMPLE_CATEGORY ${TARGET_CATEGORY}
-            SAMPLE_DESCRIPTION ${TARGET_DESCRIPTION})
+        # add sample project to a folder
+        set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Samples//${CATEGORY}")
+    elseif(${TARGET_TYPE} STREQUAL "Test")
+        # add test project to a folder
+        set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Tests")
+    endif()
 
-    if(NOT ANDROID AND ${VKB_SAMPLE_ENTRYPOINT})
-        # create sample app project
-        project(${TARGET_ID}_app LANGUAGES C CXX)
+    if(NOT ANDROID AND ${VKB_ENTRYPOINTS})
+        set(CREATE_FUNC_NAME ${TARGET_ID})
+        if(${TARGET_TYPE} STREQUAL "Sample")
+            # create sample app project
+            project(${TARGET_ID}_app LANGUAGES C CXX)
+        elseif(${TARGET_TYPE} STREQUAL "Test")
+            # create sample app project
+            project(${TARGET_ID}_test LANGUAGES C CXX)
+            set(CREATE_FUNC_NAME ${TARGET_ID}_test)
+        endif()
 
         # create entrypoint file for sample
-        generate_sample_entrypoint(
+        generate_entrypoint(
             ID ${TARGET_ID}
             NAME ${TARGET_NAME}
-            OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
-
+            CREATE_FUNC ${CREATE_FUNC_NAME}
+            INCLUDE_PATH ${TARGET_ID}
+            OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/main.cpp)
+            
         # create list of project files (objects + entrypoint file)
         set(PROJECT_FILES 
-            ${CMAKE_CURRENT_BINARY_DIR}/main.cpp
+            ${CMAKE_CURRENT_BINARY_DIR}/main.cpp 
             $<TARGET_OBJECTS:${TARGET_ID}>)
 
         source_group("\\" FILES ${PROJECT_FILES})
@@ -167,6 +226,10 @@ function(add_sample_project)
 
         target_link_libraries(${PROJECT_NAME} PUBLIC framework)
 
+        if(${TARGET_TYPE} STREQUAL "Test")
+            target_link_libraries(${PROJECT_NAME} PUBLIC test_framework)
+        endif()
+
         # add sample app project to a folder
         set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Entrypoints//${CATEGORY}")
 
@@ -178,12 +241,20 @@ function(add_sample_project)
                 
             create_symlink(
                 NAME ${PROJECT_NAME}
-                DIR ${CMAKE_SOURCE_DIR}/outputs
-                LINK ${CMAKE_CURRENT_BINARY_DIR}/outputs)
+                DIR ${CMAKE_SOURCE_DIR}/output
+                LINK ${CMAKE_CURRENT_BINARY_DIR}/output)
         endif()
-        
+
         if(MSVC)
             set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+            
+            foreach(CONFIG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+                string(TOUPPER ${CONFIG_TYPE} SUFFIX)
+                string(TOLOWER ${CONFIG_TYPE} CONFIG_DIR)
+                set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_${SUFFIX} ${CMAKE_CURRENT_BINARY_DIR}/bin/${CONFIG_DIR}/${TARGET_ARCH})
+                set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_${SUFFIX} ${CMAKE_CURRENT_BINARY_DIR}/lib/${CONFIG_DIR}/${TARGET_ARCH})
+                set_target_properties(${PROJECT_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_${SUFFIX} ${CMAKE_CURRENT_BINARY_DIR}/lib/${CONFIG_DIR}/${TARGET_ARCH})
+            endforeach()
         endif()
     endif()
 endfunction()

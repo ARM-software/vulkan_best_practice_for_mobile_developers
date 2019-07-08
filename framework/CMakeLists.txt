@@ -188,6 +188,7 @@ set(CORE_FILES
 set(PLATFORM_FILES
     # Header Files
     platform/application.h
+    platform/argument_parser.h
     platform/platform.h
     platform/file.h
     platform/thread_pool.h
@@ -197,6 +198,7 @@ set(PLATFORM_FILES
     platform/configuration.h
     # Source Files
     platform/application.cpp
+    platform/argument_parser.cpp
     platform/platform.cpp
     platform/file.cpp
     platform/thread_pool.cpp

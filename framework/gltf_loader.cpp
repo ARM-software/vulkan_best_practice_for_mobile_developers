@@ -320,7 +320,7 @@ GLTFLoader::GLTFLoader(Device &device) :
 {
 }
 
-bool GLTFLoader::read_scene_from_file(const std::string &file_name, sg::Scene &scene)
+std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &file_name)
 {
 	std::string err;
 	std::string warn;
@@ -335,14 +335,14 @@ bool GLTFLoader::read_scene_from_file(const std::string &file_name, sg::Scene &s
 	{
 		LOGE("Failed to load gltf file {}.", gltf_file.c_str());
 
-		return false;
+		return nullptr;
 	}
 
 	if (!err.empty())
 	{
 		LOGE("Error loading gltf model: {}.", err.c_str());
 
-		return false;
+		return nullptr;
 	}
 
 	if (!warn.empty())
@@ -359,9 +359,7 @@ bool GLTFLoader::read_scene_from_file(const std::string &file_name, sg::Scene &s
 		model_path.clear();
 	}
 
-	scene = load_scene();
-
-	return true;
+	return std::make_unique<sg::Scene>(load_scene());
 }
 
 sg::Scene GLTFLoader::load_scene()

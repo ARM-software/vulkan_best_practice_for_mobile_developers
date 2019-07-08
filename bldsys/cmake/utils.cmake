@@ -57,14 +57,14 @@ function(create_symlink)
 
         add_custom_command(
             TARGET ${TARGET_NAME} POST_BUILD
-            COMMENT "Create symlink for assets folder"
+            COMMENT "Create symlink for ${TARGET_DIR}"
             COMMAND if exist ${DIR_LINK} rmdir /q ${DIR_LINK}
             COMMAND mklink /D ${DIR_LINK} ${DIR_SRC}
             VERBATIM)
     else()
         add_custom_command(
             TARGET ${TARGET_NAME} PRE_BUILD
-            COMMENT "Create symlink for assets folder"
+            COMMENT "Create symlink for ${TARGET_DIR}"
             COMMAND ${CMAKE_COMMAND} -E create_symlink ${TARGET_DIR} ${TARGET_LINK}
             VERBATIM)
     endif()

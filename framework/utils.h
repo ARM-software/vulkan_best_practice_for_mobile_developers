@@ -32,6 +32,8 @@ VKBP_ENABLE_WARNINGS()
 #include "scene_graph/components/sub_mesh.h"
 #include "scene_graph/scene.h"
 
+#include "platform/file.h"
+
 namespace vkb
 {
 /**

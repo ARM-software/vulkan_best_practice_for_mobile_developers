@@ -55,7 +55,7 @@ std::string Path::get_temp_path()
 
 std::string Path::get_storage_path()
 {
-	static std::string storage = "outputs/";
+	static std::string storage = "output/";
 
 	if (!is_directory(storage))
 	{
