@@ -263,11 +263,6 @@ void on_app_cmd(android_app *app, int32_t cmd)
 			platform->get_app().set_focus(false);
 			break;
 		}
-		case APP_CMD_TERM_WINDOW:
-		{
-			platform->get_app().finish();
-			break;
-		}
 	}
 }
 
@@ -334,15 +329,15 @@ AndroidPlatform::AndroidPlatform(android_app *app) :
 	spdlog::set_default_logger(android_logger);
 }
 
-bool AndroidPlatform::initialize(std::unique_ptr<Application> &&appplication)
+bool AndroidPlatform::initialize(std::unique_ptr<Application> &&application)
 {
 	app->onAppCmd                                  = on_app_cmd;
 	app->onInputEvent                              = on_input_event;
 	app->activity->callbacks->onContentRectChanged = on_content_rect_changed;
 	app->userData                                  = this;
 
-	assert(appplication && "Appplication is not valid");
-	active_app = std::move(appplication);
+	assert(application && "Application is not valid");
+	active_app = std::move(application);
 
 	return true;
 }
@@ -381,6 +376,11 @@ void AndroidPlatform::main_loop()
 			{
 				source->process(app, source);
 			}
+
+			if (app->destroyRequested)
+			{
+				break;
+			}
 		}
 
 		if (app->destroyRequested)
@@ -395,17 +395,9 @@ void AndroidPlatform::main_loop()
 	}
 }
 
-void AndroidPlatform::terminate()
-{
-	Platform::terminate();
-	active_app.reset();
-	spdlog::drop_all();
-}
-
 void AndroidPlatform::close() const
 {
 	ANativeActivity_finish(app->activity);
-	pthread_exit(0);
 }
 
 ANativeActivity *AndroidPlatform::get_activity()

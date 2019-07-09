@@ -40,6 +40,8 @@ bool Platform::initialize(std::unique_ptr<Application> &&app)
 void Platform::terminate()
 {
 	active_app->finish();
+	active_app.reset();
+	spdlog::drop_all();
 }
 
 const ArgumentParser &Platform::get_arguments()
