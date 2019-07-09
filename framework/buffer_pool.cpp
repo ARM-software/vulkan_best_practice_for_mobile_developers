@@ -119,18 +119,25 @@ BufferAllocation::BufferAllocation(core::Buffer &buffer, VkDeviceSize size, VkDe
 {
 }
 
-void BufferAllocation::update(uint32_t offset, const std::vector<uint8_t> &data)
+void BufferAllocation::update(const std::vector<uint8_t> &data, uint32_t offset)
 {
 	assert(buffer && "Invalid buffer pointer");
 
 	if (offset + data.size() <= size)
 	{
-		buffer->update(static_cast<size_t>(base_offset) + offset, data);
+		buffer->update(data, static_cast<size_t>(base_offset) + offset);
 	}
 	else
 	{
 		LOGE("Ignore buffer allocation update");
 	}
+}
+
+void BufferAllocation::update(const uint8_t *data, const size_t size, const uint32_t offset)
+{
+	assert(data && "Invalid data pointer");
+
+	buffer->update(data, size, offset);
 }
 
 bool BufferAllocation::empty() const

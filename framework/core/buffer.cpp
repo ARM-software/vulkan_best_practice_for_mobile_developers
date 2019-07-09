@@ -125,12 +125,12 @@ void Buffer::unmap()
 	}
 }
 
-void Buffer::update(size_t offset, const std::vector<uint8_t> &data)
+void Buffer::update(const std::vector<uint8_t> &data, size_t offset)
 {
-	update(offset, data.data(), data.size());
+	update(data.data(), data.size(), offset);
 }
 
-void Buffer::update(const size_t offset, const uint8_t *src, const size_t size)
+void Buffer::update(const uint8_t *src, const size_t size, const size_t offset)
 {
 	map();
 	std::copy(src, src + size, mapped_data + offset);

@@ -127,8 +127,10 @@ bool RenderPassesSample::prepare(vkb::Platform &platform)
 	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/base.frag"));
 	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 
-	render_pipeline = std::make_unique<vkb::RenderPipeline>();
-	render_pipeline->add_subpass(std::move(scene_subpass));
+	auto render_pipeline = vkb::RenderPipeline();
+	render_pipeline.add_subpass(std::move(scene_subpass));
+
+	set_render_pipeline(std::move(render_pipeline));
 
 	gui = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor());
 
@@ -148,15 +150,7 @@ void RenderPassesSample::draw_swapchain_renderpass(vkb::CommandBuffer &command_b
 	// Store operation for depth attachment is selected by the user at run-time
 	load_store[1].store_op = static_cast<VkAttachmentStoreOp>(store.value);
 
-	std::vector<VkClearValue> clear_value{2};
-	clear_value[0].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
-	clear_value[1].depthStencil = {1.0f, ~0U};
-
-	command_buffer.begin_render_pass(render_target, load_store, clear_value);
-
-	vkb::ColorBlendState blend_state{};
-	blend_state.attachments = {vkb::ColorBlendAttachmentState{}};
-	command_buffer.set_color_blend_state(blend_state);
+	get_render_pipeline().set_load_store(load_store);
 
 	auto &extent = render_target.get_extent();
 
@@ -171,16 +165,11 @@ void RenderPassesSample::draw_swapchain_renderpass(vkb::CommandBuffer &command_b
 	scissor.extent = extent;
 	command_buffer.set_scissor(0, {scissor});
 
-	draw_scene(command_buffer);
+	render(command_buffer);
 
 	gui->draw(command_buffer);
 
 	command_buffer.end_render_pass();
-}
-
-void RenderPassesSample::draw_scene(vkb::CommandBuffer &command_buffer)
-{
-	render_pipeline->draw(command_buffer);
 }
 
 void RenderPassesSample::update(float delta_time)

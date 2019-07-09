@@ -40,13 +40,9 @@ class SwapchainImages : public vkb::VulkanSample
 	virtual void update(float delta_time) override;
 
   private:
-	std::unique_ptr<vkb::RenderPipeline> render_pipeline{nullptr};
-
 	vkb::sg::Camera *camera{nullptr};
 
 	virtual void draw_gui() override;
-
-	virtual void draw_scene(vkb::CommandBuffer &cmd_buf) override;
 
 	int swapchain_image_count{3};
 

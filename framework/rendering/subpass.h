@@ -29,6 +29,13 @@ namespace vkb
 class RenderContext;
 
 /**
+ * @brief Calculates the vulkan style projection matrix
+ * @param proj The projection matrix
+ * @return The vulkan style projection matrix
+ */
+glm::mat4 vulkan_style_projection(const glm::mat4 &proj);
+
+/**
  * @brief This class defines an interface for subpasses
  *        where they need to implement the draw function.
  *        It is used to construct a RenderPipeline
@@ -41,30 +48,33 @@ class Subpass : public NonCopyable
 	virtual ~Subpass() = default;
 
 	/**
+	 * @brief Updates the render target attachments with the ones stored in this subpass
+	 *        This function is called by the RenderPipeline before beginning the render
+	 *        pass and before proceeding with a new subpass.
+	 */
+	void update_render_target_attachments();
+
+	/**
 	 * @brief Draw virtual function
 	 * @param command_buffer Command buffer to use to record draw commands
 	 */
 	virtual void draw(CommandBuffer &command_buffer) = 0;
 
-	RenderContext &get_render_context()
-	{
-		return render_context;
-	}
+	RenderContext &get_render_context();
 
-	const ShaderSource &get_vertex_shader() const
-	{
-		return vertex_shader;
-	}
+	const ShaderSource &get_vertex_shader() const;
 
-	const ShaderSource &get_fragment_shader() const
-	{
-		return fragment_shader;
-	}
+	const ShaderSource &get_fragment_shader() const;
 
-	DepthStencilState &get_depth_stencil_state()
-	{
-		return depth_stencil_state;
-	}
+	DepthStencilState &get_depth_stencil_state();
+
+	const std::vector<uint32_t> &get_input_attachments() const;
+
+	void set_input_attachments(std::vector<uint32_t> input);
+
+	const std::vector<uint32_t> &get_output_attachments() const;
+
+	void set_output_attachments(std::vector<uint32_t> output);
 
   private:
 	RenderContext &render_context;
@@ -74,6 +84,12 @@ class Subpass : public NonCopyable
 	ShaderSource fragment_shader;
 
 	DepthStencilState depth_stencil_state{};
+
+	/// Default to no input attachments
+	std::vector<uint32_t> input_attachments = {};
+
+	/// Default to swapchain output attachment
+	std::vector<uint32_t> output_attachments = {0};
 };
 
 }        // namespace vkb

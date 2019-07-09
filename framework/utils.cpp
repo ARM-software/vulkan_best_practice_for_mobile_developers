@@ -244,17 +244,6 @@ VkShaderStageFlagBits find_shader_stage(const std::string &ext)
 };
 }        // namespace
 
-glm::mat4 vulkan_style_projection(const glm::mat4 &proj)
-{
-	// Flip Y in clipspace. X = -1, Y = -1 is topLeft in Vulkan.
-	glm::mat4 mat = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, -1.0f, 1.0f));
-
-	// Z depth is [0, 1] range instead of [-1, 1].
-	mat = glm::scale(mat, glm::vec3(1.0f, 1.0f, 0.5f));
-
-	return glm::translate(mat, glm::vec3(0.0f, 0.0f, 1.0f)) * proj;
-}
-
 std::string to_snake_case(const std::string &text)
 {
 	std::stringstream result;

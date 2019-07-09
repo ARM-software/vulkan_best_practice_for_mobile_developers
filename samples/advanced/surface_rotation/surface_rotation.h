@@ -65,13 +65,9 @@ class SurfaceRotation : public vkb::VulkanSample
 	static const char *transform_to_string(VkSurfaceTransformFlagBitsKHR flag);
 
   private:
-	std::unique_ptr<vkb::RenderPipeline> render_pipeline{nullptr};
-
 	vkb::sg::PerspectiveCamera *camera{nullptr};
 
 	virtual void draw_gui() override;
-
-	virtual void draw_scene(vkb::CommandBuffer &cmd_buf) override;
 
 	void trigger_swapchain_recreation();
 

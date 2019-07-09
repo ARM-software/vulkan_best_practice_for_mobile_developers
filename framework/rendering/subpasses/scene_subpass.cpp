@@ -106,7 +106,7 @@ void SceneSubpass::draw(CommandBuffer &command_buffer)
 
 		global_uniform.model = transform.get_world_matrix();
 
-		allocation.update(0, global_uniform);
+		allocation.update(global_uniform);
 
 		command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
 
@@ -121,8 +121,8 @@ void SceneSubpass::draw(CommandBuffer &command_buffer)
 	color_blend_attachment.src_alpha_blend_factor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 
 	ColorBlendState color_blend_state{};
-	color_blend_state.attachments = {color_blend_attachment};
-
+	color_blend_state.attachments.resize(get_output_attachments().size());
+	color_blend_state.attachments[0] = color_blend_attachment;
 	command_buffer.set_color_blend_state(color_blend_state);
 
 	command_buffer.set_depth_stencil_state(get_depth_stencil_state());
@@ -136,7 +136,7 @@ void SceneSubpass::draw(CommandBuffer &command_buffer)
 
 		global_uniform.model = transform.get_world_matrix();
 
-		allocation.update(0, global_uniform);
+		allocation.update(global_uniform);
 
 		command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
 

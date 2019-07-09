@@ -101,45 +101,6 @@ vkb::RenderTarget::RenderTarget(std::vector<core::Image> &&images) :
 	}
 }
 
-RenderTarget::RenderTarget(Device &device, const VkExtent2D &extent, const std::vector<Attachment> &attachments) :
-    device{device},
-    extent{extent}
-{
-	add_attachments(attachments);
-}
-
-void RenderTarget::add_attachments(const std::vector<Attachment> &attachments)
-{
-	assert(this->attachments.empty() && "Attachments already added");
-	assert(!attachments.empty() && "Add at least 1 attachment");
-
-	// Images should not be moved or views will end up with dangling pointers
-	// So reserve space for vectors
-	images.reserve(attachments.size());
-	views.reserve(attachments.size());
-
-	VkExtent3D image_extent = {extent.width, extent.height, 1};
-
-	for (auto &attachment : attachments)
-	{
-		auto usage = attachment.usage;
-
-		if (is_depth_stencil_format(attachment.format))
-		{
-			usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-		}
-		else
-		{
-			usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		}
-
-		images.emplace_back(device, image_extent, attachment.format, usage, VMA_MEMORY_USAGE_GPU_ONLY);
-		views.emplace_back(images.back(), VK_IMAGE_VIEW_TYPE_2D);
-	}
-
-	std::copy(std::begin(attachments), std::end(attachments), std::back_inserter(this->attachments));
-}
-
 const VkExtent2D &RenderTarget::get_extent() const
 {
 	return extent;
@@ -155,9 +116,19 @@ const std::vector<Attachment> &RenderTarget::get_attachments() const
 	return attachments;
 }
 
-void RenderTarget::set_output_attachments(std::vector<uint32_t> &&output)
+void RenderTarget::set_input_attachments(std::vector<uint32_t> &input)
 {
-	output_attachments = std::move(output);
+	input_attachments = input;
+}
+
+const std::vector<uint32_t> &RenderTarget::get_input_attachments() const
+{
+	return input_attachments;
+}
+
+void RenderTarget::set_output_attachments(std::vector<uint32_t> &output)
+{
+	output_attachments = output;
 }
 
 const std::vector<uint32_t> &RenderTarget::get_output_attachments() const

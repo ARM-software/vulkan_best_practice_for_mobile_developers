@@ -130,7 +130,7 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 	// Upload font data into the vulkan image memory
 	{
 		core::Buffer stage_buffer{device, upload_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, 0};
-		stage_buffer.update(0, {font_data, font_data + upload_size});
+		stage_buffer.update({font_data, font_data + upload_size});
 
 		auto &command_buffer = device.request_command_buffer();
 
@@ -258,7 +258,7 @@ void Gui::update_buffers(CommandBuffer &command_buffer)
 
 	auto vertex_allocation = render_context.get_active_frame().allocate_buffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertex_buffer_size);
 
-	vertex_allocation.update(0, vertex_data);
+	vertex_allocation.update(vertex_data);
 
 	std::vector<std::reference_wrapper<const core::Buffer>> buffers;
 	buffers.emplace_back(std::ref(vertex_allocation.get_buffer()));
@@ -269,7 +269,7 @@ void Gui::update_buffers(CommandBuffer &command_buffer)
 
 	auto index_allocation = render_context.get_active_frame().allocate_buffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, index_buffer_size);
 
-	index_allocation.update(0, index_data);
+	index_allocation.update(index_data);
 
 	command_buffer.bind_index_buffer(index_allocation.get_buffer(), index_allocation.get_offset(), VK_INDEX_TYPE_UINT16);
 }

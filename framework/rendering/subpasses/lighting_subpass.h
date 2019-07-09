@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,39 +20,40 @@
 
 #pragma once
 
-#include "common/error.h"
-
-VKBP_DISABLE_WARNINGS()
-#include <glm/glm.hpp>
-VKBP_ENABLE_WARNINGS()
-
-#include "platform/file.h"
-#include "rendering/pipeline_state.h"
-#include "rendering/render_context.h"
-#include "scene_graph/components/sub_mesh.h"
-#include "scene_graph/scene.h"
-
-#include "platform/file.h"
+#include "rendering/subpass.h"
 
 namespace vkb
 {
-/**
- * @brief Extracts the extension from an uri
- * @param uri An uniform Resource Identifier
- * @return The extension
- */
-std::string get_extension(const std::string &uri);
+namespace sg
+{
+class Camera;
+}        // namespace sg
 
 /**
- * @param name String to convert to snake case
- * @return a snake case version of the string
+ * @brief Light uniform structure for lighting shader
+ * Inverse view projection matrix and inverse resolution vector are used
+ * in lighting pass to reconstruct position from depth and frag coord
  */
-std::string to_snake_case(const std::string &name);
+struct alignas(16) LightUniform
+{
+	glm::mat4 inv_view_proj;
+	glm::vec4 light_pos;
+	glm::vec4 light_color;
+	glm::vec2 inv_resolution;
+};
 
 /**
- * @brief Takes a screenshot of the app by writing the swapchain image to file (slow function)
- * @param filename The name of the file to save the output to
+ * @brief Lighting pass of Deferred Rendering
  */
-void screenshot(RenderContext &render_context, const std::string &filename);
+class LightingSubpass : public Subpass
+{
+  public:
+	LightingSubpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Camera &camera);
+
+	void draw(CommandBuffer &command_buffer) override;
+
+  private:
+	sg::Camera &camera;
+};
 
 }        // namespace vkb

@@ -71,8 +71,10 @@ bool AFBCSample::prepare(vkb::Platform &platform)
 	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/base.frag"));
 	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 
-	render_pipeline = std::make_unique<vkb::RenderPipeline>();
-	render_pipeline->add_subpass(std::move(scene_subpass));
+	auto render_pipeline = vkb::RenderPipeline();
+	render_pipeline.add_subpass(std::move(scene_subpass));
+
+	set_render_pipeline(std::move(render_pipeline));
 
 	gui = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor());
 
@@ -111,11 +113,6 @@ void AFBCSample::draw_gui()
 		    ImGui::Checkbox("AFBC", &afbc_enabled);
 	    },
 	    /* lines = */ 1);
-}
-
-void AFBCSample::draw_scene(vkb::CommandBuffer &cmd_buf)
-{
-	render_pipeline->draw(cmd_buf);
 }
 
 std::unique_ptr<vkb::VulkanSample> create_afbc()

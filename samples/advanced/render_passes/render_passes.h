@@ -23,7 +23,6 @@
 #include <iomanip>        // setprecision
 #include <sstream>        // stringstream
 
-#include "rendering/render_pipeline.h"
 #include "scene_graph/components/perspective_camera.h"
 #include "vulkan_sample.h"
 
@@ -56,10 +55,8 @@ class RenderPassesSample : public vkb::VulkanSample
 
   private:
 	void reset_stats_view() override;
-	void draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
-	void draw_scene(vkb::CommandBuffer &command_buffer) override;
 
-	std::unique_ptr<vkb::RenderPipeline> render_pipeline{nullptr};
+	void draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
 
 	vkb::sg::PerspectiveCamera *camera{nullptr};
 

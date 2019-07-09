@@ -32,6 +32,7 @@
 #include "gui.h"
 #include "platform/application.h"
 #include "rendering/render_context.h"
+#include "rendering/render_pipeline.h"
 #include "scene_graph/node.h"
 #include "scene_graph/scene.h"
 #include "scene_graph/scripts/node_animation.h"
@@ -161,6 +162,10 @@ class VulkanSample : public Application
 
 	std::unique_ptr<Stats> stats{nullptr};
 
+	void set_render_pipeline(RenderPipeline &&render_pipeline);
+
+	RenderPipeline &get_render_pipeline();
+
 	/**
 	 * @brief Get sample-specific instance layers.
 	 * 
@@ -181,11 +186,10 @@ class VulkanSample : public Application
 	virtual void draw_swapchain_renderpass(CommandBuffer &command_buffer, RenderTarget &render_target);
 
 	/**
-	 * @brief Draw scene meshes to the command buffer
-	 *
+	 * @brief Triggers rendering, it can be overriden by samples to specialize their rendering logic
 	 * @param command_buffer The Vulkan command buffer
 	 */
-	virtual void draw_scene(CommandBuffer &command_buffer);
+	virtual void render(CommandBuffer &command_buffer);
 
 	virtual void draw_gui();
 
@@ -226,6 +230,11 @@ class VulkanSample : public Application
 	 * @brief The physical devices found on the machine
 	 */
 	std::vector<VkPhysicalDevice> gpus;
+
+	/**
+	 * @brief Pipeline used for rendering, it should be set up by the concrete sample
+	 */
+	std::unique_ptr<RenderPipeline> render_pipeline{nullptr};
 
 	/**
 	 * @brief Create a Vulkan instance

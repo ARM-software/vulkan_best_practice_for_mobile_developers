@@ -70,8 +70,10 @@ bool SurfaceRotation::prepare(vkb::Platform &platform)
 	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/base.frag"));
 	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 
-	render_pipeline = std::make_unique<vkb::RenderPipeline>();
-	render_pipeline->add_subpass(std::move(scene_subpass));
+	auto render_pipeline = vkb::RenderPipeline();
+	render_pipeline.add_subpass(std::move(scene_subpass));
+
+	set_render_pipeline(std::move(render_pipeline));
 
 	gui = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor());
 
@@ -86,6 +88,32 @@ void SurfaceRotation::update(float delta_time)
 		trigger_swapchain_recreation();
 		last_pre_rotate = pre_rotate;
 	}
+
+	glm::mat4 pre_rotate_mat = glm::mat4(1.0f);
+
+	// In pre-rotate mode, the application has to handle the rotation
+	glm::vec3 rotation_axis = glm::vec3(0.0f, 0.0f, -1.0f);
+
+	const auto &swapchain = render_context->get_swapchain();
+
+	if (swapchain.get_transform() & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
+	{
+		pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(90.0f), rotation_axis);
+	}
+	else if (swapchain.get_transform() & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
+	{
+		pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(270.0f), rotation_axis);
+	}
+	else if (swapchain.get_transform() & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)
+	{
+		pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(180.0f), rotation_axis);
+	}
+
+	// Ensure that the camera uses the swapchain dimensions, since in pre-rotate
+	// mode the aspect ratio never changes
+	VkExtent2D extent = swapchain.get_extent();
+	camera->set_aspect_ratio(static_cast<float>(extent.width) / extent.height);
+	camera->set_pre_rotation(pre_rotate_mat);
 
 	VulkanSample::update(delta_time);
 }
@@ -129,35 +157,6 @@ void SurfaceRotation::draw_gui()
 		    },
 		    /* lines = */ lines);
 	}
-}
-
-void SurfaceRotation::draw_scene(vkb::CommandBuffer &cmd_buf)
-{
-	glm::mat4 pre_rotate_mat = glm::mat4(1.0f);
-
-	// In pre-rotate mode, the application has to handle the rotation
-	glm::vec3 rotation_axis = glm::vec3(0.0f, 0.0f, -1.0f);
-
-	if (render_context->get_swapchain().get_transform() & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
-	{
-		pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(90.0f), rotation_axis);
-	}
-	else if (render_context->get_swapchain().get_transform() & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
-	{
-		pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(270.0f), rotation_axis);
-	}
-	else if (render_context->get_swapchain().get_transform() & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)
-	{
-		pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(180.0f), rotation_axis);
-	}
-
-	// Ensure that the camera uses the swapchain dimensions, since in pre-rotate
-	// mode the aspect ratio never changes
-	VkExtent2D extent = render_context->get_swapchain().get_extent();
-	camera->set_aspect_ratio(static_cast<float>(extent.width) / extent.height);
-	camera->set_pre_rotation(pre_rotate_mat);
-
-	render_pipeline->draw(cmd_buf);
 }
 
 void SurfaceRotation::trigger_swapchain_recreation()

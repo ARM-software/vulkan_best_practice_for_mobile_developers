@@ -99,7 +99,13 @@ void vkb::CommandRecord::begin_render_pass(const RenderTarget &              ren
 
 	// Add first subpass to render pass
 	auto &subpass              = render_pass_binding.subpasses.emplace_back(SubpassDesc{stream.tellp()});
+	subpass.input_attachments  = render_target.get_input_attachments();
 	subpass.output_attachments = render_target.get_output_attachments();
+
+	// Update blend state attachments
+	auto blend_state = pipeline_state.get_color_blend_state();
+	blend_state.attachments.resize(subpass.output_attachments.size());
+	pipeline_state.set_color_blend_state(blend_state);
 
 	// Add render pass
 	render_pass_bindings.push_back(render_pass_binding);
@@ -113,7 +119,13 @@ void CommandRecord::next_subpass()
 	// Add subpass to render pass
 	auto &render_pass_desc     = render_pass_bindings.back();
 	auto &subpass              = render_pass_desc.subpasses.emplace_back(SubpassDesc{stream.tellp()});
+	subpass.input_attachments  = render_pass_desc.render_target.get_input_attachments();
 	subpass.output_attachments = render_pass_desc.render_target.get_output_attachments();
+
+	// Update blend state attachments
+	auto blend_state = pipeline_state.get_color_blend_state();
+	blend_state.attachments.resize(subpass.output_attachments.size());
+	pipeline_state.set_color_blend_state(blend_state);
 
 	// Descriptor set
 	descriptor_set_layout_state.clear();
@@ -392,18 +404,6 @@ void CommandRecord::FlushPipelineState(VkPipelineBindPoint pipeline_bind_point)
 
 		// Add graphics state to the current subpass
 		subpass.pipeline_descs.push_back({stream.tellp(), pipeline_state});
-
-		// Ensure all output attachments are there
-		auto output_attachments_count = pipeline_layout.get_fragment_output_attachments().size();
-		assert(subpass.output_attachments.size() == output_attachments_count && "Output attachments mismatch");
-
-		const auto &input_resource = pipeline_layout.get_fragment_input_attachments();
-
-		for (auto &resource : input_resource)
-		{
-			// Add input attachment index to current subpass.
-			subpass.input_attachments.emplace_back(resource.input_attachment_index);
-		}
 	}
 	else if (pipeline_bind_point == VK_PIPELINE_BIND_POINT_COMPUTE)
 	{

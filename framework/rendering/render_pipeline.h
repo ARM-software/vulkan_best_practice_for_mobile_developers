@@ -44,6 +44,28 @@ class RenderPipeline : public NonCopyable
 
 	virtual ~RenderPipeline() = default;
 
+	RenderPipeline(RenderPipeline &&other) = default;
+
+	/**
+	 * @return Load store info
+	 */
+	const std::vector<LoadStoreInfo> &get_load_store() const;
+
+	/**
+	 * @param load_store Load store info to set
+	 */
+	void set_load_store(std::vector<LoadStoreInfo> &load_store);
+
+	/**
+	 * @return Clear values
+	 */
+	const std::vector<VkClearValue> &get_clear_value() const;
+
+	/**
+	 * @param clear_values Clear values to set
+	 */
+	void set_clear_value(std::vector<VkClearValue> &clear_values);
+
 	/**
 	 * @brief Appends a subpass to the pipeline
 	 * @param subpass Subpass to append
@@ -53,9 +75,15 @@ class RenderPipeline : public NonCopyable
 	/**
 	 * @brief Record draw commands for each Subpass
 	 */
-	void draw(CommandBuffer &command_buffer);
+	void draw(CommandBuffer &command_buffer, RenderTarget &render_target);
 
   private:
 	std::vector<std::unique_ptr<Subpass>> subpasses;
+
+	/// Default to two load store
+	std::vector<LoadStoreInfo> load_store = std::vector<LoadStoreInfo>(2);
+
+	/// Default to two clear values
+	std::vector<VkClearValue> clear_value = std::vector<VkClearValue>(2);
 };
 }        // namespace vkb

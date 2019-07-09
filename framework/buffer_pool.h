@@ -37,14 +37,17 @@ class BufferAllocation : public NonCopyable
 
 	BufferAllocation(core::Buffer &buffer, VkDeviceSize size, VkDeviceSize offset);
 
-	void update(uint32_t offset, const std::vector<uint8_t> &data);
+	void update(const std::vector<uint8_t> &data, uint32_t offset = 0);
 
 	template <class T>
-	void update(uint32_t offset, const T &value)
+	void update(const T &value, uint32_t offset = 0)
 	{
-		update(offset, std::vector<uint8_t>{reinterpret_cast<const uint8_t *>(&value),
-		                                    reinterpret_cast<const uint8_t *>(&value) + sizeof(T)});
+		update(std::vector<uint8_t>{reinterpret_cast<const uint8_t *>(&value),
+		                            reinterpret_cast<const uint8_t *>(&value) + sizeof(T)},
+		       offset);
 	}
+
+	void update(const uint8_t *data, size_t size, uint32_t offset = 0);
 
 	bool empty() const;
 

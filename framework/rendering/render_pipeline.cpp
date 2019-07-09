@@ -35,6 +35,9 @@ namespace vkb
 RenderPipeline::RenderPipeline(std::vector<std::unique_ptr<Subpass>> &&subpasses) :
     subpasses{std::move(subpasses)}
 {
+	// Default clear value
+	clear_value[0].color        = {0.0f, 0.0f, 0.0f, 1.0f};
+	clear_value[1].depthStencil = {1.0f, ~0U};
 }
 
 void RenderPipeline::add_subpass(std::unique_ptr<Subpass> &&subpass)
@@ -42,12 +45,47 @@ void RenderPipeline::add_subpass(std::unique_ptr<Subpass> &&subpass)
 	subpasses.emplace_back(std::move(subpass));
 }
 
-void RenderPipeline::draw(CommandBuffer &command_buffer)
+const std::vector<LoadStoreInfo> &RenderPipeline::get_load_store() const
+{
+	return load_store;
+}
+
+void RenderPipeline::set_load_store(std::vector<LoadStoreInfo> &ls)
+{
+	load_store = ls;
+}
+
+const std::vector<VkClearValue> &RenderPipeline::get_clear_value() const
+{
+	return clear_value;
+}
+
+void RenderPipeline::set_clear_value(std::vector<VkClearValue> &cv)
+{
+	clear_value = cv;
+}
+
+void RenderPipeline::draw(CommandBuffer &command_buffer, RenderTarget &render_target)
 {
 	assert(!subpasses.empty() && "Render pipeline should contain at least one sub-pass");
 
-	for (auto &subpass : subpasses)
+	for (size_t i = 0; i < subpasses.size(); ++i)
 	{
+		auto &subpass = subpasses[i];
+
+		subpass->update_render_target_attachments();
+
+		if (i == 0)
+		{
+			// Begin render pass
+			command_buffer.begin_render_pass(render_target, load_store, clear_value);
+		}
+		else
+		{
+			// Start next subpass
+			command_buffer.next_subpass();
+		}
+
 		subpass->draw(command_buffer);
 	}
 }

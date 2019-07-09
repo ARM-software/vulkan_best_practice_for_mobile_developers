@@ -141,6 +141,17 @@ VulkanSample::~VulkanSample()
 	}
 }
 
+void VulkanSample::set_render_pipeline(RenderPipeline &&rp)
+{
+	render_pipeline = std::make_unique<RenderPipeline>(std::move(rp));
+}
+
+RenderPipeline &VulkanSample::get_render_pipeline()
+{
+	assert(render_pipeline && "Render pipeline was not created");
+	return *render_pipeline;
+}
+
 bool VulkanSample::prepare(Platform &platform)
 {
 	if (!Application::prepare(platform))
@@ -361,8 +372,12 @@ VkSurfaceKHR VulkanSample::get_surface()
 	return surface;
 }
 
-void VulkanSample::draw_scene(vkb::CommandBuffer & /*command_buffer*/)
+void VulkanSample::render(CommandBuffer &command_buffer)
 {
+	if (render_pipeline)
+	{
+		render_pipeline->draw(command_buffer, render_context->get_active_frame().get_render_target());
+	}
 }
 
 void VulkanSample::draw_gui()
@@ -377,7 +392,7 @@ void VulkanSample::update_debug_window()
 
 	get_debug_info().insert<field::Static, std::string>("surface_format",
 	                                                    convert_format_to_string(render_context->get_swapchain().get_format()) + " (" +
-	                                                        to_string(vkb::get_bits_per_pixel(render_context->get_swapchain().get_format())) + "bbp)");
+	                                                        to_string(get_bits_per_pixel(render_context->get_swapchain().get_format())) + "bbp)");
 
 	get_debug_info().insert<field::Static, uint32_t>("mesh_count", to_u32(scene->get_components<sg::SubMesh>().size()));
 
@@ -414,7 +429,7 @@ sg::Node &VulkanSample::add_free_camera(const std::string &node_name)
 		throw std::runtime_error("No camera component found for `" + node_name + "` node.");
 	}
 
-	auto free_camera_script = std::make_unique<vkb::sg::FreeCamera>(*camera_node);
+	auto free_camera_script = std::make_unique<sg::FreeCamera>(*camera_node);
 
 	scene->add_component(std::move(free_camera_script), *camera_node);
 
@@ -423,7 +438,7 @@ sg::Node &VulkanSample::add_free_camera(const std::string &node_name)
 
 void VulkanSample::load_scene(const std::string &path)
 {
-	vkb::GLTFLoader loader{*device};
+	GLTFLoader loader{*device};
 
 	scene = loader.read_scene_from_file(path);
 
@@ -541,25 +556,8 @@ std::vector<const char *> VulkanSample::get_sample_additional_layers()
 	return {};
 }
 
-void VulkanSample::draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, RenderTarget &render_target)
+void VulkanSample::draw_swapchain_renderpass(CommandBuffer &command_buffer, RenderTarget &render_target)
 {
-	std::vector<vkb::LoadStoreInfo> load_store{2};
-	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-	load_store[1].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-
-	std::vector<VkClearValue> clear_value{2};
-	clear_value[0].color        = {0.0f, 0.0f, 0.0f, 1.0f};
-	clear_value[1].depthStencil = {1.0f, ~0U};
-
-	command_buffer.begin_render_pass(render_target, load_store, clear_value);
-
-	vkb::ColorBlendState blend_state{};
-	blend_state.attachments = {vkb::ColorBlendAttachmentState{}};
-
-	command_buffer.set_color_blend_state(blend_state);
-
 	auto &extent = render_target.get_extent();
 
 	VkViewport viewport{};
@@ -567,17 +565,14 @@ void VulkanSample::draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer,
 	viewport.height   = static_cast<float>(extent.height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
-
 	command_buffer.set_viewport(0, {viewport});
 
 	VkRect2D scissor{};
 	scissor.extent = extent;
-
 	command_buffer.set_scissor(0, {scissor});
 
-	draw_scene(command_buffer);
+	render(command_buffer);
 
-	// Draw gui
 	if (gui)
 	{
 		gui->draw(command_buffer);

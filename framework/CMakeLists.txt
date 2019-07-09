@@ -17,7 +17,6 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
-
 cmake_minimum_required(VERSION 3.8)
 
 project(framework LANGUAGES C CXX)
@@ -91,8 +90,10 @@ set(RENDERING_FILES
 set(RENDERING_SUBPASSES_FILES
     # Header files
     rendering/subpasses/scene_subpass.h
+    rendering/subpasses/lighting_subpass.h
     # Source files
-    rendering/subpasses/scene_subpass.cpp)
+    rendering/subpasses/scene_subpass.cpp
+    rendering/subpasses/lighting_subpass.cpp)
 
 set(SCENE_GRAPH_FILES
     # Header Files

@@ -70,12 +70,12 @@ class Buffer : public NonCopyable
 	 * @param offset Offset from which to start uploading
 	 * @param data Data to upload
 	 */
-	void update(size_t offset, const std::vector<uint8_t> &data);
+	void update(const std::vector<uint8_t> &data, size_t offset = 0);
 
 	template <class T>
-	void update(size_t offset, const T &value)
+	void update(const T &value, size_t offset = 0)
 	{
-		update(offset, reinterpret_cast<const uint8_t *>(&value), sizeof(T));
+		update(reinterpret_cast<const uint8_t *>(&value), sizeof(T), offset);
 	}
 
 	const uint8_t *get_data() const
@@ -83,9 +83,9 @@ class Buffer : public NonCopyable
 		return mapped_data;
 	}
 
-  private:
-	void update(size_t offset, const uint8_t *src, size_t size);
+	void update(const uint8_t *src, size_t size, size_t offset = 0);
 
+  private:
 	Device &device;
 
 	VkBuffer handle{VK_NULL_HANDLE};

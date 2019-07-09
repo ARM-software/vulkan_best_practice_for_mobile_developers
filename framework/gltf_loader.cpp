@@ -420,7 +420,7 @@ sg::Scene GLTFLoader::load_scene()
 		                          VMA_MEMORY_USAGE_CPU_ONLY,
 		                          0};
 
-		stage_buffer.update(0, image->get_data());
+		stage_buffer.update(image->get_data());
 		// Clean up the image data, as they are copied in the staging buffer
 		image->clear_data();
 		upload_image(command_buffer, stage_buffer, *image);
@@ -720,7 +720,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primiti
 		                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 		                    VMA_MEMORY_USAGE_CPU_TO_GPU,
 		                    VMA_ALLOCATION_CREATE_MAPPED_BIT};
-		buffer.update(0, vertex_data);
+		buffer.update(vertex_data);
 
 		auto pair = std::make_pair(attrib_name, std::move(buffer));
 
@@ -765,7 +765,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primiti
 		                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 		                                                       VMA_MEMORY_USAGE_CPU_TO_GPU,
 		                                                       VMA_ALLOCATION_CREATE_MAPPED_BIT);
-		submesh->index_buffer->update(0, index_data);
+		submesh->index_buffer->update(index_data);
 	}
 	else
 	{

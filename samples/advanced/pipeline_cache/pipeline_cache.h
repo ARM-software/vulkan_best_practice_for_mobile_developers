@@ -41,8 +41,6 @@ class PipelineCache : public vkb::VulkanSample
 	virtual void update(float delta_time) override;
 
   private:
-	std::unique_ptr<vkb::RenderPipeline> render_pipeline{nullptr};
-
 	vkb::sg::Camera *camera{nullptr};
 
 	VkPipelineCache pipeline_cache{VK_NULL_HANDLE};
@@ -56,8 +54,6 @@ class PipelineCache : public vkb::VulkanSample
 	float rebuild_pipelines_frame_time_ms{0.0f};
 
 	virtual void draw_gui() override;
-
-	virtual void draw_scene(vkb::CommandBuffer &cmd_buf) override;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_pipeline_cache();

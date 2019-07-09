@@ -64,8 +64,6 @@ class RenderTarget : public NonCopyable
 
 	RenderTarget(std::vector<core::Image> &&images);
 
-	RenderTarget(Device &device, const VkExtent2D &extent, const std::vector<Attachment> &attachments);
-
 	RenderTarget(RenderTarget &&) = default;
 
 	RenderTarget &operator=(RenderTarget &&other) noexcept;
@@ -77,17 +75,24 @@ class RenderTarget : public NonCopyable
 	const std::vector<Attachment> &get_attachments() const;
 
 	/**
+	 * @brief Sets the current input attachments overwriting the current ones
+	 *        Should be set before beginning the render pass and before starting a new subpass
+	 * @param input Set of attachment reference number to use as input
+	 */
+	void set_input_attachments(std::vector<uint32_t> &input);
+
+	const std::vector<uint32_t> &get_input_attachments() const;
+
+	/**
 	 * @brief Sets the current output attachments overwriting the current ones
 	 *        Should be set before beginning the render pass and before starting a new subpass
 	 * @param output Set of attachment reference number to use as output
 	 */
-	void set_output_attachments(std::vector<uint32_t> &&output);
+	void set_output_attachments(std::vector<uint32_t> &output);
 
 	const std::vector<uint32_t> &get_output_attachments() const;
 
   private:
-	void add_attachments(const std::vector<Attachment> &attachments);
-
 	Device &device;
 
 	VkExtent2D extent{};
@@ -98,6 +103,10 @@ class RenderTarget : public NonCopyable
 
 	std::vector<Attachment> attachments;
 
+	/// By default there are no input attachments
+	std::vector<uint32_t> input_attachments = {};
+
+	/// By default the output attachments is attachment 0
 	std::vector<uint32_t> output_attachments = {0};
 };
 }        // namespace vkb
