@@ -31,6 +31,14 @@
 #include "scene_graph/node.h"
 #include "stats.h"
 
+PipelineCache::PipelineCache()
+{
+	auto &config = get_configuration();
+
+	config.insert<vkb::BoolSetting>(0, enable_pipeline_cache, true);
+	config.insert<vkb::BoolSetting>(1, enable_pipeline_cache, false);
+}
+
 PipelineCache::~PipelineCache()
 {
 	if (pipeline_cache != VK_NULL_HANDLE)

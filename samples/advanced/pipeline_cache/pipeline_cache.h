@@ -32,6 +32,8 @@
 class PipelineCache : public vkb::VulkanSample
 {
   public:
+	PipelineCache();
+
 	virtual ~PipelineCache();
 
 	virtual bool prepare(vkb::Platform &platform) override;
