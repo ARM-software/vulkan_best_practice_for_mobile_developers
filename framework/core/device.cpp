@@ -27,10 +27,17 @@ VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
-Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vector<const char *> extensions, const VkPhysicalDeviceFeatures &features) :
+Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vector<const char *> extensions, VkPhysicalDeviceFeatures requested_features) :
     physical_device{physical_device},
     resource_cache{*this}
 {
+	// Check whether ASTC is supported
+	vkGetPhysicalDeviceFeatures(physical_device, &features);
+	if (features.textureCompressionASTC_LDR)
+	{
+		requested_features.textureCompressionASTC_LDR = VK_TRUE;
+	}
+
 	// Gpu properties
 	vkGetPhysicalDeviceProperties(physical_device, &properties);
 
@@ -80,7 +87,7 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vect
 
 	create_info.pQueueCreateInfos       = queue_create_infos.data();
 	create_info.queueCreateInfoCount    = to_u32(queue_create_infos.size());
-	create_info.pEnabledFeatures        = &features;
+	create_info.pEnabledFeatures        = &requested_features;
 	create_info.enabledExtensionCount   = to_u32(extensions.size());
 	create_info.ppEnabledExtensionNames = extensions.data();
 
