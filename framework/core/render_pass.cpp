@@ -240,7 +240,7 @@ RenderPass::RenderPass(Device &device, const std::vector<Attachment> &attachment
 
 	create_info.attachmentCount = to_u32(attachment_descriptions.size());
 	create_info.pAttachments    = attachment_descriptions.data();
-	create_info.subpassCount    = subpass_count;
+	create_info.subpassCount    = to_u32(subpass_count);
 	create_info.pSubpasses      = subpass_descriptions.data();
 	create_info.dependencyCount = to_u32(dependencies.size());
 	create_info.pDependencies   = dependencies.data();

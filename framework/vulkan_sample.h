@@ -145,11 +145,11 @@ class VulkanSample : public Application
 	 */
 	void load_scene(const std::string &path);
 
-	RenderContext &get_render_context()
-	{
-		assert(render_context && "Render context is not valid");
-		return *render_context;
-	}
+	RenderContext &get_render_context();
+
+	void set_render_pipeline(RenderPipeline &&render_pipeline);
+
+	RenderPipeline &get_render_pipeline();
 
   protected:
 	std::unique_ptr<Device> device{nullptr};
@@ -161,10 +161,6 @@ class VulkanSample : public Application
 	std::unique_ptr<Gui> gui{nullptr};
 
 	std::unique_ptr<Stats> stats{nullptr};
-
-	void set_render_pipeline(RenderPipeline &&render_pipeline);
-
-	RenderPipeline &get_render_pipeline();
 
 	/**
 	 * @brief Get sample-specific instance layers.

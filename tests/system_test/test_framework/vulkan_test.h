@@ -37,7 +37,7 @@ class VulkanTest : public vkb::VulkanSample
 
 	virtual void update(float delta_time) override;
 
-	void end();
+	virtual void end();
 
   private:
 	vkb::Platform *platform;

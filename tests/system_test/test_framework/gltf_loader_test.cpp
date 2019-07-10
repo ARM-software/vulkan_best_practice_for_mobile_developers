@@ -61,15 +61,12 @@ bool GLTFLoaderTest::prepare(vkb::Platform &platform)
 
 	auto scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, camera);
 
-	render_pipeline = std::make_unique<vkb::RenderPipeline>();
-	render_pipeline->add_subpass(std::move(scene_subpass));
+	auto render_pipeline = vkb::RenderPipeline();
+	render_pipeline.add_subpass(std::move(scene_subpass));
+
+	VulkanSample::set_render_pipeline(std::move(render_pipeline));
 
 	return true;
-}
-
-void GLTFLoaderTest::draw_scene(vkb::CommandBuffer &cmd_buf)
-{
-	render_pipeline->draw(cmd_buf);
 }
 
 }        // namespace vkbtest

@@ -342,6 +342,15 @@ void VulkanSample::input_event(const InputEvent &input_event)
 			}
 		}
 	}
+
+	if (input_event.get_source() == EventSource::Keyboard)
+	{
+		const auto &key_event = static_cast<const KeyInputEvent &>(input_event);
+		if (key_event.get_action() == KeyAction::Down && key_event.get_code() == KeyCode::PrintScreen)
+		{
+			screenshot(*render_context, "screenshot-" + get_name());
+		}
+	}
 }
 
 void VulkanSample::finish()
@@ -447,6 +456,12 @@ void VulkanSample::load_scene(const std::string &path)
 		LOGE("Cannot load scene: {}", path.c_str());
 		throw std::runtime_error("Cannot load scene: " + path);
 	}
+}
+
+RenderContext &VulkanSample::get_render_context()
+{
+	assert(render_context && "Render context is not valid");
+	return *render_context;
 }
 
 VkInstance VulkanSample::create_instance(const std::vector<const char *> &required_instance_extensions,

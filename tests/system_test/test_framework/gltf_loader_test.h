@@ -37,9 +37,5 @@ class GLTFLoaderTest : public VulkanTest
 
   protected:
 	std::string scene_path{};
-
-	std::unique_ptr<vkb::RenderPipeline> render_pipeline{nullptr};
-
-	virtual void draw_scene(vkb::CommandBuffer &cmd_buf) override;
 };
 }        // namespace vkbtest

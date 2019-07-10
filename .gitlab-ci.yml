@@ -65,7 +65,7 @@ Linux:
     - linux
     - docker
   script:
-    - cmake -G "Unix Makefiles" -H. -Bbuild -DCMAKE_BUILD_TYPE=Release
+    - cmake -G "Unix Makefiles" -H. -Bbuild -DCMAKE_BUILD_TYPE=Release -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
     - cmake --build build --target vulkan_best_practice --config Release
 
 Windows:
@@ -76,7 +76,7 @@ Windows:
     - windows
     - shell
   script:
-    - cmake -H. -Bbuild
+    - cmake -H. -Bbuild -DVKB_BUILD_TESTS:BOOL=ON -DVKB_BUILD_SAMPLES:BOOL=ON
     - cmake --build build --target vulkan_best_practice --config Release
 
 Android:
@@ -88,7 +88,7 @@ Android:
     - linux
     - docker
   script:
-    - cmake -G "Unix Makefiles" -H. -Bbuild -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake
+    - cmake -G "Unix Makefiles" -H. -Bbuild -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
     - cmake --build build --config Release --target vulkan_best_practice_package
 
 LinuxExternalProject:

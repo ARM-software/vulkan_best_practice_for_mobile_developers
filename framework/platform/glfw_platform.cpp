@@ -269,6 +269,9 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int /*mod
 
 bool GlfwPlatform::initialize(std::unique_ptr<Application> &&app)
 {
+	uint32_t width  = 1280;
+	uint32_t height = 720;
+
 	if (!glfwInit())
 	{
 		return false;
@@ -283,7 +286,14 @@ bool GlfwPlatform::initialize(std::unique_ptr<Application> &&app)
 		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 	}
 
-	window = glfwCreateWindow(1280, 720, app->get_name().c_str(), NULL, NULL);
+	if (arguments.contains("resolution"))
+	{
+		auto &extent = arguments.get("resolution");
+		width        = std::stoi(extent[0]);
+		height       = std::stoi(extent[1]);
+	}
+
+	window = glfwCreateWindow(width, height, app->get_name().c_str(), NULL, NULL);
 
 	if (!window)
 	{
