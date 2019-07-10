@@ -42,6 +42,21 @@ class CommandPool;
 class CommandBuffer : public NonCopyable
 {
   public:
+	enum class ResetMode
+	{
+		ResetPool,
+		ResetIndividually,
+		AlwaysAllocate,
+	};
+
+	enum class State
+	{
+		Invalid,
+		Initial,
+		Recording,
+		Executable,
+	};
+
 	CommandBuffer(CommandPool &command_pool, VkCommandBufferLevel level);
 
 	~CommandBuffer();
@@ -55,20 +70,29 @@ class CommandBuffer : public NonCopyable
 
 	CommandRecord &get_recorder();
 
+	CommandReplay &get_replayer();
+
 	const VkCommandBuffer &get_handle() const;
 
-	bool is_recording() const
-	{
-		return recording_commands;
-	}
+	bool is_recording() const;
 
-	VkResult begin(VkCommandBufferUsageFlags flags);
+	/**
+	 * @brief Sets the command buffer so that it is ready for recording
+	 *        If it is a secondary command buffer, a pointer to the
+	 *        primary command buffer it inherits from must be provided
+	 * @brief primary_cmd_buf (optional)
+	 */
+	VkResult begin(VkCommandBufferUsageFlags flags, CommandBuffer *primary_cmd_buf = nullptr);
 
 	VkResult end();
 
-	void begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values);
+	void begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values, VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
 
 	void next_subpass();
+
+	void resolve_subpasses();
+
+	void execute_commands(std::vector<CommandBuffer *> &secondary_command_buffers);
 
 	void end_render_pass();
 
@@ -147,8 +171,20 @@ class CommandBuffer : public NonCopyable
 
 	void buffer_memory_barrier(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier);
 
+	const State get_state() const;
+
+	const VkCommandBufferUsageFlags get_usage_flags() const;
+
+	/**
+	 * @brief Reset the command buffer to a state where it can be recorded to
+	 * @param reset_mode How to reset the buffer, should match the one used by the pool to allocate it
+	 */
+	VkResult reset(ResetMode reset_mode);
+
+	const VkCommandBufferLevel level;
+
   private:
-	bool recording_commands{false};
+	State state{State::Initial};
 
 	CommandPool &command_pool;
 
@@ -157,6 +193,8 @@ class CommandBuffer : public NonCopyable
 	CommandRecord recorder;
 
 	CommandReplay replayer;
+
+	VkCommandBufferUsageFlags usage_flags{};
 };
 
 template <class T>

@@ -51,6 +51,7 @@ RenderContext::RenderContext(std::unique_ptr<Swapchain> &&s, RenderTarget::Creat
 VkSemaphore RenderContext::begin_frame()
 {
 	handle_surface_changes();
+
 	assert(!frame_active && "Frame is still active, please call end_frame");
 
 	auto &prev_frame = frames.at(active_frame_index);
@@ -166,11 +167,11 @@ RenderFrame &RenderContext::get_last_rendered_frame()
 	return frames.at(active_frame_index);
 }
 
-CommandBuffer &RenderContext::request_frame_command_buffer(const Queue &queue)
+CommandBuffer &RenderContext::request_frame_command_buffer(const Queue &queue, CommandBuffer::ResetMode reset_mode, VkCommandBufferLevel level)
 {
 	RenderFrame &frame = get_active_frame();
 
-	return frame.get_command_pool(queue).request_command_buffer();
+	return frame.get_command_pool(queue, reset_mode).request_command_buffer(level);
 }
 
 VkSemaphore RenderContext::request_semaphore()

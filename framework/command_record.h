@@ -37,6 +37,7 @@
 namespace vkb
 {
 class RenderContext;
+class CommandBuffer;
 
 /*
  * @brief Temporary pipeline descriptor structure for a drawcall 
@@ -82,6 +83,8 @@ struct RenderPassBinding
 	const RenderPass *render_pass;
 
 	const Framebuffer *framebuffer;
+
+	VkSubpassContents contents{VK_SUBPASS_CONTENTS_INLINE};
 };
 
 /*
@@ -126,6 +129,7 @@ enum class CommandType
 	NextSubpass,
 	EndRenderPass,
 	BindPipelineLayout,
+	ExecuteCommands,
 	PushConstants,
 	BindBuffer,
 	BindImage,
@@ -172,7 +176,7 @@ class CommandRecord
 
 	const std::ostringstream &get_stream() const;
 
-	const std::vector<RenderPassBinding> &get_render_pass_bindings() const;
+	std::vector<RenderPassBinding> &get_render_pass_bindings();
 
 	const std::vector<PipelineBinding> &get_pipeline_bindings() const;
 
@@ -182,9 +186,13 @@ class CommandRecord
 
 	void end();
 
-	void begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values);
+	void begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values, VkSubpassContents contents);
 
 	void next_subpass();
+
+	void resolve_subpasses();
+
+	void execute_commands(std::vector<vkb::CommandBuffer *> &sec_cmd_bufs);
 
 	void end_render_pass();
 
@@ -363,16 +371,18 @@ class CommandRecord
 
 	std::unordered_map<uint32_t, DescriptorSetLayout *> descriptor_set_layout_state;
 
+	void prepare_pipeline_bindings(CommandRecord &recorder, RenderPassBinding &render_pass_desc);
+
 	/**
 	 * @brief Flush the piplines state
 	 * 
 	 */
-	void FlushPipelineState(VkPipelineBindPoint pipeline_bind_point);
+	void flush_pipeline_state(VkPipelineBindPoint pipeline_bind_point);
 
 	/**
 	 * @brief Flush the descriptor set State
 	 * 
 	 */
-	void FlushDescriptorState(VkPipelineBindPoint pipeline_bind_point);
+	void flush_descriptor_state(VkPipelineBindPoint pipeline_bind_point);
 };
 }        // namespace vkb

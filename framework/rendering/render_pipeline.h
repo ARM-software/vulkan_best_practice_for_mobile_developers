@@ -75,7 +75,7 @@ class RenderPipeline : public NonCopyable
 	/**
 	 * @brief Record draw commands for each Subpass
 	 */
-	void draw(CommandBuffer &command_buffer, RenderTarget &render_target);
+	void draw(CommandBuffer &command_buffer, RenderTarget &render_target, VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
 
   private:
 	std::vector<std::unique_ptr<Subpass>> subpasses;

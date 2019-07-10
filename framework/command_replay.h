@@ -54,6 +54,8 @@ class CommandReplay
 
 	void end_render_pass(CommandBuffer &command_buffer, std::istringstream &stream);
 
+	void execute_commands(CommandBuffer &command_buffer, std::istringstream &stream);
+
 	void push_constants(CommandBuffer &command_buffer, std::istringstream &stream);
 
 	void bind_vertex_buffers(CommandBuffer &command_buffer, std::istringstream &stream);

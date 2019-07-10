@@ -33,6 +33,7 @@ namespace vkb
 namespace sg
 {
 class Scene;
+class Node;
 class Mesh;
 class SubMesh;
 class Camera;
@@ -83,19 +84,28 @@ class SceneSubpass : public Subpass
 	virtual ~SceneSubpass() = default;
 
 	/**
-	 * @brief record draw commands
+	 * @brief Record draw commands
 	 */
-	void draw(CommandBuffer &command_buffer) override;
+	virtual void draw(CommandBuffer &command_buffer) override;
 
-  protected:
-	void draw_submesh_command(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh);
+	void update_uniform(CommandBuffer &command_buffer, sg::Node &node);
 
-  private:
 	void draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh);
 
-	std::vector<sg::Mesh *> meshes;
+  protected:
+	/**
+	 * @brief Sorts objects based on distance from camera and classifies them
+	 *        into opaque and transparent in the arrays provided
+	 */
+	void get_sorted_nodes(std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &opaque_nodes,
+	                      std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &transparent_nodes);
+
+  private:
+	void draw_submesh_command(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh);
 
 	sg::Camera &camera;
+
+	std::vector<sg::Mesh *> meshes;
 
 	GlobalUniform global_uniform;
 };

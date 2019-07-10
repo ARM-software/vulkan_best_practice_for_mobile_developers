@@ -135,6 +135,10 @@ VulkanSample::~VulkanSample()
 		vkDestroySurfaceKHR(instance, surface, nullptr);
 	}
 
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	vkDestroyDebugReportCallbackEXT(instance, debug_report_callback, nullptr);
+#endif
+
 	if (instance != VK_NULL_HANDLE)
 	{
 		vkDestroyInstance(instance, nullptr);
@@ -183,7 +187,7 @@ bool VulkanSample::prepare(Platform &platform)
 	return true;
 }
 
-void VulkanSample::update(float delta_time)
+void VulkanSample::update_scripts(float delta_time)
 {
 	if (scene->has_component<sg::Script>())
 	{
@@ -194,19 +198,10 @@ void VulkanSample::update(float delta_time)
 			script->update(delta_time);
 		}
 	}
+}
 
-	VkSemaphore aquired_semaphore = render_context->begin_frame();
-
-	if (aquired_semaphore == VK_NULL_HANDLE)
-	{
-		return;
-	}
-
-	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-
-	CommandBuffer &cmd_buf = render_context->request_frame_command_buffer(queue);
-
-	// Update stats
+void VulkanSample::update_stats(float delta_time)
+{
 	if (stats)
 	{
 		stats->update();
@@ -221,8 +216,10 @@ void VulkanSample::update(float delta_time)
 			stats_view_count = 0.0f;
 		}
 	}
+}
 
-	// Update gui
+void VulkanSample::update_gui(float delta_time)
+{
 	if (gui)
 	{
 		if (gui->is_debug_view_active())
@@ -239,11 +236,10 @@ void VulkanSample::update(float delta_time)
 
 		gui->update(delta_time);
 	}
+}
 
-	auto &render_target = render_context->get_active_frame().get_render_target();
-
-	cmd_buf.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-
+void VulkanSample::record_scene_rendering_commands(CommandBuffer &command_buffer, RenderTarget &render_target)
+{
 	auto &views = render_target.get_views();
 
 	{
@@ -254,12 +250,12 @@ void VulkanSample::update(float delta_time)
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-		cmd_buf.image_memory_barrier(views.at(0), memory_barrier);
+		command_buffer.image_memory_barrier(views.at(0), memory_barrier);
 
 		// Skip 1 as it is handled later as a depth-stencil attachment
 		for (size_t i = 2; i < views.size(); ++i)
 		{
-			cmd_buf.image_memory_barrier(views.at(i), memory_barrier);
+			command_buffer.image_memory_barrier(views.at(i), memory_barrier);
 		}
 	}
 
@@ -271,10 +267,10 @@ void VulkanSample::update(float delta_time)
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
-		cmd_buf.image_memory_barrier(views.at(1), memory_barrier);
+		command_buffer.image_memory_barrier(views.at(1), memory_barrier);
 	}
 
-	draw_swapchain_renderpass(cmd_buf, render_target);
+	draw_swapchain_renderpass(command_buffer, render_target);
 
 	{
 		ImageMemoryBarrier memory_barrier{};
@@ -284,12 +280,38 @@ void VulkanSample::update(float delta_time)
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 
-		cmd_buf.image_memory_barrier(views.at(0), memory_barrier);
+		command_buffer.image_memory_barrier(views.at(0), memory_barrier);
+	}
+}
+
+void VulkanSample::update(float delta_time)
+{
+	update_scripts(delta_time);
+
+	update_stats(delta_time);
+
+	update_gui(delta_time);
+
+	auto acquired_semaphore = render_context->begin_frame();
+
+	if (acquired_semaphore == VK_NULL_HANDLE)
+	{
+		return;
 	}
 
-	cmd_buf.end();
+	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-	VkSemaphore render_semaphore = render_context->submit(queue, cmd_buf, aquired_semaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+	auto &render_target = render_context->get_active_frame().get_render_target();
+
+	auto &command_buffer = render_context->request_frame_command_buffer(queue);
+
+	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+	record_scene_rendering_commands(command_buffer, render_target);
+
+	command_buffer.end();
+
+	auto render_semaphore = render_context->submit(queue, command_buffer, acquired_semaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
 	render_context->end_frame(render_semaphore);
 }
@@ -588,6 +610,8 @@ void VulkanSample::draw_swapchain_renderpass(CommandBuffer &command_buffer, Rend
 	{
 		gui->draw(command_buffer);
 	}
+
+	command_buffer.resolve_subpasses();
 
 	command_buffer.end_render_pass();
 }

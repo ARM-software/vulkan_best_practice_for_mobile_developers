@@ -436,7 +436,7 @@ sg::Scene GLTFLoader::load_scene()
 
 	device.get_fence_pool().wait();
 	device.get_fence_pool().reset();
-	device.get_command_pool().reset();
+	device.get_command_pool().reset_pool();
 
 	transient_buffers.clear();
 

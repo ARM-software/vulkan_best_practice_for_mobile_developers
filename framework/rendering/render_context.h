@@ -98,9 +98,15 @@ class RenderContext : public NonCopyable
 	/**
 	 * @brief Requests a command buffer to the command pool of the active frame
 	 *        A frame should be active at the moment of requesting it
+	 * @param queue The queue command buffers will be submitted on
+	 * @param reset_mode Indicate how the command buffer will be used, may trigger a
+	 *        pool re-creation to set necessary flags
+	 * @param level Command buffer level, either primary or secondary
 	 * @return A command buffer related to the current active frame
 	 */
-	CommandBuffer &request_frame_command_buffer(const Queue &queue);
+	CommandBuffer &request_frame_command_buffer(const Queue &            queue,
+	                                            CommandBuffer::ResetMode reset_mode = CommandBuffer::ResetMode::ResetPool,
+	                                            VkCommandBufferLevel     level      = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
 	VkSemaphore request_semaphore();
 

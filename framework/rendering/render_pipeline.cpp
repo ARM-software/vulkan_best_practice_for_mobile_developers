@@ -65,7 +65,7 @@ void RenderPipeline::set_clear_value(std::vector<VkClearValue> &cv)
 	clear_value = cv;
 }
 
-void RenderPipeline::draw(CommandBuffer &command_buffer, RenderTarget &render_target)
+void RenderPipeline::draw(CommandBuffer &command_buffer, RenderTarget &render_target, VkSubpassContents contents)
 {
 	assert(!subpasses.empty() && "Render pipeline should contain at least one sub-pass");
 
@@ -78,7 +78,7 @@ void RenderPipeline::draw(CommandBuffer &command_buffer, RenderTarget &render_ta
 		if (i == 0)
 		{
 			// Begin render pass
-			command_buffer.begin_render_pass(render_target, load_store, clear_value);
+			command_buffer.begin_render_pass(render_target, load_store, clear_value, contents);
 		}
 		else
 		{

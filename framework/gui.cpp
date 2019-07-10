@@ -183,7 +183,7 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 		// Wait for the command buffer to finish its work before destroying the staging buffer
 		device.get_fence_pool().wait();
 		device.get_fence_pool().reset();
-		device.get_command_pool().reset();
+		device.get_command_pool().reset_pool();
 	}
 
 	// Create texture sampler
@@ -223,9 +223,6 @@ void Gui::update(const float delta_time)
 
 	// Render to generate draw buffers
 	ImGui::Render();
-
-	// Update vulkan buffers
-	//update_buffers();
 }
 
 void Gui::update_buffers(CommandBuffer &command_buffer)

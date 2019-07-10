@@ -48,7 +48,7 @@ void RenderFrame::reset()
 
 	for (auto &command_pool : command_pools)
 	{
-		command_pool.second.reset();
+		command_pool.second->reset_pool();
 	}
 
 	for (auto &buffer_pool_it : buffer_pools)
@@ -63,16 +63,26 @@ void RenderFrame::reset()
 	semaphore_pool.reset();
 }
 
-CommandPool &RenderFrame::get_command_pool(const Queue &queue)
+CommandPool &RenderFrame::get_command_pool(const Queue &queue, CommandBuffer::ResetMode reset_mode)
 {
 	auto command_pool_it = command_pools.find(queue.get_family_index());
 
 	if (command_pool_it != command_pools.end())
 	{
-		return command_pool_it->second;
+		if (command_pool_it->second->get_reset_mode() != reset_mode)
+		{
+			device.wait_idle();
+
+			// Delete pool
+			command_pools.erase(command_pool_it);
+		}
+		else
+		{
+			return *command_pool_it->second;
+		}
 	}
 
-	auto res_ins_it = command_pools.emplace(queue.get_family_index(), CommandPool{device, queue.get_family_index()});
+	auto res_ins_it = command_pools.emplace(queue.get_family_index(), std::make_unique<CommandPool>(device, queue.get_family_index(), reset_mode));
 
 	if (!res_ins_it.second)
 	{
@@ -81,7 +91,7 @@ CommandPool &RenderFrame::get_command_pool(const Queue &queue)
 
 	command_pool_it = res_ins_it.first;
 
-	return command_pool_it->second;
+	return *command_pool_it->second;
 }
 
 FencePool &RenderFrame::get_fence_pool()

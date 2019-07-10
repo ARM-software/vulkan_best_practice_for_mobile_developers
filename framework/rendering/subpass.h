@@ -76,9 +76,10 @@ class Subpass : public NonCopyable
 
 	void set_output_attachments(std::vector<uint32_t> output);
 
-  private:
+  protected:
 	RenderContext &render_context;
 
+  private:
 	ShaderSource vertex_shader;
 
 	ShaderSource fragment_shader;

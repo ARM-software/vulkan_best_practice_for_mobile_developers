@@ -28,6 +28,7 @@ namespace vkb
 {
 CommandBuffer::CommandBuffer(CommandPool &command_pool, VkCommandBufferLevel level) :
     command_pool{command_pool},
+    level{level},
     recorder{command_pool.get_device()}
 {
 	VkCommandBufferAllocateInfo allocate_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
@@ -55,11 +56,15 @@ CommandBuffer::~CommandBuffer()
 
 CommandBuffer::CommandBuffer(CommandBuffer &&other) :
     command_pool{other.command_pool},
+    usage_flags{other.usage_flags},
+    level{other.level},
     handle{other.handle},
     recorder{std::move(other.recorder)},
-    replayer{std::move(other.replayer)}
+    replayer{std::move(other.replayer)},
+    state{other.state}
 {
 	other.handle = VK_NULL_HANDLE;
+	other.state  = State::Invalid;
 }
 
 Device &CommandBuffer::get_device()
@@ -72,55 +77,92 @@ CommandRecord &CommandBuffer::get_recorder()
 	return recorder;
 }
 
+CommandReplay &CommandBuffer::get_replayer()
+{
+	return replayer;
+}
+
 const VkCommandBuffer &CommandBuffer::get_handle() const
 {
 	return handle;
 }
 
-VkResult CommandBuffer::begin(VkCommandBufferUsageFlags flags)
+bool CommandBuffer::is_recording() const
 {
-	assert(!recording_commands && "Command buffer is already recording, please call end before beginning again");
+	return state == State::Recording;
+}
 
-	if (recording_commands)
+VkResult CommandBuffer::begin(VkCommandBufferUsageFlags flags, CommandBuffer *primary_cmd_buf)
+{
+	assert(!is_recording() && "Command buffer is already recording, please call end before beginning again");
+
+	if (is_recording())
 	{
 		return VK_NOT_READY;
 	}
 
 	recorder.reset();
 
-	recording_commands = true;
+	state = State::Recording;
 
-	recorder.begin(flags);
+	usage_flags = flags;
+
+	if (level != VK_COMMAND_BUFFER_LEVEL_SECONDARY)
+	{
+		recorder.begin(flags);
+	}
+	else
+	{
+		// Secondary command buffers' Vulkan begin command is deferred further, when the information required
+		// to set up inheritance information is known
+		assert(primary_cmd_buf && "A primary command buffer pointer must be provided when calling begin from a secondary one");
+
+		recorder.get_render_pass_bindings().push_back(primary_cmd_buf->get_recorder().get_render_pass_bindings().back());
+	}
 
 	return VK_SUCCESS;
 }
 
 VkResult CommandBuffer::end()
 {
-	assert(recording_commands && "Command buffer is not recording, please call begin before end");
+	assert(is_recording() && "Command buffer is not recording, please call begin before end");
 
-	if (!recording_commands)
+	if (!is_recording())
 	{
 		return VK_NOT_READY;
 	}
 
-	recording_commands = false;
-
 	recorder.end();
 
-	replayer.play(*this, recorder);
+	if (level != VK_COMMAND_BUFFER_LEVEL_SECONDARY)
+	{
+		// Secondary buffers play is deferred further
+		replayer.play(*this, recorder);
+	}
+
+	state = State::Executable;
 
 	return VK_SUCCESS;
 }
 
-void CommandBuffer::begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values)
+void CommandBuffer::begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values, VkSubpassContents contents)
 {
-	recorder.begin_render_pass(render_target, load_store_infos, clear_values);
+	recorder.begin_render_pass(render_target, load_store_infos, clear_values, contents);
 }
 
 void CommandBuffer::next_subpass()
 {
 	recorder.next_subpass();
+}
+
+void CommandBuffer::resolve_subpasses()
+{
+	recorder.resolve_subpasses();
+}
+
+void CommandBuffer::execute_commands(std::vector<CommandBuffer *> &secondary_command_buffers)
+{
+	recorder.execute_commands(secondary_command_buffers);
 }
 
 void CommandBuffer::end_render_pass()
@@ -286,5 +328,31 @@ void CommandBuffer::image_memory_barrier(const core::ImageView &image_view, cons
 void CommandBuffer::buffer_memory_barrier(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier)
 {
 	recorder.buffer_memory_barrier(buffer, offset, size, memory_barrier);
+}
+
+const CommandBuffer::State CommandBuffer::get_state() const
+{
+	return state;
+}
+
+const VkCommandBufferUsageFlags CommandBuffer::get_usage_flags() const
+{
+	return usage_flags;
+}
+
+VkResult CommandBuffer::reset(ResetMode reset_mode)
+{
+	VkResult result = VK_SUCCESS;
+
+	assert(reset_mode == command_pool.get_reset_mode() && "Command buffer reset mode must match the one used by the pool to allocate it");
+
+	state = State::Initial;
+
+	if (reset_mode == ResetMode::ResetIndividually)
+	{
+		result = vkResetCommandBuffer(handle, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+	}
+
+	return result;
 }
 }        // namespace vkb

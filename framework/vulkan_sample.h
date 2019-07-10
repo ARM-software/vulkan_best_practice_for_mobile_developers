@@ -163,6 +163,32 @@ class VulkanSample : public Application
 	std::unique_ptr<Stats> stats{nullptr};
 
 	/**
+	 * @brief Update scripts
+	 * @param delta_time
+	 */
+	void update_scripts(float delta_time);
+
+	/**
+	 * @brief Update counter values
+	 * @param delta_time
+	 */
+	void update_stats(float delta_time);
+
+	/**
+	 * @brief Update GUI
+	 * @param delta_time
+	 */
+	void update_gui(float delta_time);
+
+	/**
+	 * @brief Sets up the necessary image memory barriers for all attachments
+	 *        and calls draw_swapchain_renderpass
+	 * @param command_buffer
+	 * @param render_target
+	 */
+	void record_scene_rendering_commands(CommandBuffer &command_buffer, RenderTarget &render_target);
+
+	/**
 	 * @brief Get sample-specific instance layers.
 	 * 
 	 * @return Vector of additional instance layers. Default is empty vector.
@@ -187,6 +213,9 @@ class VulkanSample : public Application
 	 */
 	virtual void render(CommandBuffer &command_buffer);
 
+	/**
+	 * @brief Samples should override this function to draw their interface
+	 */
 	virtual void draw_gui();
 
 	/**
@@ -203,6 +232,11 @@ class VulkanSample : public Application
 	 * @return Node where the script was attached as component
 	 */
 	sg::Node &add_free_camera(const std::string &node_name);
+
+	/**
+	 * @brief Pipeline used for rendering, it should be set up by the concrete sample
+	 */
+	std::unique_ptr<RenderPipeline> render_pipeline{nullptr};
 
   private:
 	static constexpr float STATS_VIEW_RESET_TIME{10.0f};        // 10 seconds
@@ -226,11 +260,6 @@ class VulkanSample : public Application
 	 * @brief The physical devices found on the machine
 	 */
 	std::vector<VkPhysicalDevice> gpus;
-
-	/**
-	 * @brief Pipeline used for rendering, it should be set up by the concrete sample
-	 */
-	std::unique_ptr<RenderPipeline> render_pipeline{nullptr};
 
 	/**
 	 * @brief Create a Vulkan instance

@@ -58,19 +58,16 @@ SceneSubpass::SceneSubpass(RenderContext &render_context, ShaderSource &&vertex_
 	}
 }
 
-void SceneSubpass::draw(CommandBuffer &command_buffer)
+void SceneSubpass::get_sorted_nodes(std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &opaque_nodes,
+                                    std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &transparent_nodes)
 {
-	std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> opaque_nodes;
-	std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> transparent_nodes;
+	auto camera_transform = camera.get_node()->get_transform().get_world_matrix();
 
-	glm::mat4 camera_transform = camera.get_node()->get_transform().get_world_matrix();
-
-	// Sort objects based on distance from camera and type
 	for (auto &mesh : meshes)
 	{
 		for (auto &node : mesh->get_nodes())
 		{
-			glm::mat4 node_transform = node->get_transform().get_world_matrix();
+			auto node_transform = node->get_transform().get_world_matrix();
 
 			const sg::AABB &mesh_bounds = mesh->get_bounds();
 
@@ -92,23 +89,21 @@ void SceneSubpass::draw(CommandBuffer &command_buffer)
 			}
 		}
 	}
+}
 
-	global_uniform.camera_view_proj = vkb::vulkan_style_projection(camera.get_projection()) * camera.get_view();
+void SceneSubpass::draw(CommandBuffer &command_buffer)
+{
+	std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> opaque_nodes;
+	std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> transparent_nodes;
+
+	get_sorted_nodes(opaque_nodes, transparent_nodes);
 
 	auto &render_frame = get_render_context().get_active_frame();
 
 	// Draw opaque objects in front-to-back order
 	for (auto node_it = opaque_nodes.begin(); node_it != opaque_nodes.end(); node_it++)
 	{
-		auto &transform = node_it->second.first->get_transform();
-
-		auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GlobalUniform));
-
-		global_uniform.model = transform.get_world_matrix();
-
-		allocation.update(global_uniform);
-
-		command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
+		update_uniform(command_buffer, *node_it->second.first);
 
 		draw_submesh(command_buffer, *node_it->second.second);
 	}
@@ -130,18 +125,27 @@ void SceneSubpass::draw(CommandBuffer &command_buffer)
 	// Draw transparent objects in back-to-front order
 	for (auto node_it = transparent_nodes.rbegin(); node_it != transparent_nodes.rend(); node_it++)
 	{
-		auto &transform = node_it->second.first->get_transform();
-
-		auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GlobalUniform));
-
-		global_uniform.model = transform.get_world_matrix();
-
-		allocation.update(global_uniform);
-
-		command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
+		update_uniform(command_buffer, *node_it->second.first);
 
 		draw_submesh(command_buffer, *node_it->second.second);
 	}
+}
+
+void SceneSubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &node)
+{
+	global_uniform.camera_view_proj = vkb::vulkan_style_projection(camera.get_projection()) * camera.get_view();
+
+	auto &render_frame = get_render_context().get_active_frame();
+
+	auto &transform = node.get_transform();
+
+	auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GlobalUniform));
+
+	global_uniform.model = transform.get_world_matrix();
+
+	allocation.update(global_uniform);
+
+	command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
 }
 
 void SceneSubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh)
@@ -254,5 +258,4 @@ void SceneSubpass::draw_submesh_command(CommandBuffer &command_buffer, sg::SubMe
 		command_buffer.draw(sub_mesh.vertices_count, 1, 0, 0);
 	}
 }
-
 }        // namespace vkb

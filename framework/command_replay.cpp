@@ -34,6 +34,7 @@ CommandReplay::CommandReplay()
 	stream_commands[CommandType::End]                 = std::bind(&CommandReplay::end, this, std::placeholders::_1, std::placeholders::_2);
 	stream_commands[CommandType::NextSubpass]         = std::bind(&CommandReplay::next_subpass, this, std::placeholders::_1, std::placeholders::_2);
 	stream_commands[CommandType::EndRenderPass]       = std::bind(&CommandReplay::end_render_pass, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::ExecuteCommands]     = std::bind(&CommandReplay::execute_commands, this, std::placeholders::_1, std::placeholders::_2);
 	stream_commands[CommandType::PushConstants]       = std::bind(&CommandReplay::push_constants, this, std::placeholders::_1, std::placeholders::_2);
 	stream_commands[CommandType::BindVertexBuffers]   = std::bind(&CommandReplay::bind_vertex_buffers, this, std::placeholders::_1, std::placeholders::_2);
 	stream_commands[CommandType::BindIndexBuffer]     = std::bind(&CommandReplay::bind_index_buffer, this, std::placeholders::_1, std::placeholders::_2);
@@ -75,7 +76,8 @@ void CommandReplay::play(CommandBuffer &command_buffer, CommandRecord &recorder)
 		std::streampos event_id = stream.tellg();
 
 		// Check to see if there are any render passes left
-		if (render_pass_binding_it != recorder.get_render_pass_bindings().cend())
+		if (command_buffer.level == VK_COMMAND_BUFFER_LEVEL_PRIMARY &&
+		    render_pass_binding_it != recorder.get_render_pass_bindings().cend())
 		{
 			// Current render pass event id must be equal to the current event id
 			if (render_pass_binding_it->event_id == event_id)
@@ -89,7 +91,7 @@ void CommandReplay::play(CommandBuffer &command_buffer, CommandRecord &recorder)
 				begin_info.pClearValues      = render_pass_binding_it->clear_values.data();
 
 				// Begin render pass
-				vkCmdBeginRenderPass(command_buffer.get_handle(), &begin_info, VK_SUBPASS_CONTENTS_INLINE);
+				vkCmdBeginRenderPass(command_buffer.get_handle(), &begin_info, render_pass_binding_it->contents);
 
 				// Move to the next render pass
 				++render_pass_binding_it;
@@ -189,6 +191,37 @@ void CommandReplay::end_render_pass(CommandBuffer &command_buffer, std::istrings
 {
 	// Call Vulkan function
 	vkCmdEndRenderPass(command_buffer.get_handle());
+}
+
+void CommandReplay::execute_commands(CommandBuffer &command_buffer, std::istringstream &stream)
+{
+	int render_pass_binding_index;
+	read(stream, render_pass_binding_index);
+
+	std::vector<CommandBuffer *> command_buffers;
+	read(stream, command_buffers);
+
+	auto render_pass_binding = command_buffer.get_recorder().get_render_pass_bindings()[render_pass_binding_index];
+
+	for (auto &cmd_buf : command_buffers)
+	{
+		VkCommandBufferBeginInfo begin_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+		begin_info.flags = cmd_buf->get_usage_flags();
+
+		VkCommandBufferInheritanceInfo inheritance = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO};
+		begin_info.pInheritanceInfo                = &inheritance;
+		inheritance.renderPass                     = render_pass_binding.render_pass->get_handle();
+		inheritance.framebuffer                    = render_pass_binding.framebuffer->get_handle();
+		inheritance.subpass                        = to_u32(render_pass_binding.subpasses.size()) - 1;
+
+		vkBeginCommandBuffer(cmd_buf->get_handle(), &begin_info);
+
+		cmd_buf->get_replayer().play(*cmd_buf, cmd_buf->get_recorder());
+	}
+
+	std::vector<VkCommandBuffer> sec_cmd_buffers(command_buffers.size(), VK_NULL_HANDLE);
+	std::transform(command_buffers.begin(), command_buffers.end(), sec_cmd_buffers.begin(), [](const vkb::CommandBuffer *sec_cmd_buf) { return sec_cmd_buf->get_handle(); });
+	vkCmdExecuteCommands(command_buffer.get_handle(), to_u32(sec_cmd_buffers.size()), sec_cmd_buffers.data());
 }
 
 void CommandReplay::push_constants(CommandBuffer &command_buffer, std::istringstream &stream)
