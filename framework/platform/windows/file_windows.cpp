@@ -64,4 +64,16 @@ std::string Path::get_storage_path()
 
 	return storage;
 }
+
+std::string Path::get_logs_path()
+{
+	static std::string logs = get_storage_path() + "logs/";
+
+	if (!is_directory(logs))
+	{
+		CreateDirectory(logs.c_str(), NULL);
+	}
+
+	return logs;
+}
 }        // namespace vkb::file

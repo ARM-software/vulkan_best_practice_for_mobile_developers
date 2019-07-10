@@ -30,10 +30,6 @@ VKBP_DISABLE_WARNINGS()
 #include <spdlog/sinks/stdout_color_sinks.h>
 VKBP_ENABLE_WARNINGS()
 
-#include "application.h"
-#include "common/logging.h"
-#include "input_events.h"
-
 namespace vkb
 {
 namespace
@@ -312,9 +308,9 @@ bool GlfwPlatform::initialize(std::unique_ptr<Application> &&app)
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
 	glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, 1);
 
-	auto console = spdlog::stdout_color_mt("console");
-	console->set_pattern(LOGGER_FORMAT);
-	spdlog::set_default_logger(console);
+	std::vector<spdlog::sink_ptr> sinks;
+	sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
+	prepare_logger(sinks);
 
 	return Platform::initialize(std::move(app));
 }
@@ -351,9 +347,9 @@ void GlfwPlatform::main_loop()
 	}
 }
 
-void GlfwPlatform::terminate()
+void GlfwPlatform::terminate(ExitCode code)
 {
-	Platform::terminate();
+	Platform::terminate(ExitCode::Success);
 
 	glfwTerminate();
 }

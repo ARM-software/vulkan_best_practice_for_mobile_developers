@@ -145,4 +145,14 @@ const std::string &Path::storage()
 	return storage_path;
 }
 
+const std::string &Path::logs()
+{
+	static std::string logs_path = get_logs_path();
+	if (logs_path.empty())
+	{
+		throw std::runtime_error("Platform must initialize the logs path for file::Path");
+	}
+	return logs_path;
+}
+
 }        // namespace vkb::file

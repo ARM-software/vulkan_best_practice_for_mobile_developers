@@ -33,6 +33,12 @@ namespace vkb
 {
 class Application;
 
+enum class ExitCode
+{
+	Success,
+	Fatal
+};
+
 class Platform
 {
   public:
@@ -49,7 +55,7 @@ class Platform
 
 	virtual void main_loop() = 0;
 
-	virtual void terminate();
+	virtual void terminate(ExitCode code);
 
 	virtual void close() const = 0;
 
@@ -67,9 +73,16 @@ class Platform
 	 */
 	void parse_arguments(const std::string &argument_string);
 
+	std::string &get_log_output_path();
+
   protected:
+	void prepare_logger(std::vector<spdlog::sink_ptr> sinks = {});
+
 	std::unique_ptr<Application> active_app;
 
 	ArgumentParser arguments{""};
+
+  private:
+	std::string log_output;
 };
 }        // namespace vkb

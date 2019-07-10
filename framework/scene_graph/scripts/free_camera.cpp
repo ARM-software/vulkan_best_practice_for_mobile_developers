@@ -20,8 +20,6 @@
 
 #include "free_camera.h"
 
-#include <iostream>
-
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()

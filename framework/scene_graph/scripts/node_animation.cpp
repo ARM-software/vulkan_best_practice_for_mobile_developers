@@ -20,8 +20,6 @@
 
 #include "node_animation.h"
 
-#include <iostream>
-
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()

@@ -65,4 +65,14 @@ std::string Path::get_storage_path()
 {
 	return android_storage_path;
 }
+
+std::string Path::get_logs_path()
+{
+	static std::string screenshots = get_storage_path() + "logs/";
+	if (!is_directory(screenshots))
+	{
+		mkdir(screenshots.c_str(), 0777);
+	}
+	return screenshots;
+}
 }        // namespace vkb::file

@@ -20,14 +20,6 @@
 - OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 -
 -->
-<resources>
-	<string name="app_name">Vulkan Best Practice for Mobile Developers</string>
-	<string name="channel_name">vkb_channel</string>
-	<string name="channel_desc">vkb_channel is a channel for the vulkan best practice application notifications</string>
-	<string name="native_lib_name">vulkan_best_practice</string>
-	<string name="button_demo_mode">Run All Samples</string>
-	<string name="permissions_text">Permission to access files is required to load assets</string>
-	<string name="permissions_button">Grant Permissions</string>
-	<string name="menu_run_samples_title">Run All Samples</string>
-	<string name="open_file_with">Open File With</string>
-</resources>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <external-path name="external_files" path="."/>
+</paths>

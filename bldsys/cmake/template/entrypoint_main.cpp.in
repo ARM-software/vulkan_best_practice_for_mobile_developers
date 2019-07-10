@@ -42,6 +42,7 @@ int main(int argc, char *argv[])
 {
 	vkb::LinuxPlatform platform{argc, argv};
 #endif
+
 	try
 	{
 		auto sample = create_@TARGET_CREATE_FUNC@();
@@ -51,10 +52,11 @@ int main(int argc, char *argv[])
 		{
 			platform.main_loop();
 		}
-		platform.terminate();
+		platform.terminate(vkb::ExitCode::Success);
 	}
-	catch (std::exception &e)
+	catch (const std::exception &e)
 	{
 		LOGE(e.what());
+		platform.terminate(vkb::ExitCode::Fatal);
 	}
 }

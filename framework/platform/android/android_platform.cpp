@@ -28,6 +28,7 @@
 
 VKBP_DISABLE_WARNINGS()
 #include <imgui.h>
+#include <jni.h>
 #include <spdlog/sinks/android_sink.h>
 VKBP_ENABLE_WARNINGS()
 
@@ -324,9 +325,6 @@ int32_t on_input_event(android_app *app, AInputEvent *input_event)
 AndroidPlatform::AndroidPlatform(android_app *app) :
     app{app}
 {
-	auto android_logger = spdlog::android_logger_mt("android", PROJECT_NAME);
-	android_logger->set_pattern(LOGGER_FORMAT);
-	spdlog::set_default_logger(android_logger);
 }
 
 bool AndroidPlatform::initialize(std::unique_ptr<Application> &&application)
@@ -338,6 +336,10 @@ bool AndroidPlatform::initialize(std::unique_ptr<Application> &&application)
 
 	assert(application && "Application is not valid");
 	active_app = std::move(application);
+
+	std::vector<spdlog::sink_ptr> sinks;
+	sinks.push_back(std::make_shared<spdlog::sinks::android_sink_mt>(PROJECT_NAME));
+	prepare_logger(sinks);
 
 	return true;
 }
@@ -393,6 +395,21 @@ void AndroidPlatform::main_loop()
 			active_app->step();
 		}
 	}
+}
+
+void AndroidPlatform::terminate(ExitCode code)
+{
+	if (code == ExitCode::Fatal)
+	{
+		std::string message = Platform::get_log_output_path();
+		app->activity->vm->AttachCurrentThread(&app->activity->env, NULL);
+		jclass    cls         = app->activity->env->GetObjectClass(app->activity->clazz);
+		jmethodID fatal_error = app->activity->env->GetMethodID(cls, "fatalError", "(Ljava/lang/String;)V");
+		app->activity->env->CallVoidMethod(app->activity->clazz, fatal_error, app->activity->env->NewStringUTF(message.c_str()));
+		app->activity->vm->DetachCurrentThread();
+	}
+
+	Platform::terminate(code);
 }
 
 void AndroidPlatform::close() const

@@ -62,10 +62,10 @@ bool WindowsPlatform::initialize(std::unique_ptr<Application> &&app)
 	return GlfwPlatform::initialize(std::move(app));
 }
 
-void WindowsPlatform::terminate()
+void WindowsPlatform::terminate(ExitCode code)
 {
 	FreeConsole();
 
-	GlfwPlatform::terminate();
+	GlfwPlatform::terminate(code);
 }
 }        // namespace vkb

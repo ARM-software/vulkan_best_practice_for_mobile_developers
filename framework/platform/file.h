@@ -104,12 +104,20 @@ class Path
 	 */
 	static const std::string &storage();
 
+	/**
+	 * @brief Platform dependent, for use with log files
+	 * @return Path to log file storage
+	 */
+	static const std::string &logs();
+
   private:
 	static std::string get_asset_path();
 
 	static std::string get_temp_path();
 
 	static std::string get_storage_path();
+
+	static std::string get_logs_path();
 };
 
 }        // namespace vkb::file
