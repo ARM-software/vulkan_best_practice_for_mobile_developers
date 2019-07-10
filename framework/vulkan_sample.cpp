@@ -509,11 +509,7 @@ VkInstance VulkanSample::create_instance(const std::vector<const char *> &requir
 	std::vector<const char *> active_instance_layers(required_instance_layers);
 
 #ifdef VKB_VALIDATION_LAYERS
-	active_instance_layers.push_back("VK_LAYER_GOOGLE_threading");
-	active_instance_layers.push_back("VK_LAYER_LUNARG_parameter_validation");
-	active_instance_layers.push_back("VK_LAYER_LUNARG_object_tracker");
-	active_instance_layers.push_back("VK_LAYER_LUNARG_core_validation");
-	active_instance_layers.push_back("VK_LAYER_GOOGLE_unique_objects");
+	active_instance_layers.push_back("VK_LAYER_KHRONOS_validation");
 #endif
 
 	if (!validate_layers(active_instance_layers, instance_layers))
