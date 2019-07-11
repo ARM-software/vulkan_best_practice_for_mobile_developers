@@ -123,6 +123,7 @@ This project uses the following 3D models. Each one has its own licence.
    - All textures are converted to ASTC in .ktx format.
    - Converted to gltf using [Blender exporter](https://github.com/KhronosGroup/glTF-Blender-IO).
 - Bonza: [MIT license](LICENSE)
+- Space Module: [MIT license](LICENSE)
 
 Sponza model downloaded from Morgan McGuire's [Computer Graphics Archive](https://casual-effects.com/data).
 
