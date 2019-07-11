@@ -78,8 +78,8 @@ inline void print_usage()
 	LOGI("");
 	LOGI("Options:");
 	LOGI("");
-	LOGI("\t help - Display this usage guide.");
-	LOGI("\t <SAMPLE_ID> - Run the specific sample.");
+	LOGI("\t --sample <SAMPLE_ID> - Run the specific sample.");
+	LOGI("\t --help               - Display this usage guide.");
 	LOGI("");
 	LOGI("Available samples:");
 	LOGI("");
