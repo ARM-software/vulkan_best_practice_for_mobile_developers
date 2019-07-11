@@ -24,7 +24,7 @@
 
 ## Overview
 
-Vulkan gives applications the ability to save internal representation of a pipeline (graphics or compute) to allow recreating the same pipeline later. This sample will look in detail at the implementation and performance implications of the pipeline creation, caching and management.
+Vulkan gives applications the ability to save internal representation of a pipeline (graphics or compute) to enable recreating the same pipeline later. This sample will look in detail at the implementation and performance implications of the pipeline creation, caching and management.
 
 ## Vulkan Pipeline
 
@@ -34,8 +34,8 @@ To create a graphics pipeline in Vulkan, the following objects are required:
 * VkRenderPass
 * Subpass Index
 * VkPipelineLayout
-  * PushConstants
-  * DescriptorSetLayouts
+  * Push Constants
+  * Descriptor Set Layouts
 * Pipeline States
   * Vertex Input
   * Input Assembly
@@ -49,16 +49,16 @@ Alternatively for a compute pipeline in Vulkan, you need:
 
 * VkShaderModule (Compute stage)
 * VkPipelineLayout
-  * PushConstants
-  * DescriptorSetLayouts
+  * Push Constants
+  * Descriptor Set Layouts
 
 ![Compute Pipeline Dependencies](images/compute_pipeline_dependencies.png)
 
 ## Vulkan Pipeline Cache
 
-Creating a Vulkan pipeline requires compiling `VkShaderModule` internally. This will have a significant increase in frame time if performed at runtime. To reduce this time, you can provide a previously initialised `VkPipelineCache` object when calling the `VkCreateGraphicsPipelines` or `VkCreateComputePipelines` functions. This object behaves like a cache container which stores the pipeline internal representation for reuse. In order to benefit from using a `VkPipelineCache` object, the data recorded during pipeline creation needs to be saved to disk and reused between application runs.
+Creating a Vulkan pipeline requires compiling `VkShaderModule` internally. This will have a significant increase in frame time if performed at runtime. To reduce this time, you can provide a previously initialised `VkPipelineCache` object when calling the `vkCreateGraphicsPipelines` or `vkCreateComputePipelines` functions. This object behaves like a cache container which stores the pipeline internal representation for reuse. In order to benefit from using a `VkPipelineCache` object, the data recorded during pipeline creation needs to be saved to disk and reused between application runs.
 
-Vulkan allows an application to obtain the binary data of a `VkPipelineCache` object and save it to a file on disk before terminating the application. This operation can be achieved using two calls to the `vkGetPipelineCacheData` function to obtain the size and `VkPipelineCache` object's binary data. In the next application run, the `VkPipelineCache` can be initialised with the previous run's data. This will allow the `VkCreateGraphicsPipelines` or `VkCreateComputePipelines` functions to reuse the baked state and avoid repeating costly operations such as shader compilation.
+Vulkan allows an application to obtain the binary data of a `VkPipelineCache` object and save it to a file on disk before terminating the application. This operation can be achieved using two calls to the `vkGetPipelineCacheData` function to obtain the size and `VkPipelineCache` object's binary data. In the next application run, the `VkPipelineCache` can be initialised with the previous run's data. This will allow the `vkCreateGraphicsPipelines` or `vkCreateComputePipelines` functions to reuse the baked state and avoid repeating costly operations such as shader compilation.
 
 ## Resource Cache Warmup
 
@@ -70,19 +70,19 @@ While the application is loading, the Vulkan resources can be prepared so that t
 
 ## The sample
 
-The `pipeline_cache` Vulkan sample demonstrates this behaviour, by allowing you to enable or disable the use of pipeline cache objects. Destroying the existing pipelines will trigger re-caching, which is a process that will slow down the application. In this case there are only 2 pipelines, and the effect is noticeable, therefore we can expect it to have a much greater impact in a real game.
+The `pipeline_cache` sample demonstrates this behaviour, by allowing you to enable or disable the use of pipeline cache objects. Destroying the existing pipelines will trigger re-caching, which is a process that will slow down the application. In this case there are only 2 pipelines, and the effect is noticeable, therefore we can expect it to have a much greater impact in a real game.
 
 > On the first run of the sample on a device, the first frames will have a slightly bigger execution time because the pipelines are created for the first time - this is expected behaviour. In the next runs of the sample, the `VkPipelineCache` is created with the data saved from the previous run and the internal resource cache.
 
-Below is a screenshot of the sample on a phone with Mali G72 GPU:
+Below is a screenshot of the sample on a phone with Mali G76 GPU:
 
 ![Pipeline Cache Enable](images/pipeline_cache_enable.jpg)
 
-Pipeline cache is enabled and Sponza is rendered at 60 FPS when the existing pipelines are destroyed. However, when the pipeline cache is disabled and the existing pipelines are destroyed, a spike in the framerate graph can be noticed.
+Pipeline cache is enabled and Sponza is rendered at 60 FPS when the existing pipelines are destroyed. Pipeline re-creation takes 24.4 ms thanks to the pipeline cache.
 
 ![Pipeline Cache Disable](images/pipeline_cache_disable.jpg)
 
-Building pipelines dynamically without a pipeline cache can result in a sudden framerate drop.
+If we disable the pipeline cache, re-creating the pipelines takes 50.4 ms, more than double the previous time. Building pipelines dynamically without a pipeline cache can result in a sudden framerate drop.
 
 ## Best practices summary
 
@@ -102,6 +102,6 @@ Building pipelines dynamically without a pipeline cache can result in a sudden f
 
 **Debugging**
 
-* A frame capture would show if there are any calls to `vkCreateGraphicsPipelines` or `VkCreateComputePipelines` with an empty `VkPipelineCache` object. 
+* A frame capture would show if there are any calls to `vkCreateGraphicsPipelines` or `vkCreateComputePipelines` with an empty `VkPipelineCache` object.
 
 > Due to how `RenderDoc` captures and replays a frame, the field for `VkPipelineCache` is always empty in the report for the 'create pipeline' functions.
