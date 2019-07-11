@@ -20,8 +20,32 @@
 
 #include "platform/file.h"
 
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS()
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+VKBP_ENABLE_WARNINGS()
+
 namespace vkb::file
 {
+bool is_directory(const std::string &path)
+{
+	struct stat info;
+	if (stat(path.c_str(), &info) != 0)
+	{
+		return false;
+	}
+	else if (info.st_mode & S_IFDIR)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 static std::vector<uint8_t> read_binary_file(const std::string &filename, const uint32_t count)
 {
 	std::vector<uint8_t> data;
@@ -43,7 +67,7 @@ static std::vector<uint8_t> read_binary_file(const std::string &filename, const 
 		file.seekg(0, std::ios::beg);
 	}
 
-	data.resize(read_count);
+	data.resize(static_cast<size_t>(read_count));
 	file.read(reinterpret_cast<char *>(data.data()), read_count);
 	file.close();
 
@@ -86,6 +110,11 @@ void write_temp(const std::vector<uint8_t> &data, const std::string &filename, c
 	write_binary_file(data, Path::temp() + filename, count);
 }
 
+void write_image(const uint8_t *data, const std::string &filename, const uint32_t width, const uint32_t height, const uint32_t components, const uint32_t row_stride)
+{
+	stbi_write_png((Path::storage() + "/" + filename + ".png").c_str(), width, height, components, data, row_stride);
+}
+
 const std::string &Path::assets()
 {
 	static std::string asset_path = get_asset_path();
@@ -104,6 +133,26 @@ const std::string &Path::temp()
 		throw std::runtime_error("Platform must initialize the temporary path for file::Path");
 	}
 	return temp_path;
+}
+
+const std::string &Path::storage()
+{
+	static std::string storage_path = get_storage_path();
+	if (storage_path.empty())
+	{
+		throw std::runtime_error("Platform must initialize the storage path for file::Path");
+	}
+	return storage_path;
+}
+
+const std::string &Path::logs()
+{
+	static std::string logs_path = get_logs_path();
+	if (logs_path.empty())
+	{
+		throw std::runtime_error("Platform must initialize the logs path for file::Path");
+	}
+	return logs_path;
 }
 
 }        // namespace vkb::file

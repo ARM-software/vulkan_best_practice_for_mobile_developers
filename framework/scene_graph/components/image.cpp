@@ -22,15 +22,18 @@
 
 #include <mutex>
 
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS()
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+#include <stb_image_resize.h>
+VKBP_ENABLE_WARNINGS()
+
+#include "platform/file.h"
 #include "scene_graph/components/image/astc.h"
 #include "scene_graph/components/image/ktx.h"
 #include "scene_graph/components/image/stb.h"
-
-#include "platform/file.h"
 #include "utils.h"
-
-#define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include "stb_image_resize.h"
 
 namespace vkb
 {
@@ -86,6 +89,12 @@ const std::vector<uint8_t> &Image::get_data() const
 	return data;
 }
 
+void Image::clear_data()
+{
+	data.clear();
+	data.shrink_to_fit();
+}
+
 VkFormat Image::get_format() const
 {
 	return format;
@@ -110,9 +119,9 @@ void Image::create_vk_image(Device &device)
 	                                         format,
 	                                         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
 	                                         VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT,
-	                                         mipmaps.size());
+	                                         to_u32(mipmaps.size()));
 
-	vk_image_view = std::make_unique<ImageView>(*vk_image, VK_IMAGE_VIEW_TYPE_2D);
+	vk_image_view = std::make_unique<core::ImageView>(*vk_image, VK_IMAGE_VIEW_TYPE_2D);
 }
 
 const core::Image &Image::get_vk_image() const
@@ -121,7 +130,7 @@ const core::Image &Image::get_vk_image() const
 	return *vk_image;
 }
 
-const ImageView &Image::get_vk_image_view() const
+const core::ImageView &Image::get_vk_image_view() const
 {
 	assert(vk_image_view && "Vulkan image view was not created");
 	return *vk_image_view;
@@ -150,7 +159,7 @@ void Image::generate_mipmaps()
 	while (true)
 	{
 		// Make space for next mipmap
-		auto old_size = data.size();
+		auto old_size = to_u32(data.size());
 		data.resize(old_size + next_size);
 
 		auto &prev_mipmap = mipmaps.back();

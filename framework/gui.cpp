@@ -19,21 +19,28 @@
  */
 
 #include "gui.h"
-#include "imgui_internal.h"
 
 #include <map>
 #include <numeric>
 
-#include "buffer_pool.h"
-#include "platform/file.h"
-#include "render_context.h"
-#include "utils.h"
+#include "common/error.h"
 
+VKBP_DISABLE_WARNINGS()
+#include <glm/glm.hpp>
+VKBP_ENABLE_WARNINGS()
+
+#include "buffer_pool.h"
+#include "common/logging.h"
+#include "common/vk_common.h"
 #include "core/descriptor_set.h"
 #include "core/descriptor_set_layout.h"
 #include "core/pipeline.h"
 #include "core/pipeline_layout.h"
 #include "core/shader_module.h"
+#include "imgui_internal.h"
+#include "platform/file.h"
+#include "rendering/render_context.h"
+#include "utils.h"
 #include "vulkan_sample.h"
 
 namespace vkb
@@ -118,12 +125,12 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 	font_image      = std::make_unique<core::Image>(device, font_extent, VK_FORMAT_R8G8B8A8_UNORM,
                                                VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
                                                VMA_MEMORY_USAGE_GPU_ONLY);
-	font_image_view = std::make_unique<ImageView>(*font_image, VK_IMAGE_VIEW_TYPE_2D);
+	font_image_view = std::make_unique<core::ImageView>(*font_image, VK_IMAGE_VIEW_TYPE_2D);
 
 	// Upload font data into the vulkan image memory
 	{
-		core::Buffer stage_buffer{device, upload_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY};
-		stage_buffer.update(0, {font_data, font_data + upload_size});
+		core::Buffer stage_buffer{device, upload_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, 0};
+		stage_buffer.update({font_data, font_data + upload_size});
 
 		auto &command_buffer = device.request_command_buffer();
 
@@ -176,7 +183,7 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 		// Wait for the command buffer to finish its work before destroying the staging buffer
 		device.get_fence_pool().wait();
 		device.get_fence_pool().reset();
-		device.get_command_pool().reset();
+		device.get_command_pool().reset_pool();
 	}
 
 	// Create texture sampler
@@ -216,9 +223,6 @@ void Gui::update(const float delta_time)
 
 	// Render to generate draw buffers
 	ImGui::Render();
-
-	// Update vulkan buffers
-	//update_buffers();
 }
 
 void Gui::update_buffers(CommandBuffer &command_buffer)
@@ -251,7 +255,7 @@ void Gui::update_buffers(CommandBuffer &command_buffer)
 
 	auto vertex_allocation = render_context.get_active_frame().allocate_buffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertex_buffer_size);
 
-	vertex_allocation.update(0, vertex_data);
+	vertex_allocation.update(vertex_data);
 
 	std::vector<std::reference_wrapper<const core::Buffer>> buffers;
 	buffers.emplace_back(std::ref(vertex_allocation.get_buffer()));
@@ -262,7 +266,7 @@ void Gui::update_buffers(CommandBuffer &command_buffer)
 
 	auto index_allocation = render_context.get_active_frame().allocate_buffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, index_buffer_size);
 
-	index_allocation.update(0, index_data);
+	index_allocation.update(index_data);
 
 	command_buffer.bind_index_buffer(index_allocation.get_buffer(), index_allocation.get_offset(), VK_INDEX_TYPE_UINT16);
 }
@@ -608,21 +612,21 @@ void Gui::show_stats(const Stats &stats)
 		    ImGui::GetIO().DisplaySize.x,
 		    stats_view.graph_height /* dpi */ * dpi_factor};
 
-		char  graph_label[64];
-		float avg = std::accumulate(graph_elements.begin(), graph_elements.end(), 0.0f) / graph_elements.size();
+		std::stringstream graph_label;
+		float             avg = std::accumulate(graph_elements.begin(), graph_elements.end(), 0.0f) / graph_elements.size();
 
 		// Check if the stat is available in the current platform
 		if (!stats.is_available(stat_index))
 		{
-			std::sprintf(graph_label, "Stat not available");
+			graph_label << "Stat not available";
 		}
 		else
 		{
-			std::sprintf(graph_label, graph_data.graph_label_format.c_str(), avg * graph_data.scale_factor);
+			graph_label << fmt::format(graph_data.graph_label_format, avg * graph_data.scale_factor);
 		}
 
 		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-		ImGui::PlotLines("", &graph_elements[0], static_cast<int>(graph_elements.size()), 0, graph_label, graph_min, graph_max, graph_size);
+		ImGui::PlotLines("", &graph_elements[0], static_cast<int>(graph_elements.size()), 0, graph_label.str().c_str(), graph_min, graph_max, graph_size);
 		ImGui::PopItemFlag();
 	}
 }

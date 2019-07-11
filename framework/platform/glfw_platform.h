@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "common/vk_common.h"
 #include "platform.h"
 
 struct GLFWwindow;
@@ -39,7 +40,7 @@ class GlfwPlatform : public Platform
 
 	virtual void main_loop() override;
 
-	virtual void terminate() override;
+	virtual void terminate(ExitCode code) override;
 
 	virtual void close() const override;
 

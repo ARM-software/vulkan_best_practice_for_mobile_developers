@@ -25,7 +25,13 @@
 #include <typeinfo>
 #include <vector>
 
-#include "common.h"
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS()
+#include <glm/glm.hpp>
+VKBP_ENABLE_WARNINGS()
+
+#include "common/helpers.h"
 #include "scene_graph/component.h"
 
 namespace vkb

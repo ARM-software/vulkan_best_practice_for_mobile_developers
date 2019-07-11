@@ -20,11 +20,12 @@
 
 #include "command_record.h"
 
+#include "common/error.h"
+#include "common/logging.h"
 #include "core/descriptor_set_layout.h"
 #include "core/device.h"
 #include "core/shader_module.h"
-
-#include "render_context.h"
+#include "rendering/render_context.h"
 
 namespace vkb
 {
@@ -37,7 +38,7 @@ void CommandRecord::reset()
 	// Clear stream content
 	stream.str("");
 
-	graphics_pipeline_state.reset();
+	pipeline_state.reset();
 	resource_binding_state.reset();
 	descriptor_set_layout_state.clear();
 
@@ -56,7 +57,7 @@ const std::ostringstream &CommandRecord::get_stream() const
 	return stream;
 }
 
-const std::vector<RenderPassBinding> &CommandRecord::get_render_pass_bindings() const
+std::vector<RenderPassBinding> &CommandRecord::get_render_pass_bindings()
 {
 	return render_pass_bindings;
 }
@@ -83,19 +84,30 @@ void CommandRecord::end()
 	write(stream, CommandType::End);
 }
 
-void vkb::CommandRecord::begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values)
+void vkb::CommandRecord::begin_render_pass(const RenderTarget &              render_target,
+                                           const std::vector<LoadStoreInfo> &load_store_infos,
+                                           const std::vector<VkClearValue> & clear_values,
+                                           const VkSubpassContents           contents)
 {
-	// Reset graphics pipeline state
-	graphics_pipeline_state.reset();
+	// Reset pipeline state
+	pipeline_state.reset();
 	resource_binding_state.reset();
 	descriptor_set_layout_state.clear();
 
 	RenderPassBinding render_pass_binding{stream.tellp(), render_target};
 	render_pass_binding.load_store_infos = load_store_infos;
 	render_pass_binding.clear_values     = clear_values;
+	render_pass_binding.contents         = contents;
 
 	// Add first subpass to render pass
-	render_pass_binding.subpasses.push_back(SubpassDesc{stream.tellp()});
+	auto &subpass              = render_pass_binding.subpasses.emplace_back(SubpassDesc{stream.tellp()});
+	subpass.input_attachments  = render_target.get_input_attachments();
+	subpass.output_attachments = render_target.get_output_attachments();
+
+	// Update blend state attachments
+	auto blend_state = pipeline_state.get_color_blend_state();
+	blend_state.attachments.resize(subpass.output_attachments.size());
+	pipeline_state.set_color_blend_state(blend_state);
 
 	// Add render pass
 	render_pass_bindings.push_back(render_pass_binding);
@@ -104,13 +116,44 @@ void vkb::CommandRecord::begin_render_pass(const RenderTarget &render_target, co
 void CommandRecord::next_subpass()
 {
 	// Increment subpass index
-	graphics_pipeline_state.set_subpass_index(graphics_pipeline_state.get_subpass_index() + 1);
+	pipeline_state.set_subpass_index(pipeline_state.get_subpass_index() + 1);
+
+	// Add subpass to render pass
+	auto &render_pass_desc     = render_pass_bindings.back();
+	auto &subpass              = render_pass_desc.subpasses.emplace_back(SubpassDesc{stream.tellp()});
+	subpass.input_attachments  = render_pass_desc.render_target.get_input_attachments();
+	subpass.output_attachments = render_pass_desc.render_target.get_output_attachments();
+
+	// Update blend state attachments
+	auto blend_state = pipeline_state.get_color_blend_state();
+	blend_state.attachments.resize(subpass.output_attachments.size());
+	pipeline_state.set_color_blend_state(blend_state);
+
+	// Descriptor set
+	descriptor_set_layout_state.clear();
+	resource_binding_state.reset();
 
 	// Write command parameters
 	write(stream, CommandType::NextSubpass);
 }
 
-void CommandRecord::end_render_pass()
+void CommandRecord::prepare_pipeline_bindings(CommandRecord &recorder, RenderPassBinding &render_pass_desc)
+{
+	// Iterate over each graphics state that was bound within the subpass
+	for (auto &subpass_desc : render_pass_desc.subpasses)
+	{
+		for (auto &pipeline_desc : subpass_desc.pipeline_descs)
+		{
+			pipeline_desc.pipeline_state.set_render_pass(*render_pass_desc.render_pass);
+
+			auto &pipeline = device.get_resource_cache().request_graphics_pipeline(pipeline_desc.pipeline_state);
+
+			recorder.pipeline_bindings.push_back({pipeline_desc.event_id, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline});
+		}
+	}
+}
+
+void CommandRecord::resolve_subpasses()
 {
 	auto &render_pass_desc = render_pass_bindings.back();
 
@@ -118,10 +161,10 @@ void CommandRecord::end_render_pass()
 
 	auto subpass_it = render_pass_desc.subpasses.begin();
 
-	for (SubpassInfo &subpass : subpasses)
+	for (auto &subpass_desc : subpasses)
 	{
-		subpass.input_attachments  = subpass_it->input_attachments;
-		subpass.output_attachments = subpass_it->output_attachments;
+		subpass_desc.input_attachments  = subpass_it->input_attachments;
+		subpass_desc.output_attachments = subpass_it->output_attachments;
 
 		++subpass_it;
 	}
@@ -129,33 +172,46 @@ void CommandRecord::end_render_pass()
 	render_pass_desc.render_pass = &device.get_resource_cache().request_render_pass(render_pass_desc.render_target.get_attachments(), render_pass_desc.load_store_infos, subpasses);
 	render_pass_desc.framebuffer = &device.get_resource_cache().request_framebuffer(render_pass_desc.render_target, *render_pass_desc.render_pass);
 
-	// Iterate over each graphics state that was bound within the subpass
-	for (SubpassDesc &subpassDesc : render_pass_desc.subpasses)
+	prepare_pipeline_bindings(*this, render_pass_desc);
+}
+
+void CommandRecord::execute_commands(std::vector<vkb::CommandBuffer *> &sec_cmd_bufs)
+{
+	auto &render_pass_desc = render_pass_bindings.back();
+
+	// Also update render pass and pipeline descriptions for every secondary command buffer
+	for (auto &cmd_buf : sec_cmd_bufs)
 	{
-		for (auto &pipeline_state : subpassDesc.pipeline_states)
-		{
-			pipeline_state.graphics_pipeline_state.set_render_pass(*render_pass_desc.render_pass);
+		auto &sec_render_pass_desc       = cmd_buf->get_recorder().render_pass_bindings.back();
+		sec_render_pass_desc.render_pass = render_pass_desc.render_pass;
+		sec_render_pass_desc.framebuffer = render_pass_desc.framebuffer;
 
-			auto &pipeline = device.get_resource_cache().request_graphics_pipeline(pipeline_state.graphics_pipeline_state, {});
-
-			pipeline_bindings.push_back({pipeline_state.event_id, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline});
-		}
+		prepare_pipeline_bindings(cmd_buf->get_recorder(), sec_render_pass_desc);
 	}
 
-	// Write command parameters
+	write(stream, CommandType::ExecuteCommands, to_u32(render_pass_bindings.size() - 1), sec_cmd_bufs);
+}
+
+void CommandRecord::end_render_pass()
+{
 	write(stream, CommandType::EndRenderPass);
 }
 
 void CommandRecord::bind_pipeline_layout(PipelineLayout &pipeline_layout)
 {
-	graphics_pipeline_state.set_pipeline_layout(pipeline_layout);
+	pipeline_state.set_pipeline_layout(pipeline_layout);
+}
+
+void CommandRecord::set_specialization_constant(uint32_t constant_id, const std::vector<uint8_t> &data)
+{
+	pipeline_state.set_specialization_constant(constant_id, data);
 }
 
 void CommandRecord::push_constants(uint32_t offset, const std::vector<uint8_t> &values)
 {
-	const PipelineLayout &pipeline_layout = graphics_pipeline_state.get_pipeline_layout();
+	const PipelineLayout &pipeline_layout = pipeline_state.get_pipeline_layout();
 
-	VkShaderStageFlags shader_stage = pipeline_layout.get_push_constant_range_stage(offset, values.size());
+	VkShaderStageFlags shader_stage = pipeline_layout.get_push_constant_range_stage(offset, to_u32(values.size()));
 
 	if (shader_stage)
 	{
@@ -173,9 +229,14 @@ void CommandRecord::bind_buffer(const core::Buffer &buffer, VkDeviceSize offset,
 	resource_binding_state.bind_buffer(buffer, offset, range, set, binding, array_element);
 }
 
-void CommandRecord::bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element)
+void CommandRecord::bind_image(const core::ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element)
 {
 	resource_binding_state.bind_image(image_view, sampler, set, binding, array_element);
+}
+
+void CommandRecord::bind_input(const core::ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element)
+{
+	resource_binding_state.bind_input(image_view, set, binding, array_element);
 }
 
 void CommandRecord::bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::Buffer>> &buffers, const std::vector<VkDeviceSize> &offsets)
@@ -183,7 +244,6 @@ void CommandRecord::bind_vertex_buffers(uint32_t first_binding, const std::vecto
 	std::vector<VkBuffer> native_buffers(buffers.size(), VK_NULL_HANDLE);
 	std::transform(buffers.begin(), buffers.end(), native_buffers.begin(),
 	               [](const core::Buffer &buffer) { return buffer.get_handle(); });
-
 	// Write command parameters
 	write(stream, CommandType::BindVertexBuffers, first_binding, native_buffers, offsets);
 }
@@ -196,37 +256,37 @@ void CommandRecord::bind_index_buffer(const core::Buffer &buffer, VkDeviceSize o
 
 void CommandRecord::set_viewport_state(const ViewportState &state_info)
 {
-	graphics_pipeline_state.set_viewport_state(state_info);
+	pipeline_state.set_viewport_state(state_info);
 }
 
 void CommandRecord::set_vertex_input_state(const VertexInputState &state_info)
 {
-	graphics_pipeline_state.set_vertex_input_state(state_info);
+	pipeline_state.set_vertex_input_state(state_info);
 }
 
 void CommandRecord::set_input_assembly_state(const InputAssemblyState &state_info)
 {
-	graphics_pipeline_state.set_input_assembly_state(state_info);
+	pipeline_state.set_input_assembly_state(state_info);
 }
 
 void CommandRecord::set_rasterization_state(const RasterizationState &state_info)
 {
-	graphics_pipeline_state.set_rasterization_state(state_info);
+	pipeline_state.set_rasterization_state(state_info);
 }
 
 void CommandRecord::set_multisample_state(const MultisampleState &state_info)
 {
-	graphics_pipeline_state.set_multisample_state(state_info);
+	pipeline_state.set_multisample_state(state_info);
 }
 
 void CommandRecord::set_depth_stencil_state(const DepthStencilState &state_info)
 {
-	graphics_pipeline_state.set_depth_stencil_state(state_info);
+	pipeline_state.set_depth_stencil_state(state_info);
 }
 
 void CommandRecord::set_color_blend_state(const ColorBlendState &state_info)
 {
-	graphics_pipeline_state.set_color_blend_state(state_info);
+	pipeline_state.set_color_blend_state(state_info);
 }
 
 void CommandRecord::set_viewport(uint32_t first_viewport, const std::vector<VkViewport> &viewports)
@@ -267,9 +327,9 @@ void CommandRecord::set_depth_bounds(float min_depth_bounds, float max_depth_bou
 
 void CommandRecord::draw(uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance)
 {
-	FlushPipelineState();
+	flush_pipeline_state(VK_PIPELINE_BIND_POINT_GRAPHICS);
 
-	FlushDescriptorState();
+	flush_descriptor_state(VK_PIPELINE_BIND_POINT_GRAPHICS);
 
 	// Write command parameters
 	write(stream, CommandType::Draw, vertex_count, instance_count, first_vertex, first_instance);
@@ -277,18 +337,54 @@ void CommandRecord::draw(uint32_t vertex_count, uint32_t instance_count, uint32_
 
 void CommandRecord::draw_indexed(uint32_t index_count, uint32_t instance_count, uint32_t first_index, int32_t vertex_offset, uint32_t first_instance)
 {
-	FlushPipelineState();
+	flush_pipeline_state(VK_PIPELINE_BIND_POINT_GRAPHICS);
 
-	FlushDescriptorState();
+	flush_descriptor_state(VK_PIPELINE_BIND_POINT_GRAPHICS);
 
 	// Write command parameters
 	write(stream, CommandType::DrawIndexed, index_count, instance_count, first_index, vertex_offset, first_instance);
+}
+
+void CommandRecord::draw_indexed_indirect(const core::Buffer &buffer, VkDeviceSize offset, uint32_t draw_count, uint32_t stride)
+{
+	flush_pipeline_state(VK_PIPELINE_BIND_POINT_GRAPHICS);
+
+	flush_descriptor_state(VK_PIPELINE_BIND_POINT_GRAPHICS);
+
+	// Write command parameters
+	write(stream, CommandType::DrawIndexedIndirect, buffer.get_handle(), offset, draw_count, stride);
+}
+
+void CommandRecord::dispatch(uint32_t group_count_x, uint32_t group_count_y, uint32_t group_count_z)
+{
+	flush_pipeline_state(VK_PIPELINE_BIND_POINT_COMPUTE);
+
+	flush_descriptor_state(VK_PIPELINE_BIND_POINT_COMPUTE);
+
+	// Write command parameters
+	write(stream, CommandType::Dispatch, group_count_x, group_count_y, group_count_z);
+}
+
+void CommandRecord::dispatch_indirect(const core::Buffer &buffer, VkDeviceSize offset)
+{
+	flush_pipeline_state(VK_PIPELINE_BIND_POINT_COMPUTE);
+
+	flush_descriptor_state(VK_PIPELINE_BIND_POINT_COMPUTE);
+
+	// Write command parameters
+	write(stream, CommandType::DispatchIndirect, buffer.get_handle(), offset);
 }
 
 void CommandRecord::update_buffer(const core::Buffer &buffer, VkDeviceSize offset, const std::vector<uint8_t> &data)
 {
 	// Write command parameters
 	write(stream, CommandType::UpdateBuffer, buffer.get_handle(), offset, data);
+}
+
+void CommandRecord::blit_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageBlit> &regions)
+{
+	// Write command parameters
+	write(stream, CommandType::BlitImage, src_img.get_handle(), dst_img.get_handle(), regions);
 }
 
 void CommandRecord::copy_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageCopy> &regions)
@@ -303,50 +399,53 @@ void CommandRecord::copy_buffer_to_image(const core::Buffer &buffer, const core:
 	write(stream, CommandType::CopyBufferToImage, buffer.get_handle(), image.get_handle(), regions);
 }
 
-void CommandRecord::image_memory_barrier(const ImageView &image_view, const ImageMemoryBarrier &memory_barrier)
+void CommandRecord::image_memory_barrier(const core::ImageView &image_view, const ImageMemoryBarrier &memory_barrier)
 {
 	// Write command parameters
 	write(stream, CommandType::ImageMemoryBarrier, image_view.get_image().get_handle(), image_view.get_subresource_range(), memory_barrier);
 }
 
-void CommandRecord::FlushPipelineState()
+void CommandRecord::buffer_memory_barrier(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier)
+{
+	// Write command parameters
+	write(stream, CommandType::BufferMemoryBarrier, buffer.get_handle(), offset, size, memory_barrier);
+}
+
+void CommandRecord::flush_pipeline_state(VkPipelineBindPoint pipeline_bind_point)
 {
 	// Create a new pipeline in the command stream only if the graphics state changed
-	if (!graphics_pipeline_state.is_dirty())
+	if (!pipeline_state.is_dirty())
 	{
 		return;
 	}
 
 	// Clear dirty bit for graphics state
-	graphics_pipeline_state.clear_dirty();
+	pipeline_state.clear_dirty();
 
-	const PipelineLayout &pipeline_layout = graphics_pipeline_state.get_pipeline_layout();
-
-	SubpassDesc &subpass = render_pass_bindings.back().subpasses.back();
-
-	// Add graphics state to the current subpass
-	subpass.pipeline_states.push_back({stream.tellp(), graphics_pipeline_state});
-
-	const auto &resources = pipeline_layout.get_fragment_output_attachments();
-
-	for (auto &resource : resources)
+	if (pipeline_bind_point == VK_PIPELINE_BIND_POINT_GRAPHICS)
 	{
-		// Add output location to subpass's output attachments
-		subpass.output_attachments.emplace(resource.location);
+		const PipelineLayout &pipeline_layout = pipeline_state.get_pipeline_layout();
+
+		SubpassDesc &subpass = render_pass_bindings.back().subpasses.back();
+
+		// Add graphics state to the current subpass
+		subpass.pipeline_descs.push_back({stream.tellp(), pipeline_state});
 	}
-
-	const auto &input_resource = pipeline_layout.get_fragment_input_attachments();
-
-	for (auto &resource : input_resource)
+	else if (pipeline_bind_point == VK_PIPELINE_BIND_POINT_COMPUTE)
 	{
-		// Add input attachment index to current subpass.
-		subpass.input_attachments.emplace(resource.input_attachment_index);
+		auto &pipeline = device.get_resource_cache().request_compute_pipeline(pipeline_state);
+
+		pipeline_bindings.push_back({stream.tellp(), pipeline_bind_point, pipeline});
+	}
+	else
+	{
+		throw "Only graphics and compute pipeline bind points are supported now";
 	}
 }
 
-void CommandRecord::FlushDescriptorState()
+void CommandRecord::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_point)
 {
-	PipelineLayout &pipeline_layout = const_cast<PipelineLayout &>(graphics_pipeline_state.get_pipeline_layout());
+	PipelineLayout &pipeline_layout = const_cast<PipelineLayout &>(pipeline_state.get_pipeline_layout());
 
 	const auto &set_bindings = pipeline_layout.get_bindings();
 
@@ -443,7 +542,7 @@ void CommandRecord::FlushDescriptorState()
 
 						if (is_dynamic_buffer_descriptor_type(binding_info.descriptorType))
 						{
-							dynamic_offsets.push_back(buffer_info.offset);
+							dynamic_offsets.push_back(to_u32(buffer_info.offset));
 
 							buffer_info.offset = 0;
 						}
@@ -457,7 +556,7 @@ void CommandRecord::FlushDescriptorState()
 
 						if (resource_info.is_image_only() || resource_info.is_image_sampler())
 						{
-							const vkb::ImageView &image_view = resource_info.get_image_view();
+							const vkb::core::ImageView &image_view = resource_info.get_image_view();
 
 							// Add iamge layout info based on descriptor type
 							switch (binding_info.descriptorType)
@@ -473,7 +572,6 @@ void CommandRecord::FlushDescriptorState()
 										image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 									}
 									break;
-
 								case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
 									image_info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 									break;
@@ -490,7 +588,7 @@ void CommandRecord::FlushDescriptorState()
 
 			auto &descriptor_set = device.get_resource_cache().request_descriptor_set(descriptor_set_layout, buffer_infos, image_infos);
 
-			descriptor_set_bindings.push_back({stream.tellp(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, set_it.first, descriptor_set, dynamic_offsets});
+			descriptor_set_bindings.push_back({stream.tellp(), pipeline_bind_point, pipeline_layout, set_it.first, descriptor_set, dynamic_offsets});
 		}
 	}
 }

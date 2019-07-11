@@ -81,7 +81,6 @@ size_t ResourceRecord::register_pipeline_layout(const std::vector<ShaderModule *
 	std::vector<size_t> shader_indices(shader_modules.size());
 	std::transform(shader_modules.begin(), shader_modules.end(), shader_indices.begin(),
 	               [this](ShaderModule *shader_module) { return shader_module_to_index.at(shader_module); });
-
 	write(stream,
 	      ResourceType::PipelineLayout,
 	      shader_indices);
@@ -103,33 +102,38 @@ size_t ResourceRecord::register_render_pass(const std::vector<Attachment> &attac
 	return render_pass_indices.back();
 }
 
-size_t ResourceRecord::register_graphics_pipeline(VkPipelineCache pipeline_cache, GraphicsPipelineState &graphics_state, const ShaderStageMap<SpecializationInfo> &specialization_infos)
+size_t ResourceRecord::register_graphics_pipeline(VkPipelineCache /*pipeline_cache*/, PipelineState &pipeline_state)
 {
 	graphics_pipeline_indices.push_back(graphics_pipeline_indices.size());
 
-	auto &pipeline_layout = graphics_state.get_pipeline_layout();
-	auto &render_pass     = graphics_state.get_render_pass();
+	auto &pipeline_layout = pipeline_state.get_pipeline_layout();
+	auto  render_pass     = pipeline_state.get_render_pass();
 
 	write(stream,
 	      ResourceType::GraphicsPipeline,
 	      pipeline_layout_to_index.at(&pipeline_layout),
-	      render_pass_to_index.at(&render_pass),
-	      graphics_state.get_subpass_index());
+	      render_pass_to_index.at(render_pass),
+	      pipeline_state.get_subpass_index());
 
-	auto &vertex_input_state = graphics_state.get_vertex_input_state();
+	auto &specialization_constant_state = pipeline_state.get_specialization_constant_state().get_specialization_constant_state();
+
+	write(stream,
+	      specialization_constant_state);
+
+	auto &vertex_input_state = pipeline_state.get_vertex_input_state();
 
 	write(stream,
 	      vertex_input_state.attributes,
 	      vertex_input_state.bindings);
 
 	write(stream,
-	      graphics_state.get_input_assembly_state(),
-	      graphics_state.get_rasterization_state(),
-	      graphics_state.get_viewport_state(),
-	      graphics_state.get_multisample_state(),
-	      graphics_state.get_depth_stencil_state());
+	      pipeline_state.get_input_assembly_state(),
+	      pipeline_state.get_rasterization_state(),
+	      pipeline_state.get_viewport_state(),
+	      pipeline_state.get_multisample_state(),
+	      pipeline_state.get_depth_stencil_state());
 
-	auto &color_blend_state = graphics_state.get_color_blend_state();
+	auto &color_blend_state = pipeline_state.get_color_blend_state();
 
 	write(stream,
 	      color_blend_state.logic_op,

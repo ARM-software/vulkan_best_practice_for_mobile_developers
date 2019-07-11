@@ -21,7 +21,6 @@
 #include "node.h"
 
 #include "component.h"
-
 #include "components/transform.h"
 
 namespace vkb

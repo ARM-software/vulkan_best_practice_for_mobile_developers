@@ -22,6 +22,17 @@
 
 #include <mutex>
 
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS()
+#include <glm/glm.hpp>
+#if defined(_WIN32) || defined(_WIN64)
+// Windows.h defines IGNORE, so we must #undef it to avoid clashes with astc header
+#	undef IGNORE
+#endif
+#include <astc_codec_internals.h>
+VKBP_ENABLE_WARNINGS()
+
 #define MAGIC_FILE_CONSTANT 0x5CA1AB13
 
 namespace vkb
@@ -105,7 +116,7 @@ void Astc::init()
 	}
 }
 
-void Astc::decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *data)
+void Astc::decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *data_)
 {
 	// Actual decoding
 	astc_decode_mode decode_mode = DECODE_LDR_SRGB;
@@ -147,9 +158,9 @@ void Astc::decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *data)
 			for (int x = 0; x < xblocks; x++)
 			{
 				int            offset = (((z * yblocks + y) * xblocks) + x) * 16;
-				const uint8_t *bp     = data + offset;
+				const uint8_t *bp     = data_ + offset;
 
-				physical_compressed_block pcb = *(physical_compressed_block *) bp;
+				physical_compressed_block pcb = *reinterpret_cast<const physical_compressed_block *>(bp);
 				symbolic_compressed_block scb;
 
 				physical_to_symbolic(xdim, ydim, zdim, pcb, &scb);
@@ -187,7 +198,7 @@ Astc::Astc(const std::string &name, const std::vector<uint8_t> &data) :
 	}
 	AstcHeader header{};
 	std::memcpy(&header, data.data(), sizeof(AstcHeader));
-	uint32_t magicval = header.magic[0] + 256 * (uint32_t)(header.magic[1]) + 65536 * (uint32_t)(header.magic[2]) + 16777216 * (uint32_t)(header.magic[3]);
+	uint32_t magicval = header.magic[0] + 256 * static_cast<uint32_t>(header.magic[1]) + 65536 * static_cast<uint32_t>(header.magic[2]) + 16777216 * static_cast<uint32_t>(header.magic[3]);
 	if (magicval != MAGIC_FILE_CONSTANT)
 	{
 		throw std::runtime_error{"Error reading astc: invalid magic"};

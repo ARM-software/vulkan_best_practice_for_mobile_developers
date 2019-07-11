@@ -28,24 +28,24 @@ PerspectiveCamera::PerspectiveCamera(const std::string &name) :
     Camera{name}
 {}
 
-void PerspectiveCamera::set_field_of_view(float fov)
+void PerspectiveCamera::set_field_of_view(float new_fov)
 {
-	this->fov = fov;
+	fov = new_fov;
 }
 
 void PerspectiveCamera::set_far_plane(float zfar)
 {
-	this->far_plane = zfar;
+	far_plane = zfar;
 }
 
 void PerspectiveCamera::set_near_plane(float znear)
 {
-	this->near_plane = znear;
+	near_plane = znear;
 }
 
-void PerspectiveCamera::set_aspect_ratio(float aspect_ratio)
+void PerspectiveCamera::set_aspect_ratio(float new_aspect_ratio)
 {
-	this->aspect_ratio = aspect_ratio;
+	aspect_ratio = new_aspect_ratio;
 }
 
 float PerspectiveCamera::get_field_of_view()

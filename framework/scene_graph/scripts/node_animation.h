@@ -20,12 +20,12 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <typeinfo>
 #include <vector>
 
-#include "common.h"
 #include "scene_graph/components/transform.h"
 #include "scene_graph/script.h"
 

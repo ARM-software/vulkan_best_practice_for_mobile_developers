@@ -25,10 +25,11 @@
 #include <typeinfo>
 #include <vector>
 
-#include "scene_graph/component.h"
+#include <volk.h>
 
 #include "core/image.h"
 #include "core/image_view.h"
+#include "scene_graph/component.h"
 
 namespace vkb
 {
@@ -68,6 +69,8 @@ class Image : public Component
 
 	const std::vector<uint8_t> &get_data() const;
 
+	void clear_data();
+
 	VkFormat get_format() const;
 
 	const VkExtent3D &get_extent() const;
@@ -80,7 +83,7 @@ class Image : public Component
 
 	const core::Image &get_vk_image() const;
 
-	const ImageView &get_vk_image_view() const;
+	const core::ImageView &get_vk_image_view() const;
 
   protected:
 	std::vector<uint8_t> &get_mut_data();
@@ -108,7 +111,7 @@ class Image : public Component
 
 	std::unique_ptr<core::Image> vk_image;
 
-	std::unique_ptr<ImageView> vk_image_view;
+	std::unique_ptr<core::ImageView> vk_image_view;
 };
 
 }        // namespace sg

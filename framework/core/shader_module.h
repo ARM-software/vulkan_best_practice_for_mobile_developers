@@ -20,7 +20,8 @@
 
 #pragma once
 
-#include "common.h"
+#include "common/helpers.h"
+#include "common/vk_common.h"
 
 namespace vkb
 {
@@ -68,6 +69,8 @@ struct ShaderResource
 
 	uint32_t size;
 
+	uint32_t constant_id;
+
 	bool dynamic;
 
 	std::string name;
@@ -98,9 +101,21 @@ class ShaderVariant
 	 */
 	void add_undefine(const std::string &undef);
 
+	/**
+	 * @brief Specifies the size of a named runtime array for automatic reflection. If already specified, overrides the size.
+	 * @param runtime_array_name String under which the runtime array is named in the shader
+	 * @param size Integer specifying the wanted size of the runtime array (in number of elements, not size in bytes), used for automatic allocation of buffers.
+	 * See get_declared_struct_size_runtime_array() in spirv_cross.h
+	 */
+	void add_runtime_array_size(const std::string &runtime_array_name, size_t size);
+
+	void set_runtime_array_sizes(const std::unordered_map<std::string, size_t> &sizes);
+
 	const std::string &get_preamble() const;
 
 	const std::vector<std::string> &get_processes() const;
+
+	const std::unordered_map<std::string, size_t> &get_runtime_array_sizes() const;
 
 	void clear();
 
@@ -110,6 +125,8 @@ class ShaderVariant
 	std::string preamble;
 
 	std::vector<std::string> processes;
+
+	std::unordered_map<std::string, size_t> runtime_array_sizes;
 
 	void update_id();
 };
@@ -133,7 +150,12 @@ class ShaderSource
 
 /**
  * @brief Contains shader code, with an entry point, for a specific shader stage.
- *        It is needed by a @ref PipelineLayout to create a @ref Pipeline
+ * It is needed by a PipelineLayout to create a Pipeline.
+ * ShaderModule can do auto-pairing between shader code and textures.
+ * The low level code can change bindings, just keeping the name of the texture.
+ * Variants for each texture are also generated, such as HAS_BASE_COLOR_TEX.
+ * It works similarly for attribute locations. A current limitation is that only set 0
+ * is considered. Uniform buffers are currently hardcoded as well.
  */
 class ShaderModule : public NonCopyable
 {

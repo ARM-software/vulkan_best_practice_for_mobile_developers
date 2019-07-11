@@ -20,13 +20,16 @@
 
 #include "glsl_compiler.h"
 
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS()
 #include <SPIRV/GLSL.std.450.h>
 #include <SPIRV/GlslangToSpv.h>
+#include <StandAlone/ResourceLimits.h>
 #include <glslang/Include/ShHandle.h>
 #include <glslang/Include/revision.h>
 #include <glslang/OSDependent/osinclude.h>
-
-#include <StandAlone/ResourceLimits.h>
+VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {

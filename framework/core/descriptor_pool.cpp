@@ -20,6 +20,7 @@
 
 #include "descriptor_pool.h"
 
+#include "common/error.h"
 #include "descriptor_set_layout.h"
 #include "device.h"
 
@@ -146,10 +147,10 @@ VkResult DescriptorPool::free(VkDescriptorSet descriptor_set)
 	return VK_SUCCESS;
 }
 
-std::uint32_t DescriptorPool::find_available_pool(std::uint32_t pool_index)
+std::uint32_t DescriptorPool::find_available_pool(std::uint32_t search_index)
 {
 	// Create a new pool
-	if (pools.size() <= pool_index)
+	if (pools.size() <= search_index)
 	{
 		VkDescriptorPoolCreateInfo create_info{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
 
@@ -174,14 +175,14 @@ std::uint32_t DescriptorPool::find_available_pool(std::uint32_t pool_index)
 		// Add set count for the descriptor pool
 		pool_sets_count.push_back(0);
 
-		return pool_index;
+		return search_index;
 	}
-	else if (pool_sets_count[pool_index] < pool_max_sets)
+	else if (pool_sets_count[search_index] < pool_max_sets)
 	{
-		return pool_index;
+		return search_index;
 	}
 
 	// Increment pool index
-	return find_available_pool(++pool_index);
+	return find_available_pool(++search_index);
 }
 }        // namespace vkb

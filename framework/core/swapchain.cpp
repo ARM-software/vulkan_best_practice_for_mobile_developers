@@ -20,6 +20,7 @@
 
 #include "core/swapchain.h"
 
+#include "common/logging.h"
 #include "device.h"
 
 namespace vkb
@@ -86,21 +87,31 @@ inline VkPresentModeKHR choose_present_mode(
 }
 
 inline VkSurfaceFormatKHR choose_surface_format(
-    VkSurfaceFormatKHR                     request_surface_format,
+    const std::vector<VkSurfaceFormatKHR> &request_surface_formats,
     const std::vector<VkSurfaceFormatKHR> &surface_formats)
 {
-	auto surface_format_it = std::find_if(
-	    surface_formats.begin(),
-	    surface_formats.end(),
-	    [&request_surface_format](const VkSurfaceFormatKHR &surface) {
-		    if (surface.format == request_surface_format.format &&
-		        surface.colorSpace == request_surface_format.colorSpace)
-		    {
-			    return true;
-		    }
+	std::vector<VkSurfaceFormatKHR>::const_iterator surface_format_it;
 
-		    return false;
-	    });
+	for (auto &request_surface_format : request_surface_formats)
+	{
+		surface_format_it = std::find_if(
+		    surface_formats.begin(),
+		    surface_formats.end(),
+		    [&request_surface_format](const VkSurfaceFormatKHR &surface) {
+			    if (surface.format == request_surface_format.format &&
+			        surface.colorSpace == request_surface_format.colorSpace)
+			    {
+				    return true;
+			    }
+
+			    return false;
+		    });
+
+		if (surface_format_it != surface_formats.end())
+		{
+			break;
+		}
+	}
 
 	if (surface_format_it == surface_formats.end())
 	{
@@ -253,10 +264,14 @@ Swapchain::Swapchain(Swapchain &                         old_swapchain,
 	create_info.minImageCount = choose_image_count(image_count, surface_capabilities.minImageCount, surface_capabilities.maxImageCount);
 	create_info.imageExtent   = choose_extent(extent, surface_capabilities.minImageExtent, surface_capabilities.maxImageExtent, surface_capabilities.currentExtent);
 
-	VkSurfaceFormatKHR format = choose_surface_format({VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}, surface_formats);
+	std::vector<VkSurfaceFormatKHR> request_surface_formats{
+	    {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	    {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	};
+	auto surface_format = choose_surface_format(request_surface_formats, surface_formats);
 
-	create_info.imageFormat     = format.format;
-	create_info.imageColorSpace = format.colorSpace;
+	create_info.imageFormat     = surface_format.format;
+	create_info.imageColorSpace = surface_format.colorSpace;
 
 	create_info.imageArrayLayers = choose_image_array_layers(1U, surface_capabilities.maxImageArrayLayers);
 	create_info.imageUsage       = choose_image_usage(image_usage, surface_capabilities.supportedUsageFlags);

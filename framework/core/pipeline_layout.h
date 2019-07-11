@@ -20,7 +20,8 @@
 
 #pragma once
 
-#include "common.h"
+#include "common/helpers.h"
+#include "common/vk_common.h"
 #include "core/descriptor_set_layout.h"
 #include "core/shader_module.h"
 
@@ -30,8 +31,8 @@ class Pipeline;
 class Device;
 class ShaderModule;
 class DescriptorSetLayout;
-class SpecializationInfo;
-class GraphicsPipelineState;
+class SpecializationConstantState;
+class PipelineState;
 
 class PipelineLayout : public NonCopyable
 {

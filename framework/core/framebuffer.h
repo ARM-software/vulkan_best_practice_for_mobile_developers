@@ -20,8 +20,10 @@
 
 #pragma once
 
+#include "common/helpers.h"
+#include "common/vk_common.h"
 #include "core/render_pass.h"
-#include "render_target.h"
+#include "rendering/render_target.h"
 
 namespace vkb
 {

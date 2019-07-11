@@ -20,13 +20,12 @@
 
 #include "stats.h"
 
-#include "common.h"
+#include "common/error.h"
 
 namespace vkb
 {
 Stats::Stats(const std::set<StatIndex> &enabled_stats, CounterSamplingConfig sampling_config,
              const size_t buffer_size) :
-    hwcpipe(std::make_unique<hwcpipe::HWCPipe>()),
     enabled_stats(enabled_stats),
     sampling_config(sampling_config),
     stop_worker(std::make_unique<std::promise<void>>())
@@ -56,6 +55,31 @@ Stats::Stats(const std::set<StatIndex> &enabled_stats, CounterSamplingConfig sam
 	    {StatIndex::l2_ext_read_bytes, {hwcpipe::GpuCounter::ExternalMemoryReadBytes}},
 	    {StatIndex::l2_ext_write_bytes, {hwcpipe::GpuCounter::ExternalMemoryWriteBytes}},
 	};
+
+	hwcpipe::CpuCounterSet enabled_cpu_counters{};
+	hwcpipe::GpuCounterSet enabled_gpu_counters{};
+
+	for (const auto &stat : enabled_stats)
+	{
+		auto res = stat_data.find(stat);
+		if (res != stat_data.end())
+		{
+			switch (res->second.type)
+			{
+				case StatType::Cpu:
+					enabled_cpu_counters.insert(res->second.cpu_counter);
+					break;
+				case StatType::Gpu:
+					enabled_gpu_counters.insert(res->second.gpu_counter);
+					break;
+				default:
+					break;
+			}
+		}
+	}
+
+	hwcpipe = std::make_unique<hwcpipe::HWCPipe>(enabled_cpu_counters, enabled_gpu_counters);
+	hwcpipe->run();
 
 	if (sampling_config.mode == CounterSamplingMode::Continuous)
 	{
@@ -203,7 +227,7 @@ void Stats::update()
 	}
 
 	// Compute the number of samples to show this frame
-	size_t sample_count = sampling_config.speed * delta_time * pending_samples.size();
+	size_t sample_count = static_cast<size_t>(sampling_config.speed * delta_time) * pending_samples.size();
 
 	// Clamp the number of samples
 	sample_count = std::max<size_t>(1, std::min(sample_count, pending_samples.size()));
@@ -229,7 +253,7 @@ void Stats::continuous_sampling_worker(std::future<void> should_terminate)
 		if (delta_time < interval)
 		{
 			std::this_thread::sleep_for(std::chrono::duration<float>(interval - delta_time));
-			delta_time += worker_timer.tick();
+			delta_time += static_cast<float>(worker_timer.tick());
 		}
 
 		// Sample counters

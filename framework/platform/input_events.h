@@ -20,7 +20,8 @@
 
 #pragma once
 
-#include "common.h"
+#include <cstddef>
+#include <cstdint>
 
 namespace vkb
 {

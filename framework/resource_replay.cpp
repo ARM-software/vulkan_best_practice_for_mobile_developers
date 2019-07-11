@@ -20,6 +20,8 @@
 
 #include "resource_replay.h"
 
+#include "common/logging.h"
+#include "common/vk_common.h"
 #include "resource_cache.h"
 #include "resource_record.h"
 
@@ -124,7 +126,6 @@ void ResourceReplay::create_pipeline_layout(ResourceCache &resource_cache, std::
 	std::vector<ShaderModule *> shader_stages(shader_indices.size());
 	std::transform(shader_indices.begin(), shader_indices.end(), shader_stages.begin(),
 	               [&](size_t shader_index) { return shader_modules.at(shader_index); });
-
 	auto &pipeline_layout = resource_cache.request_pipeline_layout(shader_stages);
 
 	pipeline_layouts.push_back(&pipeline_layout);
@@ -158,6 +159,10 @@ void ResourceReplay::create_graphics_pipeline(ResourceCache &resource_cache, std
 	     render_pass_index,
 	     subpass_index);
 
+	std::map<uint32_t, std::vector<uint8_t>> specialization_constant_state{};
+	read(stream,
+	     specialization_constant_state);
+
 	VertexInputState vertex_input_sate{};
 
 	read(stream,
@@ -184,19 +189,25 @@ void ResourceReplay::create_graphics_pipeline(ResourceCache &resource_cache, std
 	     color_blend_state.logic_op_enable,
 	     color_blend_state.attachments);
 
-	GraphicsPipelineState graphics_state{};
-	graphics_state.set_pipeline_layout(*pipeline_layouts.at(pipeline_layout_index));
-	graphics_state.set_render_pass(*render_passes.at(render_pass_index));
-	graphics_state.set_subpass_index(subpass_index);
-	graphics_state.set_vertex_input_state(vertex_input_sate);
-	graphics_state.set_input_assembly_state(input_assembly_state);
-	graphics_state.set_rasterization_state(rasterization_state);
-	graphics_state.set_viewport_state(viewport_state);
-	graphics_state.set_multisample_state(multisample_state);
-	graphics_state.set_depth_stencil_state(depth_stencil_state);
-	graphics_state.set_color_blend_state(color_blend_state);
+	PipelineState pipeline_state{};
+	pipeline_state.set_pipeline_layout(*pipeline_layouts.at(pipeline_layout_index));
+	pipeline_state.set_render_pass(*render_passes.at(render_pass_index));
 
-	auto &graphics_pipeline = resource_cache.request_graphics_pipeline(graphics_state, {});
+	for (auto &item : specialization_constant_state)
+	{
+		pipeline_state.set_specialization_constant(item.first, item.second);
+	}
+
+	pipeline_state.set_subpass_index(subpass_index);
+	pipeline_state.set_vertex_input_state(vertex_input_sate);
+	pipeline_state.set_input_assembly_state(input_assembly_state);
+	pipeline_state.set_rasterization_state(rasterization_state);
+	pipeline_state.set_viewport_state(viewport_state);
+	pipeline_state.set_multisample_state(multisample_state);
+	pipeline_state.set_depth_stencil_state(depth_stencil_state);
+	pipeline_state.set_color_blend_state(color_blend_state);
+
+	auto &graphics_pipeline = resource_cache.request_graphics_pipeline(pipeline_state);
 
 	graphics_pipelines.push_back(&graphics_pipeline);
 }

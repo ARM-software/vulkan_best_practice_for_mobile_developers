@@ -20,10 +20,15 @@
 
 #include "buffer_pool.h"
 
+#include <cstddef>
+
+#include "common/error.h"
+#include "common/logging.h"
+
 namespace vkb
 {
 BufferBlock::BufferBlock(Device &device, VkDeviceSize size, VkBufferUsageFlags usage) :
-    buffer{device, size, usage, VMA_MEMORY_USAGE_CPU_TO_GPU}
+    buffer{device, size, usage, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT}
 {
 	if (usage == VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
 	{
@@ -110,22 +115,29 @@ void BufferPool::reset()
 BufferAllocation::BufferAllocation(core::Buffer &buffer, VkDeviceSize size, VkDeviceSize offset) :
     buffer{&buffer},
     size{size},
-    offset{offset}
+    base_offset{offset}
 {
 }
 
-void BufferAllocation::update(uint32_t offset, const std::vector<uint8_t> &data)
+void BufferAllocation::update(const std::vector<uint8_t> &data, uint32_t offset)
 {
 	assert(buffer && "Invalid buffer pointer");
 
 	if (offset + data.size() <= size)
 	{
-		buffer->update(this->offset + offset, data);
+		buffer->update(data, static_cast<size_t>(base_offset) + offset);
 	}
 	else
 	{
 		LOGE("Ignore buffer allocation update");
 	}
+}
+
+void BufferAllocation::update(const uint8_t *data, const size_t size, const uint32_t offset)
+{
+	assert(data && "Invalid data pointer");
+
+	buffer->update(data, size, offset);
 }
 
 bool BufferAllocation::empty() const
@@ -140,7 +152,7 @@ VkDeviceSize BufferAllocation::get_size() const
 
 VkDeviceSize BufferAllocation::get_offset() const
 {
-	return offset;
+	return base_offset;
 }
 
 core::Buffer &BufferAllocation::get_buffer()

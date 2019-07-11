@@ -30,10 +30,9 @@
 #include "core/command_buffer.h"
 #include "core/sampler.h"
 #include "debug_info.h"
-
 #include "platform/file.h"
 #include "platform/input_events.h"
-#include "render_context.h"
+#include "rendering/render_context.h"
 #include "stats.h"
 
 namespace vkb
@@ -58,7 +57,7 @@ struct Font
 		font_config.FontDataOwnedByAtlas = false;
 
 		ImGuiIO &io = ImGui::GetIO();
-		handle      = io.Fonts->AddFontFromMemoryTTF(data.data(), data.size(), size, &font_config);
+		handle      = io.Fonts->AddFontFromMemoryTTF(data.data(), static_cast<int>(data.size()), size, &font_config);
 	}
 
 	ImFont *handle{nullptr};
@@ -120,53 +119,51 @@ class Gui
 		/// Per-statistic max values
 		std::map<StatIndex, GraphData> graph_map{
 		    {StatIndex::frame_times,
-		     {/* label = */ "Frame time: %3.1f ms",
+		     {/* label = */ "Frame time: {:3.1f} ms",
 		      /* scale_factor = */ 1000.0f}},
 		    {StatIndex::cpu_cycles,
-		     {/* label = */ "CPU cycles: %4.1f M/s",
-		      /* scale_factor = */ float(1e-6),
-		      /* has_fixed_max = */ true,
-		      /* max_value = */ 10000.0f}},
+		     {/* label = */ "CPU cycles: {:4.1f} M/s",
+		      /* scale_factor = */ float(1e-6)}},
 		    {StatIndex::cpu_instructions,
-		     {/* label = */ "CPU inst: %4.1f M/s",
+		     {/* label = */ "CPU inst: {:4.1f} M/s",
 		      /* scale_factor = */ float(1e-6)}},
 		    {StatIndex::cache_miss_ratio,
-		     {/* label = */ "Cache misses: %3.1f%%",
+		     {/* label = */ "Cache misses: {:3.1f}%",
 		      /* scale_factor = */ 100.0f,
 		      /* has_fixed_max = */ true,
 		      /* max_value = */ 100.0f}},
 		    {StatIndex::branch_miss_ratio,
-		     {/* label = */ "Branch misses: %3.1f%%",
+		     {/* label = */ "Branch misses: {:3.1f}%",
 		      /* scale_factor = */ 100.0f,
 		      /* has_fixed_max = */ true,
 		      /* max_value = */ 100.0f}},
 
 		    {StatIndex::gpu_cycles,
-		     {/* label = */ "GPU cycles: %4.1f M/s",
+		     {/* label = */ "GPU cycles: {:4.1f} M/s",
 		      /* scale_factor = */ float(1e-6)}},
 		    {StatIndex::vertex_compute_cycles,
-		     {/* label = */ "Vert cycles: %4.1f M/s",
+		     {/* label = */ "Vert cycles: {:4.1f} M/s",
 		      /* scale_factor = */ float(1e-6)}},
 		    {StatIndex::fragment_cycles,
-		     {/* label = */ "Frag cycles: %4.1f M/s",
+		     {/* label = */ "Frag cycles: {:4.1f} M/s",
 		      /* scale_factor = */ float(1e-6)}},
 		    {StatIndex::l2_ext_reads,
-		     {/* label = */ "Ext reads: %4.1f M/s",
+		     {/* label = */ "Ext reads: {:4.1f} M/s",
 		      /* scale_factor = */ float(1e-6)}},
 		    {StatIndex::l2_ext_writes,
-		     {/* label = */ "Ext writes: %4.1f M/s",
+		     {/* label = */ "Ext writes: {:4.1f} M/s",
 		      /* scale_factor = */ float(1e-6)}},
 		    {StatIndex::l2_ext_read_stalls,
-		     {/* label = */ "Ext read stalls: %4.1f M/s",
+		     {/* label = */ "Ext read stalls: {:4.1f} M/s",
 		      /* scale_factor = */ float(1e-6)}},
 		    {StatIndex::l2_ext_write_stalls,
-		     {/* label = */ "Ext write stalls: %4.1f M/s",
+		     {/* label = */ "Ext write stalls: {:4.1f} M/s",
 		      /* scale_factor = */ float(1e-6)}},
 		    {StatIndex::l2_ext_read_bytes,
-		     {/* label = */ "Ext read bw: %4.1f MiB/s",
+		     {/* label = */ "Ext read bw: {:4.1f} MiB/s",
 		      /* scale_factor = */ 1.0f / (1024.0f * 1024.0f)}},
 		    {StatIndex::l2_ext_write_bytes,
-		     {/* label = */ "Ext write bw: %4.1f MiB/s",
+		     {/* label = */ "Ext write bw: {:4.1f} MiB/s",
 		      /* scale_factor = */ 1.0f / (1024.0f * 1024.0f)}}};
 
 		float graph_height{50.0f};
@@ -186,7 +183,7 @@ class Gui
 
 		uint32_t max_fields{8};
 
-		uint32_t label_column_width{0};
+		float label_column_width{0};
 	};
 
 	// The name of the default font file to use
@@ -305,8 +302,8 @@ class Gui
 
 	std::vector<Font> fonts;
 
-	std::unique_ptr<core::Image> font_image;
-	std::unique_ptr<ImageView>   font_image_view;
+	std::unique_ptr<core::Image>     font_image;
+	std::unique_ptr<core::ImageView> font_image_view;
 
 	std::unique_ptr<core::Sampler> sampler{nullptr};
 

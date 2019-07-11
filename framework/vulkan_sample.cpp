@@ -20,42 +20,48 @@
 
 #include "vulkan_sample.h"
 
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS()
+#include <glm/glm.hpp>
+#include <imgui.h>
+VKBP_ENABLE_WARNINGS()
+
+#include "common/helpers.h"
+#include "common/logging.h"
+#include "common/vk_common.h"
 #include "gltf_loader.h"
 #include "platform/platform.h"
-
-#include <imgui.h>
-
+#include "scene_graph/script.h"
+#include "scene_graph/scripts/free_camera.h"
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
 #endif
-
-#include "scene_graph/script.h"
-#include "scene_graph/scripts/free_camera.h"
 
 namespace vkb
 {
 namespace
 {
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT type,
-                                                     uint64_t object, size_t location, int32_t message_code,
-                                                     const char *layer_prefix, const char *message, void *user_data)
+static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT /*type*/,
+                                                     uint64_t /*object*/, size_t /*location*/, int32_t /*message_code*/,
+                                                     const char *layer_prefix, const char *message, void * /*user_data*/)
 {
 	if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
 	{
-		LOGE("Validation Layer: Error: {}: {}", layer_prefix, message);
+		LOGE("{}: {}", layer_prefix, message);
 	}
 	else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
 	{
-		LOGE("Validation Layer: Warning: {}: {}", layer_prefix, message);
+		LOGW("{}: {}", layer_prefix, message);
 	}
 	else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
 	{
-		LOGI("Validation Layer: Performance warning: {}: {}", layer_prefix, message);
+		LOGW("{}: {}", layer_prefix, message);
 	}
 	else
 	{
-		LOGI("Validation Layer: Information: {}: {}", layer_prefix, message);
+		LOGI("{}: {}", layer_prefix, message);
 	}
 	return VK_FALSE;
 }
@@ -115,10 +121,39 @@ VulkanSample::VulkanSample()
 
 VulkanSample::~VulkanSample()
 {
+	device->wait_idle();
+
+	scene.reset();
+
+	stats.reset();
+	gui.reset();
+	render_context.reset();
+	device.reset();
+
 	if (surface != VK_NULL_HANDLE)
 	{
 		vkDestroySurfaceKHR(instance, surface, nullptr);
 	}
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	vkDestroyDebugReportCallbackEXT(instance, debug_report_callback, nullptr);
+#endif
+
+	if (instance != VK_NULL_HANDLE)
+	{
+		vkDestroyInstance(instance, nullptr);
+	}
+}
+
+void VulkanSample::set_render_pipeline(RenderPipeline &&rp)
+{
+	render_pipeline = std::make_unique<RenderPipeline>(std::move(rp));
+}
+
+RenderPipeline &VulkanSample::get_render_pipeline()
+{
+	assert(render_pipeline && "Render pipeline was not created");
+	return *render_pipeline;
 }
 
 bool VulkanSample::prepare(Platform &platform)
@@ -133,7 +168,7 @@ bool VulkanSample::prepare(Platform &platform)
 
 	LOGI("Initializing context");
 
-	instance = create_instance({VK_KHR_SURFACE_EXTENSION_NAME});
+	instance = create_instance({VK_KHR_SURFACE_EXTENSION_NAME}, get_sample_additional_layers());
 	surface  = platform.create_surface(instance);
 
 	uint32_t physical_device_count{0};
@@ -152,30 +187,21 @@ bool VulkanSample::prepare(Platform &platform)
 	return true;
 }
 
-void VulkanSample::update(float delta_time)
+void VulkanSample::update_scripts(float delta_time)
 {
-	if (scene.has_component<sg::Script>())
+	if (scene->has_component<sg::Script>())
 	{
-		auto scripts = scene.get_components<sg::Script>();
+		auto scripts = scene->get_components<sg::Script>();
 
 		for (auto script : scripts)
 		{
 			script->update(delta_time);
 		}
 	}
+}
 
-	VkSemaphore aquired_semaphore = render_context->begin_frame();
-
-	if (aquired_semaphore == VK_NULL_HANDLE)
-	{
-		return;
-	}
-
-	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-
-	CommandBuffer &cmd_buf = render_context->request_frame_command_buffer(queue);
-
-	// Update stats
+void VulkanSample::update_stats(float delta_time)
+{
 	if (stats)
 	{
 		stats->update();
@@ -190,8 +216,10 @@ void VulkanSample::update(float delta_time)
 			stats_view_count = 0.0f;
 		}
 	}
+}
 
-	// Update gui
+void VulkanSample::update_gui(float delta_time)
+{
 	if (gui)
 	{
 		if (gui->is_debug_view_active())
@@ -208,10 +236,11 @@ void VulkanSample::update(float delta_time)
 
 		gui->update(delta_time);
 	}
+}
 
-	const RenderTarget &render_target = render_context->get_active_frame().get_render_target();
-
-	cmd_buf.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+void VulkanSample::record_scene_rendering_commands(CommandBuffer &command_buffer, RenderTarget &render_target)
+{
+	auto &views = render_target.get_views();
 
 	{
 		ImageMemoryBarrier memory_barrier{};
@@ -221,7 +250,13 @@ void VulkanSample::update(float delta_time)
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-		cmd_buf.image_memory_barrier(render_target.get_views().at(0), memory_barrier);
+		command_buffer.image_memory_barrier(views.at(0), memory_barrier);
+
+		// Skip 1 as it is handled later as a depth-stencil attachment
+		for (size_t i = 2; i < views.size(); ++i)
+		{
+			command_buffer.image_memory_barrier(views.at(i), memory_barrier);
+		}
 	}
 
 	{
@@ -232,10 +267,10 @@ void VulkanSample::update(float delta_time)
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
-		cmd_buf.image_memory_barrier(render_target.get_views().at(1), memory_barrier);
+		command_buffer.image_memory_barrier(views.at(1), memory_barrier);
 	}
 
-	draw_swapchain_renderpass(cmd_buf, render_target);
+	draw_swapchain_renderpass(command_buffer, render_target);
 
 	{
 		ImageMemoryBarrier memory_barrier{};
@@ -245,12 +280,38 @@ void VulkanSample::update(float delta_time)
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 
-		cmd_buf.image_memory_barrier(render_target.get_views().at(0), memory_barrier);
+		command_buffer.image_memory_barrier(views.at(0), memory_barrier);
+	}
+}
+
+void VulkanSample::update(float delta_time)
+{
+	update_scripts(delta_time);
+
+	update_stats(delta_time);
+
+	update_gui(delta_time);
+
+	auto acquired_semaphore = render_context->begin_frame();
+
+	if (acquired_semaphore == VK_NULL_HANDLE)
+	{
+		return;
 	}
 
-	cmd_buf.end();
+	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-	VkSemaphore render_semaphore = render_context->submit(queue, cmd_buf, aquired_semaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+	auto &render_target = render_context->get_active_frame().get_render_target();
+
+	auto &command_buffer = render_context->request_frame_command_buffer(queue);
+
+	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+	record_scene_rendering_commands(command_buffer, render_target);
+
+	command_buffer.end();
+
+	auto render_semaphore = render_context->submit(queue, command_buffer, acquired_semaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
 	render_context->end_frame(render_semaphore);
 }
@@ -264,9 +325,9 @@ void VulkanSample::resize(uint32_t width, uint32_t height)
 		gui->resize(width, height);
 	}
 
-	if (scene.has_component<sg::Script>())
+	if (scene->has_component<sg::Script>())
 	{
-		auto scripts = scene.get_components<sg::Script>();
+		auto scripts = scene->get_components<sg::Script>();
 
 		for (auto script : scripts)
 		{
@@ -293,9 +354,9 @@ void VulkanSample::input_event(const InputEvent &input_event)
 
 	if (!gui_captures_event)
 	{
-		if (scene.has_component<sg::Script>())
+		if (scene->has_component<sg::Script>())
 		{
-			auto scripts = scene.get_components<sg::Script>();
+			auto scripts = scene->get_components<sg::Script>();
 
 			for (auto script : scripts)
 			{
@@ -303,11 +364,38 @@ void VulkanSample::input_event(const InputEvent &input_event)
 			}
 		}
 	}
+
+	if (input_event.get_source() == EventSource::Keyboard)
+	{
+		const auto &key_event = static_cast<const KeyInputEvent &>(input_event);
+		if (key_event.get_action() == KeyAction::Down && key_event.get_code() == KeyCode::PrintScreen)
+		{
+			screenshot(*render_context, "screenshot-" + get_name());
+		}
+	}
 }
 
-VkPhysicalDevice VulkanSample::get_gpu(size_t i)
+void VulkanSample::finish()
 {
-	return gpus.at(i);
+	Application::finish();
+	device->wait_idle();
+}
+
+VkPhysicalDevice VulkanSample::get_gpu()
+{
+	// Find a discrete GPU
+	for (auto gpu : gpus)
+	{
+		VkPhysicalDeviceProperties properties{};
+		vkGetPhysicalDeviceProperties(gpu, &properties);
+		if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+		{
+			return gpu;
+		}
+	}
+
+	// Otherwise just pick the first one
+	return gpus.at(0);
 }
 
 VkSurfaceKHR VulkanSample::get_surface()
@@ -315,8 +403,12 @@ VkSurfaceKHR VulkanSample::get_surface()
 	return surface;
 }
 
-void VulkanSample::draw_scene(vkb::CommandBuffer &command_buffer)
+void VulkanSample::render(CommandBuffer &command_buffer)
 {
+	if (render_pipeline)
+	{
+		render_pipeline->draw(command_buffer, render_context->get_active_frame().get_render_target());
+	}
 }
 
 void VulkanSample::draw_gui()
@@ -331,13 +423,13 @@ void VulkanSample::update_debug_window()
 
 	get_debug_info().insert<field::Static, std::string>("surface_format",
 	                                                    convert_format_to_string(render_context->get_swapchain().get_format()) + " (" +
-	                                                        to_string(vkb::get_bits_per_pixel(render_context->get_swapchain().get_format())) + "bbp)");
+	                                                        to_string(get_bits_per_pixel(render_context->get_swapchain().get_format())) + "bbp)");
 
-	get_debug_info().insert<field::Static, uint32_t>("mesh_count", to_u32(scene.get_components<sg::SubMesh>().size()));
+	get_debug_info().insert<field::Static, uint32_t>("mesh_count", to_u32(scene->get_components<sg::SubMesh>().size()));
 
-	get_debug_info().insert<field::Static, uint32_t>("texture_count", to_u32(scene.get_components<sg::Texture>().size()));
+	get_debug_info().insert<field::Static, uint32_t>("texture_count", to_u32(scene->get_components<sg::Texture>().size()));
 
-	if (auto camera = scene.get_components<vkb::sg::Camera>().at(0))
+	if (auto camera = scene->get_components<vkb::sg::Camera>().at(0))
 	{
 		if (auto camera_node = camera->get_node())
 		{
@@ -349,13 +441,13 @@ void VulkanSample::update_debug_window()
 
 sg::Node &VulkanSample::add_free_camera(const std::string &node_name)
 {
-	auto camera_node = scene.find_node(node_name);
+	auto camera_node = scene->find_node(node_name);
 
 	if (!camera_node)
 	{
 		LOGW("Camera node `{}` not found. Looking for `default_camera` node.", node_name.c_str());
 
-		camera_node = scene.find_node("default_camera");
+		camera_node = scene->find_node("default_camera");
 	}
 
 	if (!camera_node)
@@ -368,24 +460,30 @@ sg::Node &VulkanSample::add_free_camera(const std::string &node_name)
 		throw std::runtime_error("No camera component found for `" + node_name + "` node.");
 	}
 
-	auto free_camera_script = std::make_unique<vkb::sg::FreeCamera>(*camera_node);
+	auto free_camera_script = std::make_unique<sg::FreeCamera>(*camera_node);
 
-	scene.add_component(std::move(free_camera_script), *camera_node);
+	scene->add_component(std::move(free_camera_script), *camera_node);
 
 	return *camera_node;
 }
 
 void VulkanSample::load_scene(const std::string &path)
 {
-	vkb::GLTFLoader loader{*device};
+	GLTFLoader loader{*device};
 
-	bool status = loader.read_scene_from_file(path, scene);
+	scene = loader.read_scene_from_file(path);
 
-	if (!status)
+	if (!scene)
 	{
 		LOGE("Cannot load scene: {}", path.c_str());
 		throw std::runtime_error("Cannot load scene: " + path);
 	}
+}
+
+RenderContext &VulkanSample::get_render_context()
+{
+	assert(render_context && "Render context is not valid");
+	return *render_context;
 }
 
 VkInstance VulkanSample::create_instance(const std::vector<const char *> &required_instance_extensions,
@@ -433,11 +531,7 @@ VkInstance VulkanSample::create_instance(const std::vector<const char *> &requir
 	std::vector<const char *> active_instance_layers(required_instance_layers);
 
 #ifdef VKB_VALIDATION_LAYERS
-	active_instance_layers.push_back("VK_LAYER_GOOGLE_threading");
-	active_instance_layers.push_back("VK_LAYER_LUNARG_parameter_validation");
-	active_instance_layers.push_back("VK_LAYER_LUNARG_object_tracker");
-	active_instance_layers.push_back("VK_LAYER_LUNARG_core_validation");
-	active_instance_layers.push_back("VK_LAYER_GOOGLE_unique_objects");
+	active_instance_layers.push_back("VK_LAYER_KHRONOS_validation");
 #endif
 
 	if (!validate_layers(active_instance_layers, instance_layers))
@@ -465,14 +559,14 @@ VkInstance VulkanSample::create_instance(const std::vector<const char *> &requir
 
 	// Create the Vulkan instance
 
-	VkInstance instance;
-	result = vkCreateInstance(&instance_info, nullptr, &instance);
+	VkInstance new_instance;
+	result = vkCreateInstance(&instance_info, nullptr, &new_instance);
 	if (result != VK_SUCCESS)
 	{
 		throw VulkanException(result, "Could not create Vulkan instance");
 	}
 
-	volkLoadInstance(instance);
+	volkLoadInstance(new_instance);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	VkDebugReportCallbackCreateInfoEXT info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
@@ -480,35 +574,23 @@ VkInstance VulkanSample::create_instance(const std::vector<const char *> &requir
 	info.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
 	info.pfnCallback = debug_callback;
 
-	result = vkCreateDebugReportCallbackEXT(instance, &info, nullptr, &debug_report_callback);
+	result = vkCreateDebugReportCallbackEXT(new_instance, &info, nullptr, &debug_report_callback);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Could not create debug callback.");
 	}
 #endif
 
-	return instance;
+	return new_instance;
 }
 
-void VulkanSample::draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, const RenderTarget &render_target)
+std::vector<const char *> VulkanSample::get_sample_additional_layers()
 {
-	std::vector<vkb::LoadStoreInfo> load_store{2};
-	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-	load_store[1].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_STORE;
+	return {};
+}
 
-	std::vector<VkClearValue> clear_value{2};
-	clear_value[0].color        = {0.0f, 0.0f, 0.0f, 1.0f};
-	clear_value[1].depthStencil = {1.0f, ~0U};
-
-	command_buffer.begin_render_pass(render_target, load_store, clear_value);
-
-	vkb::ColorBlendState blend_state{};
-	blend_state.attachments = {vkb::ColorBlendAttachmentState{}};
-
-	command_buffer.set_color_blend_state(blend_state);
-
+void VulkanSample::draw_swapchain_renderpass(CommandBuffer &command_buffer, RenderTarget &render_target)
+{
 	auto &extent = render_target.get_extent();
 
 	VkViewport viewport{};
@@ -516,21 +598,20 @@ void VulkanSample::draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer,
 	viewport.height   = static_cast<float>(extent.height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
-
 	command_buffer.set_viewport(0, {viewport});
 
 	VkRect2D scissor{};
 	scissor.extent = extent;
-
 	command_buffer.set_scissor(0, {scissor});
 
-	draw_scene(command_buffer);
+	render(command_buffer);
 
-	// Draw gui
 	if (gui)
 	{
 		gui->draw(command_buffer);
 	}
+
+	command_buffer.resolve_subpasses();
 
 	command_buffer.end_render_pass();
 }

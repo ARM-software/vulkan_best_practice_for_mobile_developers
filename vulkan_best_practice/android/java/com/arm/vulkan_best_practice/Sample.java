@@ -22,17 +22,23 @@ package com.arm.vulkan_best_practice;
 
 public class Sample {
     private String id;
+    private String category;
     private String name;
     private String description;
 
-    public Sample(String id, String name, String description) {
+    public Sample(String id, String category, String name, String description) {
         this.id = id;
+        this.category = category;
         this.name = name;
         this.description = description;
     }
 
     public String getId() {
         return id;
+    }
+
+    public String getCategory() {
+        return category;
     }
 
     public String getName() {

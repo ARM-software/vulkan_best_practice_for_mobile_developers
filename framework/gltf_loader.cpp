@@ -19,23 +19,28 @@
  */
 
 #define TINYGLTF_IMPLEMENTATION
-
 #include "gltf_loader.h"
 
+#include <limits>
 #include <queue>
 
-#include "core/image.h"
+#include "common/error.h"
 
+VKBP_DISABLE_WARNINGS()
+#include <glm/glm.hpp>
+VKBP_ENABLE_WARNINGS()
+
+#include "common/logging.h"
+#include "common/vk_common.h"
 #include "core/device.h"
+#include "core/image.h"
 #include "platform/file.h"
 #include "platform/thread_pool.h"
-
 #include "scene_graph/components/image/astc.h"
 #include "scene_graph/components/perspective_camera.h"
 #include "scene_graph/components/texture.h"
 #include "scene_graph/components/transform.h"
 #include "scene_graph/node.h"
-
 #include "utils.h"
 
 namespace vkb
@@ -315,7 +320,7 @@ GLTFLoader::GLTFLoader(Device &device) :
 {
 }
 
-bool GLTFLoader::read_scene_from_file(const std::string &file_name, sg::Scene &scene)
+std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &file_name)
 {
 	std::string err;
 	std::string warn;
@@ -330,14 +335,14 @@ bool GLTFLoader::read_scene_from_file(const std::string &file_name, sg::Scene &s
 	{
 		LOGE("Failed to load gltf file {}.", gltf_file.c_str());
 
-		return false;
+		return nullptr;
 	}
 
 	if (!err.empty())
 	{
 		LOGE("Error loading gltf model: {}.", err.c_str());
 
-		return false;
+		return nullptr;
 	}
 
 	if (!warn.empty())
@@ -354,9 +359,7 @@ bool GLTFLoader::read_scene_from_file(const std::string &file_name, sg::Scene &s
 		model_path.clear();
 	}
 
-	scene = load_scene();
-
-	return true;
+	return std::make_unique<sg::Scene>(load_scene());
 }
 
 sg::Scene GLTFLoader::load_scene()
@@ -365,23 +368,15 @@ sg::Scene GLTFLoader::load_scene()
 
 	scene.set_name("gltf_scene");
 
-	ThreadPool thread_pool;
-
 	// Load samplers
-	std::vector<std::unique_ptr<sg::Sampler>> sampler_components(model.samplers.size());
+	std::vector<std::unique_ptr<sg::Sampler>>
+	    sampler_components(model.samplers.size());
 
 	for (size_t sampler_index = 0; sampler_index < model.samplers.size(); sampler_index++)
 	{
-		thread_pool.run(
-		    [&](size_t sampler_index) {
-			    auto sampler = parse_sampler(model.samplers.at(sampler_index));
-
-			    sampler_components[sampler_index] = std::move(sampler);
-		    },
-		    sampler_index);
+		auto sampler                      = parse_sampler(model.samplers.at(sampler_index));
+		sampler_components[sampler_index] = std::move(sampler);
 	}
-
-	thread_pool.wait();
 
 	scene.set_components(std::move(sampler_components));
 
@@ -389,6 +384,8 @@ sg::Scene GLTFLoader::load_scene()
 	timer.start();
 
 	// Load images
+	ThreadPool thread_pool;
+
 	std::vector<std::unique_ptr<sg::Image>> image_components(model.images.size());
 
 	for (size_t image_index = 0; image_index < model.images.size(); image_index++)
@@ -417,9 +414,15 @@ sg::Scene GLTFLoader::load_scene()
 	{
 		auto &image = image_components.at(image_index);
 
-		core::Buffer stage_buffer{device, image->get_data().size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU};
-		stage_buffer.update(0, image->get_data());
+		core::Buffer stage_buffer{device,
+		                          image->get_data().size(),
+		                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		                          VMA_MEMORY_USAGE_CPU_ONLY,
+		                          0};
 
+		stage_buffer.update(image->get_data());
+		// Clean up the image data, as they are copied in the staging buffer
+		image->clear_data();
 		upload_image(command_buffer, stage_buffer, *image);
 
 		transient_buffers.push_back(std::move(stage_buffer));
@@ -433,7 +436,7 @@ sg::Scene GLTFLoader::load_scene()
 
 	device.get_fence_pool().wait();
 	device.get_fence_pool().reset();
-	device.get_command_pool().reset();
+	device.get_command_pool().reset_pool();
 
 	transient_buffers.clear();
 
@@ -454,13 +457,19 @@ sg::Scene GLTFLoader::load_scene()
 
 		texture->set_image(*images.at(gltf_texture.source));
 
-		if (gltf_texture.sampler < 0)
+		if (gltf_texture.sampler >= 0 && gltf_texture.sampler < static_cast<int>(samplers.size()))
 		{
-			texture->set_sampler(*default_sampler);
+			texture->set_sampler(*samplers.at(gltf_texture.sampler));
 		}
 		else
 		{
-			texture->set_sampler(*samplers.at(gltf_texture.sampler));
+			if (gltf_texture.name.empty())
+			{
+				gltf_texture.name = images.at(gltf_texture.source)->get_name();
+			}
+
+			LOGW("Sampler not found for texture {}, possible GLTF error", gltf_texture.name);
+			texture->set_sampler(*default_sampler);
 		}
 
 		scene.add_component(std::move(texture));
@@ -585,15 +594,15 @@ sg::Scene GLTFLoader::load_scene()
 			auto node_it = traverse_nodes.front();
 			traverse_nodes.pop();
 
-			auto &current_node = *nodes.at(node_it.second);
-			auto &root_node    = node_it.first;
+			auto &current_node       = *nodes.at(node_it.second);
+			auto &traverse_root_node = node_it.first;
 
-			current_node.set_parent(root_node);
-			root_node.add_child(current_node);
+			current_node.set_parent(traverse_root_node);
+			traverse_root_node.add_child(current_node);
 
 			for (auto child_node_index : model.nodes[node_it.second].children)
 			{
-				traverse_nodes.push(std::make_pair(std::ref(root_node), child_node_index));
+				traverse_nodes.push(std::make_pair(std::ref(traverse_root_node), child_node_index));
 			}
 		}
 
@@ -628,7 +637,7 @@ std::unique_ptr<sg::Node> GLTFLoader::parse_node(const tinygltf::Node &gltf_node
 	{
 		glm::vec3 translation;
 
-		std::copy(gltf_node.translation.begin(), gltf_node.translation.end(), glm::value_ptr(translation));
+		std::transform(gltf_node.translation.begin(), gltf_node.translation.end(), glm::value_ptr(translation), TypeCast<double, float>{});
 
 		transform.set_translation(translation);
 	}
@@ -637,7 +646,7 @@ std::unique_ptr<sg::Node> GLTFLoader::parse_node(const tinygltf::Node &gltf_node
 	{
 		glm::quat rotation;
 
-		std::copy(gltf_node.rotation.begin(), gltf_node.rotation.end(), glm::value_ptr(rotation));
+		std::transform(gltf_node.rotation.begin(), gltf_node.rotation.end(), glm::value_ptr(rotation), TypeCast<double, float>{});
 
 		transform.set_rotation(rotation);
 	}
@@ -646,7 +655,7 @@ std::unique_ptr<sg::Node> GLTFLoader::parse_node(const tinygltf::Node &gltf_node
 	{
 		glm::vec3 scale;
 
-		std::copy(gltf_node.scale.begin(), gltf_node.scale.end(), glm::value_ptr(scale));
+		std::transform(gltf_node.scale.begin(), gltf_node.scale.end(), glm::value_ptr(scale), TypeCast<double, float>{});
 
 		transform.set_scale(scale);
 	}
@@ -655,7 +664,7 @@ std::unique_ptr<sg::Node> GLTFLoader::parse_node(const tinygltf::Node &gltf_node
 	{
 		glm::mat4 matrix;
 
-		std::copy(gltf_node.matrix.begin(), gltf_node.matrix.end(), glm::value_ptr(matrix));
+		std::transform(gltf_node.matrix.begin(), gltf_node.matrix.end(), glm::value_ptr(matrix), TypeCast<double, float>{});
 
 		transform.set_matrix(matrix);
 	}
@@ -671,10 +680,10 @@ std::unique_ptr<sg::Camera> GLTFLoader::parse_camera(const tinygltf::Camera &glt
 	{
 		auto perspective_camera = std::make_unique<sg::PerspectiveCamera>(gltf_camera.name);
 
-		perspective_camera->set_aspect_ratio(gltf_camera.perspective.aspectRatio);
-		perspective_camera->set_field_of_view(gltf_camera.perspective.yfov);
-		perspective_camera->set_near_plane(gltf_camera.perspective.znear);
-		perspective_camera->set_far_plane(gltf_camera.perspective.zfar);
+		perspective_camera->set_aspect_ratio(static_cast<float>(gltf_camera.perspective.aspectRatio));
+		perspective_camera->set_field_of_view(static_cast<float>(gltf_camera.perspective.yfov));
+		perspective_camera->set_near_plane(static_cast<float>(gltf_camera.perspective.znear));
+		perspective_camera->set_far_plane(static_cast<float>(gltf_camera.perspective.zfar));
 
 		camera = std::move(perspective_camera);
 	}
@@ -699,7 +708,6 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primiti
 	{
 		std::string attrib_name = attribute.first;
 		std::transform(attrib_name.begin(), attrib_name.end(), attrib_name.begin(), ::tolower);
-
 		auto vertex_data = get_attribute_data(&model, attribute.second);
 
 		if (attrib_name == "position")
@@ -707,9 +715,12 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primiti
 			submesh->vertices_count = to_u32(model.accessors.at(attribute.second).count);
 		}
 
-		core::Buffer buffer{device, vertex_data.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU};
-
-		buffer.update(0, vertex_data);
+		core::Buffer buffer{device,
+		                    vertex_data.size(),
+		                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		                    VMA_MEMORY_USAGE_CPU_TO_GPU,
+		                    VMA_ALLOCATION_CREATE_MAPPED_BIT};
+		buffer.update(vertex_data);
 
 		auto pair = std::make_pair(attrib_name, std::move(buffer));
 
@@ -749,9 +760,12 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primiti
 				break;
 		}
 
-		submesh->index_buffer = std::make_unique<core::Buffer>(device, index_data.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-		submesh->index_buffer->update(0, index_data);
+		submesh->index_buffer = std::make_unique<core::Buffer>(device,
+		                                                       index_data.size(),
+		                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+		                                                       VMA_MEMORY_USAGE_CPU_TO_GPU,
+		                                                       VMA_ALLOCATION_CREATE_MAPPED_BIT);
+		submesh->index_buffer->update(index_data);
 	}
 	else
 	{
@@ -844,9 +858,9 @@ std::unique_ptr<sg::Image> GLTFLoader::parse_image(tinygltf::Image &gltf_image)
 	// Check whether the format is supported by the GPU
 	if (sg::is_astc(image->get_format()))
 	{
-		if (device.get_features().textureCompressionASTC_LDR == VK_FALSE)
+		if (!device.is_image_format_supported(image->get_format()))
 		{
-			LOGW("%s %s", "ASTC not supported: decoding", image->get_name());
+			LOGW("ASTC not supported: decoding {}", image->get_name());
 			image = std::make_unique<sg::Astc>(*image);
 			image->generate_mipmaps();
 		}
@@ -879,7 +893,7 @@ std::unique_ptr<sg::Sampler> GLTFLoader::parse_sampler(const tinygltf::Sampler &
 	sampler_info.addressModeV = address_mode_v;
 	sampler_info.addressModeW = address_mode_w;
 	sampler_info.borderColor  = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	sampler_info.maxLod       = VK_REMAINING_MIP_LEVELS;
+	sampler_info.maxLod       = std::numeric_limits<float>::max();
 
 	core::Sampler vk_sampler{device, sampler_info};
 

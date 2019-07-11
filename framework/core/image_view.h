@@ -20,20 +20,28 @@
 
 #pragma once
 
+#include "common/helpers.h"
+#include "common/vk_common.h"
 #include "core/image.h"
 
-namespace vkb
+namespace vkb::core
 {
 class ImageView : public NonCopyable
 {
   public:
-	ImageView(core::Image &image, VkImageViewType view_type, VkFormat format = VK_FORMAT_UNDEFINED);
+	ImageView(Image &image, VkImageViewType view_type, VkFormat format = VK_FORMAT_UNDEFINED);
 
 	ImageView(ImageView &&other);
 
 	~ImageView();
 
-	const core::Image &get_image() const;
+	const Image &get_image() const;
+
+	/**
+	 * @brief Update the image this view is referring to
+	 *        Used on image move
+	 */
+	void set_image(Image &image);
 
 	VkImageView get_handle() const;
 
@@ -44,7 +52,9 @@ class ImageView : public NonCopyable
 	VkImageSubresourceLayers get_subresource_layers() const;
 
   private:
-	core::Image &image;
+	Device &device;
+
+	Image *image{};
 
 	VkImageView handle{VK_NULL_HANDLE};
 
@@ -52,4 +62,4 @@ class ImageView : public NonCopyable
 
 	VkImageSubresourceRange subresource_range{};
 };
-}        // namespace vkb
+}        // namespace vkb::core

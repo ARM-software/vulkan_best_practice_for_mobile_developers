@@ -20,8 +20,8 @@
 
 #pragma once
 
-#include "common.h"
-
+#include "common/helpers.h"
+#include "common/vk_common.h"
 #include "core/command_buffer.h"
 
 namespace vkb
@@ -31,7 +31,7 @@ class Device;
 class CommandPool : public NonCopyable
 {
   public:
-	CommandPool(Device &device, uint32_t queue_family_index);
+	CommandPool(Device &device, uint32_t queue_family_index, CommandBuffer::ResetMode reset_mode = CommandBuffer::ResetMode::ResetPool);
 
 	~CommandPool();
 
@@ -44,9 +44,11 @@ class CommandPool : public NonCopyable
 
 	VkCommandPool get_handle() const;
 
-	VkResult reset();
+	VkResult reset_pool();
 
 	CommandBuffer &request_command_buffer(VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+	const CommandBuffer::ResetMode get_reset_mode() const;
 
   private:
 	Device &device;
@@ -55,8 +57,12 @@ class CommandPool : public NonCopyable
 
 	uint32_t queue_family_index{0};
 
-	std::vector<CommandBuffer> command_buffers;
+	std::vector<std::unique_ptr<CommandBuffer>> command_buffers;
 
 	uint32_t active_command_buffer_count{0};
+
+	CommandBuffer::ResetMode reset_mode{CommandBuffer::ResetMode::ResetPool};
+
+	VkResult reset_command_buffers();
 };
 }        // namespace vkb

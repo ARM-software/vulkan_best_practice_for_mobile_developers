@@ -33,7 +33,7 @@ inline void hash_param(size_t &seed, const T &value)
 }
 
 template <>
-inline void hash_param(size_t &seed, const VkPipelineCache &value)
+inline void hash_param(size_t & /*seed*/, const VkPipelineCache & /*value*/)
 {
 }
 
@@ -134,18 +134,6 @@ inline void hash_param<std::unordered_map<uint32_t, std::map<uint32_t, VkDescrip
 	}
 }
 
-template <>
-inline void hash_param<std::map<VkShaderStageFlagBits, SpecializationInfo>>(
-    size_t &                                                   seed,
-    const std::map<VkShaderStageFlagBits, SpecializationInfo> &value)
-{
-	for (auto &stage_specialization : value)
-	{
-		hash_combine(seed, static_cast<std::underlying_type<VkShaderStageFlagBits>::type>(stage_specialization.first));
-		hash_combine(seed, stage_specialization.second);
-	}
-}
-
 template <typename T, typename... Args>
 inline void hash_param(size_t &seed, const T &first_arg, const Args &... args)
 {
@@ -157,12 +145,12 @@ inline void hash_param(size_t &seed, const T &first_arg, const Args &... args)
 template <class T, class... A>
 struct RecordHelper
 {
-	size_t record(ResourceRecord &recorder, A &... args)
+	size_t record(ResourceRecord & /*recorder*/, A &... /*args*/)
 	{
 		return 0;
 	}
 
-	void index(ResourceRecord &recorder, size_t index, T &resource)
+	void index(ResourceRecord & /*recorder*/, size_t /*index*/, T & /*resource*/)
 	{
 	}
 };
@@ -288,9 +276,9 @@ std::vector<uint8_t> ResourceCache::serialize()
 	return recorder.get_data();
 }
 
-void ResourceCache::set_pipeline_cache(VkPipelineCache pipeline_cache)
+void ResourceCache::set_pipeline_cache(VkPipelineCache new_pipeline_cache)
 {
-	this->pipeline_cache = pipeline_cache;
+	pipeline_cache = new_pipeline_cache;
 }
 
 ShaderModule &ResourceCache::request_shader_module(VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const ShaderVariant &shader_variant)
@@ -299,9 +287,9 @@ ShaderModule &ResourceCache::request_shader_module(VkShaderStageFlagBits stage, 
 	return request_resource(device, recorder, shader_modules, stage, glsl_source, entry_point, shader_variant);
 }
 
-PipelineLayout &ResourceCache::request_pipeline_layout(const std::vector<ShaderModule *> &shader_modules)
+PipelineLayout &ResourceCache::request_pipeline_layout(const std::vector<ShaderModule *> &requested_shader_modules)
 {
-	return request_resource(device, recorder, pipeline_layouts, shader_modules);
+	return request_resource(device, recorder, pipeline_layouts, requested_shader_modules);
 }
 
 DescriptorSetLayout &ResourceCache::request_descriptor_set_layout(const std::vector<ShaderResource> &set_resources)
@@ -309,14 +297,14 @@ DescriptorSetLayout &ResourceCache::request_descriptor_set_layout(const std::vec
 	return request_resource(device, recorder, descriptor_set_layouts, set_resources);
 }
 
-GraphicsPipeline &ResourceCache::request_graphics_pipeline(GraphicsPipelineState &graphics_state, const ShaderStageMap<SpecializationInfo> &specialization_infos)
+GraphicsPipeline &ResourceCache::request_graphics_pipeline(PipelineState &pipeline_state)
 {
-	return request_resource(device, recorder, graphics_pipelines, pipeline_cache, graphics_state, specialization_infos);
+	return request_resource(device, recorder, graphics_pipelines, pipeline_cache, pipeline_state);
 }
 
-ComputePipeline &ResourceCache::request_compute_pipeline(const PipelineLayout &pipeline_layout, const SpecializationInfo &specialization_info)
+ComputePipeline &ResourceCache::request_compute_pipeline(PipelineState &pipeline_state)
 {
-	return request_resource(device, recorder, compute_pipelines, pipeline_cache, pipeline_layout, specialization_info);
+	return request_resource(device, recorder, compute_pipelines, pipeline_cache, pipeline_state);
 }
 
 DescriptorSet &ResourceCache::request_descriptor_set(DescriptorSetLayout &descriptor_set_layout, const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos)

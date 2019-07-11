@@ -22,8 +22,7 @@
 
 #include <list>
 
-#include "common.h"
-
+#include "common/vk_common.h"
 #include "core/descriptor_set.h"
 #include "core/framebuffer.h"
 #include "core/image_view.h"
@@ -31,13 +30,14 @@
 #include "core/pipeline_layout.h"
 #include "core/render_pass.h"
 #include "core/sampler.h"
-#include "graphics_pipeline_state.h"
-#include "render_target.h"
+#include "rendering/pipeline_state.h"
+#include "rendering/render_target.h"
 #include "resource_binding_state.h"
 
 namespace vkb
 {
 class RenderContext;
+class CommandBuffer;
 
 /*
  * @brief Temporary pipeline descriptor structure for a drawcall 
@@ -47,7 +47,7 @@ struct PipelineDesc
 {
 	std::streampos event_id{};
 
-	GraphicsPipelineState graphics_pipeline_state;
+	PipelineState pipeline_state;
 };
 
 /*
@@ -58,11 +58,11 @@ struct SubpassDesc
 {
 	std::streampos event_id{};
 
-	std::set<uint32_t> input_attachments;
+	std::vector<uint32_t> input_attachments;
 
-	std::set<uint32_t> output_attachments;
+	std::vector<uint32_t> output_attachments;
 
-	std::list<PipelineDesc> pipeline_states;
+	std::list<PipelineDesc> pipeline_descs;
 };
 
 /*
@@ -83,6 +83,8 @@ struct RenderPassBinding
 	const RenderPass *render_pass;
 
 	const Framebuffer *framebuffer;
+
+	VkSubpassContents contents{VK_SUBPASS_CONTENTS_INLINE};
 };
 
 /*
@@ -127,6 +129,7 @@ enum class CommandType
 	NextSubpass,
 	EndRenderPass,
 	BindPipelineLayout,
+	ExecuteCommands,
 	PushConstants,
 	BindBuffer,
 	BindImage,
@@ -147,10 +150,15 @@ enum class CommandType
 	SetDepthBounds,
 	Draw,
 	DrawIndexed,
+	DrawIndexedIndirect,
+	Dispatch,
+	DispatchIndirect,
 	UpdateBuffer,
+	BlitImage,
 	CopyImage,
 	CopyBufferToImage,
-	ImageMemoryBarrier
+	ImageMemoryBarrier,
+	BufferMemoryBarrier
 };
 
 /*
@@ -168,7 +176,7 @@ class CommandRecord
 
 	const std::ostringstream &get_stream() const;
 
-	const std::vector<RenderPassBinding> &get_render_pass_bindings() const;
+	std::vector<RenderPassBinding> &get_render_pass_bindings();
 
 	const std::vector<PipelineBinding> &get_pipeline_bindings() const;
 
@@ -178,19 +186,51 @@ class CommandRecord
 
 	void end();
 
-	void begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values);
+	void begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values, VkSubpassContents contents);
 
 	void next_subpass();
+
+	void resolve_subpasses();
+
+	void execute_commands(std::vector<vkb::CommandBuffer *> &sec_cmd_bufs);
 
 	void end_render_pass();
 
 	void bind_pipeline_layout(PipelineLayout &pipeline_layout);
 
+	void set_specialization_constant(uint32_t constant_id, const std::vector<uint8_t> &value);
+
 	void push_constants(uint32_t offset, const std::vector<uint8_t> &values);
 
+	/**
+	 * @brief It binds a buffer to an uniform
+	 * @param buffer Buffer to bind
+	 * @param offset Offset to apply to the buffer
+	 * @param range Memory size to bind
+	 * @param set Destination descriptor set
+	 * @param binding Descriptor binding within that set
+	 * @param array_element The starting element in that array
+	 */
 	void bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element);
 
-	void bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element);
+	/**
+	 * @brief It binds an image view to an uniform sampler
+	 * @param image_view Image view to bind
+	 * @param sampler Samper to use
+	 * @param set Destination descriptor set
+	 * @param binding Descriptor binding within that set
+	 * @param array_element The starting element in that array
+	 */
+	void bind_image(const core::ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element);
+
+	/**
+	 * @brief Like bind_image, it binds an image view to an input attachment
+	 * @param image_view Image view to bind
+	 * @param set Destination descriptor set
+	 * @param binding Descriptor binding within that set
+	 * @param array_element The starting element in that array
+	 */
+	void bind_input(const core::ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
 
 	void bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::Buffer>> &buffers, const std::vector<VkDeviceSize> &offsets);
 
@@ -296,13 +336,23 @@ class CommandRecord
 
 	void draw_indexed(uint32_t index_count, uint32_t instance_count, uint32_t first_index, int32_t vertex_offset, uint32_t first_instance);
 
+	void draw_indexed_indirect(const core::Buffer &buffer, VkDeviceSize offset, uint32_t draw_count, uint32_t stride);
+
+	void dispatch(uint32_t group_count_x, uint32_t group_count_y, uint32_t group_count_z);
+
+	void dispatch_indirect(const core::Buffer &buffer, VkDeviceSize offset);
+
 	void update_buffer(const core::Buffer &buffer, VkDeviceSize offset, const std::vector<uint8_t> &data);
+
+	void blit_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageBlit> &regions);
 
 	void copy_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageCopy> &regions);
 
 	void copy_buffer_to_image(const core::Buffer &buffer, const core::Image &image, const std::vector<VkBufferImageCopy> &regions);
 
-	void image_memory_barrier(const ImageView &image_view, const ImageMemoryBarrier &memory_barrier);
+	void image_memory_barrier(const core::ImageView &image_view, const ImageMemoryBarrier &memory_barrier);
+
+	void buffer_memory_barrier(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier);
 
   private:
 	Device &device;
@@ -315,22 +365,24 @@ class CommandRecord
 
 	std::vector<PipelineBinding> pipeline_bindings;
 
-	GraphicsPipelineState graphics_pipeline_state;
+	PipelineState pipeline_state;
 
 	ResourceBindingState resource_binding_state;
 
 	std::unordered_map<uint32_t, DescriptorSetLayout *> descriptor_set_layout_state;
 
+	void prepare_pipeline_bindings(CommandRecord &recorder, RenderPassBinding &render_pass_desc);
+
 	/**
 	 * @brief Flush the piplines state
 	 * 
 	 */
-	void FlushPipelineState();
+	void flush_pipeline_state(VkPipelineBindPoint pipeline_bind_point);
 
 	/**
 	 * @brief Flush the descriptor set State
 	 * 
 	 */
-	void FlushDescriptorState();
+	void flush_descriptor_state(VkPipelineBindPoint pipeline_bind_point);
 };
 }        // namespace vkb

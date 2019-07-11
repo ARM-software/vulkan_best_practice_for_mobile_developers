@@ -20,7 +20,8 @@
 
 #pragma once
 
-#include "common.h"
+#include "common/helpers.h"
+#include "common/vk_common.h"
 
 namespace vkb
 {
@@ -31,7 +32,7 @@ namespace core
 class Buffer : public NonCopyable
 {
   public:
-	Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage);
+	Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaAllocationCreateFlags flags);
 
 	Buffer(Buffer &&other);
 
@@ -43,6 +44,25 @@ class Buffer : public NonCopyable
 
 	VmaAllocation get_memory() const;
 
+	/**
+	 * @brief Maps vulkan memory to an host visible address
+	 * @return Pointer to host visible memory
+	 */
+	uint8_t *map();
+
+	/**
+	 * @brief Unmaps vulkan memory from the host visible address
+	 */
+	void unmap();
+
+	/**
+	 * @brief Flushes if memory is HOST_VISIBLE or it is not HOST_COHERENT
+	 */
+	void flush() const;
+
+	/**
+	 * @return The size of the buffer
+	 */
 	VkDeviceSize get_size() const;
 
 	/**
@@ -50,19 +70,20 @@ class Buffer : public NonCopyable
 	 * @param offset Offset from which to start uploading
 	 * @param data Data to upload
 	 */
-	void update(size_t offset, const std::vector<uint8_t> &data);
+	void update(const std::vector<uint8_t> &data, size_t offset = 0);
 
 	template <class T>
-	void update(size_t offset, const T &value)
+	void update(const T &value, size_t offset = 0)
 	{
-		update(offset, std::vector<uint8_t>{reinterpret_cast<const uint8_t *>(&value),
-		                                    reinterpret_cast<const uint8_t *>(&value) + sizeof(T)});
+		update(reinterpret_cast<const uint8_t *>(&value), sizeof(T), offset);
 	}
 
 	const uint8_t *get_data() const
 	{
 		return mapped_data;
 	}
+
+	void update(const uint8_t *src, size_t size, size_t offset = 0);
 
   private:
 	Device &device;
@@ -74,6 +95,9 @@ class Buffer : public NonCopyable
 	VkDeviceSize size{0};
 
 	uint8_t *mapped_data{nullptr};
+
+	/// Whether it has been mapped with vmaMapMemory
+	bool mapped = false;
 };
 }        // namespace core
 }        // namespace vkb

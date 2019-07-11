@@ -20,7 +20,8 @@
 
 #pragma once
 
-#include "common.h"
+#include "common/helpers.h"
+#include "common/vk_common.h"
 
 namespace vkb
 {
@@ -36,9 +37,9 @@ struct LoadStoreInfo
 
 struct SubpassInfo
 {
-	std::set<uint32_t> input_attachments;
+	std::vector<uint32_t> input_attachments;
 
-	std::set<uint32_t> output_attachments;
+	std::vector<uint32_t> output_attachments;
 };
 
 class RenderPass : public NonCopyable

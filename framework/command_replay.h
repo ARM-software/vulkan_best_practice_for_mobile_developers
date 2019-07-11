@@ -20,8 +20,6 @@
 
 #pragma once
 
-#include "common.h"
-
 #include "command_record.h"
 
 namespace vkb
@@ -56,6 +54,8 @@ class CommandReplay
 
 	void end_render_pass(CommandBuffer &command_buffer, std::istringstream &stream);
 
+	void execute_commands(CommandBuffer &command_buffer, std::istringstream &stream);
+
 	void push_constants(CommandBuffer &command_buffer, std::istringstream &stream);
 
 	void bind_vertex_buffers(CommandBuffer &command_buffer, std::istringstream &stream);
@@ -78,12 +78,22 @@ class CommandReplay
 
 	void draw_indexed(CommandBuffer &command_buffer, std::istringstream &stream);
 
+	void draw_indexed_indirect(CommandBuffer &command_buffer, std::istringstream &stream);
+
+	void dispatch(CommandBuffer &command_buffer, std::istringstream &stream);
+
+	void dispatch_indirect(CommandBuffer &command_buffer, std::istringstream &stream);
+
 	void update_buffer(CommandBuffer &command_buffer, std::istringstream &stream);
+
+	void blit_image(CommandBuffer &command_buffer, std::istringstream &stream);
 
 	void copy_image(CommandBuffer &command_buffer, std::istringstream &stream);
 
 	void copy_buffer_to_image(CommandBuffer &command_buffer, std::istringstream &stream);
 
 	void image_memory_barrier(CommandBuffer &command_buffer, std::istringstream &stream);
+
+	void buffer_memory_barrier(CommandBuffer &command_buffer, std::istringstream &stream);
 };
 }        // namespace vkb

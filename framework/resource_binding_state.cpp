@@ -51,9 +51,16 @@ void ResourceBindingState::bind_buffer(const core::Buffer &buffer, VkDeviceSize 
 	dirty = true;
 }
 
-void ResourceBindingState::bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element)
+void ResourceBindingState::bind_image(const core::ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element)
 {
 	set_bindings[set].bind_image(image_view, sampler, binding, array_element);
+
+	dirty = true;
+}
+
+void ResourceBindingState::bind_input(const core::ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element)
+{
+	set_bindings[set].bind_input(image_view, binding, array_element);
 
 	dirty = true;
 }
@@ -67,13 +74,14 @@ VkDescriptorImageInfo ResourceInfo::get_image_info() const
 {
 	VkDescriptorImageInfo image_info{};
 
-	image_info.sampler   = sampler->get_handle();
+	// Can be null for input attachments
+	image_info.sampler   = sampler ? sampler->get_handle() : VK_NULL_HANDLE;
 	image_info.imageView = image_view->get_handle();
 
 	return image_info;
 }
 
-const ImageView &ResourceInfo::get_image_view() const
+const core::ImageView &ResourceInfo::get_image_view() const
 {
 	return *image_view;
 }
@@ -123,24 +131,30 @@ bool ResourceInfo::is_image_sampler() const
 	return image_view != nullptr && sampler != VK_NULL_HANDLE;
 }
 
-void ResourceInfo::bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range)
+void ResourceInfo::bind_buffer(const core::Buffer &buffer_, VkDeviceSize offset_, VkDeviceSize range_)
 {
-	this->buffer = &buffer;
+	buffer = &buffer_;
 
-	this->offset = offset;
+	offset = offset_;
 
-	this->range = range;
+	range = range_;
 
 	dirty = true;
 }
 
-void ResourceInfo::bind_image(const ImageView &image_view, const core::Sampler &sampler)
+void ResourceInfo::bind_image(const core::ImageView &image_view_, const core::Sampler &sampler_)
 {
-	this->image_view = &image_view;
+	image_view = &image_view_;
 
-	this->sampler = &sampler;
+	sampler = &sampler_;
 
 	dirty = true;
+}
+
+void ResourceInfo::bind_input(const core::ImageView &iv)
+{
+	image_view = &iv;
+	dirty      = true;
 }
 
 VkDescriptorBufferInfo ResourceInfo::get_buffer_info() const
@@ -183,10 +197,16 @@ void SetBindings::bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, V
 	dirty = true;
 }
 
-void SetBindings::bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t binding, uint32_t array_element)
+void SetBindings::bind_image(const core::ImageView &image_view, const core::Sampler &sampler, uint32_t binding, uint32_t array_element)
 {
 	resource_bindings[binding][array_element].bind_image(image_view, sampler);
 
+	dirty = true;
+}
+
+void SetBindings::bind_input(const core::ImageView &image_view, const uint32_t binding, const uint32_t array_element)
+{
+	resource_bindings[binding][array_element].bind_input(image_view);
 	dirty = true;
 }
 

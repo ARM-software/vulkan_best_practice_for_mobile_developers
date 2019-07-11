@@ -20,6 +20,7 @@
 
 #include "application.h"
 
+#include "common/logging.h"
 #include "platform/platform.h"
 
 namespace vkb
@@ -29,7 +30,7 @@ Application::Application() :
 {
 }
 
-bool Application::prepare(Platform &platform)
+bool Application::prepare(Platform & /*platform*/)
 {
 	timer.start();
 	return true;
@@ -37,14 +38,14 @@ bool Application::prepare(Platform &platform)
 
 void Application::step()
 {
-	auto delta_time = timer.tick<Timer::Seconds>();
+	auto delta_time = static_cast<float>(timer.tick<Timer::Seconds>());
 
 	if (is_focused())
 	{
 		update(delta_time);
 	}
 
-	auto elapsed_time = timer.elapsed<Timer::Seconds>();
+	auto elapsed_time = static_cast<float>(timer.elapsed<Timer::Seconds>());
 
 	frame_count++;
 
@@ -66,7 +67,7 @@ void Application::finish()
 	LOGI("Closing App (Runtime: {:.1f})", execution_time);
 }
 
-void Application::resize(const uint32_t width, const uint32_t height)
+void Application::resize(const uint32_t /*width*/, const uint32_t /*height*/)
 {
 }
 
@@ -89,9 +90,9 @@ const std::string &Application::get_name() const
 	return name;
 }
 
-void Application::set_name(const std::string &name)
+void Application::set_name(const std::string &name_)
 {
-	this->name = name;
+	name = name_;
 }
 
 DebugInfo &Application::get_debug_info()

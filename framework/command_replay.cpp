@@ -20,6 +20,8 @@
 
 #include "command_replay.h"
 
+#include "common/logging.h"
+#include "common/vk_common.h"
 #include "core/command_buffer.h"
 #include "core/descriptor_set.h"
 #include "core/device.h"
@@ -28,25 +30,31 @@ namespace vkb
 {
 CommandReplay::CommandReplay()
 {
-	stream_commands[CommandType::Begin]              = std::bind(&CommandReplay::begin, this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::End]                = std::bind(&CommandReplay::end, this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::NextSubpass]        = std::bind(&CommandReplay::next_subpass, this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::EndRenderPass]      = std::bind(&CommandReplay::end_render_pass, this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::PushConstants]      = std::bind(&CommandReplay::push_constants, this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::BindVertexBuffers]  = std::bind(&CommandReplay::bind_vertex_buffers, this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::BindIndexBuffer]    = std::bind(&CommandReplay::bind_index_buffer, this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::SetViewport]        = std::bind(&CommandReplay::set_viewport, this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::SetScissor]         = std::bind(&CommandReplay::set_scissor, this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::SetLineWidth]       = std::bind(&CommandReplay::set_line_width, this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::SetDepthBias]       = std::bind(&CommandReplay::set_depth_bias, this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::SetBlendConstants]  = std::bind(&CommandReplay::set_blend_constants, this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::SetDepthBounds]     = std::bind(&CommandReplay::set_depth_bounds, this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::Draw]               = std::bind(&CommandReplay::draw, this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::DrawIndexed]        = std::bind(&CommandReplay::draw_indexed, this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::UpdateBuffer]       = std::bind(&CommandReplay::update_buffer, this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::CopyImage]          = std::bind(&CommandReplay::copy_image, this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::CopyBufferToImage]  = std::bind(&CommandReplay::copy_buffer_to_image, this, std::placeholders::_1, std::placeholders::_2);
-	stream_commands[CommandType::ImageMemoryBarrier] = std::bind(&CommandReplay::image_memory_barrier, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::Begin]               = std::bind(&CommandReplay::begin, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::End]                 = std::bind(&CommandReplay::end, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::NextSubpass]         = std::bind(&CommandReplay::next_subpass, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::EndRenderPass]       = std::bind(&CommandReplay::end_render_pass, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::ExecuteCommands]     = std::bind(&CommandReplay::execute_commands, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::PushConstants]       = std::bind(&CommandReplay::push_constants, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::BindVertexBuffers]   = std::bind(&CommandReplay::bind_vertex_buffers, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::BindIndexBuffer]     = std::bind(&CommandReplay::bind_index_buffer, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::SetViewport]         = std::bind(&CommandReplay::set_viewport, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::SetScissor]          = std::bind(&CommandReplay::set_scissor, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::SetLineWidth]        = std::bind(&CommandReplay::set_line_width, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::SetDepthBias]        = std::bind(&CommandReplay::set_depth_bias, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::SetBlendConstants]   = std::bind(&CommandReplay::set_blend_constants, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::SetDepthBounds]      = std::bind(&CommandReplay::set_depth_bounds, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::Draw]                = std::bind(&CommandReplay::draw, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::DrawIndexed]         = std::bind(&CommandReplay::draw_indexed, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::DrawIndexedIndirect] = std::bind(&CommandReplay::draw_indexed_indirect, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::Dispatch]            = std::bind(&CommandReplay::dispatch, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::DispatchIndirect]    = std::bind(&CommandReplay::dispatch_indirect, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::UpdateBuffer]        = std::bind(&CommandReplay::update_buffer, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::BlitImage]           = std::bind(&CommandReplay::blit_image, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::CopyImage]           = std::bind(&CommandReplay::copy_image, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::CopyBufferToImage]   = std::bind(&CommandReplay::copy_buffer_to_image, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::ImageMemoryBarrier]  = std::bind(&CommandReplay::image_memory_barrier, this, std::placeholders::_1, std::placeholders::_2);
+	stream_commands[CommandType::BufferMemoryBarrier] = std::bind(&CommandReplay::buffer_memory_barrier, this, std::placeholders::_1, std::placeholders::_2);
 }
 
 void CommandReplay::play(CommandBuffer &command_buffer, CommandRecord &recorder)
@@ -68,7 +76,8 @@ void CommandReplay::play(CommandBuffer &command_buffer, CommandRecord &recorder)
 		std::streampos event_id = stream.tellg();
 
 		// Check to see if there are any render passes left
-		if (render_pass_binding_it != recorder.get_render_pass_bindings().cend())
+		if (command_buffer.level == VK_COMMAND_BUFFER_LEVEL_PRIMARY &&
+		    render_pass_binding_it != recorder.get_render_pass_bindings().cend())
 		{
 			// Current render pass event id must be equal to the current event id
 			if (render_pass_binding_it->event_id == event_id)
@@ -82,7 +91,7 @@ void CommandReplay::play(CommandBuffer &command_buffer, CommandRecord &recorder)
 				begin_info.pClearValues      = render_pass_binding_it->clear_values.data();
 
 				// Begin render pass
-				vkCmdBeginRenderPass(command_buffer.get_handle(), &begin_info, VK_SUBPASS_CONTENTS_INLINE);
+				vkCmdBeginRenderPass(command_buffer.get_handle(), &begin_info, render_pass_binding_it->contents);
 
 				// Move to the next render pass
 				++render_pass_binding_it;
@@ -119,7 +128,7 @@ void CommandReplay::play(CommandBuffer &command_buffer, CommandRecord &recorder)
 				                        descriptor_set_binding_it->pipeline_layout.get_handle(),
 				                        descriptor_set_binding_it->set_index,
 				                        1, &descriptor_set,
-				                        descriptor_set_binding_it->dynamic_offsets.size(),
+				                        to_u32(descriptor_set_binding_it->dynamic_offsets.size()),
 				                        descriptor_set_binding_it->dynamic_offsets.data());
 
 				// Move to the next descriptor set binding
@@ -166,22 +175,53 @@ void CommandReplay::begin(CommandBuffer &command_buffer, std::istringstream &str
 	vkBeginCommandBuffer(command_buffer.get_handle(), &begin_info);
 }
 
-void CommandReplay::end(CommandBuffer &command_buffer, std::istringstream &stream)
+void CommandReplay::end(CommandBuffer &command_buffer, std::istringstream & /*stream*/)
 {
 	// Call Vulkan function
 	vkEndCommandBuffer(command_buffer.get_handle());
 }
 
-void CommandReplay::next_subpass(CommandBuffer &command_buffer, std::istringstream &stream)
+void CommandReplay::next_subpass(CommandBuffer &command_buffer, std::istringstream & /*stream*/)
 {
 	// Call Vulkan function
 	vkCmdNextSubpass(command_buffer.get_handle(), VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void CommandReplay::end_render_pass(CommandBuffer &command_buffer, std::istringstream &stream)
+void CommandReplay::end_render_pass(CommandBuffer &command_buffer, std::istringstream & /*stream*/)
 {
 	// Call Vulkan function
 	vkCmdEndRenderPass(command_buffer.get_handle());
+}
+
+void CommandReplay::execute_commands(CommandBuffer &command_buffer, std::istringstream &stream)
+{
+	int render_pass_binding_index;
+	read(stream, render_pass_binding_index);
+
+	std::vector<CommandBuffer *> command_buffers;
+	read(stream, command_buffers);
+
+	auto render_pass_binding = command_buffer.get_recorder().get_render_pass_bindings()[render_pass_binding_index];
+
+	for (auto &cmd_buf : command_buffers)
+	{
+		VkCommandBufferBeginInfo begin_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+		begin_info.flags = cmd_buf->get_usage_flags();
+
+		VkCommandBufferInheritanceInfo inheritance = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO};
+		begin_info.pInheritanceInfo                = &inheritance;
+		inheritance.renderPass                     = render_pass_binding.render_pass->get_handle();
+		inheritance.framebuffer                    = render_pass_binding.framebuffer->get_handle();
+		inheritance.subpass                        = to_u32(render_pass_binding.subpasses.size()) - 1;
+
+		vkBeginCommandBuffer(cmd_buf->get_handle(), &begin_info);
+
+		cmd_buf->get_replayer().play(*cmd_buf, cmd_buf->get_recorder());
+	}
+
+	std::vector<VkCommandBuffer> sec_cmd_buffers(command_buffers.size(), VK_NULL_HANDLE);
+	std::transform(command_buffers.begin(), command_buffers.end(), sec_cmd_buffers.begin(), [](const vkb::CommandBuffer *sec_cmd_buf) { return sec_cmd_buf->get_handle(); });
+	vkCmdExecuteCommands(command_buffer.get_handle(), to_u32(sec_cmd_buffers.size()), sec_cmd_buffers.data());
 }
 
 void CommandReplay::push_constants(CommandBuffer &command_buffer, std::istringstream &stream)
@@ -195,7 +235,7 @@ void CommandReplay::push_constants(CommandBuffer &command_buffer, std::istringst
 	read(stream, pipeline_layout, shader_stage, offset, values);
 
 	// Call Vulkan function
-	vkCmdPushConstants(command_buffer.get_handle(), pipeline_layout, shader_stage, offset, values.size(), values.data());
+	vkCmdPushConstants(command_buffer.get_handle(), pipeline_layout, shader_stage, offset, to_u32(values.size()), values.data());
 }
 
 void CommandReplay::bind_vertex_buffers(CommandBuffer &command_buffer, std::istringstream &stream)
@@ -208,7 +248,7 @@ void CommandReplay::bind_vertex_buffers(CommandBuffer &command_buffer, std::istr
 	read(stream, first_binding, buffers, offsets);
 
 	// Call Vulkan function
-	vkCmdBindVertexBuffers(command_buffer.get_handle(), first_binding, buffers.size(), buffers.data(), offsets.data());
+	vkCmdBindVertexBuffers(command_buffer.get_handle(), first_binding, to_u32(buffers.size()), buffers.data(), offsets.data());
 }
 
 void CommandReplay::bind_index_buffer(CommandBuffer &command_buffer, std::istringstream &stream)
@@ -233,7 +273,7 @@ void CommandReplay::set_viewport(CommandBuffer &command_buffer, std::istringstre
 	read(stream, first_viewport, viewports);
 
 	// Call Vulkan function
-	vkCmdSetViewport(command_buffer.get_handle(), first_viewport, viewports.size(), viewports.data());
+	vkCmdSetViewport(command_buffer.get_handle(), first_viewport, to_u32(viewports.size()), viewports.data());
 }
 
 void CommandReplay::set_scissor(CommandBuffer &command_buffer, std::istringstream &stream)
@@ -245,7 +285,7 @@ void CommandReplay::set_scissor(CommandBuffer &command_buffer, std::istringstrea
 	read(stream, first_scissor, scissors);
 
 	// Call Vulkan function
-	vkCmdSetScissor(command_buffer.get_handle(), first_scissor, scissors.size(), scissors.data());
+	vkCmdSetScissor(command_buffer.get_handle(), first_scissor, to_u32(scissors.size()), scissors.data());
 }
 
 void CommandReplay::set_line_width(CommandBuffer &command_buffer, std::istringstream &stream)
@@ -321,6 +361,45 @@ void CommandReplay::draw_indexed(CommandBuffer &command_buffer, std::istringstre
 	vkCmdDrawIndexed(command_buffer.get_handle(), index_count, instance_count, first_index, vertex_offset, first_instance);
 }
 
+void CommandReplay::draw_indexed_indirect(CommandBuffer &command_buffer, std::istringstream &stream)
+{
+	VkBuffer     buffer;
+	VkDeviceSize offset;
+	uint32_t     draw_count;
+	uint32_t     stride;
+
+	// Read command parameters
+	read(stream, buffer, offset, draw_count, stride);
+
+	// Call Vulkan function
+	vkCmdDrawIndexedIndirect(command_buffer.get_handle(), buffer, offset, draw_count, stride);
+}
+
+void CommandReplay::dispatch(CommandBuffer &command_buffer, std::istringstream &stream)
+{
+	uint32_t group_count_x;
+	uint32_t group_count_y;
+	uint32_t group_count_z;
+
+	// Read command parameters
+	read(stream, group_count_x, group_count_y, group_count_z);
+
+	// Call Vulkan function
+	vkCmdDispatch(command_buffer.get_handle(), group_count_x, group_count_y, group_count_z);
+}
+
+void CommandReplay::dispatch_indirect(CommandBuffer &command_buffer, std::istringstream &stream)
+{
+	VkBuffer     buffer;
+	VkDeviceSize offset;
+
+	// Read command parameters
+	read(stream, buffer, offset);
+
+	// Call Vulkan function
+	vkCmdDispatchIndirect(command_buffer.get_handle(), buffer, offset);
+}
+
 void CommandReplay::update_buffer(CommandBuffer &command_buffer, std::istringstream &stream)
 {
 	VkBuffer             buffer;
@@ -334,6 +413,19 @@ void CommandReplay::update_buffer(CommandBuffer &command_buffer, std::istringstr
 	vkCmdUpdateBuffer(command_buffer.get_handle(), buffer, offset, data.size(), data.data());
 }
 
+void CommandReplay::blit_image(CommandBuffer &command_buffer, std::istringstream &stream)
+{
+	VkImage                  src_image;
+	VkImage                  dst_image;
+	std::vector<VkImageBlit> regions;
+
+	// Read command parameters
+	read(stream, src_image, dst_image, regions);
+
+	// Call Vulkan function
+	vkCmdBlitImage(command_buffer.get_handle(), src_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, to_u32(regions.size()), regions.data(), VK_FILTER_NEAREST);
+}
+
 void CommandReplay::copy_image(CommandBuffer &command_buffer, std::istringstream &stream)
 {
 	VkImage                  src_image;
@@ -344,7 +436,7 @@ void CommandReplay::copy_image(CommandBuffer &command_buffer, std::istringstream
 	read(stream, src_image, dst_image, regions);
 
 	// Call Vulkan function
-	vkCmdCopyImage(command_buffer.get_handle(), src_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, regions.size(), regions.data());
+	vkCmdCopyImage(command_buffer.get_handle(), src_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, to_u32(regions.size()), regions.data());
 }
 
 void CommandReplay::copy_buffer_to_image(CommandBuffer &command_buffer, std::istringstream &stream)
@@ -357,7 +449,7 @@ void CommandReplay::copy_buffer_to_image(CommandBuffer &command_buffer, std::ist
 	read(stream, buffer, image, regions);
 
 	// Call Vulkan function
-	vkCmdCopyBufferToImage(command_buffer.get_handle(), buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, regions.size(), regions.data());
+	vkCmdCopyBufferToImage(command_buffer.get_handle(), buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, to_u32(regions.size()), regions.data());
 }
 
 void CommandReplay::image_memory_barrier(CommandBuffer &command_buffer, std::istringstream &stream)
@@ -391,5 +483,36 @@ void CommandReplay::image_memory_barrier(CommandBuffer &command_buffer, std::ist
 	    0, nullptr,
 	    1,
 	    &image_memory_barrier);
+}
+
+void CommandReplay::buffer_memory_barrier(CommandBuffer &command_buffer, std::istringstream &stream)
+{
+	VkBuffer            buffer;
+	VkDeviceSize        offset;
+	VkDeviceSize        size;
+	BufferMemoryBarrier memory_barrier;
+
+	// Read command parameters
+	read(stream, buffer, offset, size, memory_barrier);
+
+	VkBufferMemoryBarrier buffer_memory_barrier{VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER};
+	buffer_memory_barrier.srcAccessMask = memory_barrier.src_access_mask;
+	buffer_memory_barrier.dstAccessMask = memory_barrier.dst_access_mask;
+	buffer_memory_barrier.buffer        = buffer;
+	buffer_memory_barrier.offset        = offset;
+	buffer_memory_barrier.size          = size;
+
+	VkPipelineStageFlags src_stage_mask = memory_barrier.src_stage_mask;
+	VkPipelineStageFlags dst_stage_mask = memory_barrier.dst_stage_mask;
+
+	// Call Vulkan function
+	vkCmdPipelineBarrier(
+	    command_buffer.get_handle(),
+	    src_stage_mask,
+	    dst_stage_mask,
+	    0,
+	    0, nullptr,
+	    1, &buffer_memory_barrier,
+	    0, nullptr);
 }
 }        // namespace vkb

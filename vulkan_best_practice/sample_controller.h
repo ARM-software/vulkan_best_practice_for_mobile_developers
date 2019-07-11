@@ -24,10 +24,15 @@
 
 #include "platform/application.h"
 #include "samples.h"
+#include "tests.h"
 #include "vulkan_sample.h"
 
 namespace vkb
 {
+using CreateAppFunc = std::function<std::unique_ptr<vkb::Application>()>;
+
+class ArgumentParser;
+
 class SampleController : public Application
 {
   public:
@@ -46,15 +51,19 @@ class SampleController : public Application
   private:
 	bool prepare_sample(std::vector<SampleInfo>::const_iterator sample);
 
-	bool parse_arguments(const std::vector<std::string> &arguments);
+	bool process_arguments(const ArgumentParser &args);
+
+	bool run_test(const std::string &test_name);
 
 	Platform *platform;
 
-	std::unique_ptr<Application> active_sample;
+	std::unique_ptr<Application> active_app;
 
 	std::vector<SampleInfo>::const_iterator current_sample;
 
-	bool automatic_demo_mode = true;
+	std::vector<SampleInfo> samples_to_run;
+
+	bool automate = true;
 
 	bool skipped_first_frame = false;
 

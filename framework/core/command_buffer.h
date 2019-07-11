@@ -20,16 +20,16 @@
 
 #pragma once
 
-#include "common.h"
-
 #include "command_record.h"
 #include "command_replay.h"
+#include "common/helpers.h"
+#include "common/vk_common.h"
 #include "core/buffer.h"
 #include "core/image.h"
 #include "core/image_view.h"
 #include "core/sampler.h"
-#include "graphics_pipeline_state.h"
-#include "render_target.h"
+#include "rendering/pipeline_state.h"
+#include "rendering/render_target.h"
 
 namespace vkb
 {
@@ -42,6 +42,21 @@ class CommandPool;
 class CommandBuffer : public NonCopyable
 {
   public:
+	enum class ResetMode
+	{
+		ResetPool,
+		ResetIndividually,
+		AlwaysAllocate,
+	};
+
+	enum class State
+	{
+		Invalid,
+		Initial,
+		Recording,
+		Executable,
+	};
+
 	CommandBuffer(CommandPool &command_pool, VkCommandBufferLevel level);
 
 	~CommandBuffer();
@@ -55,24 +70,38 @@ class CommandBuffer : public NonCopyable
 
 	CommandRecord &get_recorder();
 
+	CommandReplay &get_replayer();
+
 	const VkCommandBuffer &get_handle() const;
 
-	bool is_recording() const
-	{
-		return recording_commands;
-	}
+	bool is_recording() const;
 
-	VkResult begin(VkCommandBufferUsageFlags flags);
+	/**
+	 * @brief Sets the command buffer so that it is ready for recording
+	 *        If it is a secondary command buffer, a pointer to the
+	 *        primary command buffer it inherits from must be provided
+	 * @brief primary_cmd_buf (optional)
+	 */
+	VkResult begin(VkCommandBufferUsageFlags flags, CommandBuffer *primary_cmd_buf = nullptr);
 
 	VkResult end();
 
-	void begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values);
+	void begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values, VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
 
 	void next_subpass();
+
+	void resolve_subpasses();
+
+	void execute_commands(std::vector<CommandBuffer *> &secondary_command_buffers);
 
 	void end_render_pass();
 
 	void bind_pipeline_layout(PipelineLayout &pipeline_layout);
+
+	template <class T>
+	void set_specialization_constant(uint32_t constant_id, const T &data);
+
+	void set_specialization_constant(uint32_t constant_id, const std::vector<uint8_t> &data);
 
 	void push_constants(uint32_t offset, const std::vector<uint8_t> &values);
 
@@ -86,7 +115,9 @@ class CommandBuffer : public NonCopyable
 
 	void bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element);
 
-	void bind_image(const ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element);
+	void bind_image(const core::ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element);
+
+	void bind_input(const core::ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
 
 	void bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::Buffer>> &buffers, const std::vector<VkDeviceSize> &offsets);
 
@@ -122,16 +153,38 @@ class CommandBuffer : public NonCopyable
 
 	void draw_indexed(uint32_t index_count, uint32_t instance_count, uint32_t first_index, int32_t vertex_offset, uint32_t first_instance);
 
+	void draw_indexed_indirect(const core::Buffer &buffer, VkDeviceSize offset, uint32_t draw_count, uint32_t stride);
+
+	void dispatch(uint32_t group_count_x, uint32_t group_count_y, uint32_t group_count_z);
+
+	void dispatch_indirect(const core::Buffer &buffer, VkDeviceSize offset);
+
 	void update_buffer(const core::Buffer &buffer, VkDeviceSize offset, const std::vector<uint8_t> &data);
+
+	void blit_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageBlit> &regions);
 
 	void copy_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageCopy> &regions);
 
 	void copy_buffer_to_image(const core::Buffer &buffer, const core::Image &image, const std::vector<VkBufferImageCopy> &regions);
 
-	void image_memory_barrier(const ImageView &image_view, const ImageMemoryBarrier &memory_barrier);
+	void image_memory_barrier(const core::ImageView &image_view, const ImageMemoryBarrier &memory_barrier);
+
+	void buffer_memory_barrier(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier);
+
+	const State get_state() const;
+
+	const VkCommandBufferUsageFlags get_usage_flags() const;
+
+	/**
+	 * @brief Reset the command buffer to a state where it can be recorded to
+	 * @param reset_mode How to reset the buffer, should match the one used by the pool to allocate it
+	 */
+	VkResult reset(ResetMode reset_mode);
+
+	const VkCommandBufferLevel level;
 
   private:
-	bool recording_commands{false};
+	State state{State::Initial};
 
 	CommandPool &command_pool;
 
@@ -140,5 +193,26 @@ class CommandBuffer : public NonCopyable
 	CommandRecord recorder;
 
 	CommandReplay replayer;
+
+	VkCommandBufferUsageFlags usage_flags{};
 };
+
+template <class T>
+inline void CommandBuffer::set_specialization_constant(uint32_t constant_id, const T &data)
+{
+	set_specialization_constant(constant_id,
+	                            {reinterpret_cast<const uint8_t *>(&data),
+	                             reinterpret_cast<const uint8_t *>(&data) + sizeof(T)});
+}
+
+template <>
+inline void CommandBuffer::set_specialization_constant<bool>(std::uint32_t constant_id, const bool &data)
+{
+	std::uint32_t value = static_cast<std::uint32_t>(data);
+
+	set_specialization_constant(
+	    constant_id,
+	    {reinterpret_cast<const uint8_t *>(&value),
+	     reinterpret_cast<const uint8_t *>(&value) + sizeof(std::uint32_t)});
+}
 }        // namespace vkb

@@ -20,10 +20,8 @@
 
 #include "descriptor_set_layout.h"
 
-#include "common.h"
 #include "descriptor_pool.h"
 #include "descriptor_set.h"
-
 #include "device.h"
 #include "shader_module.h"
 

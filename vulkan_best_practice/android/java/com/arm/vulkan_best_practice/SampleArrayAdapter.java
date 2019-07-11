@@ -20,7 +20,9 @@
 
 package com.arm.vulkan_best_practice;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,27 +33,27 @@ import java.util.List;
 
 public class SampleArrayAdapter extends ArrayAdapter<Sample> {
 
-    public SampleArrayAdapter(Context context, List<Sample> sample_list) {
+    SampleArrayAdapter(Context context, List<Sample> sample_list) {
         super(context, R.layout.bp_sample_listview_item, sample_list);
     }
 
+    @NonNull
+    @SuppressLint("SetTextI18n")
     @Override
-    public View getView(int position, View view, ViewGroup parent) {
-        View item_view = view;
-
-        if(item_view == null) {
-            item_view = LayoutInflater.from(getContext()).inflate(R.layout.bp_sample_listview_item, parent,false);
+    public View getView(int position, View view, @NonNull ViewGroup parent) {
+        if(view == null) {
+            view = LayoutInflater.from(getContext()).inflate(R.layout.bp_sample_listview_item, parent,false);
         }
 
-        String title_prefix = (position + 1) + ". ";
         Sample sample = getItem(position);
+        assert sample != null;
 
-        TextView title = item_view.findViewById(R.id.title_text);
-        title.setText(title_prefix + sample.getName());
+        TextView title = view.findViewById(R.id.title_text);
+        title.setText(sample.getName());
 
-        TextView description = item_view.findViewById(R.id.description_text);
+        TextView description = view.findViewById(R.id.description_text);
         description.setText(sample.getDescription());
 
-        return item_view;
+        return view;
     }
 }

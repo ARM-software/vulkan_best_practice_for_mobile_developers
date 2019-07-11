@@ -20,31 +20,37 @@
 
 #include "device.h"
 
+VKBP_DISABLE_WARNINGS()
 #define VMA_IMPLEMENTATION
-// Disable warnings for external header
-#pragma clang diagnostic ignored "-Wall"
-#include "vk_mem_alloc.h"
-#pragma clang diagnostic pop
+#include <vk_mem_alloc.h>
+VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
-Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const std::vector<const char *> extensions, const VkPhysicalDeviceFeatures &features) :
+Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vector<const char *> extensions, VkPhysicalDeviceFeatures requested_features) :
     physical_device{physical_device},
     resource_cache{*this}
 {
+	// Check whether ASTC is supported
+	vkGetPhysicalDeviceFeatures(physical_device, &features);
+	if (features.textureCompressionASTC_LDR)
+	{
+		requested_features.textureCompressionASTC_LDR = VK_TRUE;
+	}
+
 	// Gpu properties
 	vkGetPhysicalDeviceProperties(physical_device, &properties);
 
-	uint32_t queue_family_count = 0;
-	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, nullptr);
+	uint32_t queue_family_properties_count = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_properties_count, nullptr);
 
-	std::vector<VkQueueFamilyProperties> queue_family_properties(queue_family_count);
-	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_family_properties.data());
+	std::vector<VkQueueFamilyProperties> queue_family_properties(queue_family_properties_count);
+	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_properties_count, queue_family_properties.data());
 
-	std::vector<VkDeviceQueueCreateInfo> queue_create_infos(queue_family_count, {VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO});
-	std::vector<std::vector<float>>      queue_priorities(queue_family_count);
+	std::vector<VkDeviceQueueCreateInfo> queue_create_infos(queue_family_properties_count, {VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO});
+	std::vector<std::vector<float>>      queue_priorities(queue_family_properties_count);
 
-	for (uint32_t queue_family_index = 0U; queue_family_index < queue_family_count; ++queue_family_index)
+	for (uint32_t queue_family_index = 0U; queue_family_index < queue_family_properties_count; ++queue_family_index)
 	{
 		const VkQueueFamilyProperties &queue_family_property = queue_family_properties[queue_family_index];
 
@@ -57,11 +63,31 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const std
 		queue_create_info.pQueuePriorities = queue_priorities[queue_family_index].data();
 	}
 
+	// Check extensions to enable Vma Dedicated Allocation
+	uint32_t device_extension_count;
+	VK_CHECK(vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &device_extension_count, nullptr));
+	std::vector<VkExtensionProperties> device_extensions(device_extension_count);
+	VK_CHECK(vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &device_extension_count, device_extensions.data()));
+
+	bool can_get_memory_requirements = std::find_if(std::begin(device_extensions),
+	                                                std::end(device_extensions),
+	                                                [](auto &extension) { return std::strcmp(extension.extensionName, "VK_KHR_get_memory_requirements2") == 0; }) != std::end(device_extensions);
+	bool has_dedicated_allocation    = std::find_if(std::begin(device_extensions),
+                                                 std::end(device_extensions),
+                                                 [](auto &extension) { return std::strcmp(extension.extensionName, "VK_KHR_dedicated_allocation") == 0; }) != std::end(device_extensions);
+
+	if (can_get_memory_requirements && has_dedicated_allocation)
+	{
+		extensions.push_back("VK_KHR_get_memory_requirements2");
+		extensions.push_back("VK_KHR_dedicated_allocation");
+		LOGI("Dedicated Allocation enabled");
+	}
+
 	VkDeviceCreateInfo create_info{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
 
 	create_info.pQueueCreateInfos       = queue_create_infos.data();
 	create_info.queueCreateInfoCount    = to_u32(queue_create_infos.size());
-	create_info.pEnabledFeatures        = &features;
+	create_info.pEnabledFeatures        = &requested_features;
 	create_info.enabledExtensionCount   = to_u32(extensions.size());
 	create_info.ppEnabledExtensionNames = extensions.data();
 
@@ -72,9 +98,9 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const std
 		throw VulkanException{result, "Cannot create device"};
 	}
 
-	queues.resize(queue_family_count);
+	queues.resize(queue_family_properties_count);
 
-	for (uint32_t queue_family_index = 0U; queue_family_index < queue_family_count; ++queue_family_index)
+	for (uint32_t queue_family_index = 0U; queue_family_index < queue_family_properties_count; ++queue_family_index)
 	{
 		const VkQueueFamilyProperties &queue_family_property = queue_family_properties[queue_family_index];
 
@@ -106,8 +132,16 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const std
 	vma_vulkan_func.vkUnmapMemory                       = vkUnmapMemory;
 
 	VmaAllocatorCreateInfo allocator_info{};
-	allocator_info.physicalDevice   = physical_device;
-	allocator_info.device           = handle;
+	allocator_info.physicalDevice = physical_device;
+	allocator_info.device         = handle;
+
+	if (can_get_memory_requirements && has_dedicated_allocation)
+	{
+		allocator_info.flags |= VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
+		vma_vulkan_func.vkGetBufferMemoryRequirements2KHR = vkGetBufferMemoryRequirements2KHR;
+		vma_vulkan_func.vkGetImageMemoryRequirements2KHR  = vkGetImageMemoryRequirements2KHR;
+	}
+
 	allocator_info.pVulkanFunctions = &vma_vulkan_func;
 
 	result = vmaCreateAllocator(&allocator_info, &memory_allocator);
@@ -117,7 +151,7 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const std
 		throw VulkanException{result, "Cannot create allocator"};
 	}
 
-	command_pool = std::make_unique<CommandPool>(*this, get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0).get_family_index());
+	command_pool = std::make_unique<CommandPool>(*this, get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, 0).get_family_index());
 	fence_pool   = std::make_unique<FencePool>(*this);
 }
 
@@ -169,12 +203,33 @@ const VkPhysicalDeviceProperties &Device::get_properties() const
 	return properties;
 }
 
+bool Device::is_image_format_supported(VkFormat format) const
+{
+	VkImageFormatProperties format_properties;
+
+	auto result = vkGetPhysicalDeviceImageFormatProperties(physical_device,
+	                                                       format,
+	                                                       VK_IMAGE_TYPE_2D,
+	                                                       VK_IMAGE_TILING_OPTIMAL,
+	                                                       VK_IMAGE_USAGE_SAMPLED_BIT,
+	                                                       0,        // no create flags
+	                                                       &format_properties);
+	return result != VK_ERROR_FORMAT_NOT_SUPPORTED;
+}
+
+const VkFormatProperties Device::get_format_properties(VkFormat format) const
+{
+	VkFormatProperties format_properties;
+	vkGetPhysicalDeviceFormatProperties(physical_device, format, &format_properties);
+	return format_properties;
+}
+
 const Queue &Device::get_queue(uint32_t queue_family_index, uint32_t queue_index)
 {
 	return queues[queue_family_index][queue_index];
 }
 
-const Queue &Device::get_queue_by_flags(VkQueueFlags queue_flags, uint32_t queue_index)
+const Queue &Device::get_queue_by_flags(VkQueueFlags required_queue_flags, uint32_t queue_index)
 {
 	for (uint32_t queue_family_index = 0U; queue_family_index < queues.size(); ++queue_family_index)
 	{
@@ -183,7 +238,7 @@ const Queue &Device::get_queue_by_flags(VkQueueFlags queue_flags, uint32_t queue
 		VkQueueFlags queue_flags = first_queue.get_properties().queueFlags;
 		uint32_t     queue_count = first_queue.get_properties().queueCount;
 
-		if (((queue_flags & queue_flags) == queue_flags) && queue_index < queue_count)
+		if (((queue_flags & required_queue_flags) == required_queue_flags) && queue_index < queue_count)
 		{
 			return queues[queue_family_index][queue_index];
 		}

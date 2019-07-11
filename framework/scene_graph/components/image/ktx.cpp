@@ -20,7 +20,12 @@
 
 #include "scene_graph/components/image/ktx.h"
 
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS()
+#include <ktx.h>
 #include <vk_format.h>
+VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
@@ -29,18 +34,18 @@ namespace sg
 /// Row padding is different between KTX (pad to 4) and Vulkan (none).
 /// Also region->bufferOffset, i.e. the start of each image, has
 /// to be a multiple of 4 and also a multiple of the element size.
-static KTX_error_code KTXAPIENTRY optimal_tiling_callback(int          mip_level,
-                                                          int          face,
+static KTX_error_code KTXAPIENTRY optimal_tiling_callback(int mip_level,
+                                                          int /*face*/,
                                                           int          width,
                                                           int          height,
                                                           int          depth,
                                                           ktx_uint32_t face_lod_size,
-                                                          void *       pixels,
-                                                          void *       user_data)
+                                                          void * /*pixels*/,
+                                                          void *user_data)
 {
 	// Get mipmaps
 	auto &mipmaps = *reinterpret_cast<std::vector<Mipmap> *>(user_data);
-	assert(mip_level < mipmaps.size() && "Not enough space in the mipmap vector");
+	assert(static_cast<size_t>(mip_level) < mipmaps.size() && "Not enough space in the mipmap vector");
 
 	auto &mipmap         = mipmaps.at(mip_level);
 	mipmap.level         = mip_level;
@@ -49,7 +54,7 @@ static KTX_error_code KTXAPIENTRY optimal_tiling_callback(int          mip_level
 	mipmap.extent.depth  = depth;
 
 	// Set offset for the next mip level
-	auto next_mip_level = mip_level + 1;
+	auto next_mip_level = static_cast<size_t>(mip_level + 1);
 	if (next_mip_level < mipmaps.size())
 	{
 		mipmaps.at(next_mip_level).offset = mipmap.offset + face_lod_size;
@@ -65,13 +70,13 @@ Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data) :
 	auto data_size   = static_cast<ktx_size_t>(data.size());
 
 	ktxTexture *texture;
-	auto        result = ktxTexture_CreateFromMemory(data_buffer,
-                                              data_size,
-                                              KTX_TEXTURE_CREATE_NO_FLAGS,
-                                              &texture);
-	if (result != KTX_SUCCESS)
+	auto        load_ktx_result = ktxTexture_CreateFromMemory(data_buffer,
+                                                       data_size,
+                                                       KTX_TEXTURE_CREATE_NO_FLAGS,
+                                                       &texture);
+	if (load_ktx_result != KTX_SUCCESS)
 	{
-		throw std::runtime_error{"Error lodading KTX texture: " + name};
+		throw std::runtime_error{"Error loading KTX texture: " + name};
 	}
 
 	if (texture->pData)
@@ -82,13 +87,13 @@ Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data) :
 	else
 	{
 		// Load
-		auto &data = get_mut_data();
-		auto  size = ktxTexture_GetSize(texture);
-		data.resize(size);
-		auto result = ktxTexture_LoadImageData(texture, data.data(), size);
-		if (result != KTX_SUCCESS)
+		auto &mut_data = get_mut_data();
+		auto  size     = ktxTexture_GetSize(texture);
+		mut_data.resize(size);
+		auto load_data_result = ktxTexture_LoadImageData(texture, mut_data.data(), size);
+		if (load_data_result != KTX_SUCCESS)
 		{
-			throw std::runtime_error{"Error lodading KTX image data: " + name};
+			throw std::runtime_error{"Error loading KTX image data: " + name};
 		}
 	}
 
@@ -98,16 +103,16 @@ Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data) :
 	set_depth(texture->baseDepth);
 
 	// Update format
-	auto format = vkGetFormatFromOpenGLInternalFormat(texture->glInternalformat);
-	set_format(format);
+	auto updated_format = vkGetFormatFromOpenGLInternalFormat(texture->glInternalformat);
+	set_format(updated_format);
 
 	// Update mip levels
-	auto &mipmaps = get_mut_mipmaps();
-	mipmaps.resize(texture->numLevels);
-	result = ktxTexture_IterateLevels(texture, optimal_tiling_callback, &mipmaps);
+	auto &mipmap_levels = get_mut_mipmaps();
+	mipmap_levels.resize(texture->numLevels);
+	auto result = ktxTexture_IterateLevels(texture, optimal_tiling_callback, &mipmap_levels);
 	if (result != KTX_SUCCESS)
 	{
-		throw std::runtime_error("Error lodading KTX texture");
+		throw std::runtime_error("Error loading KTX texture");
 	}
 
 	ktxTexture_Destroy(texture);

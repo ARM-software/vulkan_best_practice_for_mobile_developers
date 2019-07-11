@@ -20,9 +20,9 @@
 
 #pragma once
 
-#include "common.h"
-
-#include "command_pool.h"
+#include "common/helpers.h"
+#include "common/logging.h"
+#include "common/vk_common.h"
 #include "core/command_buffer.h"
 #include "core/command_pool.h"
 #include "core/descriptor_set.h"
@@ -35,9 +35,8 @@
 #include "core/shader_module.h"
 #include "core/swapchain.h"
 #include "fence_pool.h"
-
-#include "graphics_pipeline_state.h"
-#include "render_target.h"
+#include "rendering/pipeline_state.h"
+#include "rendering/render_target.h"
 #include "resource_cache.h"
 
 namespace vkb
@@ -45,7 +44,7 @@ namespace vkb
 class Device : public NonCopyable
 {
   public:
-	Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, const std::vector<const char *> extensions = {}, const VkPhysicalDeviceFeatures &features = {});
+	Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vector<const char *> extensions = {}, VkPhysicalDeviceFeatures features = {});
 
 	~Device();
 
@@ -58,6 +57,13 @@ class Device : public NonCopyable
 	VmaAllocator get_memory_allocator() const;
 
 	const VkPhysicalDeviceProperties &get_properties() const;
+
+	/**
+	 * @return Whether an image format is supported by the GPU
+	 */
+	bool is_image_format_supported(VkFormat format) const;
+
+	const VkFormatProperties get_format_properties(VkFormat format) const;
 
 	const Queue &get_queue(uint32_t queue_family_index, uint32_t queue_index);
 

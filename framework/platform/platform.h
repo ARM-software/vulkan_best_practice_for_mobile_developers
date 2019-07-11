@@ -25,37 +25,64 @@
 #include <vector>
 
 #include "application.h"
-#include "common.h"
+#include "common/vk_common.h"
+#include "platform/argument_parser.h"
+#include "utils.h"
 
 namespace vkb
 {
 class Application;
 
+enum class ExitCode
+{
+	Success,
+	Fatal
+};
+
 class Platform
 {
   public:
+	Platform();
+
 	virtual ~Platform() = default;
 
+	/**
+	 * @brief Sets up windowing system and logging
+	 */
 	virtual bool initialize(std::unique_ptr<Application> &&app);
 
 	virtual VkSurfaceKHR create_surface(VkInstance instance) = 0;
 
 	virtual void main_loop() = 0;
 
-	virtual void terminate();
+	virtual void terminate(ExitCode code);
 
 	virtual void close() const = 0;
 
-	/// @return The dot-per-inch scale factor
+	/**
+	 * @return The dot-per-inch scale factor
+	 */
 	virtual float get_dpi_factor() const;
 
-	const std::vector<std::string> &get_arguments();
+	const ArgumentParser &get_arguments();
 
 	Application &get_app() const;
 
+	/**
+	 * @brief Generates an argument map from a string of input arguments
+	 */
+	void parse_arguments(const std::string &argument_string);
+
+	std::string &get_log_output_path();
+
   protected:
+	void prepare_logger(std::vector<spdlog::sink_ptr> sinks = {});
+
 	std::unique_ptr<Application> active_app;
 
-	std::vector<std::string> arguments;
+	ArgumentParser arguments{""};
+
+  private:
+	std::string log_output;
 };
 }        // namespace vkb

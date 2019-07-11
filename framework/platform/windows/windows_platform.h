@@ -34,6 +34,6 @@ class WindowsPlatform : public GlfwPlatform
 
 	virtual bool initialize(std::unique_ptr<Application> &&app) override;
 
-	virtual void terminate() override;
+	virtual void terminate(ExitCode code) override;
 };
 }        // namespace vkb

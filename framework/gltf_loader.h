@@ -23,6 +23,13 @@
 #include <memory>
 #include <mutex>
 
+#define TINYGLTF_NO_STB_IMAGE
+#define TINYGLTF_NO_STB_IMAGE_WRITE
+#define TINYGLTF_NO_EXTERNAL_IMAGE
+#include <tiny_gltf.h>
+
+#include "core/device.h"
+#include "core/sampler.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/mesh.h"
@@ -32,22 +39,25 @@
 #include "scene_graph/components/texture.h"
 #include "scene_graph/node.h"
 #include "scene_graph/scene.h"
-
-#define TINYGLTF_NO_STB_IMAGE
-#define TINYGLTF_NO_STB_IMAGE_WRITE
-#define TINYGLTF_NO_EXTERNAL_IMAGE
-// Disable warnings for external header
-#pragma clang diagnostic ignored "-Wall"
-#include "tiny_gltf.h"
-#pragma clang diagnostic pop
-
-#include "core/device.h"
-#include "core/sampler.h"
-
 #include "timer.h"
 
 namespace vkb
 {
+/**
+ * @brief Helper Function to change array type T to array type Y
+ * Create a struct that can be used with std::transform so that we do not need to recreate lambda functions
+ * @param T 
+ * @param Y 
+ */
+template <class T, class Y>
+struct TypeCast
+{
+	Y operator()(T value) const noexcept
+	{
+		return static_cast<Y>(value);
+	}
+};
+
 /// Read a gltf file and return a scene object. Converts the gltf objects
 /// to our internal scene implementation. Mesh data is copied to vulkan buffers and
 /// images are loaded from the folder of gltf file to vulkan images.
@@ -56,7 +66,7 @@ class GLTFLoader
   public:
 	GLTFLoader(Device &device);
 
-	bool read_scene_from_file(const std::string &file_name, sg::Scene &scene);
+	std::unique_ptr<sg::Scene> read_scene_from_file(const std::string &file_name);
 
   protected:
 	virtual std::unique_ptr<sg::Node> parse_node(const tinygltf::Node &gltf_node);

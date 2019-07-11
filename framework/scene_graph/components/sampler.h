@@ -25,7 +25,6 @@
 #include <typeinfo>
 #include <vector>
 
-#include "common.h"
 #include "core/sampler.h"
 #include "scene_graph/component.h"
 

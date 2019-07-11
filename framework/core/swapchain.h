@@ -20,7 +20,8 @@
 
 #pragma once
 
-#include "common.h"
+#include "common/helpers.h"
+#include "common/vk_common.h"
 
 namespace vkb
 {
@@ -62,7 +63,7 @@ class Swapchain : public NonCopyable
 	          const uint32_t                      image_count  = 3,
 	          const VkSurfaceTransformFlagBitsKHR transform    = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
 	          const VkPresentModeKHR              present_mode = VK_PRESENT_MODE_FIFO_KHR,
-	          const VkImageUsageFlags             image_usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+	          const VkImageUsageFlags             image_usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
 	/**
 	 * @brief Constructor to create a swapchain from the old swapchain
@@ -75,7 +76,7 @@ class Swapchain : public NonCopyable
 	          const uint32_t                      image_count  = 3,
 	          const VkSurfaceTransformFlagBitsKHR transform    = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
 	          const VkPresentModeKHR              present_mode = VK_PRESENT_MODE_FIFO_KHR,
-	          const VkImageUsageFlags             image_usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+	          const VkImageUsageFlags             image_usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
 	/**
 	 * @brief Destructor
@@ -86,6 +87,11 @@ class Swapchain : public NonCopyable
 	 * @brief Move constructor
 	 */
 	Swapchain(Swapchain &&other);
+
+	Device &get_device()
+	{
+		return device;
+	}
 
 	VkSwapchainKHR get_handle() const;
 

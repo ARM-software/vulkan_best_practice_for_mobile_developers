@@ -77,7 +77,6 @@ class Scene
 		               [](std::unique_ptr<T> &component) -> std::unique_ptr<Component> {
 			               return std::unique_ptr<Component>(std::move(component));
 		               });
-
 		set_components(typeid(T), std::move(result));
 	}
 
@@ -87,15 +86,13 @@ class Scene
 	template <class T>
 	std::vector<T *> get_components() const
 	{
-		auto &components = get_components(typeid(T));
+		auto &scene_components = get_components(typeid(T));
 
-		std::vector<T *> result(components.size());
-
-		std::transform(components.begin(), components.end(), result.begin(),
+		std::vector<T *> result(scene_components.size());
+		std::transform(scene_components.begin(), scene_components.end(), result.begin(),
 		               [](const std::unique_ptr<Component> &component) -> T * {
 			               return dynamic_cast<T *>(component.get());
 		               });
-
 		return result;
 	}
 

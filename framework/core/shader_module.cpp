@@ -20,6 +20,7 @@
 
 #include "shader_module.h"
 
+#include "common/logging.h"
 #include "device.h"
 #include "glsl_compiler.h"
 #include "spirv_reflection.h"
@@ -54,7 +55,7 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
 	SPIRVReflection spirv_reflection;
 
 	// Reflect all shader resouces
-	if (!spirv_reflection.reflect_shader_resources(stage, spirv, resources))
+	if (!spirv_reflection.reflect_shader_resources(stage, spirv, resources, shader_variant))
 	{
 		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
 	}
@@ -166,6 +167,16 @@ void ShaderVariant::add_undefine(const std::string &undef)
 	update_id();
 }
 
+void ShaderVariant::add_runtime_array_size(const std::string &runtime_array_name, size_t size)
+{
+	runtime_array_sizes.insert_or_assign(runtime_array_name, size);
+}
+
+void ShaderVariant::set_runtime_array_sizes(const std::unordered_map<std::string, size_t> &sizes)
+{
+	this->runtime_array_sizes = sizes;
+}
+
 const std::string &ShaderVariant::get_preamble() const
 {
 	return preamble;
@@ -176,10 +187,16 @@ const std::vector<std::string> &ShaderVariant::get_processes() const
 	return processes;
 }
 
+const std::unordered_map<std::string, size_t> &ShaderVariant::get_runtime_array_sizes() const
+{
+	return runtime_array_sizes;
+}
+
 void ShaderVariant::clear()
 {
 	preamble.clear();
 	processes.clear();
+	runtime_array_sizes.clear();
 	update_id();
 }
 

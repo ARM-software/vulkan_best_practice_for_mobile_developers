@@ -20,17 +20,21 @@
 
 #include "android_platform.h"
 
-#include "common.h"
-#include "platform/input_events.h"
-
-#include "vulkan_sample.h"
-
 #include <chrono>
-#include <imgui.h>
 #include <unistd.h>
 #include <unordered_map>
 
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS()
+#include <imgui.h>
+#include <jni.h>
 #include <spdlog/sinks/android_sink.h>
+VKBP_ENABLE_WARNINGS()
+
+#include "common/logging.h"
+#include "platform/input_events.h"
+#include "vulkan_sample.h"
 
 namespace vkb
 {
@@ -260,11 +264,6 @@ void on_app_cmd(android_app *app, int32_t cmd)
 			platform->get_app().set_focus(false);
 			break;
 		}
-		case APP_CMD_TERM_WINDOW:
-		{
-			platform->get_app().finish();
-			break;
-		}
 	}
 }
 
@@ -326,20 +325,21 @@ int32_t on_input_event(android_app *app, AInputEvent *input_event)
 AndroidPlatform::AndroidPlatform(android_app *app) :
     app{app}
 {
-	auto android_logger = spdlog::android_logger_mt("android", PROJECT_NAME);
-	android_logger->set_pattern(LOGGER_FORMAT);
-	spdlog::set_default_logger(android_logger);
 }
 
-bool AndroidPlatform::initialize(std::unique_ptr<Application> &&appplication)
+bool AndroidPlatform::initialize(std::unique_ptr<Application> &&application)
 {
 	app->onAppCmd                                  = on_app_cmd;
 	app->onInputEvent                              = on_input_event;
 	app->activity->callbacks->onContentRectChanged = on_content_rect_changed;
 	app->userData                                  = this;
 
-	assert(appplication && "Appplication is not valid");
-	active_app = std::move(appplication);
+	assert(application && "Application is not valid");
+	active_app = std::move(application);
+
+	std::vector<spdlog::sink_ptr> sinks;
+	sinks.push_back(std::make_shared<spdlog::sinks::android_sink_mt>(PROJECT_NAME));
+	prepare_logger(sinks);
 
 	return true;
 }
@@ -378,6 +378,11 @@ void AndroidPlatform::main_loop()
 			{
 				source->process(app, source);
 			}
+
+			if (app->destroyRequested)
+			{
+				break;
+			}
 		}
 
 		if (app->destroyRequested)
@@ -392,10 +397,19 @@ void AndroidPlatform::main_loop()
 	}
 }
 
-void AndroidPlatform::terminate()
+void AndroidPlatform::terminate(ExitCode code)
 {
-	active_app.reset();
-	spdlog::drop_all();
+	if (code == ExitCode::Fatal)
+	{
+		std::string message = Platform::get_log_output_path();
+		app->activity->vm->AttachCurrentThread(&app->activity->env, NULL);
+		jclass    cls         = app->activity->env->GetObjectClass(app->activity->clazz);
+		jmethodID fatal_error = app->activity->env->GetMethodID(cls, "fatalError", "(Ljava/lang/String;)V");
+		app->activity->env->CallVoidMethod(app->activity->clazz, fatal_error, app->activity->env->NewStringUTF(message.c_str()));
+		app->activity->vm->DetachCurrentThread();
+	}
+
+	Platform::terminate(code);
 }
 
 void AndroidPlatform::close() const

@@ -20,9 +20,17 @@
 
 #pragma once
 
-#include "common.h"
-
+#include <string>
 #include <utility>
+#include <vector>
+
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS()
+#include <glm/glm.hpp>
+VKBP_ENABLE_WARNINGS()
+
+#include "common/helpers.h"
 
 namespace vkb
 {

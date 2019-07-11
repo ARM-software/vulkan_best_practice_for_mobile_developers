@@ -20,6 +20,7 @@
 
 #include "postprocess.h"
 
+#include "common/logging.h"
 #include "core/pipeline.h"
 #include "core/pipeline_layout.h"
 
@@ -213,7 +214,7 @@ bool PostProcess::init(std::vector<ChainInputImages> input_images_, std::vector<
 		// Create a pipeline for the pass
 		//auto &pipeline_layout = create_pipeline_layout(*context->vk_device, "shaders/postprocessing.vert", ppp.fragment_shader_path.c_str());
 
-		GraphicsPipelineState graphics_state = {};
+		PipelineState graphics_state = {};
 		/*
 		graphics_state.render_pass           = render_pass;
 

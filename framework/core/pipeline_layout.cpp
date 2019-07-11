@@ -87,11 +87,11 @@ PipelineLayout::PipelineLayout(Device &device, const std::vector<ShaderModule *>
 		set_layouts.emplace(it.first, &device.get_resource_cache().request_descriptor_set_layout(it.second));
 	}
 
-	std::vector<VkDescriptorSetLayout> set_layouts;
+	std::vector<VkDescriptorSetLayout> descriptor_set_layouts;
 
-	for (auto &it : this->set_layouts)
+	for (auto &it : set_layouts)
 	{
-		set_layouts.push_back(it.second->get_handle());
+		descriptor_set_layouts.push_back(it.second->get_handle());
 	}
 
 	std::vector<VkPushConstantRange> push_constant_ranges;
@@ -116,8 +116,8 @@ PipelineLayout::PipelineLayout(Device &device, const std::vector<ShaderModule *>
 
 	VkPipelineLayoutCreateInfo create_info{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
 
-	create_info.setLayoutCount         = to_u32(set_layouts.size());
-	create_info.pSetLayouts            = set_layouts.data();
+	create_info.setLayoutCount         = to_u32(descriptor_set_layouts.size());
+	create_info.pSetLayouts            = descriptor_set_layouts.data();
 	create_info.pushConstantRangeCount = to_u32(push_constant_ranges.size());
 	create_info.pPushConstantRanges    = push_constant_ranges.data();
 

@@ -31,16 +31,16 @@ std::type_index SubMesh::get_type()
 	return typeid(SubMesh);
 }
 
-void SubMesh::set_attribute(const std::string &name, const VertexAttribute &attribute)
+void SubMesh::set_attribute(const std::string &attribute_name, const VertexAttribute &attribute)
 {
-	vertex_attributes[name] = attribute;
+	vertex_attributes[attribute_name] = attribute;
 
 	compute_shader_variant();
 }
 
-bool SubMesh::get_attribute(const std::string &name, VertexAttribute &attribute) const
+bool SubMesh::get_attribute(const std::string &attribute_name, VertexAttribute &attribute) const
 {
-	auto attrib_it = vertex_attributes.find(name);
+	auto attrib_it = vertex_attributes.find(attribute_name);
 
 	if (attrib_it == vertex_attributes.end())
 	{
@@ -52,9 +52,9 @@ bool SubMesh::get_attribute(const std::string &name, VertexAttribute &attribute)
 	return true;
 }
 
-void SubMesh::set_material(const Material &material)
+void SubMesh::set_material(const Material &new_material)
 {
-	this->material = &material;
+	material = &new_material;
 
 	compute_shader_variant();
 }
@@ -88,7 +88,6 @@ void SubMesh::compute_shader_variant()
 	{
 		std::string attrib_name = attribute.first;
 		std::transform(attrib_name.begin(), attrib_name.end(), attrib_name.begin(), ::toupper);
-
 		shader_variant.add_define("HAS_" + attrib_name);
 	}
 }

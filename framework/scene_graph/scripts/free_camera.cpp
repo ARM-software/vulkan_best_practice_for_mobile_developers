@@ -20,14 +20,17 @@
 
 #include "free_camera.h"
 
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS()
+#include <glm/glm.hpp>
+#include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/quaternion.hpp>
+VKBP_ENABLE_WARNINGS()
+
 #include "scene_graph/components/perspective_camera.h"
 #include "scene_graph/components/transform.h"
 #include "scene_graph/node.h"
-
-#include <glm/gtx/euler_angles.hpp>
-#include <glm/gtx/quaternion.hpp>
-
-#include <iostream>
 
 namespace vkb
 {
@@ -85,8 +88,8 @@ void FreeCamera::update(float delta_time)
 	}
 	else if (mouse_button_pressed[MouseButton::Right])
 	{
-		delta_rotation.x += ROTATION_MOVE_WEIGHT * mouse_move_delta.y;
-		delta_rotation.y += ROTATION_MOVE_WEIGHT * mouse_move_delta.x;
+		delta_rotation.x -= ROTATION_MOVE_WEIGHT * mouse_move_delta.y;
+		delta_rotation.y -= ROTATION_MOVE_WEIGHT * mouse_move_delta.x;
 	}
 	else if (mouse_button_pressed[MouseButton::Left])
 	{
@@ -96,8 +99,8 @@ void FreeCamera::update(float delta_time)
 
 	if (touch_pointer_pressed[0])
 	{
-		delta_rotation.x += ROTATION_MOVE_WEIGHT * touch_move_delta.y;
-		delta_rotation.y += ROTATION_MOVE_WEIGHT * touch_move_delta.x;
+		delta_rotation.x -= ROTATION_MOVE_WEIGHT * touch_move_delta.y;
+		delta_rotation.y -= ROTATION_MOVE_WEIGHT * touch_move_delta.x;
 
 		if (touch_pointer_time > TOUCH_DOWN_MOVE_FORWARD_WAIT_TIME)
 		{
@@ -196,11 +199,11 @@ void FreeCamera::input_event(const InputEvent &input_event)
 
 void FreeCamera::resize(uint32_t width, uint32_t height)
 {
-	auto &node = get_node();
+	auto &camera_node = get_node();
 
-	if (node.has_component<Camera>())
+	if (camera_node.has_component<Camera>())
 	{
-		if (auto camera = dynamic_cast<PerspectiveCamera *>(&node.get_component<Camera>()))
+		if (auto camera = dynamic_cast<PerspectiveCamera *>(&camera_node.get_component<Camera>()))
 		{
 			camera->set_aspect_ratio(static_cast<float>(width) / height);
 		}

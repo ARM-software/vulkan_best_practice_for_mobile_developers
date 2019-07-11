@@ -26,7 +26,17 @@ set(CMAKE_MODULE_PATH
 set(ASSETS_DIR ${ASSETS_DIR})
 set(DEVICE_DIR ${DEVICE_DIR})
 
-find_package(Adb 1.0.40 REQUIRED)
+find_package(Adb 1.0.39 REQUIRED)
+
+# Ensure that directory exists in the target
+
+set(ADB_COMMAND ${ADB_EXECUTABLE} shell mkdir -p ${DEVICE_DIR})
+
+execute_process(
+        COMMAND
+        ${ADB_COMMAND})
+
+# Sync files
 
 set(ADB_COMMAND ${ADB_EXECUTABLE} push --sync ${ASSETS_DIR} ${DEVICE_DIR})
 

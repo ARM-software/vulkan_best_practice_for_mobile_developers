@@ -20,19 +20,30 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <fstream>
 #include <stdexcept>
 #include <string>
+#include <sys/stat.h>
 #include <vector>
 
 namespace vkb::file
 {
 /**
+ * @brief Helper to tell if a given path is a directory
+ *
+ * @param path A path to a directory
+ * @return True if the path points to a valid directory, false if not
+ */
+bool is_directory(const std::string &path);
+
+/**
  * @brief Helper to read an asset file into a byte-array
  *
  * @param filename The path to the file (relative to the assets directory)
- * @param count (optional, must be >0) How many bytes to read, all by default
+ * @param count (optional) How many bytes to read. If 0 or not specified, the size
+ * of the file will be used.
  * @return A vector filled with data read from the file
  */
 std::vector<uint8_t> read_asset(const std::string &filename, const uint32_t count = 0);
@@ -58,6 +69,18 @@ std::vector<uint8_t> read_temp(const std::string &filename, const uint32_t count
 void write_temp(const std::vector<uint8_t> &data, const std::string &filename, const uint32_t count = 0);
 
 /**
+ * @brief Helper to write to a png image in permanent storage
+ *
+ * @param data       A vector filled with pixel data to write in (R, G, B, A) format
+ * @param filename   The name of the image file without an extension
+ * @param width      The width of the image
+ * @param height     The height of the image
+ * @param components The number of bytes per element
+ * @param row_stride The stride in bytes of a row of pixels
+ */
+void write_image(const uint8_t *data, const std::string &filename, const uint32_t width, const uint32_t height, const uint32_t components, const uint32_t row_stride);
+
+/**
  * @brief Manages initialization of platform-dependent file paths
  */
 class Path
@@ -75,10 +98,26 @@ class Path
 	 */
 	static const std::string &temp();
 
+	/**
+	 * @brief Platform dependent, for use with storage files
+	 * @return Path to permanent storage
+	 */
+	static const std::string &storage();
+
+	/**
+	 * @brief Platform dependent, for use with log files
+	 * @return Path to log file storage
+	 */
+	static const std::string &logs();
+
   private:
 	static std::string get_asset_path();
 
 	static std::string get_temp_path();
+
+	static std::string get_storage_path();
+
+	static std::string get_logs_path();
 };
 
 }        // namespace vkb::file

@@ -25,10 +25,14 @@
 #include <typeinfo>
 #include <vector>
 
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS()
+#include <glm/glm.hpp>
+VKBP_ENABLE_WARNINGS()
+
 #include "scene_graph/component.h"
 #include "scene_graph/components/sub_mesh.h"
-
-#include "common.h"
 
 namespace vkb
 {
@@ -58,7 +62,7 @@ class AABB : public Component
 	 * @brief Update the bounding box based on the given submesh vertices
 	 * @param submesh The submesh object
 	 */
-	void update(const SubMesh &submesh);
+	void update(SubMesh &submesh);
 
 	/**
 	 * @brief Apply a given matrix transformation to the bounding box

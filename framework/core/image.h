@@ -20,7 +20,10 @@
 
 #pragma once
 
-#include "common.h"
+#include <unordered_set>
+
+#include "common/helpers.h"
+#include "common/vk_common.h"
 
 namespace vkb
 {
@@ -28,6 +31,7 @@ class Device;
 
 namespace core
 {
+class ImageView;
 class Image : public NonCopyable
 {
   public:
@@ -44,17 +48,29 @@ class Image : public NonCopyable
 	      VmaMemoryUsage        memory_usage,
 	      VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT,
 	      uint32_t              mip_levels   = 1,
-	      uint32_t              array_layers = 1);
+	      uint32_t              array_layers = 1,
+	      VkImageTiling         tiling       = VK_IMAGE_TILING_OPTIMAL);
 
 	Image(Image &&other);
 
 	~Image();
 
-	const Device &get_device() const;
+	Device &get_device();
 
 	VkImage get_handle() const;
 
 	VmaAllocation get_memory() const;
+
+	/**
+	 * @brief Maps vulkan memory to an host visible address
+	 * @return Pointer to host visible memory
+	 */
+	uint8_t *map();
+
+	/**
+	 * @brief Unmaps vulkan memory from the host visible address
+	 */
+	void unmap();
 
 	VkImageType get_type() const;
 
@@ -62,13 +78,15 @@ class Image : public NonCopyable
 
 	VkFormat get_format() const;
 
-	VkSampleCountFlagBits get_samples() const;
-
-	uint32_t get_mip_levels() const;
-
-	uint32_t get_array_layers() const;
+	VkSampleCountFlagBits get_sample_count() const;
 
 	VkImageUsageFlags get_usage() const;
+
+	VkImageTiling get_tiling() const;
+
+	VkImageSubresource get_subresource() const;
+
+	std::unordered_set<ImageView *> &get_views();
 
   private:
 	Device &device;
@@ -87,9 +105,17 @@ class Image : public NonCopyable
 
 	VkSampleCountFlagBits sample_count{};
 
-	uint32_t mip_levels{1};
+	VkImageTiling tiling{};
 
-	uint32_t array_layers{1};
+	VkImageSubresource subresource{};
+
+	/// Image views referring to this image
+	std::unordered_set<ImageView *> views;
+
+	uint8_t *mapped_data{nullptr};
+
+	/// Whether it was mapped with vmaMapMemory
+	bool mapped{false};
 };
 }        // namespace core
 }        // namespace vkb

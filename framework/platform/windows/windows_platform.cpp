@@ -19,15 +19,15 @@
  */
 
 #include "windows_platform.h"
-#include "common.h"
 
 #include <Windows.h>
+#include <shellapi.h>
 #include <stdexcept>
 
 namespace vkb
 {
-WindowsPlatform::WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                                 PSTR lpCmdLine, INT nCmdShow)
+WindowsPlatform::WindowsPlatform(HINSTANCE /*hInstance*/, HINSTANCE /*hPrevInstance*/,
+                                 PSTR /*lpCmdLine*/, INT /*nCmdShow*/)
 {
 	if (!AllocConsole())
 	{
@@ -47,10 +47,14 @@ WindowsPlatform::WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	// Ignore the first argument containing the application full path
 	std::vector<std::wstring> arguments_w(szArgList + 1, szArgList + argCount);
 
+	std::string argument_string = "";
+
 	for (auto &arg_w : arguments_w)
 	{
-		arguments.push_back(std::string(arg_w.begin(), arg_w.end()));
+		argument_string += std::string(arg_w.begin(), arg_w.end()) + " ";
 	}
+
+	parse_arguments(argument_string);
 }
 
 bool WindowsPlatform::initialize(std::unique_ptr<Application> &&app)
@@ -58,10 +62,10 @@ bool WindowsPlatform::initialize(std::unique_ptr<Application> &&app)
 	return GlfwPlatform::initialize(std::move(app));
 }
 
-void WindowsPlatform::terminate()
+void WindowsPlatform::terminate(ExitCode code)
 {
 	FreeConsole();
 
-	GlfwPlatform::terminate();
+	GlfwPlatform::terminate(code);
 }
 }        // namespace vkb

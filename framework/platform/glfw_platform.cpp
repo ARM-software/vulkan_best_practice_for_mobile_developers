@@ -20,16 +20,15 @@
 
 #include "glfw_platform.h"
 
-#include "application.h"
-#include "common.h"
-#include "input_events.h"
-
-#include <GLFW/glfw3.h>
-#include <GLFW/glfw3native.h>
-
 #include <unordered_map>
 
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS()
+#include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
@@ -197,7 +196,7 @@ inline KeyAction translate_key_action(int action)
 	return KeyAction::Unknown;
 }
 
-void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
+void key_callback(GLFWwindow *window, int key, int /*scancode*/, int action, int /*mods*/)
 {
 	KeyCode   key_code   = translate_key_code(key);
 	KeyAction key_action = translate_key_action(action);
@@ -245,7 +244,7 @@ void cursor_position_callback(GLFWwindow *window, double xpos, double ypos)
 	}
 }
 
-void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
+void mouse_button_callback(GLFWwindow *window, int button, int action, int /*mods*/)
 {
 	MouseAction mouse_action = translate_mouse_action(action);
 
@@ -266,6 +265,9 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 
 bool GlfwPlatform::initialize(std::unique_ptr<Application> &&app)
 {
+	uint32_t width  = 1280;
+	uint32_t height = 720;
+
 	if (!glfwInit())
 	{
 		return false;
@@ -275,7 +277,19 @@ bool GlfwPlatform::initialize(std::unique_ptr<Application> &&app)
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-	window = glfwCreateWindow(1280, 720, app->get_name().c_str(), NULL, NULL);
+	if (arguments.contains("offscreen"))
+	{
+		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+	}
+
+	if (arguments.contains("resolution"))
+	{
+		auto &extent = arguments.get("resolution");
+		width        = std::stoi(extent[0]);
+		height       = std::stoi(extent[1]);
+	}
+
+	window = glfwCreateWindow(width, height, app->get_name().c_str(), NULL, NULL);
 
 	if (!window)
 	{
@@ -294,9 +308,9 @@ bool GlfwPlatform::initialize(std::unique_ptr<Application> &&app)
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
 	glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, 1);
 
-	auto console = spdlog::stdout_color_mt("console");
-	console->set_pattern(LOGGER_FORMAT);
-	spdlog::set_default_logger(console);
+	std::vector<spdlog::sink_ptr> sinks;
+	sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
+	prepare_logger(sinks);
 
 	return Platform::initialize(std::move(app));
 }
@@ -333,9 +347,9 @@ void GlfwPlatform::main_loop()
 	}
 }
 
-void GlfwPlatform::terminate()
+void GlfwPlatform::terminate(ExitCode code)
 {
-	Platform::terminate();
+	Platform::terminate(ExitCode::Success);
 
 	glfwTerminate();
 }

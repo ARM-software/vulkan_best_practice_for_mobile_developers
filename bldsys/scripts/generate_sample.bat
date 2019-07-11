@@ -31,9 +31,15 @@ if [%1] == [] (
 )
 
 if [%2] == [] (
-    set BUILD_DIR=%ROOT_DIR%\samples
+    set CATEGORY=basic
 ) else (
-    set BUILD_DIR=%2
+    set CATEGORY=%2
+)
+
+if [%3] == [] (
+    set BUILD_DIR=%ROOT_DIR%\samples\%CATEGORY%
+) else (
+    set BUILD_DIR=%3
 )
 
 call cmake.exe -DSAMPLE_NAME=%SAMPLE_NAME%^

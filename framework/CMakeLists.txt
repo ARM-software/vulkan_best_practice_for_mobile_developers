@@ -17,14 +17,12 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
-
 cmake_minimum_required(VERSION 3.8)
 
 project(framework LANGUAGES C CXX)
 
 set(FRAMEWORK_FILES
     # Header Files
-    common.h
     utils.h
     gui.h
     stats.h
@@ -37,19 +35,13 @@ set(FRAMEWORK_FILES
     semaphore_pool.h
     command_record.h
     command_replay.h
-    render_target.h
-    graphics_pipeline_state.h
     resource_binding_state.h
     resource_cache.h
     resource_record.h
     resource_replay.h
-    render_frame.h
-    render_context.h
     vulkan_sample.h
-    render_pipeline.h
     timer.h
     # Source Files
-    common.cpp
     utils.cpp
     gui.cpp
     stats.cpp
@@ -62,17 +54,46 @@ set(FRAMEWORK_FILES
     semaphore_pool.cpp
     command_record.cpp
     command_replay.cpp
-    render_target.cpp
-    graphics_pipeline_state.cpp
     resource_binding_state.cpp
     resource_cache.cpp
     resource_record.cpp
     resource_replay.cpp
-    render_frame.cpp
-    render_context.cpp
     vulkan_sample.cpp
-    render_pipeline.cpp
     timer.cpp)
+
+set(COMMON_FILES
+    # Header Files
+    common/vk_common.h
+    common/logging.h
+    common/helpers.h
+    common/error.h
+    # Source Files
+    common/error.cpp
+    common/vk_common.cpp)
+
+set(RENDERING_FILES
+    # Header files
+    rendering/pipeline_state.h
+    rendering/render_context.h
+    rendering/render_frame.h
+    rendering/render_pipeline.h
+    rendering/render_target.h
+    rendering/subpass.h
+    # Source files
+    rendering/pipeline_state.cpp
+    rendering/render_context.cpp
+    rendering/render_frame.cpp
+    rendering/render_pipeline.cpp
+    rendering/render_target.cpp
+    rendering/subpass.cpp)
+
+set(RENDERING_SUBPASSES_FILES
+    # Header files
+    rendering/subpasses/scene_subpass.h
+    rendering/subpasses/lighting_subpass.h
+    # Source files
+    rendering/subpasses/scene_subpass.cpp
+    rendering/subpasses/lighting_subpass.cpp)
 
 set(SCENE_GRAPH_FILES
     # Header Files
@@ -168,6 +189,7 @@ set(CORE_FILES
 set(PLATFORM_FILES
     # Header Files
     platform/application.h
+    platform/argument_parser.h
     platform/platform.h
     platform/file.h
     platform/thread_pool.h
@@ -177,6 +199,7 @@ set(PLATFORM_FILES
     platform/configuration.h
     # Source Files
     platform/application.cpp
+    platform/argument_parser.cpp
     platform/platform.cpp
     platform/file.cpp
     platform/thread_pool.cpp
@@ -216,16 +239,22 @@ else()
 endif()
 
 source_group("\\" FILES ${FRAMEWORK_FILES})
+source_group("common\\" FILES ${COMMON_FILES})
 source_group("platform\\" FILES ${PLATFORM_FILES})
 source_group("core\\" FILES ${CORE_FILES})
+source_group("rendering\\" FILES ${RENDERING_FILES})
+source_group("rendering\\subpasses" FILES ${RENDERING_SUBPASSES_FILES})
 source_group("scene_graph\\" FILES ${SCENE_GRAPH_FILES})
 source_group("scene_graph\\components\\" FILES ${SCENE_GRAPH_COMPONENT_FILES})
 source_group("scene_graph\\scripts\\" FILES ${SCENE_GRAPH_SCRIPTS_FILES})
 
 set(PROJECT_FILES
     ${PLATFORM_FILES}
+    ${COMMON_FILES}
     ${FRAMEWORK_FILES}
     ${CORE_FILES}
+    ${RENDERING_FILES}
+    ${RENDERING_SUBPASSES_FILES}
     ${SCENE_GRAPH_FILES}
     ${SCENE_GRAPH_COMPONENT_FILES}
     ${SCENE_GRAPH_SCRIPTS_FILES})
@@ -239,6 +268,15 @@ endif()
 
 if(${VKB_VALIDATION_LAYERS})
     target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS)
+endif()
+
+if(${VKB_WARNINGS_AS_ERRORS})
+    message(STATUS "Warnings as Errors Enabled")
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+        target_compile_options(${PROJECT_NAME} PRIVATE -Werror)
+    elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+        target_compile_options(${PROJECT_NAME} PRIVATE /W3 /WX)
+    endif()
 endif()
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

@@ -38,6 +38,9 @@ class Application
 
 	virtual ~Application() = default;
 
+	/**
+	 * @brief Starts the runtime timer
+	 */
 	virtual bool prepare(Platform &platform);
 
 	virtual void step();
@@ -46,17 +49,23 @@ class Application
 
 	virtual void finish();
 
-	/// @brief Handles resizing of the window
-	/// @param width New width of the window
-	/// @param height New height of the window
+	/**
+	 * @brief Handles resizing of the window
+	 * @param width New width of the window
+	 * @param height New height of the window
+	 */
 	virtual void resize(const uint32_t width, const uint32_t height);
 
-	/// @brief Handles input events of the window
-	/// @param input_event The input event object
+	/**
+	 * @brief Handles input events of the window
+	 * @param input_event The input event object
+	 */
 	virtual void input_event(const InputEvent &input_event);
 
-	/// @brief Returns a reference to the name of the app
-	/// @returns A string reference
+	/**
+	 * @brief Returns a reference to the name of the app
+	 * @returns A string reference
+	 */
 	const std::string &get_name() const;
 
 	void set_name(const std::string &name);
@@ -77,7 +86,9 @@ class Application
 	DebugInfo &get_debug_info();
 
   protected:
-	/// The settings of the app
+	/**
+	 * @brief The settings of the app
+	 */
 	DebugInfo debug_info{};
 
 	float fps{0.0f};
@@ -89,10 +100,14 @@ class Application
 	Timer timer;
 
   private:
-	/// The name of the app
+	/**
+	 * @brief The name of the app
+	 */
 	std::string name{};
 
-	/// The configurations of the sample
+	/**
+	 * @brief The configurations of the sample
+	 */
 	Configuration configuration{};
 
 	/**

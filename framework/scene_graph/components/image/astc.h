@@ -20,13 +20,8 @@
 
 #pragma once
 
+#include "common/vk_common.h"
 #include "scene_graph/components/image.h"
-
-#if defined(_WIN32) || defined(_WIN64)
-// Windows.h defines IGNORE, so we must #undef it to avoid clashes with astc header
-#	undef IGNORE
-#endif
-#include <astc_codec_internals.h>
 
 namespace vkb
 {

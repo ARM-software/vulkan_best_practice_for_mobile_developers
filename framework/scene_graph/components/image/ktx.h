@@ -20,9 +20,8 @@
 
 #pragma once
 
+#include "common/error.h"
 #include "scene_graph/components/image.h"
-
-#include <ktx.h>
 
 namespace vkb
 {

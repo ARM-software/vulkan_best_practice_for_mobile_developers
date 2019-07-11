@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "common/helpers.h"
+#include "common/vk_common.h"
 #include "core/device.h"
 
 namespace vkb
@@ -35,14 +37,17 @@ class BufferAllocation : public NonCopyable
 
 	BufferAllocation(core::Buffer &buffer, VkDeviceSize size, VkDeviceSize offset);
 
-	void update(uint32_t offset, const std::vector<uint8_t> &data);
+	void update(const std::vector<uint8_t> &data, uint32_t offset = 0);
 
 	template <class T>
-	void update(uint32_t offset, const T &value)
+	void update(const T &value, uint32_t offset = 0)
 	{
-		update(offset, std::vector<uint8_t>{reinterpret_cast<const uint8_t *>(&value),
-		                                    reinterpret_cast<const uint8_t *>(&value) + sizeof(T)});
+		update(std::vector<uint8_t>{reinterpret_cast<const uint8_t *>(&value),
+		                            reinterpret_cast<const uint8_t *>(&value) + sizeof(T)},
+		       offset);
 	}
+
+	void update(const uint8_t *data, size_t size, uint32_t offset = 0);
 
 	bool empty() const;
 
@@ -55,7 +60,7 @@ class BufferAllocation : public NonCopyable
   private:
 	core::Buffer *buffer{nullptr};
 
-	VkDeviceSize offset{0};
+	VkDeviceSize base_offset{0};
 
 	VkDeviceSize size{0};
 };
@@ -88,8 +93,20 @@ class BufferBlock : public NonCopyable
 };
 
 /**
- * @brief A pool of buffer blocks for a specific usage
- *        It may contain inactive blocks that can be recycled
+ * @brief A pool of buffer blocks for a specific usage.
+ * It may contain inactive blocks that can be recycled.
+ *
+ * BufferPool is a linear allocator for buffer chunks, it gives you a view of the size you want.
+ * A BufferBlock is the corresponding VkBuffer and you can get smaller offsets inside it.
+ * Since a shader cannot specify dynamic UBOs, it has to be done from the code
+ * (set_resource_dynamic).
+ *
+ * When a new frame starts, buffer blocks are returned: the offset is reset and contents are
+ * overwritten. The minimum allocation size is 256 kb, if you ask for more you get a dedicated
+ * buffer allocation.
+ *
+ * We re-use descriptor sets: we only need one for the corresponding buffer infos (and we only
+ * have one VkBuffer per BufferBlock), then it is bound and we use dynamic offsets.
  */
 class BufferPool : public NonCopyable
 {

@@ -21,13 +21,12 @@
 #pragma once
 
 #include <algorithm>
+#include <map>
 #include <memory>
 #include <string>
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
-
-#include "common.h"
 
 namespace vkb
 {

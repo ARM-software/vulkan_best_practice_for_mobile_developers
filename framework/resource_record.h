@@ -20,8 +20,7 @@
 
 #pragma once
 
-#include "common.h"
-
+#include "common/vk_common.h"
 #include "core/pipeline.h"
 #include "core/pipeline_layout.h"
 #include "core/render_pass.h"
@@ -59,9 +58,8 @@ class ResourceRecord
 	                            const std::vector<LoadStoreInfo> &load_store_infos,
 	                            const std::vector<SubpassInfo> &  subpasses);
 
-	size_t register_graphics_pipeline(VkPipelineCache                           pipeline_cache,
-	                                  GraphicsPipelineState &                   graphics_state,
-	                                  const ShaderStageMap<SpecializationInfo> &specialization_infos);
+	size_t register_graphics_pipeline(VkPipelineCache pipeline_cache,
+	                                  PipelineState & pipeline_state);
 
 	void set_shader_module(size_t index, const ShaderModule &shader_module);
 
