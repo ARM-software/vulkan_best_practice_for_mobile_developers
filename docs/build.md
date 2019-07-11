@@ -211,7 +211,7 @@ cmake --build build/linux --config Release --target vulkan_best_practice -- -j4
 `Step 1.` The following command will generate the project
 
 ```
-cmake H. -Bbuild/mac -DCMAKE_BUILD_TYPE=Release
+cmake -H. -Bbuild/mac -DCMAKE_BUILD_TYPE=Release
 ```
 
 `Step 2.` Build the project
