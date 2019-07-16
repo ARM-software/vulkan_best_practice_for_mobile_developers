@@ -27,6 +27,7 @@
 #include "application.h"
 #include "common/vk_common.h"
 #include "platform/argument_parser.h"
+#include "platform/filesystem.h"
 #include "utils.h"
 
 namespace vkb
@@ -51,6 +52,11 @@ class Platform
 	 */
 	virtual bool initialize(std::unique_ptr<Application> &&app);
 
+	/**
+	 * @brief Prepares the active app supplied in the initialize function
+	 */
+	virtual bool prepare();
+
 	virtual VkSurfaceKHR create_surface(VkInstance instance) = 0;
 
 	virtual void main_loop() = 0;
@@ -58,6 +64,18 @@ class Platform
 	virtual void terminate(ExitCode code);
 
 	virtual void close() const = 0;
+
+	/**
+	 * @brief Returns the working directory of the application set by the platform
+	 * @returns The path to the working directory
+	 */
+	static const std::string &get_external_storage_directory();
+
+	/**
+	 * @brief Returns the suitable directory for temporary files from the environment variables set in the system
+	 * @returns The path to the temp folder on the system
+	 */
+	static const std::string &get_temp_directory();
 
 	/**
 	 * @return The dot-per-inch scale factor
@@ -73,16 +91,20 @@ class Platform
 	 */
 	void parse_arguments(const std::string &argument_string);
 
-	std::string &get_log_output_path();
+	static void set_external_storage_directory(const std::string &dir);
+
+	static void set_temp_directory(const std::string &dir);
 
   protected:
-	void prepare_logger(std::vector<spdlog::sink_ptr> sinks = {});
-
 	std::unique_ptr<Application> active_app;
 
 	ArgumentParser arguments{""};
 
+	virtual void initialize_logger() = 0;
+
   private:
-	std::string log_output;
+	static std::string external_storage_directory;
+
+	static std::string temp_directory;
 };
 }        // namespace vkb

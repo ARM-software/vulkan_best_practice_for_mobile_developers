@@ -20,23 +20,57 @@
 
 #pragma once
 
-#include <algorithm>
 #include <cstdint>
+#include <cstdlib>
 #include <fstream>
-#include <stdexcept>
 #include <string>
 #include <sys/stat.h>
+#include <unordered_map>
 #include <vector>
 
-namespace vkb::file
+namespace vkb::fs
 {
+namespace path
+{
+enum Type
+{
+	//Relative paths
+	Assets,
+	Storage,
+	Screenshots,
+	Logs,
+	/* NewFolder */
+	TotalRelativePathTypes,
+
+	//Special paths
+	ExternalStorage,
+	WorkingDir = ExternalStorage,
+	Temp
+};
+
+extern const std::unordered_map<Type, std::string> relative_paths;
+
+/**
+ * @brief Gets the path of a given type
+ * @param type The type of path to get
+ * @throws runtime_error if the platform didn't initialize each path properly, path wasn't found or the path was found but is empty
+ * @return Path to the directory of a certain type
+ */
+const std::string get(const Type type);
+}        // namespace path
+
 /**
  * @brief Helper to tell if a given path is a directory
- *
  * @param path A path to a directory
  * @return True if the path points to a valid directory, false if not
  */
 bool is_directory(const std::string &path);
+
+/**
+ * @brief Creates a directory relative to the path given
+ * @param path A path to a directory
+ */
+void create_directory(const std::string &path);
 
 /**
  * @brief Helper to read an asset file into a byte-array
@@ -79,45 +113,4 @@ void write_temp(const std::vector<uint8_t> &data, const std::string &filename, c
  * @param row_stride The stride in bytes of a row of pixels
  */
 void write_image(const uint8_t *data, const std::string &filename, const uint32_t width, const uint32_t height, const uint32_t components, const uint32_t row_stride);
-
-/**
- * @brief Manages initialization of platform-dependent file paths
- */
-class Path
-{
-  public:
-	/**
-	 * @brief Platform dependent, for use with asset files
-	 * @return Path to the assets directory
-	 */
-	static const std::string &assets();
-
-	/**
-	 * @brief Platform dependent, for use with temporary files
-	 * @return Path to temporary storage
-	 */
-	static const std::string &temp();
-
-	/**
-	 * @brief Platform dependent, for use with storage files
-	 * @return Path to permanent storage
-	 */
-	static const std::string &storage();
-
-	/**
-	 * @brief Platform dependent, for use with log files
-	 * @return Path to log file storage
-	 */
-	static const std::string &logs();
-
-  private:
-	static std::string get_asset_path();
-
-	static std::string get_temp_path();
-
-	static std::string get_storage_path();
-
-	static std::string get_logs_path();
-};
-
-}        // namespace vkb::file
+}        // namespace vkb::fs

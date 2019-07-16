@@ -22,6 +22,32 @@
 
 namespace vkb
 {
+namespace
+{
+inline const std::string get_temp_path_from_environment()
+{
+	std::string temp_path = "/tmp/";
+
+	if (const char *env_ptr = std::getenv("TMPDIR"))
+	{
+		temp_path = std::string(env_ptr) + "/";
+	}
+
+	return temp_path;
+}
+}        // namespace
+
+namespace fs
+{
+void create_directory(const std::string &path)
+{
+	if (!is_directory(path))
+	{
+		mkdir(path.c_str(), 0777);
+	}
+}
+}        // namespace fs
+
 LinuxPlatform::LinuxPlatform(int argc, char **argv)
 {
 	// Ignore the first argument containing the application full path
@@ -35,5 +61,7 @@ LinuxPlatform::LinuxPlatform(int argc, char **argv)
 	}
 
 	parse_arguments(argument_string);
+
+	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 }        // namespace vkb

@@ -201,12 +201,12 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 		}
 	}
 
-	vkb::file::write_image(raw_data,
-	                       filename,
-	                       width,
-	                       height,
-	                       4,
-	                       static_cast<uint32_t>(subresource_layout.rowPitch));
+	vkb::fs::write_image(raw_data,
+	                     filename,
+	                     width,
+	                     height,
+	                     4,
+	                     static_cast<uint32_t>(subresource_layout.rowPitch));
 
 	dst_image.unmap();
 }        // namespace vkb

@@ -44,11 +44,21 @@ class AndroidPlatform : public Platform
 
 	virtual void close() const override;
 
+	/**
+	 * @brief Sends a notification in the task bar
+	 * @param message The message to display
+	 */
+	void send_notification(const std::string &message);
+
 	float get_dpi_factor() const override;
 
 	ANativeActivity *get_activity();
 
   private:
 	android_app *app{nullptr};
+
+	std::string log_output;
+
+	virtual void initialize_logger() override;
 };
 }        // namespace vkb

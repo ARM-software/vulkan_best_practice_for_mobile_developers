@@ -26,6 +26,35 @@
 
 namespace vkb
 {
+namespace
+{
+inline const std::string get_temp_path_from_environment()
+{
+	std::string temp_path = "temp/";
+
+	TCHAR temp_buffer[MAX_PATH];
+	DWORD temp_path_ret = GetTempPath(MAX_PATH, temp_buffer);
+	if (temp_path_ret > MAX_PATH || temp_path_ret == 0)
+	{
+		temp_path = "temp/";
+	}
+	else
+	{
+		temp_path = std::string(temp_buffer) + "/";
+	}
+
+	return temp_path;
+}
+}        // namespace
+
+namespace fs
+{
+void create_directory(const std::string &path)
+{
+	CreateDirectory(path.c_str(), NULL);
+}
+}        // namespace fs
+
 WindowsPlatform::WindowsPlatform(HINSTANCE /*hInstance*/, HINSTANCE /*hPrevInstance*/,
                                  PSTR /*lpCmdLine*/, INT /*nCmdShow*/)
 {
@@ -55,6 +84,8 @@ WindowsPlatform::WindowsPlatform(HINSTANCE /*hInstance*/, HINSTANCE /*hPrevInsta
 	}
 
 	parse_arguments(argument_string);
+
+	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
 bool WindowsPlatform::initialize(std::unique_ptr<Application> &&app)

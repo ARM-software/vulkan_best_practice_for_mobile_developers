@@ -308,11 +308,7 @@ bool GlfwPlatform::initialize(std::unique_ptr<Application> &&app)
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
 	glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, 1);
 
-	std::vector<spdlog::sink_ptr> sinks;
-	sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
-	prepare_logger(sinks);
-
-	return Platform::initialize(std::move(app));
+	return Platform::initialize(std::move(app)) && Platform::prepare();
 }
 
 VkSurfaceKHR GlfwPlatform::create_surface(VkInstance instance)
@@ -377,4 +373,14 @@ float GlfwPlatform::get_dpi_factor() const
 	auto dpi_factor = dpi / win_base_density;
 	return dpi_factor;
 }
+
+void GlfwPlatform::initialize_logger()
+{
+	auto console = spdlog::stdout_color_mt("console");
+	console->set_pattern(LOGGER_FORMAT);
+	spdlog::set_default_logger(console);
+
+	LOGI("Logger initialized");
+}
+
 }        // namespace vkb

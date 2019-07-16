@@ -23,7 +23,7 @@
 #include "common/logging.h"
 #include "common/vk_common.h"
 #include "glsl_compiler.h"
-#include "platform/file.h"
+#include "platform/filesystem.h"
 #include "platform/platform.h"
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
@@ -650,7 +650,7 @@ VkShaderModule HelloTriangle::load_shader_module(Context &context, const char *p
 {
 	vkb::GLSLCompiler glsl_compiler;
 
-	auto buffer = vkb::file::read_asset(path);
+	auto buffer = vkb::fs::read_asset(path);
 
 	std::string file_ext = path;
 

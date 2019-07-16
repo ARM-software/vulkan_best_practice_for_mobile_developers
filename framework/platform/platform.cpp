@@ -31,23 +31,14 @@
 
 #include "application.h"
 #include "common/logging.h"
-#include "platform/file.h"
-
-inline std::tm thread_safe_time(const std::time_t time)
-{
-	std::tm result;
-#if defined(VK_USE_PLATFORM_WIN32_KHR)
-	localtime_s(&result, &time);
-#else
-	std::mutex                  mtx;
-	std::lock_guard<std::mutex> lock(mtx);
-	result = *std::localtime(&time);
-#endif
-	return result;
-}
+#include "platform/filesystem.h"
 
 namespace vkb
 {
+std::string Platform::external_storage_directory = "";
+
+std::string Platform::temp_directory = "";
+
 Platform::Platform() :
     arguments{""}
 {
@@ -57,7 +48,19 @@ bool Platform::initialize(std::unique_ptr<Application> &&app)
 {
 	assert(app && "Application is not valid");
 	active_app = std::move(app);
-	return active_app->prepare(*this);
+
+	initialize_logger();
+
+	return true;
+}
+
+bool Platform::prepare()
+{
+	if (active_app)
+	{
+		return active_app->prepare(*this);
+	}
+	return false;
 }
 
 void Platform::terminate(ExitCode code)
@@ -69,38 +72,26 @@ void Platform::terminate(ExitCode code)
 
 	active_app.reset();
 	spdlog::drop_all();
-
-	if (code == ExitCode::Success)
-	{
-		std::remove(log_output.c_str());
-	}
 }
 
-void Platform::prepare_logger(std::vector<spdlog::sink_ptr> sinks)
+const std::string &Platform::get_external_storage_directory()
 {
-	char        timestamp[80];
-	std::time_t time = std::time(0);
-	std::tm     now  = thread_safe_time(time);
-	std::strftime(timestamp, 80, "%G-%m-%d_%H-%M-%S_log.txt", &now);
-	log_output = vkb::file::Path::logs() + std::string(timestamp);
-
-	sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_output, true));
-
-	auto logger = std::make_shared<spdlog::logger>("logger", sinks.begin(), sinks.end());
-	logger->set_pattern(LOGGER_FORMAT);
-	spdlog::set_default_logger(logger);
-
-	LOGI("Logger Initialized");
+	return external_storage_directory;
 }
 
-const ArgumentParser &Platform::get_arguments()
+const std::string &Platform::get_temp_directory()
 {
-	return arguments;
+	return temp_directory;
 }
 
 float Platform::get_dpi_factor() const
 {
 	return 1.0;
+}
+
+const ArgumentParser &Platform::get_arguments()
+{
+	return arguments;
 }
 
 Application &Platform::get_app() const
@@ -113,10 +104,12 @@ void Platform::parse_arguments(const std::string &argument_string)
 {
 	arguments = ArgumentParser{argument_string};
 }
-
-std::string &Platform::get_log_output_path()
+void Platform::set_external_storage_directory(const std::string &dir)
 {
-	return log_output;
-};
-
+	external_storage_directory = dir;
+}
+void Platform::set_temp_directory(const std::string &dir)
+{
+	temp_directory = dir;
+}
 }        // namespace vkb

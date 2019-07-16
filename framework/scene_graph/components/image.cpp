@@ -29,7 +29,7 @@ VKBP_DISABLE_WARNINGS()
 #include <stb_image_resize.h>
 VKBP_ENABLE_WARNINGS()
 
-#include "platform/file.h"
+#include "platform/filesystem.h"
 #include "scene_graph/components/image/astc.h"
 #include "scene_graph/components/image/ktx.h"
 #include "scene_graph/components/image/stb.h"
@@ -227,7 +227,7 @@ std::unique_ptr<Image> Image::load(const std::string &name, const std::string &u
 {
 	std::unique_ptr<Image> image{nullptr};
 
-	auto data = file::read_asset(uri);
+	auto data = fs::read_asset(uri);
 
 	// Get extension
 	auto extension = get_extension(uri);
