@@ -50,7 +50,7 @@ const std::vector<LoadStoreInfo> &RenderPipeline::get_load_store() const
 	return load_store;
 }
 
-void RenderPipeline::set_load_store(std::vector<LoadStoreInfo> &ls)
+void RenderPipeline::set_load_store(const std::vector<LoadStoreInfo> &ls)
 {
 	load_store = ls;
 }
@@ -60,7 +60,7 @@ const std::vector<VkClearValue> &RenderPipeline::get_clear_value() const
 	return clear_value;
 }
 
-void RenderPipeline::set_clear_value(std::vector<VkClearValue> &cv)
+void RenderPipeline::set_clear_value(const std::vector<VkClearValue> &cv)
 {
 	clear_value = cv;
 }

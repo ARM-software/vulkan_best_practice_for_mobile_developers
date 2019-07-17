@@ -54,7 +54,7 @@ class RenderPipeline : public NonCopyable
 	/**
 	 * @param load_store Load store info to set
 	 */
-	void set_load_store(std::vector<LoadStoreInfo> &load_store);
+	void set_load_store(const std::vector<LoadStoreInfo> &load_store);
 
 	/**
 	 * @return Clear values
@@ -64,7 +64,7 @@ class RenderPipeline : public NonCopyable
 	/**
 	 * @param clear_values Clear values to set
 	 */
-	void set_clear_value(std::vector<VkClearValue> &clear_values);
+	void set_clear_value(const std::vector<VkClearValue> &clear_values);
 
 	/**
 	 * @brief Appends a subpass to the pipeline
