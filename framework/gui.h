@@ -30,7 +30,7 @@
 #include "core/command_buffer.h"
 #include "core/sampler.h"
 #include "debug_info.h"
-#include "platform/file.h"
+#include "platform/filesystem.h"
 #include "platform/input_events.h"
 #include "rendering/render_context.h"
 #include "stats.h"
@@ -49,7 +49,7 @@ struct Font
 	 */
 	Font(const std::string &name, float size) :
 	    name{name},
-	    data{vkb::file::read_asset("fonts/" + name + ".ttf")},
+	    data{vkb::fs::read_asset("fonts/" + name + ".ttf")},
 	    size{size}
 	{
 		// Keep ownership of the font data to avoid a double delete
@@ -144,9 +144,17 @@ class Gui
 		    {StatIndex::vertex_compute_cycles,
 		     {/* label = */ "Vert cycles: {:4.1f} M/s",
 		      /* scale_factor = */ float(1e-6)}},
+		    {StatIndex::tiles,
+		     {/* label = */ "Tiles: {:4.1f} M/s",
+		      /* scale_factor = */ float(1e-6)}},
 		    {StatIndex::fragment_cycles,
 		     {/* label = */ "Frag cycles: {:4.1f} M/s",
 		      /* scale_factor = */ float(1e-6)}},
+		    {StatIndex::fragment_jobs,
+		     {/* label = */ "Frag jobs: {:4.0f}/s"}},
+		    {StatIndex::tex_instr,
+		     {/* label = */ "Tex instr: {:4.0f} k/s",
+		      /* scale_factor = */ float(1e-3)}},
 		    {StatIndex::l2_ext_reads,
 		     {/* label = */ "Ext reads: {:4.1f} M/s",
 		      /* scale_factor = */ float(1e-6)}},

@@ -109,8 +109,7 @@ public class BPNativeActivity extends NativeActivity {
         File file = new File(log_file);
 
         Uri path = FileProvider.getUriForFile(context, context.getApplicationContext().getPackageName() + ".provider", file);
-
-
+        
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 

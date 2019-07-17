@@ -1,3 +1,4 @@
+#version 320 es
 /* Copyright (c) 2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
@@ -18,62 +19,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "platform/file.h"
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec2 texcoord_0;
+layout(location = 2) in vec3 normal;
 
-#include <Windows.h>
+layout(set = 0, binding = 1) uniform GlobalUniform {
+    mat4 model;
+    mat4 view_proj;
+    vec4 light_pos;
+    vec4 light_color;
+} global_uniform;
 
-namespace vkb::file
+layout (location = 0) out vec4 o_pos;
+layout (location = 1) out vec2 o_uv;
+layout (location = 2) out vec3 o_normal;
+
+void main(void)
 {
-std::string Path::get_asset_path()
-{
-	static std::string assets = "assets/";
+    o_pos = global_uniform.model * vec4(position, 1.0);
 
-	if (!is_directory(assets))
-	{
-		CreateDirectory(assets.c_str(), NULL);
-	}
+    o_uv = texcoord_0;
 
-	return assets;
+    o_normal = mat3(global_uniform.model) * normal;
+
+    gl_Position = global_uniform.view_proj * o_pos;
 }
-
-std::string Path::get_temp_path()
-{
-	TCHAR       temp_buffer[MAX_PATH];
-	DWORD       temp_path_ret = GetTempPath(MAX_PATH, temp_buffer);
-	std::string temp_path;
-	if (temp_path_ret > MAX_PATH || temp_path_ret == 0)
-	{
-		temp_path = "temp/";
-	}
-	else
-	{
-		temp_path = std::string(temp_buffer) + "/";
-	}
-
-	return temp_path;
-}
-
-std::string Path::get_storage_path()
-{
-	static std::string storage = "output/";
-
-	if (!is_directory(storage))
-	{
-		CreateDirectory(storage.c_str(), NULL);
-	}
-
-	return storage;
-}
-
-std::string Path::get_logs_path()
-{
-	static std::string logs = get_storage_path() + "logs/";
-
-	if (!is_directory(logs))
-	{
-		CreateDirectory(logs.c_str(), NULL);
-	}
-
-	return logs;
-}
-}        // namespace vkb::file

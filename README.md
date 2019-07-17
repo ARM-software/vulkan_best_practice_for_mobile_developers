@@ -64,6 +64,8 @@ More detailed look at swapchains, and how you might want to use them
   - [Use of pipeline caches to avoid startup latency](./samples/advanced/pipeline_cache/pipeline_cache_tutorial.md)
 - **Render Passes**
   - [Appropriate use of load/store operations, and use of transient attachments](./samples/advanced/render_passes/render_passes_tutorial.md)
+- **Render Subpasses**
+  - [Benefits of subpasses over multiple render passes, use of transient attachments, and G-buffer recommended size](./samples/advanced/render_subpasses/render_subpasses_tutorial.md)
 - **Command Buffers**
   - [Allocation and management of command buffers](./samples/advanced/command_buffer_usage/command_buffer_usage_tutorial.md)
 - **AFBC**

@@ -45,7 +45,9 @@ Stats::Stats(const std::set<StatIndex> &enabled_stats, CounterSamplingConfig sam
 	    {StatIndex::branch_miss_ratio, {hwcpipe::CpuCounter::BranchMisses}},
 	    {StatIndex::gpu_cycles, {hwcpipe::GpuCounter::GpuCycles}},
 	    {StatIndex::vertex_compute_cycles, {hwcpipe::GpuCounter::VertexComputeCycles}},
+	    {StatIndex::tiles, {hwcpipe::GpuCounter::Tiles}},
 	    {StatIndex::fragment_cycles, {hwcpipe::GpuCounter::FragmentCycles}},
+	    {StatIndex::fragment_jobs, {hwcpipe::GpuCounter::FragmentJobs}},
 	    {StatIndex::l2_reads_lookups, {hwcpipe::GpuCounter::CacheReadLookups}},
 	    {StatIndex::l2_ext_reads, {hwcpipe::GpuCounter::ExternalMemoryReadAccesses}},
 	    {StatIndex::l2_writes_lookups, {hwcpipe::GpuCounter::CacheWriteLookups}},
@@ -54,6 +56,7 @@ Stats::Stats(const std::set<StatIndex> &enabled_stats, CounterSamplingConfig sam
 	    {StatIndex::l2_ext_write_stalls, {hwcpipe::GpuCounter::ExternalMemoryWriteStalls}},
 	    {StatIndex::l2_ext_read_bytes, {hwcpipe::GpuCounter::ExternalMemoryReadBytes}},
 	    {StatIndex::l2_ext_write_bytes, {hwcpipe::GpuCounter::ExternalMemoryWriteBytes}},
+	    {StatIndex::tex_instr, {hwcpipe::GpuCounter::ShaderTextureCycles}},
 	};
 
 	hwcpipe::CpuCounterSet enabled_cpu_counters{};

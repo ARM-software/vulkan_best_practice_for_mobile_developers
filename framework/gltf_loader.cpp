@@ -34,7 +34,7 @@ VKBP_ENABLE_WARNINGS()
 #include "common/vk_common.h"
 #include "core/device.h"
 #include "core/image.h"
-#include "platform/file.h"
+#include "platform/filesystem.h"
 #include "platform/thread_pool.h"
 #include "scene_graph/components/image/astc.h"
 #include "scene_graph/components/perspective_camera.h"
@@ -327,7 +327,7 @@ std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &f
 
 	tinygltf::TinyGLTF gltf_loader;
 
-	std::string gltf_file = vkb::file::Path::assets() + file_name;
+	std::string gltf_file = vkb::fs::path::get(vkb::fs::path::Type::Assets) + file_name;
 
 	bool importResult = gltf_loader.LoadASCIIFromFile(&model, &err, &warn, gltf_file.c_str());
 

@@ -191,7 +191,7 @@ set(PLATFORM_FILES
     platform/application.h
     platform/argument_parser.h
     platform/platform.h
-    platform/file.h
+    platform/filesystem.h
     platform/thread_pool.h
     platform/concurrent_queue.h
     platform/concurrent_queue.inl
@@ -201,7 +201,7 @@ set(PLATFORM_FILES
     platform/application.cpp
     platform/argument_parser.cpp
     platform/platform.cpp
-    platform/file.cpp
+    platform/filesystem.cpp
     platform/thread_pool.cpp
     platform/input_events.cpp
     platform/configuration.cpp)
@@ -212,8 +212,7 @@ if(ANDROID)
         # Header Files
         platform/android/android_platform.h
         # Source Files
-        platform/android/android_platform.cpp
-        platform/android/file_android.cpp)
+        platform/android/android_platform.cpp)
 else()
     list(APPEND PLATFORM_FILES
         # Header Files
@@ -226,15 +225,13 @@ else()
         # Header Files
         platform/windows/windows_platform.h
         # Source Files
-        platform/windows/windows_platform.cpp
-        platform/windows/file_windows.cpp)
+        platform/windows/windows_platform.cpp)
     else()
         list(APPEND PLATFORM_FILES
         # Header Files
         platform/linux/linux_platform.h
         # Source Files
-        platform/linux/linux_platform.cpp
-        platform/linux/file_linux.cpp)
+        platform/linux/linux_platform.cpp)
     endif()
 endif()
 

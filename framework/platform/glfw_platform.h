@@ -48,5 +48,7 @@ class GlfwPlatform : public Platform
 
   private:
 	GLFWwindow *window = nullptr;
+
+	virtual void initialize_logger() override;
 };
 }        // namespace vkb

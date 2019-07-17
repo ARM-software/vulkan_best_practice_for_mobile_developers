@@ -26,13 +26,11 @@ VKBP_DISABLE_WARNINGS()
 #include <glm/glm.hpp>
 VKBP_ENABLE_WARNINGS()
 
-#include "platform/file.h"
+#include "platform/filesystem.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_context.h"
 #include "scene_graph/components/sub_mesh.h"
 #include "scene_graph/scene.h"
-
-#include "platform/file.h"
 
 namespace vkb
 {

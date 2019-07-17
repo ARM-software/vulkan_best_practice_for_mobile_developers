@@ -1,3 +1,4 @@
+#version 320 es
 /* Copyright (c) 2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
@@ -18,50 +19,45 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "linux_platform.h"
+precision highp float;
 
-namespace vkb
-{
-namespace
-{
-inline const std::string get_temp_path_from_environment()
-{
-	std::string temp_path = "/tmp/";
+#ifdef HAS_BASE_COLOR_TEXTURE
+layout (set=0, binding=0) uniform sampler2D base_color_texture;
+#endif
 
-	if (const char *env_ptr = std::getenv("TMPDIR"))
-	{
-		temp_path = std::string(env_ptr) + "/";
-	}
+layout (location = 0) in vec4 in_pos;
+layout (location = 1) in vec2 in_uv;
+layout (location = 2) in vec3 in_normal;
 
-	return temp_path;
+layout (location = 0) out vec4 o_albedo;
+layout (location = 1) out vec4 o_normal;
+
+layout(set = 0, binding = 1) uniform GlobalUniform {
+    mat4 model;
+    mat4 view_proj;
+    vec4 light_pos;
+    vec4 light_color;
+} global_uniform;
+
+layout(push_constant, std430) uniform PBRMaterialUniform {
+    vec4 base_color_factor;
+    float metallic_factor;
+    float roughness_factor;
+} pbr_material_uniform;
+
+void main(void)
+{
+    vec3 normal = normalize(in_normal);
+    // Transform normals from [-1, 1] to [0, 1]
+    o_normal = vec4(0.5 * normal + 0.5, 1.0);
+
+    vec4 base_color = vec4(1.0, 0.0, 0.0, 1.0);
+
+#ifdef HAS_BASE_COLOR_TEXTURE
+    base_color = texture(base_color_texture, in_uv);
+#else
+    base_color = pbr_material_uniform.base_color_factor;
+#endif
+
+    o_albedo = base_color;
 }
-}        // namespace
-
-namespace fs
-{
-void create_directory(const std::string &path)
-{
-	if (!is_directory(path))
-	{
-		mkdir(path.c_str(), 0777);
-	}
-}
-}        // namespace fs
-
-LinuxPlatform::LinuxPlatform(int argc, char **argv)
-{
-	// Ignore the first argument containing the application full path
-	std::vector<std::string> argument_list = {argv + 1, argv + argc};
-
-	std::string argument_string = "";
-
-	for (auto &arg : argument_list)
-	{
-		argument_string += std::string(arg.begin(), arg.end()) + " ";
-	}
-
-	parse_arguments(argument_string);
-
-	Platform::set_temp_directory(get_temp_path_from_environment());
-}
-}        // namespace vkb

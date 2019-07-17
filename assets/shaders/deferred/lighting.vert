@@ -1,3 +1,4 @@
+#version 320 es
 /* Copyright (c) 2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
@@ -18,53 +19,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "platform/file.h"
+layout (location = 0) out vec2 outUV;
 
-namespace vkb::file
+void main()
 {
-std::string Path::get_asset_path()
-{
-	static std::string assets = "assets/";
-
-	if (!is_directory(assets))
-	{
-		mkdir(assets.c_str(), 0777);
-	}
-
-	return assets;
+	outUV = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
+	gl_Position = vec4(outUV * 2.0f - 1.0f, 0.0f, 1.0f);
 }
-
-std::string Path::get_temp_path()
-{
-	std::string temp_path = "/tmp/";
-	if (const char *env_ptr = std::getenv("TMPDIR"))
-	{
-		temp_path = std::string(env_ptr) + "/";
-	}
-	return temp_path;
-}
-
-std::string Path::get_storage_path()
-{
-	static std::string storage = "output/";
-
-	if (!is_directory(storage))
-	{
-		mkdir(storage.c_str(), 0777);
-	}
-
-	return storage;
-}
-
-std::string Path::get_logs_path()
-{
-	static std::string logs = get_storage_path() + "logs/";
-
-	if (!is_directory(logs))
-	{
-		mkdir(logs.c_str(), 0777);
-	}
-
-	return logs;
-}
-}        // namespace vkb::file

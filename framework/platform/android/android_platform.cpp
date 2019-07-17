@@ -30,16 +30,42 @@ VKBP_DISABLE_WARNINGS()
 #include <imgui.h>
 #include <jni.h>
 #include <spdlog/sinks/android_sink.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/spdlog.h>
 VKBP_ENABLE_WARNINGS()
 
 #include "common/logging.h"
 #include "platform/input_events.h"
 #include "vulkan_sample.h"
 
+extern "C"
+{
+	JNIEXPORT void JNICALL
+	    Java_com_arm_vulkan_1best_1practice_BPSampleActivity_initFilePath(JNIEnv *env, jobject thiz, jstring external_dir, jstring temp_dir)
+	{
+		const char *external_dir_cstr = env->GetStringUTFChars(external_dir, 0);
+		vkb::Platform::set_external_storage_directory(std::string(external_dir_cstr) + "/");
+		env->ReleaseStringUTFChars(external_dir, external_dir_cstr);
+
+		const char *temp_dir_cstr = env->GetStringUTFChars(temp_dir, 0);
+		vkb::Platform::set_temp_directory(std::string(temp_dir_cstr) + "/");
+		env->ReleaseStringUTFChars(temp_dir, temp_dir_cstr);
+	}
+}
+
 namespace vkb
 {
 namespace
 {
+inline std::tm thread_safe_time(const std::time_t time)
+{
+	std::tm                     result;
+	std::mutex                  mtx;
+	std::lock_guard<std::mutex> lock(mtx);
+	result = *std::localtime(&time);
+	return result;
+}
+
 inline KeyCode translate_key_code(int key)
 {
 	static const std::unordered_map<int, KeyCode> key_lookup =
@@ -243,7 +269,7 @@ void on_app_cmd(android_app *app, int32_t cmd)
 	{
 		case APP_CMD_INIT_WINDOW:
 		{
-			app->destroyRequested = !platform->get_app().prepare(*platform);
+			app->destroyRequested = !platform->prepare();
 			break;
 		}
 		case APP_CMD_CONTENT_RECT_CHANGED:
@@ -322,6 +348,17 @@ int32_t on_input_event(android_app *app, AInputEvent *input_event)
 }
 }        // namespace
 
+namespace fs
+{
+void create_directory(const std::string &path)
+{
+	if (!is_directory(path))
+	{
+		mkdir(path.c_str(), 0777);
+	}
+}
+}        // namespace fs
+
 AndroidPlatform::AndroidPlatform(android_app *app) :
     app{app}
 {
@@ -334,14 +371,7 @@ bool AndroidPlatform::initialize(std::unique_ptr<Application> &&application)
 	app->activity->callbacks->onContentRectChanged = on_content_rect_changed;
 	app->userData                                  = this;
 
-	assert(application && "Application is not valid");
-	active_app = std::move(application);
-
-	std::vector<spdlog::sink_ptr> sinks;
-	sinks.push_back(std::make_shared<spdlog::sinks::android_sink_mt>(PROJECT_NAME));
-	prepare_logger(sinks);
-
-	return true;
+	return Platform::initialize(std::move(application));
 }
 
 VkSurfaceKHR AndroidPlatform::create_surface(VkInstance instance)
@@ -399,14 +429,14 @@ void AndroidPlatform::main_loop()
 
 void AndroidPlatform::terminate(ExitCode code)
 {
-	if (code == ExitCode::Fatal)
+	switch (code)
 	{
-		std::string message = Platform::get_log_output_path();
-		app->activity->vm->AttachCurrentThread(&app->activity->env, NULL);
-		jclass    cls         = app->activity->env->GetObjectClass(app->activity->clazz);
-		jmethodID fatal_error = app->activity->env->GetMethodID(cls, "fatalError", "(Ljava/lang/String;)V");
-		app->activity->env->CallVoidMethod(app->activity->clazz, fatal_error, app->activity->env->NewStringUTF(message.c_str()));
-		app->activity->vm->DetachCurrentThread();
+		case ExitCode::Success:
+			log_output.clear();
+			break;
+		case ExitCode::Fatal:
+			send_notification(log_output);
+			break;
 	}
 
 	Platform::terminate(code);
@@ -417,6 +447,15 @@ void AndroidPlatform::close() const
 	ANativeActivity_finish(app->activity);
 }
 
+void AndroidPlatform::send_notification(const std::string &message)
+{
+	app->activity->vm->AttachCurrentThread(&app->activity->env, NULL);
+	jclass    cls         = app->activity->env->GetObjectClass(app->activity->clazz);
+	jmethodID fatal_error = app->activity->env->GetMethodID(cls, "fatalError", "(Ljava/lang/String;)V");
+	app->activity->env->CallVoidMethod(app->activity->clazz, fatal_error, app->activity->env->NewStringUTF(message.c_str()));
+	app->activity->vm->DetachCurrentThread();
+}
+
 ANativeActivity *AndroidPlatform::get_activity()
 {
 	return app->activity;
@@ -425,5 +464,25 @@ ANativeActivity *AndroidPlatform::get_activity()
 float AndroidPlatform::get_dpi_factor() const
 {
 	return AConfiguration_getDensity(app->config) / static_cast<float>(ACONFIGURATION_DENSITY_MEDIUM);
+}
+
+void AndroidPlatform::initialize_logger()
+{
+	std::vector<spdlog::sink_ptr> sinks;
+	sinks.push_back(std::make_shared<spdlog::sinks::android_sink_mt>(PROJECT_NAME));
+
+	char        timestamp[80];
+	std::time_t time = std::time(0);
+	std::tm     now  = thread_safe_time(time);
+	std::strftime(timestamp, 80, "%G-%m-%d_%H-%M-%S_log.txt", &now);
+	log_output = vkb::fs::path::get(vkb::fs::path::Logs) + std::string(timestamp);
+
+	sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_output, true));
+
+	auto logger = std::make_shared<spdlog::logger>("logger", sinks.begin(), sinks.end());
+	logger->set_pattern(LOGGER_FORMAT);
+	spdlog::set_default_logger(logger);
+
+	LOGI("Logger initialized");
 }
 }        // namespace vkb

@@ -49,6 +49,8 @@ enum class StatIndex
 	branch_miss_ratio,
 	gpu_cycles,
 	vertex_compute_cycles,
+	tiles,
+	fragment_jobs,
 	fragment_cycles,
 	l2_reads_lookups,
 	l2_ext_reads,
@@ -57,7 +59,8 @@ enum class StatIndex
 	l2_ext_read_stalls,
 	l2_ext_write_stalls,
 	l2_ext_read_bytes,
-	l2_ext_write_bytes
+	l2_ext_write_bytes,
+	tex_instr
 };
 
 struct StatIndexHash

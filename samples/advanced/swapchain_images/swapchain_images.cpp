@@ -25,7 +25,7 @@
 #include "core/shader_module.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "platform/file.h"
+#include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "rendering/subpasses/scene_subpass.h"
 #include "scene_graph/components/material.h"
@@ -64,8 +64,8 @@ bool SwapchainImages::prepare(vkb::Platform &platform)
 	auto &camera_node = add_free_camera("main_camera");
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
-	vkb::ShaderSource vert_shader(vkb::file::read_asset("shaders/base.vert"));
-	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/base.frag"));
+	vkb::ShaderSource vert_shader(vkb::fs::read_asset("shaders/base.vert"));
+	vkb::ShaderSource frag_shader(vkb::fs::read_asset("shaders/base.frag"));
 	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 
 	auto render_pipeline = vkb::RenderPipeline();

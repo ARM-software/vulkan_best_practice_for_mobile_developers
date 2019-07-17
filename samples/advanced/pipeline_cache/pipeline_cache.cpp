@@ -25,7 +25,7 @@
 #include "common/logging.h"
 #include "core/device.h"
 #include "gui.h"
-#include "platform/file.h"
+#include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "rendering/subpasses/scene_subpass.h"
 #include "scene_graph/node.h"
@@ -52,13 +52,13 @@ PipelineCache::~PipelineCache()
 		VK_CHECK(vkGetPipelineCacheData(device->get_handle(), pipeline_cache, &size, data.data()));
 
 		/* Write pipeline cache data to a file in binary format */
-		vkb::file::write_temp(data, "pipeline_cache.data");
+		vkb::fs::write_temp(data, "pipeline_cache.data");
 
 		/* Destroy Vulkan pipeline cache */
 		vkDestroyPipelineCache(device->get_handle(), pipeline_cache, nullptr);
 	}
 
-	vkb::file::write_temp(device->get_resource_cache().serialize(), "cache.data");
+	vkb::fs::write_temp(device->get_resource_cache().serialize(), "cache.data");
 }
 
 bool PipelineCache::prepare(vkb::Platform &platform)
@@ -73,7 +73,7 @@ bool PipelineCache::prepare(vkb::Platform &platform)
 
 	try
 	{
-		pipeline_data = vkb::file::read_temp("pipeline_cache.data");
+		pipeline_data = vkb::fs::read_temp("pipeline_cache.data");
 	}
 	catch (std::runtime_error &ex)
 	{
@@ -101,7 +101,7 @@ bool PipelineCache::prepare(vkb::Platform &platform)
 
 	try
 	{
-		data_cache = vkb::file::read_temp("cache.data");
+		data_cache = vkb::fs::read_temp("cache.data");
 	}
 	catch (std::runtime_error &ex)
 	{
@@ -128,8 +128,8 @@ bool PipelineCache::prepare(vkb::Platform &platform)
 	auto &camera_node = add_free_camera("main_camera");
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
-	vkb::ShaderSource vert_shader(vkb::file::read_asset("shaders/base.vert"));
-	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/base.frag"));
+	vkb::ShaderSource vert_shader(vkb::fs::read_asset("shaders/base.vert"));
+	vkb::ShaderSource frag_shader(vkb::fs::read_asset("shaders/base.frag"));
 	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 
 	auto render_pipeline = vkb::RenderPipeline();
