@@ -192,9 +192,6 @@ set(PLATFORM_FILES
     platform/argument_parser.h
     platform/platform.h
     platform/filesystem.h
-    platform/thread_pool.h
-    platform/concurrent_queue.h
-    platform/concurrent_queue.inl
     platform/input_events.h
     platform/configuration.h
     # Source Files
@@ -202,7 +199,6 @@ set(PLATFORM_FILES
     platform/argument_parser.cpp
     platform/platform.cpp
     platform/filesystem.cpp
-    platform/thread_pool.cpp
     platform/input_events.cpp
     platform/configuration.cpp)
 
@@ -293,7 +289,8 @@ target_link_libraries(${PROJECT_NAME}
     hwcpipe
     spirv-cross-glsl
     glslang-default-resource-limits
-    spdlog)
+    spdlog
+    ctpl)
 
 # Link platform specific libraries
 if(ANDROID)

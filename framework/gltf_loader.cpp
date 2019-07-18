@@ -35,13 +35,14 @@ VKBP_ENABLE_WARNINGS()
 #include "core/device.h"
 #include "core/image.h"
 #include "platform/filesystem.h"
-#include "platform/thread_pool.h"
 #include "scene_graph/components/image/astc.h"
 #include "scene_graph/components/perspective_camera.h"
 #include "scene_graph/components/texture.h"
 #include "scene_graph/components/transform.h"
 #include "scene_graph/node.h"
 #include "utils.h"
+
+#include <ctpl_stl.h>
 
 namespace vkb
 {
@@ -384,24 +385,32 @@ sg::Scene GLTFLoader::load_scene()
 	timer.start();
 
 	// Load images
-	ThreadPool thread_pool;
+	auto thread_count = std::thread::hardware_concurrency();
+	thread_count      = thread_count == 0 ? 1 : thread_count;
+	ctpl::thread_pool thread_pool(thread_count);
 
-	std::vector<std::unique_ptr<sg::Image>> image_components(model.images.size());
+	auto image_count = to_u32(model.images.size());
 
-	for (size_t image_index = 0; image_index < model.images.size(); image_index++)
+	std::vector<std::future<std::unique_ptr<sg::Image>>> image_component_futures;
+	for (size_t image_index = 0; image_index < image_count; image_index++)
 	{
-		thread_pool.run(
-		    [&](size_t image_index) {
+		auto fut = thread_pool.push(
+		    [this, image_index](size_t) {
 			    auto image = parse_image(model.images.at(image_index));
 
 			    LOGI("Loaded gltf image #{} ({})", image_index, model.images.at(image_index).uri.c_str());
 
-			    image_components[image_index] = std::move(image);
-		    },
-		    image_index);
+			    return image;
+		    });
+
+		image_component_futures.push_back(std::move(fut));
 	}
 
-	thread_pool.wait();
+	std::vector<std::unique_ptr<sg::Image>> image_components;
+	for (auto &fut : image_component_futures)
+	{
+		image_components.push_back(fut.get());
+	}
 
 	// Upload images to GPU
 	std::vector<core::Buffer> transient_buffers;
@@ -410,7 +419,7 @@ sg::Scene GLTFLoader::load_scene()
 
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-	for (size_t image_index = 0; image_index < image_components.size(); image_index++)
+	for (size_t image_index = 0; image_index < image_count; image_index++)
 	{
 		auto &image = image_components.at(image_index);
 
@@ -444,7 +453,7 @@ sg::Scene GLTFLoader::load_scene()
 
 	auto elapsed_time = timer.stop();
 
-	LOGI("Time spent loading images: {} seconds.", vkb::to_string(elapsed_time));
+	LOGI("Time spent loading images: {} seconds across {} threads.", vkb::to_string(elapsed_time), thread_count);
 
 	// Load textures
 	auto images          = scene.get_components<sg::Image>();
@@ -627,7 +636,7 @@ sg::Scene GLTFLoader::load_scene()
 	return scene;
 }
 
-std::unique_ptr<sg::Node> GLTFLoader::parse_node(const tinygltf::Node &gltf_node)
+std::unique_ptr<sg::Node> GLTFLoader::parse_node(const tinygltf::Node &gltf_node) const
 {
 	auto node = std::make_unique<sg::Node>(gltf_node.name);
 
@@ -672,7 +681,7 @@ std::unique_ptr<sg::Node> GLTFLoader::parse_node(const tinygltf::Node &gltf_node
 	return node;
 }
 
-std::unique_ptr<sg::Camera> GLTFLoader::parse_camera(const tinygltf::Camera &gltf_camera)
+std::unique_ptr<sg::Camera> GLTFLoader::parse_camera(const tinygltf::Camera &gltf_camera) const
 {
 	std::unique_ptr<sg::Camera> camera;
 
@@ -695,12 +704,12 @@ std::unique_ptr<sg::Camera> GLTFLoader::parse_camera(const tinygltf::Camera &glt
 	return camera;
 }
 
-std::unique_ptr<sg::Mesh> GLTFLoader::parse_mesh(const tinygltf::Mesh &gltf_mesh)
+std::unique_ptr<sg::Mesh> GLTFLoader::parse_mesh(const tinygltf::Mesh &gltf_mesh) const
 {
 	return std::make_unique<sg::Mesh>(gltf_mesh.name);
 }
 
-std::unique_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primitive &gltf_primitive)
+std::unique_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primitive &gltf_primitive) const
 {
 	auto submesh = std::make_unique<sg::SubMesh>();
 
@@ -775,7 +784,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primiti
 	return submesh;
 }
 
-std::unique_ptr<sg::PBRMaterial> GLTFLoader::parse_material(const tinygltf::Material &gltf_material)
+std::unique_ptr<sg::PBRMaterial> GLTFLoader::parse_material(const tinygltf::Material &gltf_material) const
 {
 	auto material = std::make_unique<sg::PBRMaterial>(gltf_material.name);
 
@@ -832,7 +841,7 @@ std::unique_ptr<sg::PBRMaterial> GLTFLoader::parse_material(const tinygltf::Mate
 	return material;
 }
 
-std::unique_ptr<sg::Image> GLTFLoader::parse_image(tinygltf::Image &gltf_image)
+std::unique_ptr<sg::Image> GLTFLoader::parse_image(tinygltf::Image &gltf_image) const
 {
 	std::unique_ptr<sg::Image> image{nullptr};
 
@@ -871,7 +880,7 @@ std::unique_ptr<sg::Image> GLTFLoader::parse_image(tinygltf::Image &gltf_image)
 	return image;
 }
 
-std::unique_ptr<sg::Sampler> GLTFLoader::parse_sampler(const tinygltf::Sampler &gltf_sampler)
+std::unique_ptr<sg::Sampler> GLTFLoader::parse_sampler(const tinygltf::Sampler &gltf_sampler) const
 {
 	auto name = gltf_sampler.name;
 
@@ -900,7 +909,7 @@ std::unique_ptr<sg::Sampler> GLTFLoader::parse_sampler(const tinygltf::Sampler &
 	return std::make_unique<sg::Sampler>(name, std::move(vk_sampler));
 }
 
-std::unique_ptr<sg::Texture> GLTFLoader::parse_texture(const tinygltf::Texture &gltf_texture)
+std::unique_ptr<sg::Texture> GLTFLoader::parse_texture(const tinygltf::Texture &gltf_texture) const
 {
 	return std::make_unique<sg::Texture>(gltf_texture.name);
 }

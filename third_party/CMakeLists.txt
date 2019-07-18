@@ -252,3 +252,9 @@ endif()
 add_subdirectory(spdlog)
 
 set_property(TARGET spdlog_headers_for_ide PROPERTY FOLDER "ThirdParty")
+
+# ctpl
+add_library(ctpl INTERFACE)
+set(CTPL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/CTPL)
+target_sources(ctpl INTERFACE ${CTPL_DIR}/ctpl_stl.h)
+target_include_directories(ctpl INTERFACE ${CTPL_DIR})
