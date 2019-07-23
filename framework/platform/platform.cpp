@@ -49,7 +49,14 @@ bool Platform::initialize(std::unique_ptr<Application> &&app)
 	assert(app && "Application is not valid");
 	active_app = std::move(app);
 
-	initialize_logger();
+	// Override initialize_sinks in the derived platforms
+	auto sinks = get_platform_sinks();
+
+	auto logger = std::make_shared<spdlog::logger>("logger", sinks.begin(), sinks.end());
+	logger->set_pattern(LOGGER_FORMAT);
+	spdlog::set_default_logger(logger);
+
+	LOGI("Logger initialized");
 
 	return true;
 }
@@ -104,12 +111,18 @@ void Platform::parse_arguments(const std::string &argument_string)
 {
 	arguments = ArgumentParser{argument_string};
 }
+
 void Platform::set_external_storage_directory(const std::string &dir)
 {
 	external_storage_directory = dir;
 }
+
 void Platform::set_temp_directory(const std::string &dir)
 {
 	temp_directory = dir;
+}
+std::vector<spdlog::sink_ptr> Platform::get_platform_sinks()
+{
+	return {};
 }
 }        // namespace vkb

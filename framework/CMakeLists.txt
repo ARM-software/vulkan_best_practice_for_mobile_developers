@@ -268,7 +268,7 @@ if(${VKB_WARNINGS_AS_ERRORS})
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         target_compile_options(${PROJECT_NAME} PRIVATE -Werror)
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-        target_compile_options(${PROJECT_NAME} PRIVATE /W3 /WX)
+        target_compile_options(${PROJECT_NAME} PRIVATE /W3 /WX /MP)
     endif()
 endif()
 

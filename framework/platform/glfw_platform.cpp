@@ -28,6 +28,7 @@ VKBP_DISABLE_WARNINGS()
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
 VKBP_ENABLE_WARNINGS()
 
 namespace vkb
@@ -374,13 +375,11 @@ float GlfwPlatform::get_dpi_factor() const
 	return dpi_factor;
 }
 
-void GlfwPlatform::initialize_logger()
+std::vector<spdlog::sink_ptr> GlfwPlatform::get_platform_sinks()
 {
-	auto console = spdlog::stdout_color_mt("console");
-	console->set_pattern(LOGGER_FORMAT);
-	spdlog::set_default_logger(console);
-
-	LOGI("Logger initialized");
+	std::vector<spdlog::sink_ptr> sinks;
+	sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
+	return sinks;
 }
 
 }        // namespace vkb

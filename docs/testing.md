@@ -33,16 +33,15 @@ In order for the script to work you will need to install and add to your Path:
 * `cmake` 
 * (Optional) `adb` if you plan to use Android
 
-You will also need to have built the Vulkan Best Practices in 64 bit, with the CMake flag `VKB_BUILD_TESTS`, `VKB_ENTRYPOINTS` and `VKB_SYMLINKS` set to `ON`, and in addition to this install a working `.apk` onto a device if you plan on testing on Android.
+You will also need to have built the Vulkan Best Practices in 64 bit, with the CMake flag `VKB_BUILD_SAMPLES`, `VKB_BUILD_TESTS`, and `VKB_SYMLINKS` set to `ON`, and in addition to this install a working `.apk` onto a device if you plan on testing on Android.
 
 **Before you begin a system test on Android, ensure that the device is held in landscape, and there isn't an instance of Vulkan Best Practice running already.**
 
 1. From the root of the project: `cd tests/system_test`
-2. To run: `python system_test.py -B <build dir> -H <root_dir> -C <Debug|Release>`  
-2.1. e.g. `python system_test.py -Bbuild/windows -H../.. -CRelease` (build path is relative to root)  
+2. To run: `python system_test.py -B <build dir> -C <Debug|Release>`  
+2.1. e.g. `python system_test.py -Bbuild/windows -CRelease` (build path is relative to root)  
 2.2. To target just testing on desktop, add a `-D` flag, or to target just Android, an `-A` flag. If no flag is specified it will run for both.  
 2.3. To run a specific sub test(s), use the `-S` flag (e.g. `python system_test.py ... -S sponza bonza` runs sponza and bonza)  
-2.4. To use a different image comparison metric, use the `-M` flag, by default [MAE](https://en.wikipedia.org/wiki/Mean_absolute_error) is used.
 
 ## Android
 

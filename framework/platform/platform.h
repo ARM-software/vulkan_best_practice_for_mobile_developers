@@ -100,7 +100,7 @@ class Platform
 
 	ArgumentParser arguments{""};
 
-	virtual void initialize_logger() = 0;
+	virtual std::vector<spdlog::sink_ptr> get_platform_sinks();
 
   private:
 	static std::string external_storage_directory;
