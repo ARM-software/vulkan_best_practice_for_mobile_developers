@@ -163,10 +163,10 @@ class VulkanSample : public Application
 	std::unique_ptr<Stats> stats{nullptr};
 
 	/**
-	 * @brief Update scripts
+	 * @brief Update scene
 	 * @param delta_time
 	 */
-	void update_scripts(float delta_time);
+	void update_scene(float delta_time);
 
 	/**
 	 * @brief Update counter values

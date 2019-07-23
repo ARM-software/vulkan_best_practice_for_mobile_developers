@@ -187,15 +187,19 @@ bool VulkanSample::prepare(Platform &platform)
 	return true;
 }
 
-void VulkanSample::update_scripts(float delta_time)
+void VulkanSample::update_scene(float delta_time)
 {
-	if (scene->has_component<sg::Script>())
+	if (scene)
 	{
-		auto scripts = scene->get_components<sg::Script>();
-
-		for (auto script : scripts)
+		//Update scripts
+		if (scene->has_component<sg::Script>())
 		{
-			script->update(delta_time);
+			auto scripts = scene->get_components<sg::Script>();
+
+			for (auto script : scripts)
+			{
+				script->update(delta_time);
+			}
 		}
 	}
 }
@@ -286,7 +290,7 @@ void VulkanSample::record_scene_rendering_commands(CommandBuffer &command_buffer
 
 void VulkanSample::update(float delta_time)
 {
-	update_scripts(delta_time);
+	update_scene(delta_time);
 
 	update_stats(delta_time);
 

@@ -88,7 +88,7 @@ bool CommandBufferUsage::prepare(vkb::Platform &platform)
 
 void CommandBufferUsage::update(float delta_time)
 {
-	update_scripts(delta_time);
+	update_scene(delta_time);
 
 	update_stats(delta_time);
 
