@@ -42,4 +42,4 @@
 	url = https://github.com/ARM-software/astc-encoder
 [submodule "third_party/CTPL"]
 	path = third_party/CTPL
-	url = https://github.com/vit-vit/CTPL.git
+	url = https://github.com/vit-vit/CTPL

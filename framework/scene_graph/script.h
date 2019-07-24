@@ -25,8 +25,8 @@
 #include <typeinfo>
 #include <vector>
 
-#include "scene_graph/component.h"
 #include "platform/input_events.h"
+#include "scene_graph/component.h"
 
 namespace vkb
 {

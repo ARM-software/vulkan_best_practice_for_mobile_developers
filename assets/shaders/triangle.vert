@@ -1,5 +1,5 @@
 #version 320 es
-/* Copyright (c) 2018, Arm Limited and Contributors
+/* Copyright (c) 2018-2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@
  */
 
 precision mediump float;
- 
+
 layout(location = 0) out vec3 out_color;
 
 vec2 triangle_positions[3] = vec2[](

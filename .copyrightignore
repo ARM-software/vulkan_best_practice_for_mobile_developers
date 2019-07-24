@@ -1,5 +1,4 @@
 .clang-format
-doxyfile
 .gitignore
 .snakeignore
 .yml
@@ -7,4 +6,7 @@ doxyfile
 .jpg
 .png
 .ttf
+doxyfile
+build.gradle.in
+settings.gradle.in
 VERSION
