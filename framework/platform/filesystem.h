@@ -67,10 +67,17 @@ const std::string get(const Type type);
 bool is_directory(const std::string &path);
 
 /**
- * @brief Creates a directory relative to the path given
+ * @brief Platform specific implementation to create a directory
  * @param path A path to a directory
  */
 void create_directory(const std::string &path);
+
+/**
+ * @brief Recursively creates a directory
+ * @param root The root directory that the path is relative to
+ * @param path A path in the format 'this/is/an/example/path/'
+ */
+void create_path(const std::string &root, const std::string &path);
 
 /**
  * @brief Helper to read an asset file into a byte-array

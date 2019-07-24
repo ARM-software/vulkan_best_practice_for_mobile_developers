@@ -51,7 +51,10 @@ namespace fs
 {
 void create_directory(const std::string &path)
 {
-	CreateDirectory(path.c_str(), NULL);
+	if (!is_directory(path))
+	{
+		CreateDirectory(path.c_str(), NULL);
+	}
 }
 }        // namespace fs
 

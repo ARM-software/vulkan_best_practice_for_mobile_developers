@@ -72,7 +72,7 @@ const std::string get(const Type type)
 
 	if (!is_directory(path))
 	{
-		create_directory(path);
+		create_path(Platform::get_external_storage_directory(), it->second);
 	}
 
 	return path;
@@ -93,6 +93,15 @@ bool is_directory(const std::string &path)
 	else
 	{
 		return false;
+	}
+}
+
+void create_path(const std::string &root, const std::string &path)
+{
+	for (auto it = path.begin(); it != path.end(); ++it)
+	{
+		it = std::find(it, path.end(), '/');
+		create_directory(root + std::string(path.begin(), it));
 	}
 }
 
