@@ -104,6 +104,7 @@ See [LICENSE](LICENSE).
 This project has some third-party dependencies, each of which may have independent licensing:
 
 - [astc-encoder](https://github.com/ARM-software/astc-encoder): ASTC Evaluation Codec
+- [CTPL](https://github.com/vit-vit/CTPL): Thread Pool Library
 - [glfw](https://github.com/glfw/glfw): A multi-platform library for OpenGL, OpenGL ES, Vulkan, window and input
 - [glm](https://github.com/g-truc/glm): OpenGL Mathematics
 - [glslang](https://github.com/KhronosGroup/glslang): Shader front end and validator
