@@ -63,7 +63,7 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 	                      VkExtent3D{width, height, 1},
 	                      format,
 	                      VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-	                      VMA_MEMORY_USAGE_CPU_ONLY,
+	                      VMA_MEMORY_USAGE_GPU_TO_CPU,
 	                      VK_SAMPLE_COUNT_1_BIT,
 	                      1, 1,
 	                      VK_IMAGE_TILING_LINEAR};
