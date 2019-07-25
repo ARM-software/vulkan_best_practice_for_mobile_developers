@@ -41,8 +41,8 @@ Stats::Stats(const std::set<StatIndex> &enabled_stats, CounterSamplingConfig sam
 	    {StatIndex::frame_times, {StatScaling::None}},
 	    {StatIndex::cpu_cycles, {hwcpipe::CpuCounter::Cycles}},
 	    {StatIndex::cpu_instructions, {hwcpipe::CpuCounter::Instructions}},
-	    {StatIndex::cache_miss_ratio, {hwcpipe::CpuCounter::CacheMisses}},
-	    {StatIndex::branch_miss_ratio, {hwcpipe::CpuCounter::BranchMisses}},
+	    {StatIndex::cache_miss_ratio, {hwcpipe::CpuCounter::CacheMisses, StatScaling::ByCounter, hwcpipe::CpuCounter::CacheReferences}},
+	    {StatIndex::branch_miss_ratio, {hwcpipe::CpuCounter::BranchMisses, StatScaling::ByCounter, hwcpipe::CpuCounter::BranchInstructions}},
 	    {StatIndex::gpu_cycles, {hwcpipe::GpuCounter::GpuCycles}},
 	    {StatIndex::vertex_compute_cycles, {hwcpipe::GpuCounter::VertexComputeCycles}},
 	    {StatIndex::tiles, {hwcpipe::GpuCounter::Tiles}},
@@ -71,9 +71,19 @@ Stats::Stats(const std::set<StatIndex> &enabled_stats, CounterSamplingConfig sam
 			{
 				case StatType::Cpu:
 					enabled_cpu_counters.insert(res->second.cpu_counter);
+
+					if (res->second.denom_cpu_counter != hwcpipe::CpuCounter::MaxValue)
+					{
+						enabled_cpu_counters.insert(res->second.denom_cpu_counter);
+					}
 					break;
 				case StatType::Gpu:
 					enabled_gpu_counters.insert(res->second.gpu_counter);
+
+					if (res->second.denom_gpu_counter != hwcpipe::GpuCounter::MaxValue)
+					{
+						enabled_gpu_counters.insert(res->second.denom_gpu_counter);
+					}
 					break;
 				default:
 					break;
@@ -294,6 +304,19 @@ void Stats::push_sample(const MeasurementSample &sample)
 				{
 					measurement = cpu_res->second.get<float>();
 				}
+
+				if (data->second.scaling == StatScaling::ByCounter)
+				{
+					const auto &denom_cpu_res = sample.cpu.find(data->second.denom_cpu_counter);
+					if (denom_cpu_res != sample.cpu.end())
+					{
+						measurement /= denom_cpu_res->second.get<float>();
+					}
+					else
+					{
+						measurement = 0;
+					}
+				}
 				break;
 			}
 			case StatType::Gpu:
@@ -302,6 +325,19 @@ void Stats::push_sample(const MeasurementSample &sample)
 				if (gpu_res != sample.gpu.end())
 				{
 					measurement = gpu_res->second.get<float>();
+				}
+
+				if (data->second.scaling == StatScaling::ByCounter)
+				{
+					const auto &denom_gpu_res = sample.gpu.find(data->second.denom_gpu_counter);
+					if (denom_gpu_res != sample.gpu.end())
+					{
+						measurement /= denom_gpu_res->second.get<float>();
+					}
+					else
+					{
+						measurement = 0;
+					}
 				}
 				break;
 			}
