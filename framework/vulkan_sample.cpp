@@ -466,6 +466,8 @@ sg::Node &VulkanSample::add_free_camera(const std::string &node_name)
 
 	auto free_camera_script = std::make_unique<sg::FreeCamera>(*camera_node);
 
+	free_camera_script->resize(render_context->get_surface_extent().width, render_context->get_surface_extent().height);
+
 	scene->add_component(std::move(free_camera_script), *camera_node);
 
 	return *camera_node;
