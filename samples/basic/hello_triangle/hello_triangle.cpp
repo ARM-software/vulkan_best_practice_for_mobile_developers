@@ -1045,7 +1045,6 @@ void HelloTriangle::teardown(Context &context)
 
 HelloTriangle::HelloTriangle()
 {
-	get_configuration().insert<vkb::EmptySetting>(0);
 }
 
 HelloTriangle::~HelloTriangle()

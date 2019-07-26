@@ -20,55 +20,49 @@
 
 #pragma once
 
-#include <sstream>
-#include <string>
-#include <unordered_map>
-#include <vector>
+#include <docopt.h>
+
+#include "common/logging.h"
 
 namespace vkb
 {
 /**
- * @brief Splits a string into a vector by a single char delimiter
- * @param s String to split
- * @param delim Single character to split the string by
- * @return A vector of the components within a string
- */
-std::vector<std::string> split(const std::string &s, char delim);
-
-/**
  * @brief Class that handles and formats arguments passed into the application
  */
-class ArgumentParser
+class Options
 {
   public:
-	/**
-	 * @brief Constructor
-	 * @param argument_string The full string of arguments passed to the program
-	 */
-	ArgumentParser(const std::string argument_string);
+	Options(const std::string &usage, const std::vector<std::string> &args);
 
 	/**
-	 * @brief Helper function to tell the existance of a flag
-	 * @param argument The flag to check for
-	 * @returns True if the flag exists within the argument map, false if not
+	 * @brief Helper function that determines if key exists within parsed args
+	 * @param argument The argument to check for
+	 * @returns True if the argument exists in the parsed_arguments
 	 */
 	bool contains(const std::string &argument) const;
 
 	/**
-	 * @brief Helper function to return the value from a flag
-	 * @param argument The flag to get the value from
-	 * @returns A string of the value 
+	 * @brief Helper function to return the integer value from a flag
+	 * @param argument The flag to check for
+	 * @returns An integer representation of the value under the argument
 	 */
-	const std::string at(const std::string &argument) const;
+	const int32_t get_int(const std::string &argument) const;
 
 	/**
-	 * @brief Helper function to return the vector of values from a flag
-	 * @param argument The flag to get the vector from
-	 * @returns A vector of strings supplied after the flag
+	 * @brief Helper function to return the string value from a flag
+	 * @param argument The flag to check for
+	 * @returns A string representation of the value under the argument
 	 */
-	const std::vector<std::string> get(const std::string &argument) const;
+	const std::string get_string(const std::string &argument) const;
+
+	/**
+	 * @brief Prints a formatted usage of the arguments
+	 */
+	void print_usage() const;
 
   private:
-	std::unordered_map<std::string, std::vector<std::string>> arguments;
+	std::string usage;
+
+	std::map<std::string, docopt::value> parse_result;
 };
 }        // namespace vkb

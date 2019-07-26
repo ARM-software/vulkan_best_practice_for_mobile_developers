@@ -31,12 +31,12 @@ namespace vkb
 {
 using CreateAppFunc = std::function<std::unique_ptr<vkb::Application>()>;
 
-class ArgumentParser;
-
-class SampleController : public Application
+class VulkanBestPractice : public Application
 {
   public:
-	virtual ~SampleController() = default;
+	VulkanBestPractice();
+
+	virtual ~VulkanBestPractice() = default;
 
 	virtual bool prepare(Platform &platform) override;
 
@@ -48,30 +48,39 @@ class SampleController : public Application
 
 	virtual void input_event(const InputEvent &input_event) override;
 
+	/** 
+	 * @brief Prepares a sample or a test to be run under certain conditions
+	 * @param run_info A struct containing the information needed to run
+	 * @returns true if the preparation was a success, false if there was a failure
+	 */
+	bool prepare_active_app(CreateAppFunc create_app_func, const std::string &name, bool test, bool batch);
+
   private:
-	bool prepare_sample(std::vector<SampleInfo>::const_iterator sample);
-
-	bool process_arguments(const ArgumentParser &args);
-
-	bool run_test(const std::string &test_name);
-
+	/// Platform pointer
 	Platform *platform;
 
-	std::unique_ptr<Application> active_app;
+	/// The actual sample that the vulkan best practices controls
+	std::unique_ptr<Application> active_app{nullptr};
 
-	std::vector<SampleInfo>::const_iterator current_sample;
+	/// The list of suitable samples to be run in conjunction with batch mode
+	std::vector<SampleInfo> batch_mode_sample_list{};
 
-	std::vector<SampleInfo> samples_to_run;
+	/// An iterator to the current batch mode sample info object
+	std::vector<SampleInfo>::const_iterator batch_mode_sample_iter;
 
-	bool automate = true;
+	/// If batch mode is enabled
+	bool batch_mode{false};
 
-	bool skipped_first_frame = false;
+	/// The first frame is skipped as we don't want to include the prepare time
+	bool skipped_first_frame{false};
 
-	float sample_run_time_per_configuration = 10.0f;
+	/// The amount of time run per configuration for each sample
+	float sample_run_time_per_configuration{10.0f};
 
-	float elapsed_time = 0.0f;
+	/// Used to calculate when the sample has exceeded the sample_run_time_per_configuration
+	float elapsed_time{0.0f};
 };
 
 }        // namespace vkb
 
-std::unique_ptr<vkb::Application> create_sample_controller();
+std::unique_ptr<vkb::Application> create_vulkan_best_practice();

@@ -38,9 +38,10 @@
 
 SurfaceRotation::SurfaceRotation()
 {
-	get_configuration().insert<vkb::BoolSetting>(0, pre_rotate, false);
+	auto &config = get_configuration();
 
-	get_configuration().insert<vkb::BoolSetting>(1, pre_rotate, true);
+	config.insert<vkb::BoolSetting>(0, pre_rotate, false);
+	config.insert<vkb::BoolSetting>(1, pre_rotate, true);
 }
 
 bool SurfaceRotation::prepare(vkb::Platform &platform)

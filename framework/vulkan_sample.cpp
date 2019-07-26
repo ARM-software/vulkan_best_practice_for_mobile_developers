@@ -233,7 +233,7 @@ void VulkanSample::update_gui(float delta_time)
 
 		gui->new_frame();
 
-		gui->show_top_window(get_name(), stats.get(), &debug_info);
+		gui->show_top_window(get_name(), stats.get(), &get_debug_info());
 
 		// Samples can override this
 		draw_gui();
@@ -405,6 +405,11 @@ VkPhysicalDevice VulkanSample::get_gpu()
 VkSurfaceKHR VulkanSample::get_surface()
 {
 	return surface;
+}
+
+Configuration &VulkanSample::get_configuration()
+{
+	return configuration;
 }
 
 void VulkanSample::render(CommandBuffer &command_buffer)

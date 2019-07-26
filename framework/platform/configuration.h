@@ -94,6 +94,11 @@ class Configuration
 {
   public:
 	/**
+	 * @brief Constructor
+	 */
+	Configuration() = default;
+
+	/**
 	 * @brief Configures the settings in the current config
 	 */
 	void set();

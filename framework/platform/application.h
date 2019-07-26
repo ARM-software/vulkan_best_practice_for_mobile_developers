@@ -25,6 +25,7 @@
 #include "debug_info.h"
 #include "platform/configuration.h"
 #include "platform/input_events.h"
+#include "platform/options.h"
 #include "timer.h"
 
 namespace vkb
@@ -39,14 +40,26 @@ class Application
 	virtual ~Application() = default;
 
 	/**
-	 * @brief Starts the runtime timer
+	 * @brief Advances the application forward one frame, calculating the delta time between steps
+	 *        and then calling the update method accordingly
+	 */
+	void step();
+
+	/**
+	 * @brief Prepares the application for execution
+	 * @param platform The platform the application is being run on
 	 */
 	virtual bool prepare(Platform &platform);
 
-	virtual void step();
-
+	/**
+	 * @brief Updates the application
+	 * @param delta_time The time since the last update
+	 */
 	virtual void update(float delta_time) = 0;
 
+	/**
+	 * @brief Handles cleaning up the application
+	 */
 	virtual void finish();
 
 	/**
@@ -63,56 +76,50 @@ class Application
 	virtual void input_event(const InputEvent &input_event);
 
 	/**
-	 * @brief Returns a reference to the name of the app
-	 * @returns A string reference
+	 * @brief Parses the arguments against Application::usage
+	 * @param args The argument list
 	 */
+	void parse_options(const std::vector<std::string> &args);
+
 	const std::string &get_name() const;
 
 	void set_name(const std::string &name);
 
-	Configuration &get_configuration();
+	bool is_benchmark_mode() const;
 
-	/**
-	 * @brief Change focus state
-	 * @param flag Current focus state of window
-	 */
-	void set_focus(bool flag);
+	void set_benchmark_mode(bool benchmark_mode);
 
-	/**
-	 * @return True if window is in focus, false otherwise
-	 */
 	bool is_focused() const;
+
+	void set_focus(bool flag);
 
 	DebugInfo &get_debug_info();
 
-  protected:
-	/**
-	 * @brief The settings of the app
-	 */
-	DebugInfo debug_info{};
+	const Options &get_options();
 
+  protected:
 	float fps{0.0f};
 
 	float frame_time{0.0f};        // In ms
 
 	uint32_t frame_count{0};
 
-	Timer timer;
+	static std::string usage;
+
+	std::unique_ptr<Options> options;
+
+	static void set_usage(const std::string &usage);
 
   private:
-	/**
-	 * @brief The name of the app
-	 */
 	std::string name{};
 
-	/**
-	 * @brief The configurations of the sample
-	 */
-	Configuration configuration{};
-
-	/**
-	 * @brief Focus state of application
-	 */
 	bool focus{true};
+
+	Timer timer;
+
+	bool benchmark_mode{false};
+
+	// The debug info of the app
+	DebugInfo debug_info{};
 };
 }        // namespace vkb

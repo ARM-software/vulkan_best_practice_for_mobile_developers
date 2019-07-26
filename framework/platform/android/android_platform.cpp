@@ -51,6 +51,25 @@ extern "C"
 		vkb::Platform::set_temp_directory(std::string(temp_dir_cstr) + "/");
 		env->ReleaseStringUTFChars(temp_dir, temp_dir_cstr);
 	}
+
+	JNIEXPORT void JNICALL
+	    Java_com_arm_vulkan_1best_1practice_BPSampleActivity_sendArgumentsToPlatform(JNIEnv *env, jobject thiz, jobjectArray arg_strings)
+	{
+		std::vector<std::string> args;
+
+		for (int i = 0; i < env->GetArrayLength(arg_strings); i++)
+		{
+			jstring arg_string = (jstring)(env->GetObjectArrayElement(arg_strings, i));
+
+			const char *arg = env->GetStringUTFChars(arg_string, 0);
+
+			args.push_back(std::string(arg));
+
+			env->ReleaseStringUTFChars(arg_string, arg);
+		}
+
+		vkb::Platform::set_arguments(args);
+	}
 }
 
 namespace vkb
@@ -420,9 +439,9 @@ void AndroidPlatform::main_loop()
 			break;
 		}
 
-		if (app->window && active_app->is_focused())
+		if (app->window)
 		{
-			active_app->step();
+			run();
 		}
 	}
 }

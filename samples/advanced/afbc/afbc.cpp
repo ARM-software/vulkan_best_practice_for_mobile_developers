@@ -34,9 +34,10 @@
 
 AFBCSample::AFBCSample()
 {
-	get_configuration().insert<vkb::BoolSetting>(0, afbc_enabled, false);
+	auto &config = get_configuration();
 
-	get_configuration().insert<vkb::BoolSetting>(1, afbc_enabled, true);
+	config.insert<vkb::BoolSetting>(0, afbc_enabled, false);
+	config.insert<vkb::BoolSetting>(1, afbc_enabled, true);
 }
 
 bool AFBCSample::prepare(vkb::Platform &platform)

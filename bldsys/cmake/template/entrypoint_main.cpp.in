@@ -47,6 +47,7 @@ int main(int argc, char *argv[])
 	{
 		auto sample = create_@TARGET_CREATE_FUNC@();
 		sample->set_name("@TARGET_NAME@");
+		sample->parse_options(platform.get_arguments());
 
 		if (platform.initialize(std::move(sample)))
 		{

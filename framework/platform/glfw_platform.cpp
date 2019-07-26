@@ -266,8 +266,9 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int /*mod
 
 bool GlfwPlatform::initialize(std::unique_ptr<Application> &&app)
 {
-	uint32_t width  = 1280;
-	uint32_t height = 720;
+	auto result = Platform::initialize(std::move(app));
+
+	auto &options = active_app->get_options();
 
 	if (!glfwInit())
 	{
@@ -278,19 +279,15 @@ bool GlfwPlatform::initialize(std::unique_ptr<Application> &&app)
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-	if (arguments.contains("offscreen"))
+	if (options.contains("--hide"))
 	{
 		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 	}
 
-	if (arguments.contains("resolution"))
-	{
-		auto &extent = arguments.get("resolution");
-		width        = std::stoi(extent[0]);
-		height       = std::stoi(extent[1]);
-	}
+	uint32_t width  = static_cast<uint32_t>(options.get_int("--width"));
+	uint32_t height = static_cast<uint32_t>(options.get_int("--height"));
 
-	window = glfwCreateWindow(width, height, app->get_name().c_str(), NULL, NULL);
+	window = glfwCreateWindow(width, height, active_app->get_name().c_str(), NULL, NULL);
 
 	if (!window)
 	{
@@ -309,7 +306,7 @@ bool GlfwPlatform::initialize(std::unique_ptr<Application> &&app)
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
 	glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, 1);
 
-	return Platform::initialize(std::move(app)) && Platform::prepare();
+	return result && Platform::prepare();
 }
 
 VkSurfaceKHR GlfwPlatform::create_surface(VkInstance instance)
@@ -335,10 +332,7 @@ void GlfwPlatform::main_loop()
 {
 	while (!glfwWindowShouldClose(window))
 	{
-		if (active_app->is_focused())
-		{
-			active_app->step();
-		}
+		run();
 
 		glfwPollEvents();
 	}

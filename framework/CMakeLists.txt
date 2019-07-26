@@ -189,14 +189,14 @@ set(CORE_FILES
 set(PLATFORM_FILES
     # Header Files
     platform/application.h
-    platform/argument_parser.h
+    platform/options.h
     platform/platform.h
     platform/filesystem.h
     platform/input_events.h
     platform/configuration.h
     # Source Files
     platform/application.cpp
-    platform/argument_parser.cpp
+    platform/options.cpp
     platform/platform.cpp
     platform/filesystem.cpp
     platform/input_events.cpp
@@ -290,7 +290,8 @@ target_link_libraries(${PROJECT_NAME}
     spirv-cross-glsl
     glslang-default-resource-limits
     spdlog
-    ctpl)
+    ctpl
+    docopt)
 
 # Link platform specific libraries
 if(ANDROID)

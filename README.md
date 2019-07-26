@@ -32,6 +32,8 @@
 - [Setup](#setup)
 - [Build](#build)
   - [Supported Platforms](#supported-platforms)
+- [Usage](#usage)
+- [Testing](#testing)
 - [License](#license)
   - [Trademarks](#trademarks)
 - [Contributions](#contributions)
@@ -92,6 +94,25 @@ Follow build instructions for your platform below.
 
 > Tested on: Samsung Galaxy S9, Samsung Galaxy S10, Huawei Mate 20 Pro, OPPO R15
 
+## Usage
+
+The following shows some example command line usage on how to configure and run the Vulkan Best Practices.
+
+```
+# Run Swapchain Images sample
+vulkan_best_practice swapchain_images
+
+# Run AFBC sample in benchmark mode for 5000 frames
+vulkan_best_practice --sample afbc --benchmark 5000 
+
+# Run bonza test offscreen
+vulkan_best_practice --test bonza --hide
+
+# Run all the advanced samples
+vulkan_best_practice --batch advanced
+```
+
+
 ## Testing
 
 - System Test - [Usage Guide](docs/testing.md#system-test "System Test Guide")
@@ -105,6 +126,7 @@ This project has some third-party dependencies, each of which may have independe
 
 - [astc-encoder](https://github.com/ARM-software/astc-encoder): ASTC Evaluation Codec
 - [CTPL](https://github.com/vit-vit/CTPL): Thread Pool Library
+- [docopt](https://github.com/docopt/docopt.cpp): A C++11 port of the Python argument parsing library
 - [glfw](https://github.com/glfw/glfw): A multi-platform library for OpenGL, OpenGL ES, Vulkan, window and input
 - [glm](https://github.com/g-truc/glm): OpenGL Mathematics
 - [glslang](https://github.com/KhronosGroup/glslang): Shader front end and validator

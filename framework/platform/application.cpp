@@ -25,6 +25,8 @@
 
 namespace vkb
 {
+std::string Application::usage = "";
+
 Application::Application() :
     name{"Sample Name"}
 {
@@ -40,7 +42,13 @@ void Application::step()
 {
 	auto delta_time = static_cast<float>(timer.tick<Timer::Seconds>());
 
-	if (is_focused())
+	if (benchmark_mode)
+	{
+		// Fix the framerate to 60 FPS for benchmark mode
+		delta_time = 0.01667f;
+	}
+
+	if (focus || benchmark_mode)
 	{
 		update(delta_time);
 	}
@@ -85,6 +93,16 @@ void Application::input_event(const InputEvent &input_event)
 	}
 }
 
+void Application::parse_options(const std::vector<std::string> &args)
+{
+	options = std::make_unique<Options>(usage, args);
+}
+
+void Application::set_usage(const std::string &usage)
+{
+	Application::usage = usage;
+}
+
 const std::string &Application::get_name() const
 {
 	return name;
@@ -95,14 +113,24 @@ void Application::set_name(const std::string &name_)
 	name = name_;
 }
 
+bool Application::is_benchmark_mode() const
+{
+	return benchmark_mode;
+}
+
 DebugInfo &Application::get_debug_info()
 {
 	return debug_info;
 }
 
-Configuration &Application::get_configuration()
+const Options &Application::get_options()
 {
-	return configuration;
+	return *options;
+}
+
+void Application::set_benchmark_mode(bool benchmark_mode_)
+{
+	benchmark_mode = benchmark_mode_;
 }
 
 void Application::set_focus(bool flag)

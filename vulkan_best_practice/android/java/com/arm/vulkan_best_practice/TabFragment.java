@@ -68,10 +68,6 @@ public class TabFragment extends Fragment {
 
         SampleArrayAdapter sampleArrayAdapter = new SampleArrayAdapter(view.getContext(), sampleList);
         ListView listView = view.findViewById(R.id.sample_list);
-        if(listView == null || sampleArrayAdapter == null) {
-            Objects.requireNonNull(getActivity()).finishAndRemoveTask();
-            return;
-        }
         listView.setAdapter(sampleArrayAdapter);
         listView.setOnItemClickListener(this.clickListener);
     }

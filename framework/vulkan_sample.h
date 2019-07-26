@@ -151,6 +151,8 @@ class VulkanSample : public Application
 
 	RenderPipeline &get_render_pipeline();
 
+	Configuration &get_configuration();
+
   protected:
 	std::unique_ptr<Device> device{nullptr};
 
@@ -260,6 +262,11 @@ class VulkanSample : public Application
 	 * @brief The physical devices found on the machine
 	 */
 	std::vector<VkPhysicalDevice> gpus;
+
+	/**
+	 * @brief The configuration of the sample
+	 */
+	Configuration configuration{};
 
 	/**
 	 * @brief Create a Vulkan instance

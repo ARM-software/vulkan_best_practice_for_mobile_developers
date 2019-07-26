@@ -35,12 +35,13 @@
 
 namespace vkb
 {
+std::vector<std::string> Platform::arguments = {};
+
 std::string Platform::external_storage_directory = "";
 
 std::string Platform::temp_directory = "";
 
-Platform::Platform() :
-    arguments{""}
+Platform::Platform()
 {
 }
 
@@ -58,6 +59,14 @@ bool Platform::initialize(std::unique_ptr<Application> &&app)
 
 	LOGI("Logger initialized");
 
+	if (active_app->get_options().contains("--benchmark"))
+	{
+		benchmark_mode             = true;
+		total_benchmark_frames     = active_app->get_options().get_int("--benchmark");
+		remaining_benchmark_frames = total_benchmark_frames;
+		active_app->set_benchmark_mode(true);
+	}
+
 	return true;
 }
 
@@ -68,6 +77,26 @@ bool Platform::prepare()
 		return active_app->prepare(*this);
 	}
 	return false;
+}
+
+void Platform::run()
+{
+	if (benchmark_mode)
+	{
+		timer.start();
+
+		if (remaining_benchmark_frames == 0)
+		{
+			LOGI("Benchmark completed in {} seconds (ran {} frames)", timer.stop(), total_benchmark_frames);
+			close();
+		}
+	}
+
+	if (active_app->is_focused() || active_app->is_benchmark_mode())
+	{
+		active_app->step();
+		remaining_benchmark_frames--;
+	}
 }
 
 void Platform::terminate(ExitCode code)
@@ -96,20 +125,20 @@ float Platform::get_dpi_factor() const
 	return 1.0;
 }
 
-const ArgumentParser &Platform::get_arguments()
-{
-	return arguments;
-}
-
 Application &Platform::get_app() const
 {
 	assert(active_app && "Application is not valid");
 	return *active_app;
 }
 
-void Platform::parse_arguments(const std::string &argument_string)
+std::vector<std::string> &Platform::get_arguments()
 {
-	arguments = ArgumentParser{argument_string};
+	return Platform::arguments;
+}
+
+void Platform::set_arguments(const std::vector<std::string> &args)
+{
+	arguments = args;
 }
 
 void Platform::set_external_storage_directory(const std::string &dir)
@@ -121,6 +150,7 @@ void Platform::set_temp_directory(const std::string &dir)
 {
 	temp_directory = dir;
 }
+
 std::vector<spdlog::sink_ptr> Platform::get_platform_sinks()
 {
 	return {};

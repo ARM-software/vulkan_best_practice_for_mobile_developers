@@ -80,6 +80,11 @@ void Configuration::set()
 
 bool Configuration::next()
 {
+	if (configs.size() == 0)
+	{
+		return false;
+	}
+
 	current_configuration++;
 
 	if (current_configuration == configs.end())
