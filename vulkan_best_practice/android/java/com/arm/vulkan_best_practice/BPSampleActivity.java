@@ -125,7 +125,7 @@ public class BPSampleActivity extends AppCompatActivity {
 
             else if (extras.containsKey("test")) {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-                args.add("--sample");
+                args.add("--test");
                 args.add(extras.getString("test"));
                 setArguments(args);
                 Intent intent = new Intent(BPSampleActivity.this, BPNativeActivity.class);
@@ -158,7 +158,7 @@ public class BPSampleActivity extends AppCompatActivity {
                 if(adapter != null) {
                     category = adapter.getCurrentFragment().getCategory();
                 }
-                args.add("--category");
+                args.add("--batch");
                 args.add(category);
                 setArguments(args);
                 Intent intent = new Intent(BPSampleActivity.this, BPNativeActivity.class);

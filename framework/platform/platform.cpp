@@ -87,7 +87,8 @@ void Platform::run()
 
 		if (remaining_benchmark_frames == 0)
 		{
-			LOGI("Benchmark completed in {} seconds (ran {} frames)", timer.stop(), total_benchmark_frames);
+			auto time_taken = timer.stop();
+			LOGI("Benchmark completed in {} seconds (ran {} frames, averaged {} fps)", time_taken, total_benchmark_frames, total_benchmark_frames / time_taken);
 			close();
 		}
 	}
