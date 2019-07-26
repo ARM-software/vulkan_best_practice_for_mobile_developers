@@ -22,6 +22,9 @@ cmake_minimum_required(VERSION 3.8)
 
 project(vulkan_best_practice)
 
+# create output folder
+file(MAKE_DIRECTORY output)
+
 # Add path for local cmake scripts
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/bldsys/cmake

@@ -187,15 +187,19 @@ bool VulkanSample::prepare(Platform &platform)
 	return true;
 }
 
-void VulkanSample::update_scripts(float delta_time)
+void VulkanSample::update_scene(float delta_time)
 {
-	if (scene->has_component<sg::Script>())
+	if (scene)
 	{
-		auto scripts = scene->get_components<sg::Script>();
-
-		for (auto script : scripts)
+		//Update scripts
+		if (scene->has_component<sg::Script>())
 		{
-			script->update(delta_time);
+			auto scripts = scene->get_components<sg::Script>();
+
+			for (auto script : scripts)
+			{
+				script->update(delta_time);
+			}
 		}
 	}
 }
@@ -229,7 +233,7 @@ void VulkanSample::update_gui(float delta_time)
 
 		gui->new_frame();
 
-		gui->show_top_window(get_name(), stats.get(), &debug_info);
+		gui->show_top_window(get_name(), stats.get(), &get_debug_info());
 
 		// Samples can override this
 		draw_gui();
@@ -286,7 +290,7 @@ void VulkanSample::record_scene_rendering_commands(CommandBuffer &command_buffer
 
 void VulkanSample::update(float delta_time)
 {
-	update_scripts(delta_time);
+	update_scene(delta_time);
 
 	update_stats(delta_time);
 
@@ -403,6 +407,11 @@ VkSurfaceKHR VulkanSample::get_surface()
 	return surface;
 }
 
+Configuration &VulkanSample::get_configuration()
+{
+	return configuration;
+}
+
 void VulkanSample::render(CommandBuffer &command_buffer)
 {
 	if (render_pipeline)
@@ -461,6 +470,8 @@ sg::Node &VulkanSample::add_free_camera(const std::string &node_name)
 	}
 
 	auto free_camera_script = std::make_unique<sg::FreeCamera>(*camera_node);
+
+	free_camera_script->resize(render_context->get_surface_extent().width, render_context->get_surface_extent().height);
 
 	scene->add_component(std::move(free_camera_script), *camera_node);
 

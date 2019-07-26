@@ -21,24 +21,27 @@
 
 import sys, os, math, platform, threading, datetime, subprocess, zipfile, argparse, shutil, struct, imghdr
 from time import sleep
+from threading import Thread
 
 # Settings (changing these may cause instabilities)
 dependencies      = ("magick", "cmake", "git", "adb")
+multithread       = False
 sub_tests         = []
 test_desktop      = True
 test_android      = True
 comparison_metric = "MAE"
 current_dir       = os.getcwd()
+script_path         = os.path.dirname(os.path.realpath(__file__))
+root_path         = os.path.join(script_path, "../../")
 build_path        = ""
-root_path         = ""
 build_config      = ""
-outputs_path      = "output/"
-tmp_path          = "tmp/"
-archive_path      = "artifacts/"
+outputs_path      = os.path.join(root_path, "output/images/")
+tmp_path          = os.path.join(script_path, "tmp/")
+archive_path      = os.path.join(script_path, "artifacts/")
 image_ext         = ".png"
 android_timeout   = 60 # How long in seconds should we wait before timing out on Android
 check_step        = 5
-threshold         = 0.9999 # How similar the images are allowed to be before they pass
+threshold         = 0.9998 # How similar the images are allowed to be before they pass
 
 class Subtest:
     result = False
@@ -49,12 +52,12 @@ class Subtest:
         self.test_name = test_name
         self.platform = platform
 
-    def run(self, path):
+    def run(self, application_path):
         result = True
-        working_dir = os.path.dirname(os.path.realpath(__file__)) + "/" + root_path
-        path = working_dir + path
+        path = root_path + application_path
+        arguments = ["--hide", "--test", "{}".format(self.test_name)]
         try:
-            subprocess.run([path, "--offscreen"], cwd=working_dir)
+            subprocess.run(path + " " + " ".join(arguments), cwd=root_path)
         except FileNotFoundError:
             print("\t\t\t(Error) Couldn't find application ({})".format(path))
             result = False
@@ -68,19 +71,19 @@ class Subtest:
         self.result = True
         screenshot_path = tmp_path + self.platform + "/"
         try:
-            shutil.move(root_path + outputs_path + self.test_name + image_ext, screenshot_path + self.test_name + image_ext)
+            shutil.move(outputs_path + self.test_name + image_ext, screenshot_path + self.test_name + image_ext)
         except FileNotFoundError:
-            print("\t\t\t(Error) Couldn't find screenshot ({}), perhaps test crashed".format(root_path + outputs_path + self.test_name + image_ext))
+            print("\t\t\t(Error) Couldn't find screenshot ({}), perhaps test crashed".format(outputs_path + self.test_name + image_ext))
             self.result = False
             return
         if not test(self.test_name, screenshot_path):
             self.result = False
-
-    def passed(self):
         if self.result:
             print("\t\t=== Passed! ===")
         else:
             print("\t\t=== Failed. ===")
+
+    def passed(self):
         return self.result
 
 class WindowsSubtest(Subtest):
@@ -88,14 +91,16 @@ class WindowsSubtest(Subtest):
         super().__init__(test_name, "Windows")
 
     def run(self):
-        return super().run("{}tests/system_test/sub_tests/{}/bin/{}/{}/{}.exe".format(build_path, self.test_name, build_config, platform.machine(), self.test_name + "_test"))
+        app_path = "{}vulkan_best_practice/bin/{}/{}/vulkan_best_practice.exe".format(build_path, build_config, platform.machine())
+        return super().run(app_path)
 
-class LinuxSubtest(Subtest):
-    def __init__(self, test_name):
-        super().__init__(test_name, "Linux")
+class UnixSubtest(Subtest):
+    def __init__(self, test_name, platform_type):
+        super().__init__(test_name, platform_type)
 
     def run(self):
-        return super().run("{}tests/system_test/sub_tests/{}/bin/{}/{}/{}".format(build_path, self.test_name, build_config, platform.machine(), self.test_name))
+        app_path = "{}vulkan_best_practice/bin/{}/{}/vulkan_best_practice".format(build_path, build_config, platform.machine())
+        return super().run(app_path)
 
 class AndroidSubtest(Subtest):
     def __init__(self, test_name):
@@ -128,8 +133,8 @@ def create_app(platform, test_name):
     """
     if platform == "Windows":
         return WindowsSubtest(test_name)
-    elif platform == "Linux":
-        return LinuxSubtest(test_name)
+    elif platform in ["Linux", "Darwin"]:
+        return UnixSubtest(test_name, platform)
     elif platform == "Android":
         return AndroidSubtest(test_name)
     else:
@@ -183,7 +188,7 @@ def test(test_name, screenshot_path):
     result = False
     image = test_name + image_ext
     base_image = screenshot_path + image
-    test_image = "gold/{0}/{1}.png".format(test_name, get_resolution(base_image))
+    test_image = script_path + "/gold/{0}/{1}.png".format(test_name, get_resolution(base_image))
     if not os.path.isfile(test_image):
         print("\t\t\t(Error) Resolution not supported, gold image not found ({})".format(test_image))
         return False
@@ -197,6 +202,11 @@ def test(test_name, screenshot_path):
         os.remove(diff_image)
         result = True
     return result
+
+def execute(app):
+    print("\t=== Running {} on {} ===".format(app.test_name, app.platform))
+    if app.run():
+        app.test()
 
 def main():
     """
@@ -219,19 +229,25 @@ def main():
             apps.append(create_app(platform.system(), test_name))
 
     # Run tests
-    for app in apps:
-        if app:
-            print("\t=== Running {} on {} ===".format(app.test_name, app.platform))
-            if app.run():
-                app.test()
-                results.append(app.passed())
-            else:
-                results.append(False)
+    if not multithread:
+        for app in apps:
+            if app:
+                execute(app)
+    else:
+        threads = []
+        for app in apps:
+            process = Thread(target=execute, args=[app])
+            process.start()
+            threads.append(process)
+        for thread in threads:
+            thread.join()
 
     # Evaluate system test
-
     passed = 0
     failed = 0
+
+    for app in apps:
+        results.append(app.passed())
 
     for result in results:
         if result:
@@ -239,55 +255,50 @@ def main():
         else:
             failed += 1
 
-    total_result = True
-    if failed > 0:
-        total_result = False
-
-    if total_result:
+    if failed == 0:
         print("=== Success: All tests passed! ===")        
         shutil.rmtree(tmp_path)
         exit(0)
     else:
         print("=== Failed: {} passed - {} failed ===".format(passed, failed))
-        # If the screenshot directory isn't empty, create an archive of the results
+        # If the screenshot directory is not empty, create an archive of the results
         if os.listdir(tmp_path) is not None:
             print("=== Archiving results into '{}' ===".format(shutil.make_archive(archive_path + "system_test" + "-" + datetime.datetime.now().strftime("%Y.%m.%d-%H.%M.%S"), 'zip', tmp_path)))
         shutil.rmtree(tmp_path)
         exit(1)
 
 if __name__ == "__main__":
-    argparser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, description="A simple script that builds, runs, screenshots, and tests your apps against a pre-existing gold")
+    argparser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, description="A simple script that runs, screenshots, and tests your apps against a pre-existing gold")
     argparser.add_argument("-B", "--build", required=True, help="relative path to the cmake build directory")
-    argparser.add_argument("-H", "--home", required=True, help="relative path to the root working directory")
     argparser.add_argument("-C", "--config", required=True, help="build configuration to use")
-    argparser.add_argument("-M", "--metric", default=comparison_metric, help="the image comparison metric to use (for list see https://imagemagick.org/script/command-line-options.php#metric)")
-    argparser.add_argument("-S", "--subtests", default=os.listdir("sub_tests"), nargs="+", help="if set the specified sub tests will be run instead")
+    argparser.add_argument("-S", "--subtests", default=os.listdir(os.path.join(script_path, "sub_tests")), nargs="+", help="if set the specified sub tests will be run instead")
+    argparser.add_argument("-P", "--parallel", action='store_true', help="flag to deploy tests in parallel")
     build_group = argparser.add_mutually_exclusive_group()
     build_group.add_argument("-D", "--desktop", action='store_false', help="flag to only deploy tests on desktop")
     build_group.add_argument("-A", "--android", action='store_false', help="flag to only deploy tests on android")
 
     args = vars(argparser.parse_args())
     build_path    = args["build"]
-    root_path     = args["home"]
     build_config  = args["config"]
-    metric        = args["metric"]
     sub_tests     = args["subtests"]
     test_desktop  = args["android"]
     test_android  = args["desktop"]
+    multithread   = args["parallel"]
 
     if build_path[-1] != "/":
         build_path += "/"
-    if root_path[-1] != "/":
-        root_path += "/"
 
-    # Ensure the right dependencies are installed before continuing
+    # Ensure right dependencies are installed before continuing
     runnable = True
     for dependency in dependencies:
         if shutil.which(dependency) is None:
-            print("Error: {} not installed".format(dependency))
+            print("Error: Couldn't find {}, perhaps it is not installed".format(dependency))
             runnable = False
     if not runnable:
-        exit(1)
+        if platform.system() not in ["Linux", "Darwin"]:
+            exit(1)
+        else:
+            print("Unix based system detected. Allowing script to continue to account for aliasing. Please ensure you have the dependencies installed or aliased otherwise the script will fail.")
 
     # If building for android check that a valid device is plugged in
     if test_android:
@@ -298,6 +309,9 @@ if __name__ == "__main__":
             test_android = False
         else:
             print("Device found!")
+            if multithread:
+                print("Android doesn't support multithreading, disabling!")
+                multithread = False
 
     # Run script and handle keyboard interruption
     try:

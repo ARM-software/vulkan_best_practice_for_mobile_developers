@@ -189,20 +189,16 @@ set(CORE_FILES
 set(PLATFORM_FILES
     # Header Files
     platform/application.h
-    platform/argument_parser.h
+    platform/options.h
     platform/platform.h
     platform/filesystem.h
-    platform/thread_pool.h
-    platform/concurrent_queue.h
-    platform/concurrent_queue.inl
     platform/input_events.h
     platform/configuration.h
     # Source Files
     platform/application.cpp
-    platform/argument_parser.cpp
+    platform/options.cpp
     platform/platform.cpp
     platform/filesystem.cpp
-    platform/thread_pool.cpp
     platform/input_events.cpp
     platform/configuration.cpp)
 
@@ -272,7 +268,7 @@ if(${VKB_WARNINGS_AS_ERRORS})
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         target_compile_options(${PROJECT_NAME} PRIVATE -Werror)
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-        target_compile_options(${PROJECT_NAME} PRIVATE /W3 /WX)
+        target_compile_options(${PROJECT_NAME} PRIVATE /W3 /WX /MP)
     endif()
 endif()
 
@@ -293,7 +289,9 @@ target_link_libraries(${PROJECT_NAME}
     hwcpipe
     spirv-cross-glsl
     glslang-default-resource-limits
-    spdlog)
+    spdlog
+    ctpl
+    docopt)
 
 # Link platform specific libraries
 if(ANDROID)

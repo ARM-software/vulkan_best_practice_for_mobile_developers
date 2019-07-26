@@ -26,7 +26,6 @@
 
 #include "application.h"
 #include "common/vk_common.h"
-#include "platform/argument_parser.h"
 #include "platform/filesystem.h"
 #include "utils.h"
 
@@ -49,6 +48,7 @@ class Platform
 
 	/**
 	 * @brief Sets up windowing system and logging
+	 * @param app The application to prepare after the platform is prepared
 	 */
 	virtual bool initialize(std::unique_ptr<Application> &&app);
 
@@ -57,12 +57,33 @@ class Platform
 	 */
 	virtual bool prepare();
 
+	/**
+	 * @brief Gets a handle from the platform's Vulkan surface 
+	 * @param instance The Vulkan instance
+	 * @returns A VkSurfaceKHR handle, for use by the application
+	 */
 	virtual VkSurfaceKHR create_surface(VkInstance instance) = 0;
 
+	/**
+	 * @brief Handles the main loop of the platform
+	 *        This function is responsible for calling run()
+	 */
 	virtual void main_loop() = 0;
 
+	/**
+	 * @brief Handles the running of the app
+	 */
+	void run();
+
+	/**
+	 * @brief Terminates the platform and the application
+	 * @param code Determines how the platform should exit
+	 */
 	virtual void terminate(ExitCode code);
 
+	/**
+	 * @brief Requests to close the platform at the next available point
+	 */
 	virtual void close() const = 0;
 
 	/**
@@ -82,14 +103,11 @@ class Platform
 	 */
 	virtual float get_dpi_factor() const;
 
-	const ArgumentParser &get_arguments();
-
 	Application &get_app() const;
 
-	/**
-	 * @brief Generates an argument map from a string of input arguments
-	 */
-	void parse_arguments(const std::string &argument_string);
+	std::vector<std::string> &get_arguments();
+
+	static void set_arguments(const std::vector<std::string> &args);
 
 	static void set_external_storage_directory(const std::string &dir);
 
@@ -98,11 +116,20 @@ class Platform
   protected:
 	std::unique_ptr<Application> active_app;
 
-	ArgumentParser arguments{""};
+	bool benchmark_mode{false};
 
-	virtual void initialize_logger() = 0;
+	uint32_t total_benchmark_frames{0};
+
+	uint32_t remaining_benchmark_frames{0};
+
+	Timer timer;
+
+	virtual std::vector<spdlog::sink_ptr> get_platform_sinks();
 
   private:
+	/// Static so can be set via JNI code in android_platform.cpp
+	static std::vector<std::string> arguments;
+
 	static std::string external_storage_directory;
 
 	static std::string temp_directory;

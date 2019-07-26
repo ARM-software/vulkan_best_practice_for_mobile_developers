@@ -28,6 +28,7 @@ VKBP_DISABLE_WARNINGS()
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
 VKBP_ENABLE_WARNINGS()
 
 namespace vkb
@@ -265,8 +266,9 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int /*mod
 
 bool GlfwPlatform::initialize(std::unique_ptr<Application> &&app)
 {
-	uint32_t width  = 1280;
-	uint32_t height = 720;
+	auto result = Platform::initialize(std::move(app));
+
+	auto &options = active_app->get_options();
 
 	if (!glfwInit())
 	{
@@ -277,19 +279,15 @@ bool GlfwPlatform::initialize(std::unique_ptr<Application> &&app)
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-	if (arguments.contains("offscreen"))
+	if (options.contains("--hide"))
 	{
 		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 	}
 
-	if (arguments.contains("resolution"))
-	{
-		auto &extent = arguments.get("resolution");
-		width        = std::stoi(extent[0]);
-		height       = std::stoi(extent[1]);
-	}
+	uint32_t width  = static_cast<uint32_t>(options.get_int("--width"));
+	uint32_t height = static_cast<uint32_t>(options.get_int("--height"));
 
-	window = glfwCreateWindow(width, height, app->get_name().c_str(), NULL, NULL);
+	window = glfwCreateWindow(width, height, active_app->get_name().c_str(), NULL, NULL);
 
 	if (!window)
 	{
@@ -308,7 +306,7 @@ bool GlfwPlatform::initialize(std::unique_ptr<Application> &&app)
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
 	glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, 1);
 
-	return Platform::initialize(std::move(app)) && Platform::prepare();
+	return result && Platform::prepare();
 }
 
 VkSurfaceKHR GlfwPlatform::create_surface(VkInstance instance)
@@ -334,10 +332,7 @@ void GlfwPlatform::main_loop()
 {
 	while (!glfwWindowShouldClose(window))
 	{
-		if (active_app->is_focused())
-		{
-			active_app->step();
-		}
+		run();
 
 		glfwPollEvents();
 	}
@@ -374,13 +369,11 @@ float GlfwPlatform::get_dpi_factor() const
 	return dpi_factor;
 }
 
-void GlfwPlatform::initialize_logger()
+std::vector<spdlog::sink_ptr> GlfwPlatform::get_platform_sinks()
 {
-	auto console = spdlog::stdout_color_mt("console");
-	console->set_pattern(LOGGER_FORMAT);
-	spdlog::set_default_logger(console);
-
-	LOGI("Logger initialized");
+	std::vector<spdlog::sink_ptr> sinks;
+	sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
+	return sinks;
 }
 
 }        // namespace vkb

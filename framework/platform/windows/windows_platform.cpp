@@ -51,7 +51,10 @@ namespace fs
 {
 void create_directory(const std::string &path)
 {
-	CreateDirectory(path.c_str(), NULL);
+	if (!is_directory(path))
+	{
+		CreateDirectory(path.c_str(), NULL);
+	}
 }
 }        // namespace fs
 
@@ -68,22 +71,21 @@ WindowsPlatform::WindowsPlatform(HINSTANCE /*hInstance*/, HINSTANCE /*hPrevInsta
 	freopen_s(&fp, "conout$", "w", stdout);
 	freopen_s(&fp, "conout$", "w", stderr);
 
-	LPWSTR *szArgList;
-	int     argCount;
+	LPWSTR *argv;
+	int     argc;
 
-	szArgList = CommandLineToArgvW(GetCommandLineW(), &argCount);
+	argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 
 	// Ignore the first argument containing the application full path
-	std::vector<std::wstring> arguments_w(szArgList + 1, szArgList + argCount);
+	std::vector<std::wstring> arg_strings(argv + 1, argv + argc);
+	std::vector<std::string>  args;
 
-	std::string argument_string = "";
-
-	for (auto &arg_w : arguments_w)
+	for (auto &arg : arg_strings)
 	{
-		argument_string += std::string(arg_w.begin(), arg_w.end()) + " ";
+		args.push_back(std::string(arg.begin(), arg.end()));
 	}
 
-	parse_arguments(argument_string);
+	Platform::set_arguments(args);
 
 	Platform::set_temp_directory(get_temp_path_from_environment());
 }

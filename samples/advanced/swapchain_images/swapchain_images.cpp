@@ -38,9 +38,10 @@
 
 SwapchainImages::SwapchainImages()
 {
-	get_configuration().insert<vkb::IntSetting>(0, swapchain_image_count, 3);
+	auto &config = get_configuration();
 
-	get_configuration().insert<vkb::IntSetting>(1, swapchain_image_count, 2);
+	config.insert<vkb::IntSetting>(0, swapchain_image_count, 3);
+	config.insert<vkb::IntSetting>(1, swapchain_image_count, 2);
 }
 
 bool SwapchainImages::prepare(vkb::Platform &platform)

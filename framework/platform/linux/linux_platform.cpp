@@ -51,16 +51,7 @@ void create_directory(const std::string &path)
 LinuxPlatform::LinuxPlatform(int argc, char **argv)
 {
 	// Ignore the first argument containing the application full path
-	std::vector<std::string> argument_list = {argv + 1, argv + argc};
-
-	std::string argument_string = "";
-
-	for (auto &arg : argument_list)
-	{
-		argument_string += std::string(arg.begin(), arg.end()) + " ";
-	}
-
-	parse_arguments(argument_string);
+	Platform::set_arguments({argv + 1, argv + argc});
 
 	Platform::set_temp_directory(get_temp_path_from_environment());
 }

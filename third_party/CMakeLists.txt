@@ -250,5 +250,17 @@ endif()
 
 # spdlog
 add_subdirectory(spdlog)
-
 set_property(TARGET spdlog_headers_for_ide PROPERTY FOLDER "ThirdParty")
+
+# ctpl
+add_library(ctpl INTERFACE)
+set(CTPL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/CTPL)
+target_sources(ctpl INTERFACE ${CTPL_DIR}/ctpl_stl.h)
+target_include_directories(ctpl INTERFACE ${CTPL_DIR})
+
+# docopts
+set(DOCOPT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/docopt)
+file(GLOB DOCOPT_FILES "${DOCOPT_DIR}/docopt.cpp" "${DOCOPT_DIR}/*.h")
+add_library(docopt STATIC ${DOCOPT_FILES})
+target_include_directories(docopt PUBLIC ${DOCOPT_DIR})
+set_property(TARGET docopt PROPERTY FOLDER "ThirdParty")

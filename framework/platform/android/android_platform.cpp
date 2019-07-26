@@ -51,6 +51,25 @@ extern "C"
 		vkb::Platform::set_temp_directory(std::string(temp_dir_cstr) + "/");
 		env->ReleaseStringUTFChars(temp_dir, temp_dir_cstr);
 	}
+
+	JNIEXPORT void JNICALL
+	    Java_com_arm_vulkan_1best_1practice_BPSampleActivity_sendArgumentsToPlatform(JNIEnv *env, jobject thiz, jobjectArray arg_strings)
+	{
+		std::vector<std::string> args;
+
+		for (int i = 0; i < env->GetArrayLength(arg_strings); i++)
+		{
+			jstring arg_string = (jstring)(env->GetObjectArrayElement(arg_strings, i));
+
+			const char *arg = env->GetStringUTFChars(arg_string, 0);
+
+			args.push_back(std::string(arg));
+
+			env->ReleaseStringUTFChars(arg_string, arg);
+		}
+
+		vkb::Platform::set_arguments(args);
+	}
 }
 
 namespace vkb
@@ -420,9 +439,9 @@ void AndroidPlatform::main_loop()
 			break;
 		}
 
-		if (app->window && active_app->is_focused())
+		if (app->window)
 		{
-			active_app->step();
+			run();
 		}
 	}
 }
@@ -466,7 +485,7 @@ float AndroidPlatform::get_dpi_factor() const
 	return AConfiguration_getDensity(app->config) / static_cast<float>(ACONFIGURATION_DENSITY_MEDIUM);
 }
 
-void AndroidPlatform::initialize_logger()
+std::vector<spdlog::sink_ptr> AndroidPlatform::get_platform_sinks()
 {
 	std::vector<spdlog::sink_ptr> sinks;
 	sinks.push_back(std::make_shared<spdlog::sinks::android_sink_mt>(PROJECT_NAME));
@@ -479,10 +498,6 @@ void AndroidPlatform::initialize_logger()
 
 	sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_output, true));
 
-	auto logger = std::make_shared<spdlog::logger>("logger", sinks.begin(), sinks.end());
-	logger->set_pattern(LOGGER_FORMAT);
-	spdlog::set_default_logger(logger);
-
-	LOGI("Logger initialized");
+	return sinks;
 }
 }        // namespace vkb

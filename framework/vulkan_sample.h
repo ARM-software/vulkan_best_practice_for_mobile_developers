@@ -151,6 +151,8 @@ class VulkanSample : public Application
 
 	RenderPipeline &get_render_pipeline();
 
+	Configuration &get_configuration();
+
   protected:
 	std::unique_ptr<Device> device{nullptr};
 
@@ -163,10 +165,10 @@ class VulkanSample : public Application
 	std::unique_ptr<Stats> stats{nullptr};
 
 	/**
-	 * @brief Update scripts
+	 * @brief Update scene
 	 * @param delta_time
 	 */
-	void update_scripts(float delta_time);
+	void update_scene(float delta_time);
 
 	/**
 	 * @brief Update counter values
@@ -260,6 +262,11 @@ class VulkanSample : public Application
 	 * @brief The physical devices found on the machine
 	 */
 	std::vector<VkPhysicalDevice> gpus;
+
+	/**
+	 * @brief The configuration of the sample
+	 */
+	Configuration configuration{};
 
 	/**
 	 * @brief Create a Vulkan instance

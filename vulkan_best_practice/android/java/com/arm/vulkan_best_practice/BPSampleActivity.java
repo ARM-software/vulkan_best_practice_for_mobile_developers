@@ -31,6 +31,7 @@ import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -50,6 +51,8 @@ import android.support.v7.widget.Toolbar;
 
 public class BPSampleActivity extends AppCompatActivity {
 
+    private List<String> args = new ArrayList<String>();
+
     private static final int RC_READ_EXTERNAL_STORAGE = 1;
     private static final int RC_WRITE_EXTERNAL_STORAGE = 2;
 
@@ -58,6 +61,8 @@ public class BPSampleActivity extends AppCompatActivity {
 
     private Button buttonPermissions;
     private TextView textPermissions;
+
+    private boolean isBenchmarkMode = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,7 +88,9 @@ public class BPSampleActivity extends AppCompatActivity {
         AdapterView.OnItemClickListener clickListener = new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String sampleId = ((Sample)parent.getItemAtPosition(position)).getId();
-                setArgumentString("--sample " + sampleId);
+                args.add("--sample");
+                args.add(sampleId);
+                setArguments(args);
                 Intent intent = new Intent(BPSampleActivity.this, BPNativeActivity.class);
                 startActivity(intent);
             }
@@ -109,14 +116,18 @@ public class BPSampleActivity extends AppCompatActivity {
 
         if (extras != null) {
             if (extras.containsKey("sample")) {
-                setArgumentString("--sample " + extras.getString("sample"));
+                args.add("--sample");
+                args.add(extras.getString("sample"));
+                setArguments(args);
                 Intent intent = new Intent(BPSampleActivity.this, BPNativeActivity.class);
                 startActivity(intent);
             }
 
             else if (extras.containsKey("test")) {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-                setArgumentString("--test " + extras.getString("test"));
+                args.add("--test");
+                args.add(extras.getString("test"));
+                setArguments(args);
                 Intent intent = new Intent(BPSampleActivity.this, BPNativeActivity.class);
                 startActivity(intent);
             }
@@ -131,19 +142,31 @@ public class BPSampleActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        super.onPrepareOptionsMenu(menu);
+        MenuItem checkable = menu.findItem(R.id.menu_benchmark_mode);
+        checkable.setChecked(isBenchmarkMode);
+        return true;
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
             case R.id.menu_run_samples:
                 String category = "";
-
                 ViewPagerAdapter adapter = ((ViewPagerAdapter)viewPager.getAdapter());
                 if(adapter != null) {
                     category = adapter.getCurrentFragment().getCategory();
                 }
-
-                setArgumentString("--category " + category);
+                args.add("--batch");
+                args.add(category);
+                setArguments(args);
                 Intent intent = new Intent(BPSampleActivity.this, BPNativeActivity.class);
                 startActivity(intent);
+                return true;
+            case R.id.menu_benchmark_mode:
+                isBenchmarkMode = !item.isChecked();
+                item.setChecked(isBenchmarkMode);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -171,6 +194,16 @@ public class BPSampleActivity extends AppCompatActivity {
             default:
                 showSamples();
         }
+    }
+
+    private void setArguments(List<String> args) {
+        if (isBenchmarkMode) {
+            args.add("--benchmark");
+            args.add("2000");
+        }
+        String[] argArray = new String[args.size()];
+        sendArgumentsToPlatform(args.toArray(argArray));
+        args.clear();
     }
 
     private HashMap<String, List<Sample>> categorize(@NonNull List<Sample> sampleList) {
@@ -238,7 +271,7 @@ public class BPSampleActivity extends AppCompatActivity {
 
     private native Sample[] getSamples();
 
-    private native void setArgumentString(String argumentString);
+    private native void sendArgumentsToPlatform(String[] args);
 
     private native void initFilePath(String external_dir, String temp_path);
 }

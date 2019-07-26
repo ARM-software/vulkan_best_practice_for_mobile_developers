@@ -52,7 +52,6 @@ function(generate_samples_header)
     set(SAMPLE_INCLUDE_FILES)
     set(SAMPLE_NAME_FUNC_PAIRS)
     set(SAMPLE_INFO_LIST)
-    set(CATEGORY_LIST)
 
     foreach(SAMPLE_ID ${TARGET_SAMPLE_ID_LIST})
         if (${VKB_${SAMPLE_ID}} AND TARGET ${SAMPLE_ID})
@@ -63,7 +62,6 @@ function(generate_samples_header)
             list(APPEND SAMPLE_INFO_LIST "\tSampleInfo{\"${SAMPLE_ID}\", \"${SAMPLE_CATEGORY}\"\, \"${SAMPLE_NAME}\"\, \"${SAMPLE_DESCRIPTION}\"},")
             list(APPEND SAMPLE_INCLUDE_FILES "#include \"${SAMPLE_CATEGORY}/${SAMPLE_ID}/${SAMPLE_ID}.h\"")
             list(APPEND SAMPLE_NAME_FUNC_PAIRS "\t{ \"${SAMPLE_ID}\", create_${SAMPLE_ID} },")
-            list(APPEND CATEGORY_LIST "\t\"${SAMPLE_CATEGORY}\"\,")
         endif()
     endforeach()
 
@@ -81,12 +79,6 @@ function(generate_samples_header)
         GLUE "\n"
         INPUT ${SAMPLE_NAME_FUNC_PAIRS}
         OUTPUT SAMPLE_NAME_FUNC_PAIRS)
-
-    list(REMOVE_DUPLICATES CATEGORY_LIST)
-    string_join(
-        GLUE "\n"
-        INPUT ${CATEGORY_LIST}
-        OUTPUT CATEGORY_LIST)
 
     set(CONFIG_FILE ${SCRIPT_DIR}/template/samples.h.in)
 

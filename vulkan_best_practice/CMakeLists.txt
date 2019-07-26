@@ -36,9 +36,9 @@ generate_tests_header(
 
 # generate entrypoint file (main function with per platform support)
 generate_entrypoint(
-    ID sample_controller
+    ID vulkan_best_practice
     NAME "Vulkan Best Practice Samples"
-    INCLUDE_PATH sample_controller
+    INCLUDE_PATH vulkan_best_practice
     OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/main.cpp)
 
 # create list of project files (header + source)
@@ -46,8 +46,8 @@ set(PROJECT_FILES
     ${CMAKE_CURRENT_BINARY_DIR}/main.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/samples.h
     ${CMAKE_CURRENT_BINARY_DIR}/tests.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/sample_controller.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/sample_controller.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/vulkan_best_practice.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/vulkan_best_practice.cpp)
     
 # add object files from samples
 foreach(SAMPLE_ID ${TOTAL_SAMPLE_ID_LIST})

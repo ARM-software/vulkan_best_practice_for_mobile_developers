@@ -69,21 +69,21 @@ class GLTFLoader
 	std::unique_ptr<sg::Scene> read_scene_from_file(const std::string &file_name);
 
   protected:
-	virtual std::unique_ptr<sg::Node> parse_node(const tinygltf::Node &gltf_node);
+	virtual std::unique_ptr<sg::Node> parse_node(const tinygltf::Node &gltf_node) const;
 
-	virtual std::unique_ptr<sg::Camera> parse_camera(const tinygltf::Camera &gltf_camera);
+	virtual std::unique_ptr<sg::Camera> parse_camera(const tinygltf::Camera &gltf_camera) const;
 
-	virtual std::unique_ptr<sg::Mesh> parse_mesh(const tinygltf::Mesh &gltf_mesh);
+	virtual std::unique_ptr<sg::Mesh> parse_mesh(const tinygltf::Mesh &gltf_mesh) const;
 
-	virtual std::unique_ptr<sg::SubMesh> parse_primitive(const tinygltf::Primitive &gltf_primitive);
+	virtual std::unique_ptr<sg::SubMesh> parse_primitive(const tinygltf::Primitive &gltf_primitive) const;
 
-	virtual std::unique_ptr<sg::PBRMaterial> parse_material(const tinygltf::Material &gltf_material);
+	virtual std::unique_ptr<sg::PBRMaterial> parse_material(const tinygltf::Material &gltf_material) const;
 
-	virtual std::unique_ptr<sg::Image> parse_image(tinygltf::Image &gltf_image);
+	virtual std::unique_ptr<sg::Image> parse_image(tinygltf::Image &gltf_image) const;
 
-	virtual std::unique_ptr<sg::Sampler> parse_sampler(const tinygltf::Sampler &gltf_sampler);
+	virtual std::unique_ptr<sg::Sampler> parse_sampler(const tinygltf::Sampler &gltf_sampler) const;
 
-	virtual std::unique_ptr<sg::Texture> parse_texture(const tinygltf::Texture &gltf_texture);
+	virtual std::unique_ptr<sg::Texture> parse_texture(const tinygltf::Texture &gltf_texture) const;
 
 	virtual std::unique_ptr<sg::PBRMaterial> create_default_material();
 

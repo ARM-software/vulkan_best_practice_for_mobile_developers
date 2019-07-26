@@ -33,8 +33,8 @@ RenderContext::RenderContext(std::unique_ptr<Swapchain> &&s, RenderTarget::Creat
 
 	// Create the render frames
 	device.wait_idle();
-	auto &     swapchain_extent = swapchain->get_extent();
-	VkExtent3D extent{swapchain_extent.width, swapchain_extent.height, 1};
+	surface_extent = swapchain->get_extent();
+	VkExtent3D extent{surface_extent.width, surface_extent.height, 1};
 
 	for (auto &image_handle : swapchain->get_images())
 	{

@@ -81,8 +81,14 @@ enum class StatType
 
 enum class StatScaling
 {
+	// The stat is not scaled
 	None,
-	ByDeltaTime
+
+	// The stat is scaled by delta time, useful for per-second values
+	ByDeltaTime,
+
+	// The stat is scaled by another counter, useful for ratios
+	ByCounter
 };
 
 struct StatData
@@ -90,21 +96,45 @@ struct StatData
 	StatType            type;
 	StatScaling         scaling;
 	hwcpipe::CpuCounter cpu_counter;
+	hwcpipe::CpuCounter divisor_cpu_counter;
 	hwcpipe::GpuCounter gpu_counter;
+	hwcpipe::GpuCounter divisor_gpu_counter;
 
+	/**
+	 * @brief Constructor for simple stats that do not use any counter
+	 * @param stat_scaling The scaling to be applied to the stat
+	 */
 	StatData(StatScaling stat_scaling = StatScaling::ByDeltaTime) :
 	    type(StatType::Other),
 	    scaling(stat_scaling)
 	{}
-	StatData(hwcpipe::CpuCounter c, StatScaling stat_scaling = StatScaling::ByDeltaTime) :
+
+	/**
+	 * @brief Constructor for CPU counters
+	 * @param c The CPU counter to be gathered
+	 * @param stat_scaling The scaling to be applied to the stat
+	 * @param divisor The CPU counter to be used as divisor if scaling is ByCounter
+	 */
+	StatData(hwcpipe::CpuCounter c, StatScaling stat_scaling = StatScaling::ByDeltaTime,
+	         hwcpipe::CpuCounter divisor = hwcpipe::CpuCounter::MaxValue) :
 	    type(StatType::Cpu),
 	    scaling(stat_scaling),
-	    cpu_counter(c)
+	    cpu_counter(c),
+	    divisor_cpu_counter(divisor)
 	{}
-	StatData(hwcpipe::GpuCounter c, StatScaling stat_scaling = StatScaling::ByDeltaTime) :
+
+	/**
+	 * @brief Constructor for GPU counters
+	 * @param c The GPU counter to be gathered
+	 * @param stat_scaling The scaling to be applied to the stat
+	 * @param divisor The GPU counter to be used as divisor if scaling is ByCounter
+	 */
+	StatData(hwcpipe::GpuCounter c, StatScaling stat_scaling = StatScaling::ByDeltaTime,
+	         hwcpipe::GpuCounter divisor = hwcpipe::GpuCounter::MaxValue) :
 	    type(StatType::Gpu),
 	    scaling(stat_scaling),
-	    gpu_counter(c)
+	    gpu_counter(c),
+	    divisor_gpu_counter(divisor)
 	{}
 };
 

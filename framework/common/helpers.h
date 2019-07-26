@@ -40,6 +40,7 @@
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -216,7 +217,7 @@ uint32_t to_u32(T value)
 }
 
 /**
- * @brief Helper class to disable the copy constructor and copy 
+ * @brief Helper class to disable the copy constructor and copy
  *        assignment operator of any inherited a class to be non copyable.
  */
 class NonCopyable

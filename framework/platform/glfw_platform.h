@@ -49,6 +49,6 @@ class GlfwPlatform : public Platform
   private:
 	GLFWwindow *window = nullptr;
 
-	virtual void initialize_logger() override;
+	virtual std::vector<spdlog::sink_ptr> get_platform_sinks() override;
 };
 }        // namespace vkb

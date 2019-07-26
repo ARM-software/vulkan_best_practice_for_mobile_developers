@@ -59,6 +59,6 @@ class AndroidPlatform : public Platform
 
 	std::string log_output;
 
-	virtual void initialize_logger() override;
+	virtual std::vector<spdlog::sink_ptr> get_platform_sinks() override;
 };
 }        // namespace vkb

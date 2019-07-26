@@ -37,8 +37,26 @@ bool @SAMPLE_NAME@::prepare(vkb::Platform &platform)
 
 	auto swapchain = std::make_unique<vkb::Swapchain>(*device, get_surface());
 
-	render_context = std::make_unique<vkb::RenderContext>(*device, std::move(swapchain));
-	render_context->prepare();
+	render_context = std::make_unique<vkb::RenderContext>(std::move(swapchain));
+	
+	// Load a scene from the assets folder
+	load_scene("scenes/sponza/Sponza01.gltf");
+
+	// Attach a move script to the camera component in the scene
+	auto &camera_node = add_free_camera("main_camera");
+	auto camera = &camera_node.get_component<vkb::sg::Camera>();
+
+	// Example Scene Render Pipeline
+	vkb::ShaderSource vert_shader(vkb::file::read_asset("shaders/base.vert"));
+	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/base.frag"));
+	auto scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto render_pipeline = vkb::RenderPipeline();
+	render_pipeline.add_subpass(std::move(scene_subpass));
+	set_render_pipeline(std::move(render_pipeline));
+
+	// Add a GUI with the stats you want to monitor
+	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times});
+	gui = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor());
 
 	return true;
 }

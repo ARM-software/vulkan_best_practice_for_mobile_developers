@@ -45,7 +45,3 @@ const std::vector<SampleInfo> sample_list = {
 const std::unordered_map<std::string, std::function<std::unique_ptr<vkb::Application>()>> sample_create_functions = {
 @SAMPLE_NAME_FUNC_PAIRS@
 };
-
-const std::vector<std::string> category_list = {
-@CATEGORY_LIST@
-};

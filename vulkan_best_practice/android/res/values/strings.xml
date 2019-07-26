@@ -30,4 +30,5 @@
 	<string name="permissions_button">Grant Permissions</string>
 	<string name="menu_run_samples_title">Run All Samples</string>
 	<string name="open_file_with">Open File With</string>
+	<string name="menu_benchmark_mode_title">Benchmark Mode</string>
 </resources>
