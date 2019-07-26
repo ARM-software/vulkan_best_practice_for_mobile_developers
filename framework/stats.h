@@ -96,9 +96,9 @@ struct StatData
 	StatType            type;
 	StatScaling         scaling;
 	hwcpipe::CpuCounter cpu_counter;
-	hwcpipe::CpuCounter denom_cpu_counter;
+	hwcpipe::CpuCounter divisor_cpu_counter;
 	hwcpipe::GpuCounter gpu_counter;
-	hwcpipe::GpuCounter denom_gpu_counter;
+	hwcpipe::GpuCounter divisor_gpu_counter;
 
 	/**
 	 * @brief Constructor for simple stats that do not use any counter
@@ -113,28 +113,28 @@ struct StatData
 	 * @brief Constructor for CPU counters
 	 * @param c The CPU counter to be gathered
 	 * @param stat_scaling The scaling to be applied to the stat
-	 * @param denom The CPU counter to be used as denominator if scaling is ByCounter
+	 * @param divisor The CPU counter to be used as divisor if scaling is ByCounter
 	 */
 	StatData(hwcpipe::CpuCounter c, StatScaling stat_scaling = StatScaling::ByDeltaTime,
-	         hwcpipe::CpuCounter denom = hwcpipe::CpuCounter::MaxValue) :
+	         hwcpipe::CpuCounter divisor = hwcpipe::CpuCounter::MaxValue) :
 	    type(StatType::Cpu),
 	    scaling(stat_scaling),
 	    cpu_counter(c),
-	    denom_cpu_counter(denom)
+	    divisor_cpu_counter(divisor)
 	{}
 
 	/**
 	 * @brief Constructor for GPU counters
 	 * @param c The GPU counter to be gathered
 	 * @param stat_scaling The scaling to be applied to the stat
-	 * @param denom The GPU counter to be used as denominator if scaling is ByCounter
+	 * @param divisor The GPU counter to be used as divisor if scaling is ByCounter
 	 */
 	StatData(hwcpipe::GpuCounter c, StatScaling stat_scaling = StatScaling::ByDeltaTime,
-	         hwcpipe::GpuCounter denom = hwcpipe::GpuCounter::MaxValue) :
+	         hwcpipe::GpuCounter divisor = hwcpipe::GpuCounter::MaxValue) :
 	    type(StatType::Gpu),
 	    scaling(stat_scaling),
 	    gpu_counter(c),
-	    denom_gpu_counter(denom)
+	    divisor_gpu_counter(divisor)
 	{}
 };
 

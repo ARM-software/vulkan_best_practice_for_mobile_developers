@@ -72,17 +72,17 @@ Stats::Stats(const std::set<StatIndex> &enabled_stats, CounterSamplingConfig sam
 				case StatType::Cpu:
 					enabled_cpu_counters.insert(res->second.cpu_counter);
 
-					if (res->second.denom_cpu_counter != hwcpipe::CpuCounter::MaxValue)
+					if (res->second.divisor_cpu_counter != hwcpipe::CpuCounter::MaxValue)
 					{
-						enabled_cpu_counters.insert(res->second.denom_cpu_counter);
+						enabled_cpu_counters.insert(res->second.divisor_cpu_counter);
 					}
 					break;
 				case StatType::Gpu:
 					enabled_gpu_counters.insert(res->second.gpu_counter);
 
-					if (res->second.denom_gpu_counter != hwcpipe::GpuCounter::MaxValue)
+					if (res->second.divisor_gpu_counter != hwcpipe::GpuCounter::MaxValue)
 					{
-						enabled_gpu_counters.insert(res->second.denom_gpu_counter);
+						enabled_gpu_counters.insert(res->second.divisor_gpu_counter);
 					}
 					break;
 				default:
@@ -307,10 +307,10 @@ void Stats::push_sample(const MeasurementSample &sample)
 
 				if (data->second.scaling == StatScaling::ByCounter)
 				{
-					const auto &denom_cpu_res = sample.cpu.find(data->second.denom_cpu_counter);
-					if (denom_cpu_res != sample.cpu.end())
+					const auto &divisor_cpu_res = sample.cpu.find(data->second.divisor_cpu_counter);
+					if (divisor_cpu_res != sample.cpu.end())
 					{
-						measurement /= denom_cpu_res->second.get<float>();
+						measurement /= divisor_cpu_res->second.get<float>();
 					}
 					else
 					{
@@ -329,10 +329,10 @@ void Stats::push_sample(const MeasurementSample &sample)
 
 				if (data->second.scaling == StatScaling::ByCounter)
 				{
-					const auto &denom_gpu_res = sample.gpu.find(data->second.denom_gpu_counter);
-					if (denom_gpu_res != sample.gpu.end())
+					const auto &divisor_gpu_res = sample.gpu.find(data->second.divisor_gpu_counter);
+					if (divisor_gpu_res != sample.gpu.end())
 					{
-						measurement /= denom_gpu_res->second.get<float>();
+						measurement /= divisor_gpu_res->second.get<float>();
 					}
 					else
 					{
