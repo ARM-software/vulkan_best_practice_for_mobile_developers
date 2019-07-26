@@ -27,7 +27,7 @@ add_project(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     NAME "Render Subpasses"
-    DESCRIPTION "Use of render subpasses"
+    DESCRIPTION "Use of render subpasses."
     FILES
         ${FOLDER_NAME}.h
         ${FOLDER_NAME}.cpp)
