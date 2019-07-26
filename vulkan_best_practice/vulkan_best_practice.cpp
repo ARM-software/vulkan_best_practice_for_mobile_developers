@@ -122,9 +122,9 @@ VulkanBestPractice::VulkanBestPractice()
 		--test TEST_ID            Run test.
 		--batch CATEGORY_NAME     Run all samples within a category, specify 'all' to run all.
 		--benchmark FRAMES        Run app under benchmark mode for n amount of frames.
-        --width WIDTH             The width of the screen if visible [default: 1280].
-        --height HEIGHT           The height of the screen if visible [default: 720].
-        --hide                    Hides the window if possible.
+		--width WIDTH             The width of the screen if visible [default: 1280].
+		--height HEIGHT           The height of the screen if visible [default: 720].
+		--hide                    Hides the window if possible.
 	)");
 }
 
