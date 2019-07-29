@@ -106,7 +106,7 @@ class Application
 
 	static std::string usage;
 
-	std::unique_ptr<Options> options;
+	Options options{};
 
 	static void set_usage(const std::string &usage);
 

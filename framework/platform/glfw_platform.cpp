@@ -284,8 +284,18 @@ bool GlfwPlatform::initialize(std::unique_ptr<Application> &&app)
 		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 	}
 
-	uint32_t width  = static_cast<uint32_t>(options.get_int("--width"));
-	uint32_t height = static_cast<uint32_t>(options.get_int("--height"));
+	uint32_t width  = 1280;
+	uint32_t height = 720;
+
+	if (options.contains("--width"))
+	{
+		width = static_cast<uint32_t>(options.get_int("--width"));
+	}
+
+	if (options.contains("--height"))
+	{
+		height = static_cast<uint32_t>(options.get_int("--height"));
+	}
 
 	window = glfwCreateWindow(width, height, active_app->get_name().c_str(), NULL, NULL);
 

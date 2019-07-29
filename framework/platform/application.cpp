@@ -95,7 +95,7 @@ void Application::input_event(const InputEvent &input_event)
 
 void Application::parse_options(const std::vector<std::string> &args)
 {
-	options = std::make_unique<Options>(usage, args);
+	options.parse(usage, args);
 }
 
 void Application::set_usage(const std::string &usage)
@@ -125,7 +125,7 @@ DebugInfo &Application::get_debug_info()
 
 const Options &Application::get_options()
 {
-	return *options;
+	return options;
 }
 
 void Application::set_benchmark_mode(bool benchmark_mode_)

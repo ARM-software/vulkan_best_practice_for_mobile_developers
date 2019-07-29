@@ -132,18 +132,18 @@ bool VulkanBestPractice::prepare(Platform &platform)
 {
 	this->platform = &platform;
 
-	if (options->contains("--help"))
+	if (options.contains("--help"))
 	{
 		print_info();
-		options->print_usage();
+		options.print_usage();
 		return false;
 	}
 
 	auto result = false;
 
-	if (options->contains("--batch"))
+	if (options.contains("--batch"))
 	{
-		auto &category_arg = options->get_string("--batch");
+		auto &category_arg = options.get_string("--batch");
 
 		if (category_arg != "all")
 		{
@@ -167,9 +167,9 @@ bool VulkanBestPractice::prepare(Platform &platform)
 		    false,
 		    true);
 	}
-	else if (options->contains("--sample"))
+	else if (options.contains("--sample"))
 	{
-		const auto &sample_arg = options->get_string("--sample");
+		const auto &sample_arg = options.get_string("--sample");
 
 		result = prepare_active_app(
 		    get_create_func(sample_arg),
@@ -177,9 +177,9 @@ bool VulkanBestPractice::prepare(Platform &platform)
 		    false,
 		    false);
 	}
-	else if (options->contains("<sample>"))
+	else if (options.contains("<sample>"))
 	{
-		const auto &sample_arg = options->get_string("<sample>");
+		const auto &sample_arg = options.get_string("<sample>");
 
 		result = prepare_active_app(
 		    get_create_func(sample_arg),
@@ -187,9 +187,9 @@ bool VulkanBestPractice::prepare(Platform &platform)
 		    false,
 		    false);
 	}
-	else if (options->contains("--test"))
+	else if (options.contains("--test"))
 	{
-		const auto &test_arg = options->get_string("--test");
+		const auto &test_arg = options.get_string("--test");
 
 		result = prepare_active_app(
 		    get_create_func(test_arg),
@@ -201,7 +201,7 @@ bool VulkanBestPractice::prepare(Platform &platform)
 	{
 		// The user didn't supply any arguments so print the usage
 		print_info();
-		options->print_usage();
+		options.print_usage();
 		throw std::runtime_error("No arguments given");
 	}
 
