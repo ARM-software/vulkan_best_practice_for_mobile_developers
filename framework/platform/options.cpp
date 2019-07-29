@@ -24,24 +24,29 @@
 
 namespace vkb
 {
-Options::Options(const std::string &usage, const std::vector<std::string> &args) :
-    usage{usage},
-    parse_result{docopt::docopt(usage, args, false)}
+void Options::parse(const std::string &usage, const std::vector<std::string> &args)
+
 {
+	if (usage.size() != 0)
+	{
+		this->usage        = usage;
+		this->parse_result = docopt::docopt(usage, args, false);
+	}
 }
 
 bool Options::contains(const std::string &argument) const
 {
-	assert(parse_result.count(argument) != 0 && "Argument not specified in usage");
-
-	if (auto result = parse_result.at(argument))
+	if (parse_result.count(argument) != 0)
 	{
-		if (result.isBool())
+		if (const auto &result = parse_result.at(argument))
 		{
-			return result.asBool();
-		}
+			if (result.isBool())
+			{
+				return result.asBool();
+			}
 
-		return true;
+			return true;
+		}
 	}
 
 	return false;

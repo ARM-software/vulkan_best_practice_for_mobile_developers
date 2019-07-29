@@ -32,7 +32,14 @@ namespace vkb
 class Options
 {
   public:
-	Options(const std::string &usage, const std::vector<std::string> &args);
+	Options() = default;
+
+	/**
+	 * @brief Parses the arguments, forcing an exit if it fails
+	 * @param usage The usage string of the application
+	 * @param args The arguments supplied to the program
+	 */
+	void parse(const std::string &usage, const std::vector<std::string> &args);
 
 	/**
 	 * @brief Helper function that determines if key exists within parsed args
