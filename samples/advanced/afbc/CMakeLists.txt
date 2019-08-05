@@ -26,7 +26,7 @@ add_project(
     TYPE "Sample"
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
-    NAME "AFBC Sample"
+    NAME "AFBC"
     DESCRIPTION "Using framebuffer compression to reduce bandwidth."
     FILES
         ${FOLDER_NAME}.h
