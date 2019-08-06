@@ -169,7 +169,14 @@ void ShaderVariant::add_undefine(const std::string &undef)
 
 void ShaderVariant::add_runtime_array_size(const std::string &runtime_array_name, size_t size)
 {
-	runtime_array_sizes.insert_or_assign(runtime_array_name, size);
+	if (runtime_array_sizes.find(runtime_array_name) != runtime_array_sizes.end())
+	{
+		runtime_array_sizes.insert({runtime_array_name, size});
+	}
+	else
+	{
+		runtime_array_sizes[runtime_array_name] = size;
+	}
 }
 
 void ShaderVariant::set_runtime_array_sizes(const std::unordered_map<std::string, size_t> &sizes)

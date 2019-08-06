@@ -29,7 +29,9 @@ VKBP_ENABLE_WARNINGS()
 
 #include "platform/platform.h"
 
-namespace vkb::fs
+namespace vkb
+{
+namespace fs
 {
 namespace path
 {
@@ -173,4 +175,5 @@ void write_image(const uint8_t *data, const std::string &filename, const uint32_
 {
 	stbi_write_png((path::get(path::Type::Screenshots) + filename + ".png").c_str(), width, height, components, data, row_stride);
 }
-}        // namespace vkb::fs
+}        // namespace fs
+}        // namespace vkb

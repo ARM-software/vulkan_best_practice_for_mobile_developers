@@ -100,7 +100,9 @@ void vkb::CommandRecord::begin_render_pass(const RenderTarget &              ren
 	render_pass_binding.contents         = contents;
 
 	// Add first subpass to render pass
-	auto &subpass              = render_pass_binding.subpasses.emplace_back(SubpassDesc{stream.tellp()});
+	render_pass_binding.subpasses.emplace_back(SubpassDesc{stream.tellp()});
+	auto &subpass = render_pass_binding.subpasses.back();
+
 	subpass.input_attachments  = render_target.get_input_attachments();
 	subpass.output_attachments = render_target.get_output_attachments();
 
@@ -119,8 +121,9 @@ void CommandRecord::next_subpass()
 	pipeline_state.set_subpass_index(pipeline_state.get_subpass_index() + 1);
 
 	// Add subpass to render pass
-	auto &render_pass_desc     = render_pass_bindings.back();
-	auto &subpass              = render_pass_desc.subpasses.emplace_back(SubpassDesc{stream.tellp()});
+	auto &render_pass_desc = render_pass_bindings.back();
+	render_pass_desc.subpasses.emplace_back(SubpassDesc{stream.tellp()});
+	auto &subpass              = render_pass_desc.subpasses.back();
 	subpass.input_attachments  = render_pass_desc.render_target.get_input_attachments();
 	subpass.output_attachments = render_pass_desc.render_target.get_output_attachments();
 

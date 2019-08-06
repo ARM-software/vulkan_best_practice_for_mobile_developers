@@ -24,7 +24,9 @@
 #include "common/vk_common.h"
 #include "core/image.h"
 
-namespace vkb::core
+namespace vkb
+{
+namespace core
 {
 class ImageView : public NonCopyable
 {
@@ -62,4 +64,5 @@ class ImageView : public NonCopyable
 
 	VkImageSubresourceRange subresource_range{};
 };
-}        // namespace vkb::core
+}        // namespace core
+}        // namespace vkb

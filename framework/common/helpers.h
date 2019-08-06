@@ -63,7 +63,7 @@ inline void read(std::istringstream &is, std::string &value)
 	std::size_t size;
 	read(is, size);
 	value.resize(size);
-	is.read(value.data(), size);
+	is.read(const_cast<char *>(value.data()), size);
 }
 
 template <class T>

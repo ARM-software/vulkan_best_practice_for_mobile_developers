@@ -53,7 +53,8 @@ void RenderFrame::reset()
 
 	for (auto &buffer_pool_it : buffer_pools)
 	{
-		auto &[buffer_pool, buffer_block] = buffer_pool_it.second;
+		auto &buffer_pool  = buffer_pool_it.second.first;
+		auto *buffer_block = buffer_pool_it.second.second;
 
 		buffer_pool.reset();
 
@@ -119,7 +120,8 @@ BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, co
 		return BufferAllocation{};
 	}
 
-	auto &[buffer_pool, buffer_block] = buffer_pool_it->second;
+	auto &buffer_pool  = buffer_pool_it->second.first;
+	auto *buffer_block = buffer_pool_it->second.second;
 
 	if (!buffer_block)
 	{
