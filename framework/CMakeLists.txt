@@ -24,7 +24,6 @@ project(framework LANGUAGES C CXX)
 
 set(FRAMEWORK_FILES
     # Header Files
-    utils.h
     gui.h
     stats.h
     glsl_compiler.h
@@ -43,7 +42,6 @@ set(FRAMEWORK_FILES
     vulkan_sample.h
     timer.h
     # Source Files
-    utils.cpp
     gui.cpp
     stats.cpp
     glsl_compiler.cpp
@@ -68,9 +66,11 @@ set(COMMON_FILES
     common/logging.h
     common/helpers.h
     common/error.h
+    common/utils.h
     # Source Files
     common/error.cpp
-    common/vk_common.cpp)
+    common/vk_common.cpp
+    common/utils.cpp)
 
 set(RENDERING_FILES
     # Header files

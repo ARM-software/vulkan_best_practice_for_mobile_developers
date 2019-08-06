@@ -21,10 +21,10 @@
 #pragma once
 
 #include "common/helpers.h"
+#include "common/utils.h"
 #include "core/buffer.h"
 #include "rendering/render_frame.h"
 #include "rendering/subpass.h"
-#include "utils.h"
 
 namespace vkb
 {

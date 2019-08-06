@@ -20,7 +20,7 @@
 
 #include "resource_cache.h"
 
-#include <vector>
+#include "rendering/pipeline_state.h"
 
 namespace vkb
 {

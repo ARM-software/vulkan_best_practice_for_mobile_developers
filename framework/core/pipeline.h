@@ -27,9 +27,6 @@
 namespace vkb
 {
 class Device;
-class PipelineLayout;
-class ShaderModule;
-class SpecializationConstantState;
 
 class Pipeline : public NonCopyable
 {

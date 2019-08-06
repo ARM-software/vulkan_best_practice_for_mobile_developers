@@ -22,13 +22,11 @@
 
 #include "common/helpers.h"
 #include "common/vk_common.h"
-#include "descriptor_pool.h"
 
 namespace vkb
 {
-class DescriptorSet;
+class DescriptorPool;
 class Device;
-class PipelineLayout;
 
 struct ShaderResource;
 

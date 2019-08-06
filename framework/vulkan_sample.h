@@ -20,14 +20,8 @@
 
 #pragma once
 
-#include <algorithm>
-#include <memory>
-#include <string>
-#include <typeindex>
-#include <unordered_map>
-#include <vector>
-
 #include "common/error.h"
+#include "common/utils.h"
 #include "common/vk_common.h"
 #include "gui.h"
 #include "platform/application.h"
@@ -37,7 +31,6 @@
 #include "scene_graph/scene.h"
 #include "scene_graph/scripts/node_animation.h"
 #include "stats.h"
-#include "utils.h"
 
 namespace vkb
 {

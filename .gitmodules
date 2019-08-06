@@ -13,9 +13,6 @@
 [submodule "third_party/tinygltf"]
 	path = third_party/tinygltf
 	url = https://github.com/syoyo/tinygltf
-[submodule "third_party/vulkan"]
-	path = third_party/vulkan
-	url = https://github.com/KhronosGroup/Vulkan-Docs
 [submodule "third_party/glfw"]
 	path = third_party/glfw
 	url = https://github.com/glfw/glfw
@@ -46,3 +43,6 @@
 [submodule "third_party/docopt"]
 	path = third_party/docopt
 	url = https://github.com/docopt/docopt.cpp
+[submodule "third_party/vulkan"]
+	path = third_party/vulkan
+	url = https://github.com/KhronosGroup/Vulkan-Headers

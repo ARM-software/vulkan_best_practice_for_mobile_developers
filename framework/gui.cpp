@@ -31,6 +31,7 @@ VKBP_ENABLE_WARNINGS()
 
 #include "buffer_pool.h"
 #include "common/logging.h"
+#include "common/utils.h"
 #include "common/vk_common.h"
 #include "core/descriptor_set.h"
 #include "core/descriptor_set_layout.h"
@@ -40,7 +41,6 @@ VKBP_ENABLE_WARNINGS()
 #include "imgui_internal.h"
 #include "platform/filesystem.h"
 #include "rendering/render_context.h"
-#include "utils.h"
 #include "vulkan_sample.h"
 
 namespace vkb

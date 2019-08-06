@@ -22,10 +22,16 @@
 
 #include "common/error.h"
 #include "common/logging.h"
+#include "core/descriptor_set.h"
 #include "core/descriptor_set_layout.h"
 #include "core/device.h"
+#include "core/framebuffer.h"
+#include "core/pipeline.h"
+#include "core/pipeline_layout.h"
+#include "core/sampler.h"
 #include "core/shader_module.h"
 #include "rendering/render_context.h"
+#include "rendering/render_target.h"
 
 namespace vkb
 {

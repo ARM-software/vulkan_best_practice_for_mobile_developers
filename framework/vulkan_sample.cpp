@@ -32,6 +32,7 @@ VKBP_ENABLE_WARNINGS()
 #include "common/vk_common.h"
 #include "gltf_loader.h"
 #include "platform/platform.h"
+#include "scene_graph/components/camera.h"
 #include "scene_graph/script.h"
 #include "scene_graph/scripts/free_camera.h"
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)

@@ -31,16 +31,23 @@ VKBP_DISABLE_WARNINGS()
 VKBP_ENABLE_WARNINGS()
 
 #include "common/logging.h"
+#include "common/utils.h"
 #include "common/vk_common.h"
 #include "core/device.h"
 #include "core/image.h"
 #include "platform/filesystem.h"
+#include "scene_graph/components/camera.h"
+#include "scene_graph/components/image.h"
 #include "scene_graph/components/image/astc.h"
+#include "scene_graph/components/mesh.h"
+#include "scene_graph/components/pbr_material.h"
 #include "scene_graph/components/perspective_camera.h"
+#include "scene_graph/components/sampler.h"
+#include "scene_graph/components/sub_mesh.h"
 #include "scene_graph/components/texture.h"
 #include "scene_graph/components/transform.h"
 #include "scene_graph/node.h"
-#include "utils.h"
+#include "scene_graph/scene.h"
 
 #include <ctpl_stl.h>
 

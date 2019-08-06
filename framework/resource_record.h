@@ -20,15 +20,16 @@
 
 #pragma once
 
-#include "common/vk_common.h"
-#include "core/pipeline.h"
-#include "core/pipeline_layout.h"
-#include "core/render_pass.h"
-#include "core/shader_module.h"
+#include <vector>
+
+#include "rendering/pipeline_state.h"
 
 namespace vkb
 {
-class ResourceCache;
+class GraphicsPipeline;
+class PipelineLayout;
+class RenderPass;
+class ShaderModule;
 
 enum class ResourceType
 {

@@ -18,7 +18,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "rendering/render_pipeline.h"
+#include "render_pipeline.h"
 
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"

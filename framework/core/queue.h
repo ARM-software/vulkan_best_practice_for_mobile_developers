@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include "command_buffer.h"
 #include "common/helpers.h"
 #include "common/vk_common.h"
 #include "core/swapchain.h"
@@ -28,6 +27,7 @@
 namespace vkb
 {
 class Device;
+class CommandBuffer;
 
 class Queue : NonCopyable
 {

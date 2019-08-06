@@ -24,6 +24,7 @@
 
 #include "common/error.h"
 #include "common/logging.h"
+#include "core/device.h"
 
 namespace vkb
 {

@@ -21,11 +21,12 @@
 #pragma once
 
 #include "common/helpers.h"
-#include "common/vk_common.h"
-#include "core/device.h"
+#include "core/buffer.h"
 
 namespace vkb
 {
+class Device;
+
 /**
  * @brief An allocation of vulkan memory; different buffer allocations,
  *        with different offset and size, may come from the same Vulkan buffer

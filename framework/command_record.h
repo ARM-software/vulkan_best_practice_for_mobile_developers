@@ -22,22 +22,20 @@
 
 #include <list>
 
-#include "common/vk_common.h"
-#include "core/descriptor_set.h"
-#include "core/framebuffer.h"
 #include "core/image_view.h"
-#include "core/pipeline.h"
-#include "core/pipeline_layout.h"
 #include "core/render_pass.h"
-#include "core/sampler.h"
 #include "rendering/pipeline_state.h"
-#include "rendering/render_target.h"
 #include "resource_binding_state.h"
 
 namespace vkb
 {
-class RenderContext;
 class CommandBuffer;
+class DescriptorSet;
+class Framebuffer;
+class Pipeline;
+class PipelineLayout;
+class PipelineState;
+class RenderTarget;
 
 /*
  * @brief Temporary pipeline descriptor structure for a drawcall 

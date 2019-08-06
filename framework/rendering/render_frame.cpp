@@ -18,7 +18,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "rendering/render_frame.h"
+#include "render_frame.h"
 
 #include "common/logging.h"
 

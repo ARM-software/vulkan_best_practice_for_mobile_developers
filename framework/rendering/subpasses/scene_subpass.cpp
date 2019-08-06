@@ -19,6 +19,7 @@
  */
 
 #include "rendering/subpasses/scene_subpass.h"
+#include "common/utils.h"
 #include "common/vk_common.h"
 #include "rendering/render_context.h"
 #include "scene_graph/components/camera.h"
@@ -29,7 +30,6 @@
 #include "scene_graph/components/texture.h"
 #include "scene_graph/node.h"
 #include "scene_graph/scene.h"
-#include "utils.h"
 
 namespace vkb
 {

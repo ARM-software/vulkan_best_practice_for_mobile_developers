@@ -28,21 +28,25 @@
 #define TINYGLTF_NO_EXTERNAL_IMAGE
 #include <tiny_gltf.h>
 
-#include "core/device.h"
-#include "core/sampler.h"
-#include "scene_graph/components/camera.h"
-#include "scene_graph/components/image.h"
-#include "scene_graph/components/mesh.h"
-#include "scene_graph/components/pbr_material.h"
-#include "scene_graph/components/sampler.h"
-#include "scene_graph/components/sub_mesh.h"
-#include "scene_graph/components/texture.h"
-#include "scene_graph/node.h"
-#include "scene_graph/scene.h"
 #include "timer.h"
 
 namespace vkb
 {
+class Device;
+
+namespace sg
+{
+class Scene;
+class Node;
+class Camera;
+class Image;
+class Mesh;
+class PBRMaterial;
+class Sampler;
+class SubMesh;
+class Texture;
+}        // namespace sg
+
 /**
  * @brief Helper Function to change array type T to array type Y
  * Create a struct that can be used with std::transform so that we do not need to recreate lambda functions
@@ -65,6 +69,8 @@ class GLTFLoader
 {
   public:
 	GLTFLoader(Device &device);
+
+	virtual ~GLTFLoader() = default;
 
 	std::unique_ptr<sg::Scene> read_scene_from_file(const std::string &file_name);
 
