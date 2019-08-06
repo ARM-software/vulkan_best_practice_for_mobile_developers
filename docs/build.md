@@ -133,7 +133,7 @@ adb shell setprop security.perf_harden 0
 
 ## Dependencies
 
-- CMake v3.8+
+- CMake v3.10+
 - Visual Studio 2017
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
@@ -167,7 +167,7 @@ build\windows\vulkan_best_practice\bin\Release\AMD64\vulkan_best_practice.exe
 
 ## Dependencies
 
-- CMake v3.8+
+- CMake v3.10+
 - C++17 Compiler (tested on GCC 7.3)
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
@@ -200,7 +200,7 @@ cmake --build build/linux --config Release --target vulkan_best_practice -- -j4
 
 ## Dependencies
 
-- CMake v3.8+
+- CMake v3.10+
 - Command Line Tools (CLT) for Xcode `xcode-select --install`
 - [Vulkan SDK](https://vulkan.lunarg.com/doc/sdk/latest/mac/getting_started.html) `./install_vulkan.py`
 - [CMake Options](#cmake-options)
@@ -233,7 +233,7 @@ cmake --build build/mac --config Release --target vulkan_best_practice -- -j4
 
 For all dependencies set the following environment variables.
 
-- CMake v3.8+
+- CMake v3.10+
 - JDK 8+ `JAVA_HOME=<SYSTEM_DIR>/java`
 - Android NDK r18+ `ANDROID_NDK_ROOT=<WORK_DIR>/android-ndk`
 - Android SDK `ANDROID_HOME=<WORK_DIR>/android-sdk`
