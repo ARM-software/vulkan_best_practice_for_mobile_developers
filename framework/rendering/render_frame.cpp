@@ -121,7 +121,7 @@ BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, co
 	}
 
 	auto &buffer_pool  = buffer_pool_it->second.first;
-	auto *buffer_block = buffer_pool_it->second.second;
+	auto &buffer_block = buffer_pool_it->second.second;
 
 	if (!buffer_block)
 	{
