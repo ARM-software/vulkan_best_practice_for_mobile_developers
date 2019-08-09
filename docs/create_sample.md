@@ -20,41 +20,47 @@
 -
 -->
 
-# Create a Sample <!-- omit in toc -->
+# Creating a new sample <!-- omit in toc -->
 
-- [Generate](#generate)
-- [Configure](#configure)
+This document will explain how to create the necessary files to start working on your own sample.
 
-## Generate
-If you would like to create a new sample the following script will generate a sample within the `samples` directory with a given name `MySample`
+- [Creating](#create)
+- [Configuring](#configure)
 
-##### Windows <!-- omit in toc -->
+## Create
+To create a new sample, run the `generate_sample` script that exists within `bldsys/scripts`. There is a batch script for Windows, and a shell script for Unix based systems. 
 
-```
-bldsys/scripts/generate_sample.bat <sample_name> <category>
-```
-
-##### Linux <!-- omit in toc -->
+#### Usage
 
 ```
-./bldsys/scripts/generate_sample.sh <sample_name> <category>
+generate_sample <sample_id> <category> [<create_path>]
 ```
 
-The sample is now created and the following files generated
+* `<sample_id>` is the id tag that your sample will have (e.g. '`my_new_sample`')
+* `<category>` is the category this sample will be placed into (e.g. '`advanced`')
+* `<create_path>` is optional, for deciding *where* your sample gets created. This should generally be left blank as the script will automatically place your sample its category folder.
+
+#### Example
 
 ```
-samples/category/sample_name/CMakeLists.txt
-samples/category/sample_name/sample_name.cpp
-samples/category/sample_name/sample_name.h
+generate_sample my_sample category
+```
+
+Running the above line will generate the following files:
+
+```
+samples/category/my_sample/CMakeLists.txt
+samples/category/my_sample/my_sample.cpp
+samples/category/my_sample/my_sample.h
 ```
 
 ## Configure
-To configure how your sample will appear in the android list activity you can change the `CMakeLists.txt` within the generated directory:
+To configure how your sample will appear, you can modify the `CMakeLists.txt` within the generated directory:
 * `NAME` the string that will appear as the title of the sample in the sample list, and the header in the GUI for the sample
 * `DESCRIPTION` the string that will appear under the samples title in the sample list
 
-Inside `samples/CMakeLists.txt` you should place your `<sample_name>` where you would like it to be placed relative to the other samples.
+To change the order of the samples (or place your sample in a specific place), modify the `ORDER_LIST` list inside `samples/CMakeLists.txt`. Just place a string of your `<sample_id>` where you would like it to be placed relative to the other samples.
 
-Within the samples constructor, you will need to insert the various configurations that you want your sample to show when automated by the `Run All Samples` button.
+If you would like to show different configurations of your sample during batch mode, you will need to insert these configurations in the constructor of your sample (inside `samples/category/my_sample.cpp`).
 
 e.g. `get_configuration().insert<vkb::IntSetting>(0, my_sample_value, 3);`

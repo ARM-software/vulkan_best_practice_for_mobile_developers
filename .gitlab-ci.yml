@@ -100,6 +100,17 @@ Android:
     - cmake -G "Unix Makefiles" -H. -Bbuild/android -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
     - cmake --build build/android --config Release --target vulkan_best_practice_package
 
+GenerateSample:
+  stage: Test
+  variables:
+   GIT_SUBMODULE_STRATEGY: recursive
+  tags:
+   - windows
+   - shell
+  script:
+   - cd tests/generate_sample
+   - python generate_sample_test.py
+
 SystemTest:
  stage: Test
  variables:

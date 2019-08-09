@@ -113,9 +113,10 @@ vulkan_best_practice --batch advanced
 ```
 
 
-## Testing
+## Tests
 
 - System Test - [Usage Guide](docs/testing.md#system-test "System Test Guide")
+- Generate Sample - [Usage Guide](docs/testing.md#generate-sample-test "Generate Sample Test Guide")
 
 
 ## License

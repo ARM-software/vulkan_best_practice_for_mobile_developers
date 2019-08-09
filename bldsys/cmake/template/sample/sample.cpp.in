@@ -20,6 +20,18 @@
 
 #include "@SAMPLE_NAME_FILE@.h"
 
+#include "common/vk_common.h"
+#include "gltf_loader.h"
+#include "gui.h"
+#include "platform/filesystem.h"
+#include "platform/platform.h"
+#include "rendering/subpasses/scene_subpass.h"
+#include "stats.h"
+
+#if defined(VK_USE_PLATFORM_ANDROID_KHR)
+#	include "platform/android/android_platform.h"
+#endif
+
 @SAMPLE_NAME@::@SAMPLE_NAME@()
 {
 }
@@ -47,8 +59,8 @@ bool @SAMPLE_NAME@::prepare(vkb::Platform &platform)
 	auto camera = &camera_node.get_component<vkb::sg::Camera>();
 
 	// Example Scene Render Pipeline
-	vkb::ShaderSource vert_shader(vkb::file::read_asset("shaders/base.vert"));
-	vkb::ShaderSource frag_shader(vkb::file::read_asset("shaders/base.frag"));
+	vkb::ShaderSource vert_shader(vkb::fs::read_asset("shaders/base.vert"));
+	vkb::ShaderSource frag_shader(vkb::fs::read_asset("shaders/base.frag"));
 	auto scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 	auto render_pipeline = vkb::RenderPipeline();
 	render_pipeline.add_subpass(std::move(scene_subpass));

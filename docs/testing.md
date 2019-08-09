@@ -24,6 +24,7 @@
 
 ## Contents 
 - [System Test](#system-test)
+- [Generate Sample Test](#generate-sample-test)
 
 ## System Test
 In order for the script to work you will need to install and add to your Path:
@@ -43,6 +44,18 @@ You will also need to have built the Vulkan Best Practices in 64 bit, with the C
 2.2. To target just testing on desktop, add a `-D` flag, or to target just Android, an `-A` flag. If no flag is specified it will run for both.  
 2.3. To run a specific sub test(s), use the `-S` flag (e.g. `python system_test.py ... -S sponza bonza` runs sponza and bonza)  
 
-## Android
+### Android
 
 We currently support FHD resolutions (2280x1080), if testing on another device or resolution the test may fail.
+
+## Generate Sample Test
+
+There is a test for the `generate_sample` script, to ensure that it generates a sample that builds within the project. 
+
+#### To run
+```
+cd tests/generate_sample
+python generate_sample_test.py
+```
+
+It will print out the result of the test
