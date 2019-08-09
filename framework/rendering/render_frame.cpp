@@ -24,11 +24,12 @@
 
 namespace vkb
 {
-RenderFrame::RenderFrame(Device &device, RenderTarget &&render_target) :
+RenderFrame::RenderFrame(Device &device, RenderTarget &&render_target, uint16_t command_pool_count) :
     device{device},
     fence_pool{device},
     semaphore_pool{device},
-    swapchain_render_target{std::move(render_target)}
+    swapchain_render_target{std::move(render_target)},
+    command_pool_count{command_pool_count}
 {
 	buffer_pools.emplace(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, std::make_pair(BufferPool{device, BUFFER_POOL_BLOCK_SIZE * 1024, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT}, nullptr));
 	buffer_pools.emplace(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, std::make_pair(BufferPool{device, BUFFER_POOL_BLOCK_SIZE * 1024, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT}, nullptr));
@@ -46,9 +47,12 @@ void RenderFrame::reset()
 
 	fence_pool.reset();
 
-	for (auto &command_pool : command_pools)
+	for (auto &command_pools_per_queue : command_pools)
 	{
-		command_pool.second->reset_pool();
+		for (auto &command_pool : command_pools_per_queue.second)
+		{
+			command_pool->reset_pool();
+		}
 	}
 
 	for (auto &buffer_pool_it : buffer_pools)
@@ -64,26 +68,32 @@ void RenderFrame::reset()
 	semaphore_pool.reset();
 }
 
-CommandPool &RenderFrame::get_command_pool(const Queue &queue, CommandBuffer::ResetMode reset_mode)
+std::vector<std::unique_ptr<CommandPool>> &RenderFrame::get_command_pools(const Queue &queue, CommandBuffer::ResetMode reset_mode)
 {
 	auto command_pool_it = command_pools.find(queue.get_family_index());
 
 	if (command_pool_it != command_pools.end())
 	{
-		if (command_pool_it->second->get_reset_mode() != reset_mode)
+		if (command_pool_it->second.at(0)->get_reset_mode() != reset_mode)
 		{
 			device.wait_idle();
 
-			// Delete pool
+			// Delete pools
 			command_pools.erase(command_pool_it);
 		}
 		else
 		{
-			return *command_pool_it->second;
+			return command_pool_it->second;
 		}
 	}
 
-	auto res_ins_it = command_pools.emplace(queue.get_family_index(), std::make_unique<CommandPool>(device, queue.get_family_index(), reset_mode));
+	std::vector<std::unique_ptr<CommandPool>> queue_command_pools;
+	for (int i = 0; i < command_pool_count; i++)
+	{
+		queue_command_pools.push_back(std::make_unique<CommandPool>(device, queue.get_family_index(), reset_mode));
+	}
+
+	auto res_ins_it = command_pools.emplace(queue.get_family_index(), std::move(queue_command_pools));
 
 	if (!res_ins_it.second)
 	{
@@ -92,7 +102,7 @@ CommandPool &RenderFrame::get_command_pool(const Queue &queue, CommandBuffer::Re
 
 	command_pool_it = res_ins_it.first;
 
-	return *command_pool_it->second;
+	return command_pool_it->second;
 }
 
 FencePool &RenderFrame::get_fence_pool()

@@ -55,7 +55,7 @@ class RenderFrame : public NonCopyable
 	 */
 	static constexpr uint32_t BUFFER_POOL_BLOCK_SIZE = 256;
 
-	RenderFrame(Device &device, RenderTarget &&render_target);
+	RenderFrame(Device &device, RenderTarget &&render_target, uint16_t command_pool_count = 1);
 
 	void reset();
 
@@ -65,13 +65,13 @@ class RenderFrame : public NonCopyable
 	}
 
 	/**
-	 * @brief Retrieve the frame's command pool
+	 * @brief Retrieve the frame's command pool(s)
 	 * @param queue The queue command buffers will be submitted on
 	 * @param reset_mode Indicate how the command buffers will be reset after execution,
 	 *        may trigger a pool re-creation to set necessary flags
-	 * @return The frame's command pool
+	 * @return The frame's command pool(s)
 	 */
-	CommandPool &get_command_pool(const Queue &queue, CommandBuffer::ResetMode reset_mode);
+	std::vector<std::unique_ptr<CommandPool>> &get_command_pools(const Queue &queue, CommandBuffer::ResetMode reset_mode);
 
 	FencePool &get_fence_pool();
 
@@ -96,11 +96,13 @@ class RenderFrame : public NonCopyable
 	Device &device;
 
 	/// Commands pools associated to the frame
-	std::map<uint32_t, std::unique_ptr<CommandPool>> command_pools;
+	std::map<uint32_t, std::vector<std::unique_ptr<CommandPool>>> command_pools;
 
 	FencePool fence_pool;
 
 	SemaphorePool semaphore_pool;
+
+	uint16_t command_pool_count;
 
 	RenderTarget swapchain_render_target;
 

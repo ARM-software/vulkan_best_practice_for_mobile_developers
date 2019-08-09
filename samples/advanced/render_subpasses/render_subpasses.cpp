@@ -123,7 +123,7 @@ bool RenderSubpasses::prepare(vkb::Platform &platform)
 	VkImageUsageFlags swapchain_usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
 	auto              swapchain       = std::make_unique<vkb::Swapchain>(*device, get_surface(), VkExtent2D{}, 3, VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR, VK_PRESENT_MODE_FIFO_KHR, swapchain_usage);
 
-	render_context = std::make_unique<vkb::RenderContext>(std::move(swapchain), std::bind(&RenderSubpasses::create_render_target, this, std::placeholders::_1));
+	render_context = std::make_unique<vkb::RenderContext>(std::move(swapchain), 1, std::bind(&RenderSubpasses::create_render_target, this, std::placeholders::_1));
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 

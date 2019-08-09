@@ -56,7 +56,7 @@ namespace vkb
 class RenderContext : public NonCopyable
 {
   public:
-	RenderContext(std::unique_ptr<Swapchain> &&swapchain, RenderTarget::CreateFunc create_render_target = RenderTarget::DEFAULT_CREATE_FUNC);
+	RenderContext(std::unique_ptr<Swapchain> &&swapchain, uint16_t command_pools_per_frame = 1, RenderTarget::CreateFunc create_render_target = RenderTarget::DEFAULT_CREATE_FUNC);
 
 	virtual ~RenderContext() = default;
 
@@ -102,11 +102,13 @@ class RenderContext : public NonCopyable
 	 * @param reset_mode Indicate how the command buffer will be used, may trigger a
 	 *        pool re-creation to set necessary flags
 	 * @param level Command buffer level, either primary or secondary
+	 * @param pool_index Select the frame command pool to use to manage the buffer
 	 * @return A command buffer related to the current active frame
 	 */
 	CommandBuffer &request_frame_command_buffer(const Queue &            queue,
 	                                            CommandBuffer::ResetMode reset_mode = CommandBuffer::ResetMode::ResetPool,
-	                                            VkCommandBufferLevel     level      = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+	                                            VkCommandBufferLevel     level      = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+	                                            uint16_t                 pool_index = 0);
 
 	VkSemaphore request_semaphore();
 

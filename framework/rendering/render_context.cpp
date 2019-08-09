@@ -22,7 +22,7 @@
 
 namespace vkb
 {
-RenderContext::RenderContext(std::unique_ptr<Swapchain> &&s, RenderTarget::CreateFunc create_rt) :
+RenderContext::RenderContext(std::unique_ptr<Swapchain> &&s, uint16_t command_pools_per_frame, RenderTarget::CreateFunc create_rt) :
     device{s->get_device()},
     swapchain{std::move(s)},
     present_queue{device.get_queue_by_present(0)},
@@ -44,7 +44,7 @@ RenderContext::RenderContext(std::unique_ptr<Swapchain> &&s, RenderTarget::Creat
 		    swapchain->get_format(),
 		    swapchain->get_usage()};
 		auto render_target = create_render_target(std::move(swapchain_image));
-		frames.emplace_back(RenderFrame{device, std::move(render_target)});
+		frames.emplace_back(RenderFrame{device, std::move(render_target), command_pools_per_frame});
 	}
 }
 
@@ -167,11 +167,11 @@ RenderFrame &RenderContext::get_last_rendered_frame()
 	return frames.at(active_frame_index);
 }
 
-CommandBuffer &RenderContext::request_frame_command_buffer(const Queue &queue, CommandBuffer::ResetMode reset_mode, VkCommandBufferLevel level)
+CommandBuffer &RenderContext::request_frame_command_buffer(const Queue &queue, CommandBuffer::ResetMode reset_mode, VkCommandBufferLevel level, uint16_t pool_index)
 {
-	RenderFrame &frame = get_active_frame();
+	auto &command_pools = get_active_frame().get_command_pools(queue, reset_mode);
 
-	return frame.get_command_pool(queue, reset_mode).request_command_buffer(level);
+	return command_pools.at(pool_index)->request_command_buffer(level);
 }
 
 VkSemaphore RenderContext::request_semaphore()
