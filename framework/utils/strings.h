@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,14 +20,15 @@
 
 #pragma once
 
-#include <spdlog/fmt/fmt.h>
-#include <spdlog/spdlog.h>
+#include <string>
+#include <unordered_map>
 
-#define LOGGER_FORMAT "[%^%l%$] %v"
-#define PROJECT_NAME "VulkanBestPractice"
+#include <volk.h>
 
-#define __FILENAME__ (static_cast<const char *>(__FILE__) + ROOT_PATH_SIZE)
-
-#define LOGI(...) spdlog::info(__VA_ARGS__);
-#define LOGW(...) spdlog::warn(__VA_ARGS__);
-#define LOGE(...) spdlog::error("[{}:{}] {}", __FILENAME__, __LINE__, fmt::format(__VA_ARGS__));
+namespace vkb
+{
+namespace utils
+{
+extern std::string to_string(VkResult result);
+}        // namespace utils
+}        // namespace vkb

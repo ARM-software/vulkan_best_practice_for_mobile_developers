@@ -25,6 +25,7 @@
 #include <string>
 
 #include "logging.h"
+#include "utils/strings.h"
 #include "vk_common.h"
 
 #if defined(__clang__)
@@ -81,25 +82,25 @@ class VulkanException : public std::runtime_error
 }        // namespace vkb
 
 /// @brief Helper macro to test the result of Vulkan calls which can return an error.
-#define VK_CHECK(x)                                                                   \
-	do                                                                                \
-	{                                                                                 \
-		VkResult err = x;                                                             \
-		if (err)                                                                      \
-		{                                                                             \
-			LOGE("Detected Vulkan error {} at {}:{}.", int(err), __FILE__, __LINE__); \
-			abort();                                                                  \
-		}                                                                             \
+#define VK_CHECK(x)                                                        \
+	do                                                                     \
+	{                                                                      \
+		VkResult err = x;                                                  \
+		if (err)                                                           \
+		{                                                                  \
+			LOGE("Detected Vulkan error: {}", vkb::utils::to_string(err)); \
+			abort();                                                       \
+		}                                                                  \
 	} while (0)
 
-#define ASSERT_VK_HANDLE(handle)                                  \
-	do                                                            \
-	{                                                             \
-		if ((handle) == VK_NULL_HANDLE)                           \
-		{                                                         \
-			LOGE("Handle is NULL at {}:{}.", __FILE__, __LINE__); \
-			abort();                                              \
-		}                                                         \
+#define ASSERT_VK_HANDLE(handle)        \
+	do                                  \
+	{                                   \
+		if ((handle) == VK_NULL_HANDLE) \
+		{                               \
+			LOGE("Handle is NULL");     \
+			abort();                    \
+		}                               \
 	} while (0)
 
 #if !defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG)

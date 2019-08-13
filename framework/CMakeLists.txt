@@ -203,6 +203,12 @@ set(PLATFORM_FILES
     platform/input_events.cpp
     platform/configuration.cpp)
 
+set(UTIL_FILES
+    # Header Files
+    utils/strings.h
+    # Source Files
+    utils/strings.cpp)
+
 # Add files based on platform
 if(ANDROID)
     list(APPEND PLATFORM_FILES
@@ -241,6 +247,7 @@ source_group("rendering\\subpasses" FILES ${RENDERING_SUBPASSES_FILES})
 source_group("scene_graph\\" FILES ${SCENE_GRAPH_FILES})
 source_group("scene_graph\\components\\" FILES ${SCENE_GRAPH_COMPONENT_FILES})
 source_group("scene_graph\\scripts\\" FILES ${SCENE_GRAPH_SCRIPTS_FILES})
+source_group("utils\\" FILES ${UTIL_FILES})
 
 set(PROJECT_FILES
     ${PLATFORM_FILES}
@@ -251,7 +258,8 @@ set(PROJECT_FILES
     ${RENDERING_SUBPASSES_FILES}
     ${SCENE_GRAPH_FILES}
     ${SCENE_GRAPH_COMPONENT_FILES}
-    ${SCENE_GRAPH_SCRIPTS_FILES})
+    ${SCENE_GRAPH_SCRIPTS_FILES}
+    ${UTIL_FILES})
 
 add_library(${PROJECT_NAME} STATIC ${PROJECT_FILES})
 

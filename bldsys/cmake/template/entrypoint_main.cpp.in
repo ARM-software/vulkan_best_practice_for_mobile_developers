@@ -19,6 +19,7 @@
  */
 
 // Generated file by CMake. Don't edit.
+
 #include "common/logging.h"
 #include "platform/platform.h"
 
@@ -43,8 +44,10 @@ int main(int argc, char *argv[])
 	vkb::LinuxPlatform platform{argc, argv};
 #endif
 
+#ifdef DEBUG
 	try
 	{
+#endif
 		auto sample = create_@TARGET_CREATE_FUNC@();
 		sample->set_name("@TARGET_NAME@");
 		sample->parse_options(platform.get_arguments());
@@ -54,10 +57,12 @@ int main(int argc, char *argv[])
 			platform.main_loop();
 		}
 		platform.terminate(vkb::ExitCode::Success);
+#ifdef DEBUG
 	}
 	catch (const std::exception &e)
 	{
 		LOGE(e.what());
 		platform.terminate(vkb::ExitCode::Fatal);
 	}
+#endif
 }
