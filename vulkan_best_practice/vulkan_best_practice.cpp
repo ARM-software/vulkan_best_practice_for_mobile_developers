@@ -161,6 +161,8 @@ bool VulkanBestPractice::prepare(Platform &platform)
 			return false;
 		}
 
+		this->batch_mode_sample_iter = batch_mode_sample_list.begin();
+
 		result = prepare_active_app(
 		    sample_create_functions.at(batch_mode_sample_list.begin()->id),
 		    batch_mode_sample_list.begin()->name,
@@ -244,7 +246,6 @@ bool VulkanBestPractice::prepare_active_app(CreateAppFunc create_app_func, const
 	if (batch)
 	{
 		this->batch_mode             = true;
-		this->batch_mode_sample_iter = batch_mode_sample_list.begin();
 	}
 	else if (is_benchmark_mode())
 	{
