@@ -48,8 +48,6 @@ class BufferAllocation : public NonCopyable
 		       offset);
 	}
 
-	void update(const uint8_t *data, size_t size, uint32_t offset = 0);
-
 	bool empty() const;
 
 	VkDeviceSize get_size() const;
@@ -72,7 +70,7 @@ class BufferAllocation : public NonCopyable
 class BufferBlock : public NonCopyable
 {
   public:
-	BufferBlock(Device &device, VkDeviceSize size, VkBufferUsageFlags usage);
+	BufferBlock(Device &device, VkDeviceSize size, VkBufferUsageFlags usage, VmaMemoryUsage memory_usage);
 
 	/**
 	 * @return An usable view on a portion of the underlying buffer
@@ -112,7 +110,7 @@ class BufferBlock : public NonCopyable
 class BufferPool : public NonCopyable
 {
   public:
-	BufferPool(Device &device, VkDeviceSize block_size, VkBufferUsageFlags usage);
+	BufferPool(Device &device, VkDeviceSize block_size, VkBufferUsageFlags usage, VmaMemoryUsage memory_usage = VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	BufferBlock &request_buffer_block(VkDeviceSize minimum_size);
 
@@ -128,6 +126,8 @@ class BufferPool : public NonCopyable
 	VkDeviceSize block_size{0};
 
 	VkBufferUsageFlags usage{};
+
+	VmaMemoryUsage memory_usage{};
 
 	/// Numbers of active blocks from the start of buffer_blocks
 	uint32_t active_buffer_block_count{0};

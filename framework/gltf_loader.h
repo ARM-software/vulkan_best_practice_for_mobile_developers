@@ -81,8 +81,6 @@ class GLTFLoader
 
 	virtual std::unique_ptr<sg::Mesh> parse_mesh(const tinygltf::Mesh &gltf_mesh) const;
 
-	virtual std::unique_ptr<sg::SubMesh> parse_primitive(const tinygltf::Primitive &gltf_primitive) const;
-
 	virtual std::unique_ptr<sg::PBRMaterial> parse_material(const tinygltf::Material &gltf_material) const;
 
 	virtual std::unique_ptr<sg::Image> parse_image(tinygltf::Image &gltf_image) const;

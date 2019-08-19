@@ -376,6 +376,13 @@ void CommandBuffer::blit_image(const core::Image &src_img, const core::Image &ds
 	               to_u32(regions.size()), regions.data(), VK_FILTER_NEAREST);
 }
 
+void CommandBuffer::copy_buffer(const core::Buffer &src_buffer, const core::Buffer &dst_buffer, VkDeviceSize size)
+{
+	VkBufferCopy copyRegion = {};
+	copyRegion.size         = size;
+	vkCmdCopyBuffer(get_handle(), src_buffer.get_handle(), dst_buffer.get_handle(), 1, &copyRegion);
+}
+
 void CommandBuffer::copy_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageCopy> &regions)
 {
 	vkCmdCopyImage(get_handle(), src_img.get_handle(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
@@ -562,10 +569,19 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 					auto  arrayElement  = element_it.first;
 					auto &resource_info = element_it.second;
 
+					// Pointer references
+					auto &buffer     = resource_info.buffer;
+					auto &sampler    = resource_info.sampler;
+					auto &image_view = resource_info.image_view;
+
 					// Get buffer info
-					if (resource_info.is_buffer() && is_buffer_descriptor_type(binding_info.descriptorType))
+					if (buffer != nullptr && is_buffer_descriptor_type(binding_info.descriptorType))
 					{
-						VkDescriptorBufferInfo buffer_info = resource_info.get_buffer_info();
+						VkDescriptorBufferInfo buffer_info{};
+
+						buffer_info.buffer = resource_info.buffer->get_handle();
+						buffer_info.offset = resource_info.offset;
+						buffer_info.range  = resource_info.range;
 
 						if (is_dynamic_buffer_descriptor_type(binding_info.descriptorType))
 						{
@@ -576,16 +592,20 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 
 						buffer_infos[binding_index][arrayElement] = buffer_info;
 					}
+
 					// Get image info
-					else if (resource_info.is_image_only() || resource_info.is_sampler_only() || resource_info.is_image_sampler())
+					else if (image_view != nullptr || sampler != VK_NULL_HANDLE)
 					{
-						VkDescriptorImageInfo image_info = resource_info.get_image_info();
+						// Can be null for input attachments
+						VkDescriptorImageInfo image_info{};
+						image_info.sampler   = sampler ? sampler->get_handle() : VK_NULL_HANDLE;
+						image_info.imageView = image_view->get_handle();
 
-						if (resource_info.is_image_only() || resource_info.is_image_sampler())
+						if (image_view != nullptr)
 						{
-							const vkb::core::ImageView &image_view = resource_info.get_image_view();
+							const auto &image_view = *resource_info.image_view;
 
-							// Add iamge layout info based on descriptor type
+							// Add image layout info based on descriptor type
 							switch (binding_info.descriptorType)
 							{
 								case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:

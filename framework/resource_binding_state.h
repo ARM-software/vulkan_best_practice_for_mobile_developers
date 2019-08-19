@@ -27,36 +27,8 @@
 
 namespace vkb
 {
-class ResourceInfo
+struct ResourceInfo
 {
-  public:
-	void reset();
-
-	bool is_dirty() const;
-
-	void clear_dirty();
-
-	bool is_buffer() const;
-
-	bool is_sampler_only() const;
-
-	bool is_image_only() const;
-
-	bool is_image_sampler() const;
-
-	void bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range);
-
-	void bind_image(const core::ImageView &image_view, const core::Sampler &sampler);
-
-	void bind_input(const core::ImageView &image_view);
-
-	VkDescriptorBufferInfo get_buffer_info() const;
-
-	VkDescriptorImageInfo get_image_info() const;
-
-	const core::ImageView &get_image_view() const;
-
-  private:
 	bool dirty{false};
 
 	const core::Buffer *buffer{nullptr};

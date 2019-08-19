@@ -276,8 +276,11 @@ inline std::vector<uint8_t> convert_data(const std::vector<uint8_t> &srcData, ui
 	return result;
 }
 
-inline void upload_image(CommandBuffer &command_buffer, core::Buffer &data, sg::Image &image)
+inline void upload_image_to_gpu(CommandBuffer &command_buffer, core::Buffer &staging_buffer, sg::Image &image)
 {
+	// Clean up the image data, as they are copied in the staging buffer
+	image.clear_data();
+
 	{
 		ImageMemoryBarrier memory_barrier{};
 		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -307,7 +310,7 @@ inline void upload_image(CommandBuffer &command_buffer, core::Buffer &data, sg::
 		copy_region.imageExtent               = mipmap.extent;
 	}
 
-	command_buffer.copy_buffer_to_image(data, image.get_vk_image(), buffer_copy_regions);
+	command_buffer.copy_buffer_to_image(staging_buffer, image.get_vk_image(), buffer_copy_regions);
 
 	{
 		ImageMemoryBarrier memory_barrier{};
@@ -433,13 +436,11 @@ sg::Scene GLTFLoader::load_scene()
 		core::Buffer stage_buffer{device,
 		                          image->get_data().size(),
 		                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		                          VMA_MEMORY_USAGE_CPU_ONLY,
-		                          0};
+		                          VMA_MEMORY_USAGE_CPU_ONLY};
 
 		stage_buffer.update(image->get_data());
-		// Clean up the image data, as they are copied in the staging buffer
-		image->clear_data();
-		upload_image(command_buffer, stage_buffer, *image);
+
+		upload_image_to_gpu(command_buffer, stage_buffer, *image);
 
 		transient_buffers.push_back(std::move(stage_buffer));
 	}
@@ -528,13 +529,83 @@ sg::Scene GLTFLoader::load_scene()
 	// Load meshes
 	auto materials = scene.get_components<sg::PBRMaterial>();
 
+	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
 	for (auto &gltf_mesh : model.meshes)
 	{
 		auto mesh = parse_mesh(gltf_mesh);
 
 		for (auto &gltf_primitive : gltf_mesh.primitives)
 		{
-			auto submesh = parse_primitive(gltf_primitive);
+			auto submesh = std::make_unique<sg::SubMesh>();
+
+			for (auto &attribute : gltf_primitive.attributes)
+			{
+				std::string attrib_name = attribute.first;
+				std::transform(attrib_name.begin(), attrib_name.end(), attrib_name.begin(), ::tolower);
+
+				auto vertex_data = get_attribute_data(&model, attribute.second);
+
+				if (attrib_name == "position")
+				{
+					submesh->vertices_count = to_u32(model.accessors.at(attribute.second).count);
+				}
+
+				core::Buffer buffer{device,
+				                    vertex_data.size(),
+				                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+				                    VMA_MEMORY_USAGE_GPU_TO_CPU};
+				buffer.update(vertex_data);
+
+				auto pair = std::make_pair(attrib_name, std::move(buffer));
+
+				submesh->vertex_buffers.insert(std::move(pair));
+
+				sg::VertexAttribute attrib;
+				attrib.format = get_attribute_format(&model, attribute.second);
+				attrib.stride = to_u32(get_attribute_stride(&model, attribute.second));
+
+				submesh->set_attribute(attrib_name, attrib);
+			}
+
+			if (gltf_primitive.indices >= 0)
+			{
+				submesh->vertex_indices = to_u32(get_attribute_size(&model, gltf_primitive.indices));
+
+				auto format = get_attribute_format(&model, gltf_primitive.indices);
+
+				auto vertex_data = get_attribute_data(&model, gltf_primitive.indices);
+				auto index_data  = get_attribute_data(&model, gltf_primitive.indices);
+
+				switch (format)
+				{
+					case VK_FORMAT_R8_UINT:
+						index_data = convert_data(index_data, 1, 2);
+
+						submesh->index_type = VK_INDEX_TYPE_UINT16;
+						break;
+					case VK_FORMAT_R16_UINT:
+						submesh->index_type = VK_INDEX_TYPE_UINT16;
+						break;
+					case VK_FORMAT_R32_UINT:
+						submesh->index_type = VK_INDEX_TYPE_UINT32;
+						break;
+					default:
+						LOGE("gltf primitive has invalid format type");
+						break;
+				}
+
+				submesh->index_buffer = std::make_unique<core::Buffer>(device,
+				                                                       index_data.size(),
+				                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+				                                                       VMA_MEMORY_USAGE_GPU_TO_CPU);
+
+				submesh->index_buffer->update(index_data);
+			}
+			else
+			{
+				submesh->vertices_count = to_u32(get_attribute_size(&model, gltf_primitive.attributes.at("POSITION")));
+			}
 
 			if (gltf_primitive.material < 0)
 			{
@@ -552,6 +623,16 @@ sg::Scene GLTFLoader::load_scene()
 
 		scene.add_component(std::move(mesh));
 	}
+
+	command_buffer.end();
+
+	queue.submit(command_buffer, device.request_fence());
+
+	device.get_fence_pool().wait();
+	device.get_fence_pool().reset();
+	device.get_command_pool().reset_pool();
+
+	transient_buffers.clear();
 
 	scene.add_component(std::move(default_material));
 
@@ -714,81 +795,6 @@ std::unique_ptr<sg::Camera> GLTFLoader::parse_camera(const tinygltf::Camera &glt
 std::unique_ptr<sg::Mesh> GLTFLoader::parse_mesh(const tinygltf::Mesh &gltf_mesh) const
 {
 	return std::make_unique<sg::Mesh>(gltf_mesh.name);
-}
-
-std::unique_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primitive &gltf_primitive) const
-{
-	auto submesh = std::make_unique<sg::SubMesh>();
-
-	for (auto &attribute : gltf_primitive.attributes)
-	{
-		std::string attrib_name = attribute.first;
-		std::transform(attrib_name.begin(), attrib_name.end(), attrib_name.begin(), ::tolower);
-		auto vertex_data = get_attribute_data(&model, attribute.second);
-
-		if (attrib_name == "position")
-		{
-			submesh->vertices_count = to_u32(model.accessors.at(attribute.second).count);
-		}
-
-		core::Buffer buffer{device,
-		                    vertex_data.size(),
-		                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		                    VMA_MEMORY_USAGE_CPU_TO_GPU,
-		                    VMA_ALLOCATION_CREATE_MAPPED_BIT};
-		buffer.update(vertex_data);
-
-		auto pair = std::make_pair(attrib_name, std::move(buffer));
-
-		submesh->vertex_buffers.insert(std::move(pair));
-
-		sg::VertexAttribute attrib;
-		attrib.format = get_attribute_format(&model, attribute.second);
-		attrib.stride = to_u32(get_attribute_stride(&model, attribute.second));
-
-		submesh->set_attribute(attrib_name, attrib);
-	}
-
-	if (gltf_primitive.indices >= 0)
-	{
-		submesh->vertex_indices = to_u32(get_attribute_size(&model, gltf_primitive.indices));
-
-		auto format = get_attribute_format(&model, gltf_primitive.indices);
-
-		auto vertex_data = get_attribute_data(&model, gltf_primitive.indices);
-		auto index_data  = get_attribute_data(&model, gltf_primitive.indices);
-
-		switch (format)
-		{
-			case VK_FORMAT_R8_UINT:
-				index_data = convert_data(index_data, 1, 2);
-
-				submesh->index_type = VK_INDEX_TYPE_UINT16;
-				break;
-			case VK_FORMAT_R16_UINT:
-				submesh->index_type = VK_INDEX_TYPE_UINT16;
-				break;
-			case VK_FORMAT_R32_UINT:
-				submesh->index_type = VK_INDEX_TYPE_UINT32;
-				break;
-			default:
-				LOGE("gltf primitive has invalid format type");
-				break;
-		}
-
-		submesh->index_buffer = std::make_unique<core::Buffer>(device,
-		                                                       index_data.size(),
-		                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		                                                       VMA_MEMORY_USAGE_CPU_TO_GPU,
-		                                                       VMA_ALLOCATION_CREATE_MAPPED_BIT);
-		submesh->index_buffer->update(index_data);
-	}
-	else
-	{
-		submesh->vertices_count = to_u32(get_attribute_size(&model, gltf_primitive.attributes.at("POSITION")));
-	}
-
-	return submesh;
 }
 
 std::unique_ptr<sg::PBRMaterial> GLTFLoader::parse_material(const tinygltf::Material &gltf_material) const

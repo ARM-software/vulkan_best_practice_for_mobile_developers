@@ -28,8 +28,8 @@
 
 namespace vkb
 {
-BufferBlock::BufferBlock(Device &device, VkDeviceSize size, VkBufferUsageFlags usage) :
-    buffer{device, size, usage, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT}
+BufferBlock::BufferBlock(Device &device, VkDeviceSize size, VkBufferUsageFlags usage, VmaMemoryUsage memory_usage) :
+    buffer{device, size, usage, memory_usage}
 {
 	if (usage == VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
 	{
@@ -39,10 +39,21 @@ BufferBlock::BufferBlock(Device &device, VkDeviceSize size, VkBufferUsageFlags u
 	{
 		alignment = device.get_properties().limits.minStorageBufferOffsetAlignment;
 	}
-	else
+	else if (usage == VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT)
 	{
+		alignment = device.get_properties().limits.minTexelBufferOffsetAlignment;
+	}
+	else if (usage == VK_BUFFER_USAGE_INDEX_BUFFER_BIT || usage == VK_BUFFER_USAGE_VERTEX_BUFFER_BIT || usage == VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT)
+	{
+		// Used to calculate the offset, required when allocating memory (its value should be power of 2)
 		alignment = 16;
 	}
+	else
+	{
+		throw std::runtime_error("Usage not recognised");
+	}
+
+	buffer.map();
 }
 
 BufferAllocation BufferBlock::allocate(const uint32_t allocate_size)
@@ -72,10 +83,11 @@ void BufferBlock::reset()
 	offset = 0;
 }
 
-BufferPool::BufferPool(Device &device, VkDeviceSize block_size, VkBufferUsageFlags usage) :
+BufferPool::BufferPool(Device &device, VkDeviceSize block_size, VkBufferUsageFlags usage, VmaMemoryUsage memory_usage) :
     device{device},
     block_size{block_size},
-    usage{usage}
+    usage{usage},
+    memory_usage{memory_usage}
 {
 }
 
@@ -96,7 +108,7 @@ BufferBlock &BufferPool::request_buffer_block(const VkDeviceSize minimum_size)
 	LOGI("Building #{} buffer block ({})", buffer_blocks.size(), usage);
 
 	// Create a new block, store and return it
-	buffer_blocks.emplace_back(device, std::max(block_size, minimum_size), usage);
+	buffer_blocks.emplace_back(device, std::max(block_size, minimum_size), usage, memory_usage);
 
 	auto &block = buffer_blocks[active_buffer_block_count++];
 
@@ -132,13 +144,6 @@ void BufferAllocation::update(const std::vector<uint8_t> &data, uint32_t offset)
 	{
 		LOGE("Ignore buffer allocation update");
 	}
-}
-
-void BufferAllocation::update(const uint8_t *data, const size_t size, const uint32_t offset)
-{
-	assert(data && "Invalid data pointer");
-
-	buffer->update(data, size, offset);
 }
 
 bool BufferAllocation::empty() const
