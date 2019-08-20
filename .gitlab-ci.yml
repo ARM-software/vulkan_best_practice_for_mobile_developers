@@ -118,9 +118,8 @@ SystemTest:
  tags:
    - windows
    - shell
- before_script:
-   - xcopy D:\scenes\cookbook-models .\assets\ /s /y
  script:
+   - python bldsys/scripts/download_assets.py https://github.com/ARM-software/vulkan_best_practice_for_mobile_developers/releases/download/v1.1.2/scenes.zip
    - cd tests/system_test
    - python system_test.py -Bbuild/windows -Crelease -D -P
 
