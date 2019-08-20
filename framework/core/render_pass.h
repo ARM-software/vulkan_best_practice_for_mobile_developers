@@ -56,9 +56,20 @@ class RenderPass : public NonCopyable
 
 	~RenderPass();
 
+	const uint32_t get_color_output_count(uint32_t subpass_index) const;
+
   private:
 	Device &device;
 
 	VkRenderPass handle{VK_NULL_HANDLE};
+
+	size_t subpass_count;
+
+	// Store attachments for every subpass
+	std::vector<std::vector<VkAttachmentReference>> input_attachments;
+
+	std::vector<std::vector<VkAttachmentReference>> color_attachments;
+
+	std::vector<std::vector<VkAttachmentReference>> depth_stencil_attachments;
 };
 }        // namespace vkb

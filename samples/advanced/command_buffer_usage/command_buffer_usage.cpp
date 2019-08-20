@@ -215,10 +215,6 @@ void CommandBufferUsage::draw_swapchain_renderpass(vkb::CommandBuffer &primary_c
 	{
 		primary_command_buffer.execute_commands(secondary_command_buffers);
 	}
-	else
-	{
-		primary_command_buffer.resolve_subpasses();
-	}
 
 	primary_command_buffer.end_render_pass();
 }
@@ -323,8 +319,6 @@ void CommandBufferUsage::SceneSubpassSecondary::draw(vkb::CommandBuffer &primary
 
 	if (use_secondary_command_buffers)
 	{
-		primary_command_buffer.resolve_subpasses();
-
 		primary_command_buffer.execute_commands(secondary_command_buffers);
 	}
 }

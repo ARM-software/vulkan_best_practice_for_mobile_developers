@@ -20,8 +20,8 @@
 
 #pragma once
 
-#include "command_record.h"
-#include "command_replay.h"
+#include <list>
+
 #include "common/helpers.h"
 #include "common/vk_common.h"
 #include "core/buffer.h"
@@ -30,14 +30,22 @@
 #include "core/sampler.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_target.h"
+#include "rendering/subpass.h"
+#include "resource_binding_state.h"
 
 namespace vkb
 {
 class CommandPool;
+class DescriptorSet;
+class Framebuffer;
+class Pipeline;
+class PipelineLayout;
+class PipelineState;
+class RenderTarget;
 
 /**
- * @brief Records Vulkan commands after begin function and replays them before end function is called.
- *        Helper class to build graphics/compute pipelines and descriptor sets
+ * @brief Helper class to manage and record a command buffer, building and
+ *        keeping track of pipeline state and resource bindings
  */
 class CommandBuffer : public NonCopyable
 {
@@ -57,6 +65,16 @@ class CommandBuffer : public NonCopyable
 		Executable,
 	};
 
+	/*
+	 * @brief Helper structure used to track render pass state
+	 */
+	struct RenderPassBinding
+	{
+		const RenderPass *render_pass;
+
+		const Framebuffer *framebuffer;
+	};
+
 	CommandBuffer(CommandPool &command_pool, VkCommandBufferLevel level);
 
 	~CommandBuffer();
@@ -67,10 +85,6 @@ class CommandBuffer : public NonCopyable
 	CommandBuffer(CommandBuffer &&other);
 
 	Device &get_device();
-
-	CommandRecord &get_recorder();
-
-	CommandReplay &get_replayer();
 
 	const VkCommandBuffer &get_handle() const;
 
@@ -86,11 +100,9 @@ class CommandBuffer : public NonCopyable
 
 	VkResult end();
 
-	void begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values, VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
+	void begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values, VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE, const std::vector<std::unique_ptr<Subpass>> &subpasses = {});
 
 	void next_subpass();
-
-	void resolve_subpasses();
 
 	void execute_commands(std::vector<CommandBuffer *> &secondary_command_buffers);
 
@@ -173,8 +185,6 @@ class CommandBuffer : public NonCopyable
 
 	const State get_state() const;
 
-	const VkCommandBufferUsageFlags get_usage_flags() const;
-
 	/**
 	 * @brief Reset the command buffer to a state where it can be recorded to
 	 * @param reset_mode How to reset the buffer, should match the one used by the pool to allocate it
@@ -190,11 +200,28 @@ class CommandBuffer : public NonCopyable
 
 	VkCommandBuffer handle{VK_NULL_HANDLE};
 
-	CommandRecord recorder;
+	RenderPassBinding current_render_pass;
 
-	CommandReplay replayer;
+	PipelineState pipeline_state;
 
-	VkCommandBufferUsageFlags usage_flags{};
+	ResourceBindingState resource_binding_state;
+
+	std::unordered_map<uint32_t, DescriptorSetLayout *> descriptor_set_layout_state;
+
+	const RenderPassBinding &get_current_render_pass()
+	{
+		return current_render_pass;
+	}
+
+	/**
+	 * @brief Flush the piplines state
+	 */
+	void flush_pipeline_state(VkPipelineBindPoint pipeline_bind_point);
+
+	/**
+	 * @brief Flush the descriptor set state
+	 */
+	void flush_descriptor_state(VkPipelineBindPoint pipeline_bind_point);
 };
 
 template <class T>

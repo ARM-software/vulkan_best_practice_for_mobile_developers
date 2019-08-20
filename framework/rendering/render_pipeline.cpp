@@ -78,7 +78,7 @@ void RenderPipeline::draw(CommandBuffer &command_buffer, RenderTarget &render_ta
 		if (i == 0)
 		{
 			// Begin render pass
-			command_buffer.begin_render_pass(render_target, load_store, clear_value, contents);
+			command_buffer.begin_render_pass(render_target, load_store, clear_value, contents, subpasses);
 		}
 		else
 		{

@@ -33,7 +33,11 @@ VkRenderPass RenderPass::get_handle() const
 }
 
 RenderPass::RenderPass(Device &device, const std::vector<Attachment> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses) :
-    device{device}
+    device{device},
+    subpass_count{std::max<size_t>(1, subpasses.size())},        // At least 1 subpass
+    input_attachments{subpass_count},
+    color_attachments{subpass_count},
+    depth_stencil_attachments{subpass_count}
 {
 	uint32_t depth_stencil_attachment{VK_ATTACHMENT_UNUSED};
 
@@ -62,16 +66,8 @@ RenderPass::RenderPass(Device &device, const std::vector<Attachment> &attachment
 		attachment_descriptions.push_back(std::move(attachment));
 	}
 
-	// At least 1 subpass
-	size_t subpass_count = std::max<size_t>(1, subpasses.size());
-
 	std::vector<VkSubpassDescription> subpass_descriptions;
 	subpass_descriptions.reserve(subpass_count);
-
-	// Store attacchments for every subpass
-	std::vector<std::vector<VkAttachmentReference>> input_attachments(subpass_count);
-	std::vector<std::vector<VkAttachmentReference>> color_attachments(subpass_count);
-	std::vector<std::vector<VkAttachmentReference>> depth_stencil_attachments(subpass_count);
 
 	for (size_t i = 0; i < subpasses.size(); ++i)
 	{
@@ -255,7 +251,11 @@ RenderPass::RenderPass(Device &device, const std::vector<Attachment> &attachment
 
 RenderPass::RenderPass(RenderPass &&other) :
     device{other.device},
-    handle{other.handle}
+    handle{other.handle},
+    subpass_count{other.subpass_count},
+    input_attachments{other.input_attachments},
+    color_attachments{other.color_attachments},
+    depth_stencil_attachments{other.depth_stencil_attachments}
 {
 	other.handle = VK_NULL_HANDLE;
 }
@@ -267,5 +267,10 @@ RenderPass::~RenderPass()
 	{
 		vkDestroyRenderPass(device.get_handle(), handle, nullptr);
 	}
+}
+
+const uint32_t RenderPass::get_color_output_count(uint32_t subpass_index) const
+{
+	return to_u32(color_attachments[subpass_index].size());
 }
 }        // namespace vkb

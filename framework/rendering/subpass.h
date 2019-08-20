@@ -21,12 +21,13 @@
 #pragma once
 
 #include "common/helpers.h"
-#include "core/command_buffer.h"
 #include "core/shader_module.h"
+#include "rendering/pipeline_state.h"
 
 namespace vkb
 {
 class RenderContext;
+class CommandBuffer;
 
 /**
  * @brief Calculates the vulkan style projection matrix

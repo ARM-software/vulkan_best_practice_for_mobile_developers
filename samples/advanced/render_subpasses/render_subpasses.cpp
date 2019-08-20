@@ -369,7 +369,6 @@ void draw_pipeline(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render
 		gui->draw(command_buffer);
 	}
 
-	command_buffer.resolve_subpasses();
 	command_buffer.end_render_pass();
 }
 

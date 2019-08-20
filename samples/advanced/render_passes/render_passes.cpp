@@ -169,8 +169,6 @@ void RenderPassesSample::draw_swapchain_renderpass(vkb::CommandBuffer &command_b
 
 	gui->draw(command_buffer);
 
-	command_buffer.resolve_subpasses();
-
 	command_buffer.end_render_pass();
 }
 

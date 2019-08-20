@@ -623,8 +623,6 @@ void VulkanSample::draw_swapchain_renderpass(CommandBuffer &command_buffer, Rend
 		gui->draw(command_buffer);
 	}
 
-	command_buffer.resolve_subpasses();
-
 	command_buffer.end_render_pass();
 }
 }        // namespace vkb

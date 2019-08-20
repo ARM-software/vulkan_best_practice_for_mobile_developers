@@ -33,8 +33,6 @@ set(FRAMEWORK_FILES
     debug_info.h
     fence_pool.h
     semaphore_pool.h
-    command_record.h
-    command_replay.h
     resource_binding_state.h
     resource_cache.h
     resource_record.h
@@ -51,8 +49,6 @@ set(FRAMEWORK_FILES
     buffer_pool.cpp
     fence_pool.cpp
     semaphore_pool.cpp
-    command_record.cpp
-    command_replay.cpp
     resource_binding_state.cpp
     resource_cache.cpp
     resource_record.cpp
