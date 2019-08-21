@@ -134,9 +134,16 @@ adb shell setprop security.perf_harden 0
 ## Dependencies
 
 - CMake v3.10+
-- Visual Studio 2017
+- Visual Studio 2017 or above
+- [clang-format-8](#clang-format-and-visual-studio)
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
+
+## Clang Format and Visual Studio
+
+Visual Studio comes with `clang-format-6` which is incompatible with some of the styles we use in our `.clang-format` file. It is recommended to point to a `clang-format-8.exe` binary within the in-built clang formatter, or disable it and use a third party extension that is more up to date.
+
+Go to the [LLVM downloads page](http://releases.llvm.org/download.html) to get clang.
 
 ## Build with CMake
 
@@ -168,7 +175,7 @@ build\windows\vulkan_best_practice\bin\Release\AMD64\vulkan_best_practice.exe
 ## Dependencies
 
 - CMake v3.10+
-- C++17 Compiler (tested on GCC 7.3)
+- C++14 Compiler (tested on GCC 7.3)
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
 
