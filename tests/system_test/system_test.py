@@ -57,7 +57,7 @@ class Subtest:
         path = root_path + application_path
         arguments = ["--test", "{}".format(self.test_name), "--headless"]
         try:
-            subprocess.run(path + " " + " ".join(arguments), cwd=root_path)
+            subprocess.run([path] + arguments, cwd=root_path)
         except FileNotFoundError:
             print("\t\t\t(Error) Couldn't find application ({})".format(path))
             result = False
@@ -170,7 +170,7 @@ def compare(metric, base_image, test_image, diff_image = "null:"):
     """
     output = ""
     try:
-        output = subprocess.check_output([get_command("magick"), "compare", "-metric", metric, base_image, test_image, diff_image], stderr=subprocess.STDOUT, shell=True)
+        output = subprocess.check_output([get_command("magick"), "compare", "-metric", metric, base_image, test_image, diff_image], stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         output = e.output
         pass
