@@ -39,10 +39,14 @@ class Pipeline : public NonCopyable
 
 	VkPipeline get_handle() const;
 
+	const PipelineState &get_state() const;
+
   protected:
 	Device &device;
 
 	VkPipeline handle = VK_NULL_HANDLE;
+
+	PipelineState state;
 };
 
 class ComputePipeline : public Pipeline

@@ -18,36 +18,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-
-#include "common/helpers.h"
-#include "common/vk_common.h"
+#include "graph.h"
 
 namespace vkb
 {
-class Device;
-
-class SemaphorePool : public NonCopyable
+namespace utils
 {
-  public:
-	SemaphorePool(Device &device);
-
-	~SemaphorePool();
-
-	/// @brief Move construct
-	SemaphorePool(SemaphorePool &&other) = default;
-
-	VkSemaphore request_semaphore();
-
-	void reset();
-
-	uint32_t get_active_semaphore_count() const;
-
-  private:
-	Device &device;
-
-	std::vector<VkSemaphore> semaphores;
-
-	uint32_t active_semaphore_count{0};
-};
+}        // namespace utils
 }        // namespace vkb

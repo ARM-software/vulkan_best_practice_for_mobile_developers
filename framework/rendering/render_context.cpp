@@ -56,9 +56,9 @@ VkSemaphore RenderContext::begin_frame()
 
 	auto &prev_frame = frames.at(active_frame_index);
 
-	auto fence = prev_frame.get_fence_pool().request_fence();
+	auto fence = prev_frame.request_fence();
 
-	auto aquired_semaphore = prev_frame.get_semaphore_pool().request_semaphore();
+	auto aquired_semaphore = prev_frame.request_semaphore();
 
 	auto result = swapchain->acquire_next_image(active_frame_index, aquired_semaphore, fence);
 
@@ -88,7 +88,7 @@ VkSemaphore RenderContext::submit(const Queue &queue, const CommandBuffer &comma
 {
 	RenderFrame &frame = get_active_frame();
 
-	VkSemaphore signal_semaphore = frame.get_semaphore_pool().request_semaphore();
+	VkSemaphore signal_semaphore = frame.request_semaphore();
 
 	VkCommandBuffer cmd_buf = command_buffer.get_handle();
 
@@ -102,7 +102,7 @@ VkSemaphore RenderContext::submit(const Queue &queue, const CommandBuffer &comma
 	submit_info.signalSemaphoreCount = 1;
 	submit_info.pSignalSemaphores    = &signal_semaphore;
 
-	VkFence fence = frame.get_fence_pool().request_fence();
+	VkFence fence = frame.request_fence();
 
 	queue.submit({submit_info}, fence);
 
@@ -120,7 +120,7 @@ void RenderContext::submit(const Queue &queue, const CommandBuffer &command_buff
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &cmd_buf;
 
-	VkFence fence = frame.get_fence_pool().request_fence();
+	VkFence fence = frame.request_fence();
 
 	queue.submit({submit_info}, fence);
 }
@@ -177,7 +177,7 @@ CommandBuffer &RenderContext::request_frame_command_buffer(const Queue &queue, C
 VkSemaphore RenderContext::request_semaphore()
 {
 	RenderFrame &frame = get_active_frame();
-	return frame.get_semaphore_pool().request_semaphore();
+	return frame.request_semaphore();
 }
 
 Device &RenderContext::get_device()
@@ -239,8 +239,18 @@ Swapchain &RenderContext::get_swapchain()
 	return *swapchain;
 }
 
-VkExtent2D RenderContext::get_surface_extent()
+VkExtent2D RenderContext::get_surface_extent() const
 {
 	return surface_extent;
+}
+
+uint32_t RenderContext::get_active_frame_index() const
+{
+	return active_frame_index;
+}
+
+const std::vector<RenderFrame> &RenderContext::get_render_frames() const
+{
+	return frames;
 }
 }        // namespace vkb

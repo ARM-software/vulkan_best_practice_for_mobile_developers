@@ -81,7 +81,7 @@ bool CommandBufferUsage::prepare(vkb::Platform &platform)
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	gui = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor());
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_dpi_factor());
 
 	return true;
 }

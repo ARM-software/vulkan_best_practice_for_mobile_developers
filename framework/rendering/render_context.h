@@ -118,7 +118,11 @@ class RenderContext : public NonCopyable
 
 	Swapchain &get_swapchain();
 
-	VkExtent2D get_surface_extent();
+	VkExtent2D get_surface_extent() const;
+
+	uint32_t get_active_frame_index() const;
+
+	const std::vector<RenderFrame> &get_render_frames() const;
 
   protected:
 	VkExtent2D surface_extent;

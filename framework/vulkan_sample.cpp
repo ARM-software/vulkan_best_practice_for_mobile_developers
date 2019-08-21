@@ -35,6 +35,9 @@ VKBP_ENABLE_WARNINGS()
 #include "scene_graph/components/camera.h"
 #include "scene_graph/script.h"
 #include "scene_graph/scripts/free_camera.h"
+#include "utils/graphs.h"
+#include "utils/strings.h"
+
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
 #endif
@@ -377,6 +380,11 @@ void VulkanSample::input_event(const InputEvent &input_event)
 		{
 			screenshot(*render_context, "screenshot-" + get_name());
 		}
+
+		if (key_event.get_code() == KeyCode::F6 && key_event.get_action() == KeyAction::Down)
+		{
+			utils::debug_graphs(get_render_context(), *scene.get());
+		}
 	}
 }
 
@@ -428,11 +436,10 @@ void VulkanSample::draw_gui()
 void VulkanSample::update_debug_window()
 {
 	get_debug_info().insert<field::Static, std::string>("resolution",
-	                                                    to_string(render_context->get_swapchain().get_extent().width) + "x" +
-	                                                        to_string(render_context->get_swapchain().get_extent().height));
+	                                                    utils::to_string(render_context->get_swapchain().get_extent()));
 
 	get_debug_info().insert<field::Static, std::string>("surface_format",
-	                                                    convert_format_to_string(render_context->get_swapchain().get_format()) + " (" +
+	                                                    utils::to_string(render_context->get_swapchain().get_format()) + " (" +
 	                                                        to_string(get_bits_per_pixel(render_context->get_swapchain().get_format())) + "bbp)");
 
 	get_debug_info().insert<field::Static, uint32_t>("mesh_count", to_u32(scene->get_components<sg::SubMesh>().size()));
@@ -624,5 +631,11 @@ void VulkanSample::draw_swapchain_renderpass(CommandBuffer &command_buffer, Rend
 	}
 
 	command_buffer.end_render_pass();
+}
+
+sg::Scene &VulkanSample::get_scene()
+{
+	assert(scene && "Scene not loaded");
+	return *scene;
 }
 }        // namespace vkb

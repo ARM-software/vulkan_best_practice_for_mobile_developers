@@ -41,6 +41,7 @@ enum Type
 	Storage,
 	Screenshots,
 	Logs,
+	Graphs,
 	/* NewFolder */
 	TotalRelativePathTypes,
 
@@ -122,5 +123,6 @@ void write_temp(const std::vector<uint8_t> &data, const std::string &filename, c
  * @param row_stride The stride in bytes of a row of pixels
  */
 void write_image(const uint8_t *data, const std::string &filename, const uint32_t width, const uint32_t height, const uint32_t components, const uint32_t row_stride);
+
 }        // namespace fs
 }        // namespace vkb

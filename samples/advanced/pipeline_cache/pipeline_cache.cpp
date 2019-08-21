@@ -122,7 +122,7 @@ bool PipelineCache::prepare(vkb::Platform &platform)
 	button_size.x = button_size.x * dpi_factor;
 	button_size.y = button_size.y * dpi_factor;
 
-	gui = std::make_unique<vkb::Gui>(*render_context, dpi_factor);
+	gui = std::make_unique<vkb::Gui>(*this, dpi_factor);
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 	auto &camera_node = add_free_camera("main_camera");

@@ -109,6 +109,8 @@ class Swapchain : public NonCopyable
 
 	VkImageUsageFlags get_usage() const;
 
+	VkPresentModeKHR get_present_mode() const;
+
   private:
 	Device &device;
 

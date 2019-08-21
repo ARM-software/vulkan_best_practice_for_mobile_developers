@@ -367,4 +367,9 @@ VkImageUsageFlags Swapchain::get_usage() const
 {
 	return image_usage;
 }
+
+VkPresentModeKHR Swapchain::get_present_mode() const
+{
+	return present_mode;
+}
 }        // namespace vkb

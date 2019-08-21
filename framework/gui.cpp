@@ -41,6 +41,7 @@ VKBP_ENABLE_WARNINGS()
 #include "imgui_internal.h"
 #include "platform/filesystem.h"
 #include "rendering/render_context.h"
+#include "utils/graphs.h"
 #include "vulkan_sample.h"
 
 namespace vkb
@@ -77,9 +78,9 @@ const ImGuiWindowFlags Gui::options_flags = Gui::common_flags;
 
 const ImGuiWindowFlags Gui::info_flags = Gui::common_flags | ImGuiWindowFlags_NoInputs;
 
-Gui::Gui(RenderContext &render_context, const float dpi_factor) :
-    render_context{render_context},
-    dpi_factor{dpi_factor}
+Gui::Gui(VulkanSample &sample_, const float dpi_factor) :
+    dpi_factor{dpi_factor},
+    sample{sample_}
 {
 	ImGui::CreateContext();
 
@@ -100,7 +101,7 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 
 	// Dimensions
 	ImGuiIO &io                = ImGui::GetIO();
-	auto &   extent            = render_context.get_swapchain().get_extent();
+	auto &   extent            = sample.get_render_context().get_swapchain().get_extent();
 	io.DisplaySize.x           = static_cast<float>(extent.width);
 	io.DisplaySize.y           = static_cast<float>(extent.height);
 	io.FontGlobalScale         = 1.0f;
@@ -118,7 +119,7 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 	io.Fonts->GetTexDataAsRGBA32(&font_data, &tex_width, &tex_height);
 	size_t upload_size = tex_width * tex_height * 4 * sizeof(char);
 
-	auto &device = render_context.get_device();
+	auto &device = sample.get_render_context().get_device();
 
 	// Create target image for copy
 	VkExtent3D font_extent{to_u32(tex_width), to_u32(tex_height), 1u};
@@ -253,7 +254,7 @@ void Gui::update_buffers(CommandBuffer &command_buffer)
 		idx_dst += cmd_list->IdxBuffer.Size;
 	}
 
-	auto vertex_allocation = render_context.get_active_frame().allocate_buffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertex_buffer_size);
+	auto vertex_allocation = sample.get_render_context().get_active_frame().allocate_buffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertex_buffer_size);
 
 	vertex_allocation.update(vertex_data);
 
@@ -264,7 +265,7 @@ void Gui::update_buffers(CommandBuffer &command_buffer)
 
 	command_buffer.bind_vertex_buffers(0, buffers, offsets);
 
-	auto index_allocation = render_context.get_active_frame().allocate_buffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, index_buffer_size);
+	auto index_allocation = sample.get_render_context().get_active_frame().allocate_buffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, index_buffer_size);
 
 	index_allocation.update(index_data);
 
@@ -340,7 +341,7 @@ void Gui::draw(CommandBuffer &command_buffer)
 	command_buffer.bind_image(*font_image_view, *sampler, 0, 0, 0);
 
 	// Pre-rotation
-	auto      transform      = render_context.get_swapchain().get_transform();
+	auto      transform      = sample.get_render_context().get_swapchain().get_transform();
 	auto &    io             = ImGui::GetIO();
 	auto      push_transform = glm::mat4(1.0f);
 	glm::vec3 rotation_axis  = glm::vec3(0.0f, 0.0f, 1.0f);
@@ -516,7 +517,7 @@ void Gui::show_app_info(const std::string &app_name)
 	ImGui::Text("%s", app_name.c_str());
 
 	// GPU name
-	auto &device            = render_context.get_device();
+	auto &device            = sample.get_render_context().get_device();
 	auto  device_name_label = "GPU: " + std::string(device.get_properties().deviceName);
 	ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize(device_name_label.c_str()).x);
 	ImGui::Text("%s", device_name_label.c_str());
@@ -566,6 +567,11 @@ void Gui::show_debug_window(DebugInfo &debug_info, const ImVec2 &position)
 	}
 	ImGui::Columns(1);
 	ImGui::EndChild();
+
+	if (ImGui::Button("Save Debug Graphs"))
+	{
+		utils::debug_graphs(sample.get_render_context(), sample.get_scene());
+	}
 
 	ImGui::PopFont();
 	ImGui::End();
@@ -765,5 +771,4 @@ bool Gui::input_event(const InputEvent &input_event)
 
 	return capture_move_event;
 }
-
 }        // namespace vkb

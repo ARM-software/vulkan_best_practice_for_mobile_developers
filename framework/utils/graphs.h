@@ -20,34 +20,14 @@
 
 #pragma once
 
-#include "common/helpers.h"
-#include "common/vk_common.h"
+#include "rendering/render_context.h"
+#include "scene_graph/scene.h"
 
 namespace vkb
 {
-class Device;
-
-class SemaphorePool : public NonCopyable
+namespace utils
 {
-  public:
-	SemaphorePool(Device &device);
+void debug_graphs(RenderContext &context, sg::Scene &scene);
 
-	~SemaphorePool();
-
-	/// @brief Move construct
-	SemaphorePool(SemaphorePool &&other) = default;
-
-	VkSemaphore request_semaphore();
-
-	void reset();
-
-	uint32_t get_active_semaphore_count() const;
-
-  private:
-	Device &device;
-
-	std::vector<VkSemaphore> semaphores;
-
-	uint32_t active_semaphore_count{0};
-};
+}        // namespace utils
 }        // namespace vkb

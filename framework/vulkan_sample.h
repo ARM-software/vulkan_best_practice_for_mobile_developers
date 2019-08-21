@@ -146,6 +146,8 @@ class VulkanSample : public Application
 
 	Configuration &get_configuration();
 
+	sg::Scene &get_scene();
+
   protected:
 	std::unique_ptr<Device> device{nullptr};
 

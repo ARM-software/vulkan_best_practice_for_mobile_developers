@@ -201,8 +201,16 @@ set(PLATFORM_FILES
 
 set(UTIL_FILES
     # Header Files
+    utils/graph/graph.h
+    utils/graph/nodes/framework.h
+    utils/graph/nodes/scene.h
+    utils/graphs.h
     utils/strings.h
     # Source Files
+    utils/graph/graph.cpp
+    utils/graph/nodes/framework.cpp
+    utils/graph/nodes/scene.cpp
+    utils/graphs.cpp
     utils/strings.cpp)
 
 # Add files based on platform
@@ -296,7 +304,8 @@ target_link_libraries(${PROJECT_NAME}
     glslang-default-resource-limits
     spdlog
     ctpl
-    docopt)
+    docopt
+    nlohmann_json::nlohmann_json)
 
 # Link platform specific libraries
 if(ANDROID)

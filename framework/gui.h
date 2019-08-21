@@ -32,7 +32,6 @@
 #include "debug_info.h"
 #include "platform/filesystem.h"
 #include "platform/input_events.h"
-#include "rendering/render_context.h"
 #include "stats.h"
 
 namespace vkb
@@ -68,6 +67,8 @@ struct Font
 
 	float size{};
 };
+
+class VulkanSample;
 
 /**
  * @brief Vulkan helper class for Dear ImGui
@@ -199,10 +200,10 @@ class Gui
 
 	/**
 	 * @brief Initializes the Gui
-	 * @param render_context A vulkan render context
+	 * @param sample_ A vulkan render context
 	 * @param dpi_factor The dpi scale factor
 	 */
-	Gui(RenderContext &render_context, const float dpi_factor = 1.0);
+	Gui(VulkanSample &sample_, const float dpi_factor = 1.0);
 
 	/**
 	 * @brief Destroys the Gui
@@ -303,7 +304,7 @@ class Gui
 
 	static const ImGuiWindowFlags info_flags;
 
-	RenderContext &render_context;
+	VulkanSample &sample;
 
 	/// Scale factor to apply to the size of gui elements (expressed in dp)
 	float dpi_factor{1.0f};
@@ -329,6 +330,8 @@ class Gui
 
 	/// Whether or not the GUI has detected a multi touch gesture
 	bool two_finger_tap = false;
+
+	bool show_graph_file_output = false;
 };
 
 void Gui::new_frame()

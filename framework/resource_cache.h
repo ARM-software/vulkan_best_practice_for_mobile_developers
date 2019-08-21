@@ -36,6 +36,29 @@ namespace vkb
 class Device;
 
 /**
+ * @brief Struct to hold the internal state of the Resource Cache
+ * 
+ */
+struct ResourceCacheState
+{
+	std::unordered_map<std::size_t, ShaderModule> shader_modules;
+
+	std::unordered_map<std::size_t, PipelineLayout> pipeline_layouts;
+
+	std::unordered_map<std::size_t, DescriptorSetLayout> descriptor_set_layouts;
+
+	std::unordered_map<std::size_t, RenderPass> render_passes;
+
+	std::unordered_map<std::size_t, GraphicsPipeline> graphics_pipelines;
+
+	std::unordered_map<std::size_t, ComputePipeline> compute_pipelines;
+
+	std::unordered_map<std::size_t, DescriptorSet> descriptor_sets;
+
+	std::unordered_map<std::size_t, Framebuffer> framebuffers;
+};
+
+/**
  * @brief Cache all sorts of Vulkan objects specific to a Vulkan device.
  * Supports serialization and deserialization of cached resources.
  * There is only one cache for all these objects, with several unordered_map of hash indices
@@ -85,6 +108,8 @@ class ResourceCache : public NonCopyable
 
 	void clear();
 
+	const ResourceCacheState &get_internal_state() const;
+
   private:
 	Device &device;
 
@@ -94,21 +119,7 @@ class ResourceCache : public NonCopyable
 
 	VkPipelineCache pipeline_cache{VK_NULL_HANDLE};
 
-	std::unordered_map<std::size_t, ShaderModule> shader_modules;
-
-	std::unordered_map<std::size_t, PipelineLayout> pipeline_layouts;
-
-	std::unordered_map<std::size_t, DescriptorSetLayout> descriptor_set_layouts;
-
-	std::unordered_map<std::size_t, RenderPass> render_passes;
-
-	std::unordered_map<std::size_t, GraphicsPipeline> graphics_pipelines;
-
-	std::unordered_map<std::size_t, ComputePipeline> compute_pipelines;
-
-	std::unordered_map<std::size_t, DescriptorSet> descriptor_sets;
-
-	std::unordered_map<std::size_t, Framebuffer> framebuffers;
+	ResourceCacheState state;
 };
 }        // namespace vkb
 

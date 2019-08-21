@@ -20,21 +20,14 @@
 -
 -->
 
-# Controls <!-- omit in toc -->
+# Controls
 
-- [Desktop](#desktop)
-- [Mobile](#mobile)
-
-## Desktop
-- WASD - Move around the scene
-- Right Mouse Button press and drag - Rotate camera
-- Left Mouse Button press and drag - Locked movement on right and up axis (relative to the camera)
-- Shift - Movement speed reduced
-- Ctrl - Movement speed increased
-
-
-## Mobile
-- Tap on scene - Toggle GUI  
-- Press and hold - Move forward  
-- Drag - Look Around
-- Tap on GUI - Interact with GUI
+| Action                   |                     Desktop                     |               Mobile               |
+| :----------------------- | :---------------------------------------------: | :--------------------------------: |
+| Move around the scene    |                 <kbd>WASD</kbd>                 | <kbd>press</kbd> + <kbd>hold</kbd> |
+| Rotate camera            | <kbd>right mouse button</kbd> + <kbd>drag</kbd> | <kbd>press</kbd> + <kbd>move</kbd> |
+| Pan                      | <kbd>left mouse button</kbd> + <kbd>drag</kbd>  |                 -                  |
+| Movement speed reduced   |                <kbd>shift</kbd>                 |                 -                  |
+| Movement speed increased |                 <kbd>ctrl</kbd>                 |                 -                  |
+| toggle GUI               |              <kbd>left click</kbd>              |           <kbd>tap</kbd>           |
+| toggle debug GUI         |             <kbd>right click</kbd>              |      2 finger <kbd>tap</kbd>       |

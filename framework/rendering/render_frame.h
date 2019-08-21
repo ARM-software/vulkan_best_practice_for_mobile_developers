@@ -73,9 +73,13 @@ class RenderFrame : public NonCopyable
 	 */
 	std::vector<std::unique_ptr<CommandPool>> &get_command_pools(const Queue &queue, CommandBuffer::ResetMode reset_mode);
 
-	FencePool &get_fence_pool();
+	const FencePool &get_fence_pool() const;
 
-	SemaphorePool &get_semaphore_pool();
+	VkFence request_fence();
+
+	const SemaphorePool &get_semaphore_pool() const;
+
+	VkSemaphore request_semaphore();
 
 	/**
 	 * @brief Called when the swapchain changes
@@ -84,6 +88,8 @@ class RenderFrame : public NonCopyable
 	void update_render_target(RenderTarget &&render_target);
 
 	RenderTarget &get_render_target();
+
+	const RenderTarget &get_render_target_const() const;
 
 	/**
 	 * @param usage Usage of the buffer

@@ -109,6 +109,13 @@ target_include_directories(volk PUBLIC ${VOLK_DIR})
 
 set_property(TARGET volk PROPERTY FOLDER "ThirdParty")
 
+#json
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+
+add_subdirectory(nlohmann_json)
+
+include_directories(nlohmann_json/single_include)
+
 # imgui
 set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/imgui")
 set(IMGUI_FILES

@@ -105,17 +105,32 @@ std::vector<std::unique_ptr<CommandPool>> &RenderFrame::get_command_pools(const 
 	return command_pool_it->second;
 }
 
-FencePool &RenderFrame::get_fence_pool()
+const FencePool &RenderFrame::get_fence_pool() const
 {
 	return fence_pool;
 }
 
-SemaphorePool &RenderFrame::get_semaphore_pool()
+VkFence RenderFrame::request_fence()
+{
+	return fence_pool.request_fence();
+}
+
+const SemaphorePool &RenderFrame::get_semaphore_pool() const
 {
 	return semaphore_pool;
 }
 
+VkSemaphore RenderFrame::request_semaphore()
+{
+	return semaphore_pool.request_semaphore();
+}
+
 RenderTarget &RenderFrame::get_render_target()
+{
+	return swapchain_render_target;
+}
+
+const RenderTarget &RenderFrame::get_render_target_const() const
 {
 	return swapchain_render_target;
 }

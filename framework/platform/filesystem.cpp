@@ -38,7 +38,8 @@ namespace path
 const std::unordered_map<Type, std::string> relative_paths = {{Type::Assets, "assets/"},
                                                               {Type::Storage, "output/"},
                                                               {Type::Screenshots, "output/images/"},
-                                                              {Type::Logs, "output/logs/"}};
+                                                              {Type::Logs, "output/logs/"},
+                                                              {Type::Graphs, "output/graphs/"}};
 
 const std::string get(const Type type)
 {
