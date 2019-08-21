@@ -32,6 +32,8 @@ The Vulkan API allows the developer a level of control around how the `VkSwapcha
 
 It is important to note that from a device perspective to have AFBC enabled on Vulkan, you will need at least driver version `r16p0` and a `Mali G-51` or higher. To find out your GPU and driver version, open Google Chrome on your device and type in `chrome://gpu` and look under the `GL_RENDERER` and `GL_VERSION` information.
 
+> Tested on: Samsung Galaxy S10
+
 ## Enabling AFBC
 
 AFBC is functionally transparent to the application and will be automatically applied on a per `VkImage` basis (provided multiple checks pass on various properties of your device and your images).
