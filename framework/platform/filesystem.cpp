@@ -36,6 +36,7 @@ namespace fs
 namespace path
 {
 const std::unordered_map<Type, std::string> relative_paths = {{Type::Assets, "assets/"},
+                                                              {Type::Shaders, "shaders/"},
                                                               {Type::Storage, "output/"},
                                                               {Type::Screenshots, "output/images/"},
                                                               {Type::Logs, "output/logs/"},
@@ -160,6 +161,11 @@ static void write_binary_file(const std::vector<uint8_t> &data, const std::strin
 std::vector<uint8_t> read_asset(const std::string &filename, const uint32_t count)
 {
 	return read_binary_file(path::get(path::Type::Assets) + filename, count);
+}
+
+std::vector<uint8_t> read_shader(const std::string &filename)
+{
+	return read_binary_file(path::get(path::Type::Shaders) + filename, 0);
 }
 
 std::vector<uint8_t> read_temp(const std::string &filename, const uint32_t count)

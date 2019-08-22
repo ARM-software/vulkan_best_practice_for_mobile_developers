@@ -104,3 +104,48 @@ function(add_android_package_project)
             ${TARGET_DEPENDS})
 
 endfunction()
+
+function(android_sync_folder)
+    set(options)
+    set(oneValueArgs FOLDER)
+    set(multiValueArgs)
+
+    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+    
+    set(INPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET_FOLDER}/)
+    set(OUTPUT_DIR /sdcard/Android/data/com.arm.${PROJECT_NAME}/files/)
+
+    set(CMAKE_MODULE_PATH
+        ${CMAKE_MODULE_PATH}
+        ${CMAKE_MODULE_PATH}/module)
+
+    find_package(Adb 1.0.39 REQUIRED)
+
+    # Ensure that the directory exists on the target
+    set(ADB_COMMAND ${ADB_EXECUTABLE} shell mkdir -p ${OUTPUT_DIR})
+    execute_process(COMMAND ${ADB_COMMAND})
+
+    # Push the folder with the sync option
+    set(ADB_COMMAND ${ADB_EXECUTABLE} push --sync ${INPUT_DIR} ${OUTPUT_DIR})
+    execute_process(
+            COMMAND ${ADB_COMMAND}
+            RESULT_VARIABLE RETURN_VAR
+            OUTPUT_VARIABLE RETURN_MSG
+            OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+    if(NOT "${RETURN_VAR}" STREQUAL "0")
+        message(WARNING "Could not sync ${TARGET_FOLDER} to device:\n${RETURN_MSG}")
+    else()
+        message(STATUS "Updating ${TARGET_FOLDER}:\n${RETURN_MSG}")
+    endif()
+
+    add_custom_target(
+            sync.${TARGET_FOLDER}.stamp
+            COMMAND
+            ${SYNC_COMMAND}
+            COMMENT
+            "Update ${TARGET_FOLDER} in external storage"
+            VERBATIM)
+
+    add_dependencies(${PROJECT_NAME} sync.${TARGET_FOLDER}.stamp)
+endfunction()

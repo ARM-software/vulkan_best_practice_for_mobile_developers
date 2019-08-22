@@ -119,22 +119,9 @@ if(ANDROID)
             MANIFEST_FILE ${CMAKE_CURRENT_SOURCE_DIR}/android/AndroidManifest.xml)
     endif()
 
-    # Sync assets
-    set(SYNC_COMMAND ${CMAKE_COMMAND}
-            -DCMAKE_MODULE_PATH=${CMAKE_MODULE_PATH}
-            -DASSETS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/../assets/.
-            -DDEVICE_DIR=/sdcard/Android/data/com.arm.${PROJECT_NAME}/files/assets/
-            -P "${CMAKE_CURRENT_SOURCE_DIR}/../bldsys/cmake/android_sync_assets.cmake")
-
-    add_custom_target(
-            sync.assets.stamp
-            COMMAND
-            ${SYNC_COMMAND}
-            COMMENT
-            "Update assets in external storage"
-            VERBATIM)
-
-    add_dependencies(${PROJECT_NAME} sync.assets.stamp)
+    # Sync assets and shaders
+    android_sync_folder(FOLDER assets)
+    android_sync_folder(FOLDER shaders)
 else()
     if(${VKB_SYMLINKS})
         create_symlink(

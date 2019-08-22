@@ -38,6 +38,7 @@ enum Type
 {
 	//Relative paths
 	Assets,
+	Shaders,
 	Storage,
 	Screenshots,
 	Logs,
@@ -91,6 +92,14 @@ void create_path(const std::string &root, const std::string &path);
  * @return A vector filled with data read from the file
  */
 std::vector<uint8_t> read_asset(const std::string &filename, const uint32_t count = 0);
+
+/**
+ * @brief Helper to read a shader file into a byte-array
+ *
+ * @param filename The path to the file (relative to the assets directory)
+ * @return A vector filled with data read from the file
+ */
+std::vector<uint8_t> read_shader(const std::string &filename);
 
 /**
  * @brief Helper to read a temporary file into a byte-array
