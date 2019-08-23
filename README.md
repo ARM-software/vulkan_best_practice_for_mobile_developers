@@ -89,7 +89,7 @@ Follow build instructions for your platform below.
 ### Supported Platforms
 - Windows - [Build Guide](./docs/build.md#windows "Windows Build Guide")
 - Linux - [Build Guide](./docs/build.md#linux "Linux Build Guide")
-- Mac OSX - [Build Guide](./docs/build.md#mac "Mac OSX Build Guide")
+- macOS - [Build Guide](./docs/build.md#macos "macOS Build Guide")
 - Android - [Build Guide](./docs/build.md#android "Android Build Guide")
 
 ## Usage

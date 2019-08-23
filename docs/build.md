@@ -38,7 +38,7 @@
 - [Linux](#linux)
   - [Dependencies](#dependencies-1)
   - [Build with CMake](#build-with-cmake-1)
-- [Mac](#mac)
+- [macOS](#macos)
   - [Dependencies](#dependencies-2)
   - [Build with CMake](#build-with-cmake-2)
 - [Android](#android)
