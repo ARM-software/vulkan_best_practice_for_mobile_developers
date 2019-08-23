@@ -41,7 +41,7 @@ archive_path      = os.path.join(script_path, "artifacts/")
 image_ext         = ".png"
 android_timeout   = 60 # How long in seconds should we wait before timing out on Android
 check_step        = 5
-threshold         = 0.9998 # How similar the images are allowed to be before they pass
+threshold         = 0.999 # How similar the images are allowed to be before they pass
 
 class Subtest:
     result = False
