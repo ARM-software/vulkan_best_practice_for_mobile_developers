@@ -107,9 +107,9 @@ Treat all warnings as errors
 
 Before you build the project make sure you download the 3D models this project uses. Run the helper script `bldsys/scripts/download_assets.py`. You should now have a `scenes` folder containing all the 3D scenes the project uses.
 
-On Android CMake will use `adb` to sync assets to the device, ensure that the target device is connected before building with CMake.
+On Android, Gradle will run CMake which will sync assets to the device if there has been a change.
 
-Alternatively, they may be synced manually:
+However, to sync them manually you may run the following command to ensure up to date assets are on the device:
 
 ```
 adb push --sync assets /sdcard/Android/data/com.arm.vulkan_best_practice/files/
