@@ -107,45 +107,25 @@ endfunction()
 
 function(android_sync_folder)
     set(options)
-    set(oneValueArgs FOLDER)
+    set(oneValueArgs PATH)
     set(multiValueArgs)
 
-    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-    
-    set(INPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET_FOLDER}/)
-    set(OUTPUT_DIR /sdcard/Android/data/com.arm.${PROJECT_NAME}/files/)
+    cmake_parse_arguments(PARSE_ARGV 0 TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}")
+    get_filename_component(FOLDER_NAME "${TARGET_PATH}" NAME)
 
-    set(CMAKE_MODULE_PATH
-        ${CMAKE_MODULE_PATH}
-        ${CMAKE_MODULE_PATH}/module)
-
-    find_package(Adb 1.0.39 REQUIRED)
-
-    # Ensure that the directory exists on the target
-    set(ADB_COMMAND ${ADB_EXECUTABLE} shell mkdir -p ${OUTPUT_DIR})
-    execute_process(COMMAND ${ADB_COMMAND})
-
-    # Push the folder with the sync option
-    set(ADB_COMMAND ${ADB_EXECUTABLE} push --sync ${INPUT_DIR} ${OUTPUT_DIR})
-    execute_process(
-            COMMAND ${ADB_COMMAND}
-            RESULT_VARIABLE RETURN_VAR
-            OUTPUT_VARIABLE RETURN_MSG
-            OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-    if(NOT "${RETURN_VAR}" STREQUAL "0")
-        message(WARNING "Could not sync ${TARGET_FOLDER} to device:\n${RETURN_MSG}")
-    else()
-        message(STATUS "Updating ${TARGET_FOLDER}:\n${RETURN_MSG}")
-    endif()
+    set(SYNC_COMMAND ${CMAKE_COMMAND}
+            -DCMAKE_MODULE_PATH=${CMAKE_MODULE_PATH}
+            -DFOLDER_DIR=${TARGET_PATH}/.
+            -DDEVICE_DIR=/sdcard/Android/data/com.arm.${PROJECT_NAME}/files/${FOLDER_NAME}/
+            -P "${SCRIPT_DIR}/android_sync_folder.cmake")
 
     add_custom_target(
-            sync.${TARGET_FOLDER}.stamp
+            sync.${FOLDER_NAME}.stamp
             COMMAND
             ${SYNC_COMMAND}
             COMMENT
-            "Update ${TARGET_FOLDER} in external storage"
+            "Update ${FOLDER_NAME} in external storage"
             VERBATIM)
 
-    add_dependencies(${PROJECT_NAME} sync.${TARGET_FOLDER}.stamp)
+    add_dependencies(${PROJECT_NAME} sync.${FOLDER_NAME}.stamp)
 endfunction()

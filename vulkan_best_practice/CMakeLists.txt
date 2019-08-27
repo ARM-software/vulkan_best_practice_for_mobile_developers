@@ -120,8 +120,8 @@ if(ANDROID)
     endif()
 
     # Sync assets and shaders
-    android_sync_folder(FOLDER assets)
-    android_sync_folder(FOLDER shaders)
+    android_sync_folder(PATH ${CMAKE_CURRENT_SOURCE_DIR}/../assets)
+    android_sync_folder(PATH ${CMAKE_CURRENT_SOURCE_DIR}/../shaders)
 else()
     if(${VKB_SYMLINKS})
         create_symlink(
