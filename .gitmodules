@@ -46,6 +46,10 @@
 [submodule "third_party/vulkan"]
 	path = third_party/vulkan
 	url = https://github.com/KhronosGroup/Vulkan-Headers
+[submodule "assets"]
+	path = assets
+	url = https://github.com/KhronosGroup/Vulkan-Samples-Assets
+	shallow = true
 [submodule "third_party/nlohmann_json"]
 	path = third_party/nlohmann_json
 	url = https://github.com/nlohmann/json.git
