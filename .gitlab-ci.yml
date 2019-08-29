@@ -119,7 +119,7 @@ SystemTest:
    - windows
    - shell
  script:
-   - python bldsys/scripts/download_assets.py https://github.com/ARM-software/vulkan_best_practice_for_mobile_developers/releases/download/v1.1.2/scenes.zip
+   - python bldsys/scripts/download_assets.py
    - cd tests/system_test
    - python system_test.py -Bbuild/windows -Crelease -D -P
 

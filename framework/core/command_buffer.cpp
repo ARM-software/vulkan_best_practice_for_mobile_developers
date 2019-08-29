@@ -378,9 +378,9 @@ void CommandBuffer::blit_image(const core::Image &src_img, const core::Image &ds
 
 void CommandBuffer::copy_buffer(const core::Buffer &src_buffer, const core::Buffer &dst_buffer, VkDeviceSize size)
 {
-	VkBufferCopy copyRegion = {};
-	copyRegion.size         = size;
-	vkCmdCopyBuffer(get_handle(), src_buffer.get_handle(), dst_buffer.get_handle(), 1, &copyRegion);
+	VkBufferCopy copy_region = {};
+	copy_region.size         = size;
+	vkCmdCopyBuffer(get_handle(), src_buffer.get_handle(), dst_buffer.get_handle(), 1, &copy_region);
 }
 
 void CommandBuffer::copy_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageCopy> &regions)
@@ -603,14 +603,12 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 
 						if (image_view != nullptr)
 						{
-							const auto &image_view = *resource_info.image_view;
-
 							// Add image layout info based on descriptor type
 							switch (binding_info.descriptorType)
 							{
 								case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
 								case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
-									if (is_depth_stencil_format(image_view.get_format()))
+									if (is_depth_stencil_format(image_view->get_format()))
 									{
 										image_info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 									}

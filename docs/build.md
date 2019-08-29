@@ -105,6 +105,8 @@ Treat all warnings as errors
 
 # 3D models
 
+Before you build the project make sure you download the 3D models this project uses. Run the helper script `bldsys/scripts/download_assets.py`. You should now have a `scenes` folder containing all the 3D scenes the project uses.
+
 On Android, Gradle will run CMake which will sync assets to the device if there has been a change.
 
 However, to sync them manually you may run the following command to ensure up to date assets are on the device:

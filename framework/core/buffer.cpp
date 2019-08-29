@@ -116,7 +116,7 @@ void Buffer::unmap()
 	}
 }
 
-void Buffer::flush() const
+void Buffer::flush()
 {
 	vmaFlushAllocation(device.get_memory_allocator(), memory, 0, size);
 }

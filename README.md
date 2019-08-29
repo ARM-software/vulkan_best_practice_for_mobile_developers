@@ -154,7 +154,6 @@ Sponza model downloaded from Morgan McGuire's [Computer Graphics Archive](https:
 
 Fonts downloaded from [Google Fonts](https://fonts.google.com), under license [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0)
 
-
 ### Trademarks
 
 Vulkan is a registered trademark of the Khronos Group Inc.

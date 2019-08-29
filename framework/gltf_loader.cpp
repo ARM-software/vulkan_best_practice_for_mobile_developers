@@ -260,17 +260,17 @@ inline VkFormat get_attribute_format(const tinygltf::Model *model, uint32_t acce
 	return format;
 };
 
-inline std::vector<uint8_t> convert_data(const std::vector<uint8_t> &srcData, uint32_t srcStride, uint32_t dstStride)
+inline std::vector<uint8_t> convert_underlying_data_stride(const std::vector<uint8_t> &src_data, uint32_t src_stride, uint32_t dst_stride)
 {
-	auto elem_count = to_u32(srcData.size()) / srcStride;
+	auto elem_count = to_u32(src_data.size()) / src_stride;
 
-	std::vector<uint8_t> result(elem_count * dstStride);
+	std::vector<uint8_t> result(elem_count * dst_stride);
 
 	for (uint32_t idxSrc = 0, idxDst = 0;
-	     idxSrc < srcData.size() && idxDst < result.size();
-	     idxSrc += srcStride, idxDst += dstStride)
+	     idxSrc < src_data.size() && idxDst < result.size();
+	     idxSrc += src_stride, idxDst += dst_stride)
 	{
-		std::copy(srcData.begin() + idxSrc, srcData.begin() + idxSrc + srcStride, result.begin() + idxDst);
+		std::copy(src_data.begin() + idxSrc, src_data.begin() + idxSrc + src_stride, result.begin() + idxDst);
 	}
 
 	return result;
@@ -557,9 +557,7 @@ sg::Scene GLTFLoader::load_scene()
 				                    VMA_MEMORY_USAGE_GPU_TO_CPU};
 				buffer.update(vertex_data);
 
-				auto pair = std::make_pair(attrib_name, std::move(buffer));
-
-				submesh->vertex_buffers.insert(std::move(pair));
+				submesh->vertex_buffers.insert(std::make_pair(attrib_name, std::move(buffer)));
 
 				sg::VertexAttribute attrib;
 				attrib.format = get_attribute_format(&model, attribute.second);
@@ -580,8 +578,8 @@ sg::Scene GLTFLoader::load_scene()
 				switch (format)
 				{
 					case VK_FORMAT_R8_UINT:
-						index_data = convert_data(index_data, 1, 2);
-
+						// Converts uint8 data into uint16 data, still represented by a uint8 vector
+						index_data          = convert_underlying_data_stride(index_data, 1, 2);
 						submesh->index_type = VK_INDEX_TYPE_UINT16;
 						break;
 					case VK_FORMAT_R16_UINT:
