@@ -188,7 +188,7 @@ def test(test_name, screenshot_path):
     result = False
     image = test_name + image_ext
     base_image = screenshot_path + image
-    test_image = root_path + "assets/gold/{0}/{1}.png".format(test_name, get_resolution(base_image))
+    test_image = script_path + "/gold/{0}/{1}.png".format(test_name, get_resolution(base_image))
     if not os.path.isfile(test_image):
         print("\t\t\t(Error) Resolution not supported, gold image not found ({})".format(test_image))
         return False
