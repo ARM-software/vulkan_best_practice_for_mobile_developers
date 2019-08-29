@@ -110,8 +110,8 @@ On Android, Gradle will run CMake which will sync assets to the device if there 
 However, to sync them manually you may run the following command to ensure up to date assets are on the device:
 
 ```
-adb push --sync assets /sdcard/Android/data/com.khronos.vulkan_samples/files/
-adb push --sync shaders /sdcard/Android/data/com.khronos.vulkan_samples/files/
+adb push --sync assets /sdcard/Android/data/com.arm.vulkan_best_practice/files/
+adb push --sync shaders /sdcard/Android/data/com.arm.vulkan_best_practice/files/
 ```
 
 # Performance data
