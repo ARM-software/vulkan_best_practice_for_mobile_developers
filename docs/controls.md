@@ -30,4 +30,10 @@
 | Movement speed reduced   |                <kbd>shift</kbd>                 |                 -                  |
 | Movement speed increased |                 <kbd>ctrl</kbd>                 |                 -                  |
 | toggle GUI               |              <kbd>left click</kbd>              |           <kbd>tap</kbd>           |
-| toggle debug GUI         |             <kbd>right click</kbd>              |      2 finger <kbd>tap</kbd>       |
+| toggle Debug Window      |             <kbd>right click</kbd>              |      2 finger <kbd>tap</kbd>       |
+
+# Debug Window
+
+The Debug Window shows information about the current application.
+
+![Debug Window](./images/debug-window.jpg)
