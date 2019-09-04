@@ -64,32 +64,22 @@ vkb::RenderTarget RenderSubpasses::create_render_target(vkb::core::Image &&swapc
 	// Albedo                  RGBA8_UNORM   (32-bit)
 	// Normal                  RGB10A2_UNORM (32-bit)
 
-	VkImageUsageFlags usage_flags = VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
-	if (configs[Config::TransientAttachments].value == 0)
-	{
-		usage_flags |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
-	}
-	else
-	{
-		LOGI("Creating non transient attachments");
-	}
-
 	vkb::core::Image depth_image{device,
 	                             extent,
 	                             VK_FORMAT_D32_SFLOAT,
-	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | usage_flags,
+	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | rt_usage_flags,
 	                             VMA_MEMORY_USAGE_GPU_ONLY};
 
 	vkb::core::Image albedo_image{device,
 	                              extent,
-	                              configs[Config::GBufferSize].value == 0 ? VK_FORMAT_R8G8B8A8_UNORM : VK_FORMAT_R16G16B16A16_UNORM,
-	                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | usage_flags,
+	                              albedo_format,
+	                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | rt_usage_flags,
 	                              VMA_MEMORY_USAGE_GPU_ONLY};
 
 	vkb::core::Image normal_image{device,
 	                              extent,
-	                              configs[Config::GBufferSize].value == 0 ? VK_FORMAT_A2R10G10B10_UNORM_PACK32 : VK_FORMAT_R16G16B16A16_UNORM,
-	                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | usage_flags,
+	                              normal_format,
+	                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | rt_usage_flags,
 	                              VMA_MEMORY_USAGE_GPU_ONLY};
 
 	std::vector<vkb::core::Image> images;
@@ -148,6 +138,74 @@ bool RenderSubpasses::prepare(vkb::Platform &platform)
 	return true;
 }
 
+void RenderSubpasses::update(float delta_time)
+{
+	// Check whether the user changed the render technique
+	if (configs[Config::RenderTechnique].value != last_render_technique)
+	{
+		LOGI("Changing render technique");
+		last_render_technique = configs[Config::RenderTechnique].value;
+
+		// Reset frames, their synchronization objects and their command buffers
+		for (auto &frame : render_context->get_render_frames())
+		{
+			frame.reset();
+		}
+	}
+
+	// Check whether the user switched the attachment or the G-buffer option
+	if (configs[Config::TransientAttachments].value != last_transient_attachment ||
+	    configs[Config::GBufferSize].value != last_g_buffer_size)
+	{
+		// If attachment option has changed
+		if (configs[Config::TransientAttachments].value != last_transient_attachment)
+		{
+			rt_usage_flags = VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+
+			// If attachment should be transient
+			if (configs[Config::TransientAttachments].value == 0)
+			{
+				rt_usage_flags |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
+			}
+			else
+			{
+				LOGI("Creating non transient attachments");
+			}
+			last_transient_attachment = configs[Config::TransientAttachments].value;
+		}
+
+		// It G-buffer option has changed
+		if (configs[Config::GBufferSize].value != last_g_buffer_size)
+		{
+			if (configs[Config::GBufferSize].value == 0)
+			{
+				// Use less bits
+				albedo_format = VK_FORMAT_R8G8B8A8_UNORM;                  // 32-bit
+				normal_format = VK_FORMAT_A2R10G10B10_UNORM_PACK32;        // 32-bit
+			}
+			else
+			{
+				// Use more bits
+				albedo_format = VK_FORMAT_R16G16B16A16_UNORM;        // 64-bit
+				normal_format = VK_FORMAT_R16G16B16A16_UNORM;        // 64-bit
+			}
+
+			last_g_buffer_size = configs[Config::GBufferSize].value;
+		}
+
+		// Reset frames, their synchronization objects and their command buffers
+		for (auto &frame : render_context->get_render_frames())
+		{
+			frame.reset();
+		}
+
+		LOGI("Recreating render target");
+		render_context->update_swapchain(std::make_unique<vkb::Swapchain>(std::move(render_context->get_swapchain())));
+	}
+
+	VulkanSample::update(delta_time);
+}
+
 void RenderSubpasses::draw_gui()
 {
 	auto lines = configs.size();
@@ -178,15 +236,7 @@ void RenderSubpasses::draw_gui()
 			    // Create a radio button for every option
 			    for (size_t j = 0; j < config.options.size(); ++j)
 			    {
-				    if (ImGui::RadioButton(config.options[j], &config.value, vkb::to_u32(j)))
-				    {
-					    if (config.type == Config::TransientAttachments ||
-					        config.type == Config::GBufferSize)
-					    {
-						    LOGI("Recreating render target");
-						    render_context->update_swapchain(std::make_unique<vkb::Swapchain>(std::move(render_context->get_swapchain())));
-					    }
-				    }
+				    ImGui::RadioButton(config.options[j], &config.value, vkb::to_u32(j));
 
 				    // Keep it on the same line til the last one
 				    if (j < config.options.size() - 1)
@@ -199,6 +249,33 @@ void RenderSubpasses::draw_gui()
 		    }
 	    },
 	    /* lines = */ vkb::to_u32(lines));
+}
+
+/**
+ * @return Load store info to load all and store only the swapchain
+ */
+std::vector<vkb::LoadStoreInfo> get_load_all_store_swapchain()
+{
+	// Load every attachment and store only swapchain
+	std::vector<vkb::LoadStoreInfo> load_store{4};
+
+	// Swapchain
+	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	load_store[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
+
+	// Depth
+	load_store[1].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
+	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	// Albedo
+	load_store[2].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
+	load_store[2].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	// Normal
+	load_store[3].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
+	load_store[3].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	return load_store;
 }
 
 /**
@@ -340,7 +417,7 @@ std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_lighting_renderpass
 
 	auto lighting_render_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(lighting_subpasses));
 
-	lighting_render_pipeline->set_load_store(get_clear_all_store_swapchain());
+	lighting_render_pipeline->set_load_store(get_load_all_store_swapchain());
 
 	lighting_render_pipeline->set_clear_value(get_clear_value());
 
@@ -381,6 +458,36 @@ void RenderSubpasses::draw_renderpasses(vkb::CommandBuffer &command_buffer, vkb:
 {
 	// First render pass (no gui)
 	draw_pipeline(command_buffer, render_target, *geometry_render_pipeline);
+
+	// Memory barriers needed
+	for (size_t i = 1; i < render_target.get_views().size(); ++i)
+	{
+		auto &view = render_target.get_views().at(i);
+
+		vkb::ImageMemoryBarrier barrier;
+
+		if (i == 1)
+		{
+			barrier.old_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			barrier.new_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+
+			barrier.src_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			barrier.src_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		}
+		else
+		{
+			barrier.old_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			barrier.new_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+			barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			barrier.src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		}
+
+		barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		barrier.dst_access_mask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+
+		command_buffer.image_memory_barrier(view, barrier);
+	}
 
 	// Second render pass
 	draw_pipeline(command_buffer, render_target, *lighting_render_pipeline, gui.get());

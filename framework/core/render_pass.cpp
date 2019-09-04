@@ -47,8 +47,9 @@ RenderPass::RenderPass(Device &device, const std::vector<Attachment> &attachment
 	{
 		VkAttachmentDescription attachment{};
 
-		attachment.format  = attachments[i].format;
-		attachment.samples = attachments[i].samples;
+		attachment.format      = attachments[i].format;
+		attachment.samples     = attachments[i].samples;
+		attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		if (i < load_store_infos.size())
 		{
@@ -61,6 +62,7 @@ RenderPass::RenderPass(Device &device, const std::vector<Attachment> &attachment
 		if (is_depth_stencil_format(attachment.format))
 		{
 			depth_stencil_attachment = i;
+			attachment.finalLayout   = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		}
 
 		attachment_descriptions.push_back(std::move(attachment));

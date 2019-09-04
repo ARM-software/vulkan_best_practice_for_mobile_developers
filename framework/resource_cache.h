@@ -35,6 +35,11 @@ namespace vkb
 {
 class Device;
 
+namespace core
+{
+class ImageView;
+}
+
 /**
  * @brief Struct to hold the internal state of the Resource Cache
  * 
@@ -103,6 +108,11 @@ class ResourceCache : public NonCopyable
 	                                 const RenderPass &  render_pass);
 
 	void clear_pipelines();
+
+	/// @brief Update those descriptor sets referring to old views
+	/// @param old_views Old image views referred by descriptor sets
+	/// @param new_views New image views to be referred
+	void update_descriptor_sets(const std::vector<core::ImageView> &old_views, const std::vector<core::ImageView> &new_views);
 
 	void clear_framebuffers();
 

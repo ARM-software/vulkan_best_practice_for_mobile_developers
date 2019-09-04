@@ -38,6 +38,8 @@ class RenderSubpasses : public vkb::VulkanSample
 
 	bool prepare(vkb::Platform &platform) override;
 
+	void update(float delta_time) override;
+
 	virtual ~RenderSubpasses() = default;
 
 	void draw_gui() override;
@@ -109,6 +111,14 @@ class RenderSubpasses : public vkb::VulkanSample
 		int value;
 	};
 
+	uint16_t last_render_technique{0};
+	uint16_t last_transient_attachment{0};
+	uint16_t last_g_buffer_size{0};
+
+	VkFormat          albedo_format{VK_FORMAT_R8G8B8A8_UNORM};
+	VkFormat          normal_format{VK_FORMAT_A2R10G10B10_UNORM_PACK32};
+	VkImageUsageFlags rt_usage_flags{VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT};
+
 	std::vector<Config> configs = {
 	    {/* config      = */ Config::RenderTechnique,
 	     /* description = */ "Render technique",
@@ -118,7 +128,7 @@ class RenderSubpasses : public vkb::VulkanSample
 	     /* description = */ "Transient attachments",
 	     /* options     = */ {"Enabled", "Disabled"},
 	     /* value       = */ 0},
-	    {/* config      = */ Config::TransientAttachments,
+	    {/* config      = */ Config::GBufferSize,
 	     /* description = */ "G-Buffer size",
 	     /* options     = */ {"128-bit", "More"},
 	     /* value       = */ 0}};

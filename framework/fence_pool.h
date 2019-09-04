@@ -38,7 +38,7 @@ class FencePool : public NonCopyable
 
 	VkFence request_fence();
 
-	VkResult wait(uint32_t timeout = std::numeric_limits<uint32_t>::max());
+	VkResult wait(uint32_t timeout = std::numeric_limits<uint32_t>::max()) const;
 
 	VkResult reset();
 

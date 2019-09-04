@@ -45,10 +45,20 @@ class DescriptorSet : public NonCopyable
 
 	VkDescriptorSet get_handle() const;
 
+	const DescriptorSetLayout &get_layout() const;
+
+	BindingMap<VkDescriptorBufferInfo> &get_buffer_infos();
+
+	BindingMap<VkDescriptorImageInfo> &get_image_infos();
+
   private:
 	Device &device;
 
 	DescriptorSetLayout &descriptor_set_layout;
+
+	BindingMap<VkDescriptorBufferInfo> buffer_infos;
+
+	BindingMap<VkDescriptorImageInfo> image_infos;
 
 	VkDescriptorSet handle{VK_NULL_HANDLE};
 };

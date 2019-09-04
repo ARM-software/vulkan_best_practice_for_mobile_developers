@@ -20,6 +20,7 @@
 
 #include "resource_cache.h"
 
+#include "core/device.h"
 #include "rendering/pipeline_state.h"
 
 namespace vkb
@@ -101,9 +102,9 @@ inline void hash_param<std::vector<ShaderResource>>(
 }
 
 template <>
-inline void hash_param<std::unordered_map<uint32_t, std::map<uint32_t, VkDescriptorBufferInfo>>>(
-    size_t &                                                                        seed,
-    const std::unordered_map<uint32_t, std::map<uint32_t, VkDescriptorBufferInfo>> &value)
+inline void hash_param<std::map<uint32_t, std::map<uint32_t, VkDescriptorBufferInfo>>>(
+    size_t &                                                              seed,
+    const std::map<uint32_t, std::map<uint32_t, VkDescriptorBufferInfo>> &value)
 {
 	for (auto &binding_set : value)
 	{
@@ -118,9 +119,9 @@ inline void hash_param<std::unordered_map<uint32_t, std::map<uint32_t, VkDescrip
 }
 
 template <>
-inline void hash_param<std::unordered_map<uint32_t, std::map<uint32_t, VkDescriptorImageInfo>>>(
-    size_t &                                                                       seed,
-    const std::unordered_map<uint32_t, std::map<uint32_t, VkDescriptorImageInfo>> &value)
+inline void hash_param<std::map<uint32_t, std::map<uint32_t, VkDescriptorImageInfo>>>(
+    size_t &                                                             seed,
+    const std::map<uint32_t, std::map<uint32_t, VkDescriptorImageInfo>> &value)
 {
 	for (auto &binding_set : value)
 	{
@@ -325,8 +326,92 @@ Framebuffer &ResourceCache::request_framebuffer(const RenderTarget &render_targe
 void ResourceCache::clear_pipelines()
 {
 	state.graphics_pipelines.clear();
-
 	state.compute_pipelines.clear();
+}
+
+void ResourceCache::update_descriptor_sets(const std::vector<core::ImageView> &old_views, const std::vector<core::ImageView> &new_views)
+{
+	// Find descriptor sets referring to the old image view
+	std::vector<VkWriteDescriptorSet> set_updates;
+	std::set<size_t>                  matches;
+
+	for (size_t i = 0; i < old_views.size(); ++i)
+	{
+		auto &old_view = old_views[i];
+		auto &new_view = new_views[i];
+
+		for (auto &kd_pair : state.descriptor_sets)
+		{
+			auto &key            = kd_pair.first;
+			auto &descriptor_set = kd_pair.second;
+
+			auto &image_infos = descriptor_set.get_image_infos();
+
+			for (auto &ba_pair : image_infos)
+			{
+				auto &binding = ba_pair.first;
+				auto &array   = ba_pair.second;
+
+				for (auto &ai_pair : array)
+				{
+					auto &array_element = ai_pair.first;
+					auto &image_info    = ai_pair.second;
+
+					if (image_info.imageView == old_view.get_handle())
+					{
+						// Save key to remove old descriptor set
+						matches.insert(key);
+
+						// Update image info with new view
+						image_info.imageView = new_view.get_handle();
+
+						// Save struct for writing the update later
+						{
+							VkWriteDescriptorSet write_descriptor_set{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+
+							VkDescriptorSetLayoutBinding binding_info;
+							if (!descriptor_set.get_layout().get_layout_binding(binding, binding_info))
+							{
+								LOGE("Shader layout set does not use image binding at #{}", binding);
+								continue;
+							}
+
+							write_descriptor_set.dstBinding      = binding;
+							write_descriptor_set.descriptorType  = binding_info.descriptorType;
+							write_descriptor_set.pImageInfo      = &image_info;
+							write_descriptor_set.dstSet          = descriptor_set.get_handle();
+							write_descriptor_set.dstArrayElement = array_element;
+							write_descriptor_set.descriptorCount = 1;
+
+							set_updates.push_back(write_descriptor_set);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if (!set_updates.empty())
+	{
+		vkUpdateDescriptorSets(device.get_handle(), to_u32(set_updates.size()), set_updates.data(),
+		                       0, nullptr);
+	}
+
+	// Delete old entries (moved out descriptor sets)
+	for (auto &match : matches)
+	{
+		// Move out of the map
+		auto it             = state.descriptor_sets.find(match);
+		auto descriptor_set = std::move(it->second);
+		state.descriptor_sets.erase(match);
+
+		// Generate new key
+		size_t new_key = 0U;
+		hash_param(new_key, descriptor_set.get_layout(), descriptor_set.get_buffer_infos(), descriptor_set.get_image_infos());
+
+		// Add (key, resource) to the cache
+		state.descriptor_sets.emplace(new_key, std::move(descriptor_set));
+	}
 }
 
 void ResourceCache::clear_framebuffers()

@@ -43,6 +43,9 @@ DescriptorSet::DescriptorSet(Device &                                  device,
 
 void DescriptorSet::update(const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos)
 {
+	this->buffer_infos = buffer_infos;
+	this->image_infos  = image_infos;
+
 	std::vector<VkWriteDescriptorSet> set_updates;
 
 	// Iterate over all buffer bindings
@@ -117,6 +120,8 @@ void DescriptorSet::update(const BindingMap<VkDescriptorBufferInfo> &buffer_info
 DescriptorSet::DescriptorSet(DescriptorSet &&other) :
     device{other.device},
     descriptor_set_layout{other.descriptor_set_layout},
+    buffer_infos{std::move(other.buffer_infos)},
+    image_infos{std::move(other.image_infos)},
     handle{other.handle}
 {
 	other.handle = VK_NULL_HANDLE;
@@ -135,4 +140,20 @@ VkDescriptorSet DescriptorSet::get_handle() const
 {
 	return handle;
 }
+
+const DescriptorSetLayout &DescriptorSet::get_layout() const
+{
+	return descriptor_set_layout;
+}
+
+BindingMap<VkDescriptorBufferInfo> &DescriptorSet::get_buffer_infos()
+{
+	return buffer_infos;
+}
+
+BindingMap<VkDescriptorImageInfo> &DescriptorSet::get_image_infos()
+{
+	return image_infos;
+}
+
 }        // namespace vkb

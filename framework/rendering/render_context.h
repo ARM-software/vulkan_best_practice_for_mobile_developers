@@ -122,7 +122,7 @@ class RenderContext : public NonCopyable
 
 	uint32_t get_active_frame_index() const;
 
-	const std::vector<RenderFrame> &get_render_frames() const;
+	std::vector<RenderFrame> &get_render_frames();
 
   protected:
 	VkExtent2D surface_extent;

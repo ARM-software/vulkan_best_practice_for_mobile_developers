@@ -187,6 +187,7 @@ Device &RenderContext::get_device()
 
 void RenderContext::update_swapchain(std::unique_ptr<Swapchain> &&new_swapchain)
 {
+	device.wait_idle();
 	device.get_resource_cache().clear_framebuffers();
 
 	swapchain = std::move(new_swapchain);
@@ -249,7 +250,7 @@ uint32_t RenderContext::get_active_frame_index() const
 	return active_frame_index;
 }
 
-const std::vector<RenderFrame> &RenderContext::get_render_frames() const
+std::vector<RenderFrame> &RenderContext::get_render_frames()
 {
 	return frames;
 }

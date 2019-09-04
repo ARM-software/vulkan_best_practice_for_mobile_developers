@@ -43,7 +43,7 @@ void RenderFrame::update_render_target(RenderTarget &&render_target)
 
 void RenderFrame::reset()
 {
-	fence_pool.wait();
+	VK_CHECK(fence_pool.wait());
 
 	fence_pool.reset();
 
