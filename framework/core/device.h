@@ -41,6 +41,13 @@
 
 namespace vkb
 {
+struct DriverVersion
+{
+	uint16_t major;
+	uint16_t minor;
+	uint16_t patch;
+};
+
 class Device : public NonCopyable
 {
   public:
@@ -57,6 +64,11 @@ class Device : public NonCopyable
 	VmaAllocator get_memory_allocator() const;
 
 	const VkPhysicalDeviceProperties &get_properties() const;
+
+	/**
+	 * @return The version of the driver of the current physical device
+	 */
+	DriverVersion get_driver_version() const;
 
 	/**
 	 * @return Whether an image format is supported by the GPU

@@ -203,6 +203,15 @@ const VkPhysicalDeviceProperties &Device::get_properties() const
 	return properties;
 }
 
+DriverVersion Device::get_driver_version() const
+{
+	DriverVersion version;
+	version.major = VK_VERSION_MAJOR(properties.driverVersion);
+	version.minor = VK_VERSION_MINOR(properties.driverVersion);
+	version.patch = VK_VERSION_PATCH(properties.driverVersion);
+	return version;
+}
+
 bool Device::is_image_format_supported(VkFormat format) const
 {
 	VkImageFormatProperties format_properties;

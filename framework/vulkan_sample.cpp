@@ -435,6 +435,10 @@ void VulkanSample::draw_gui()
 
 void VulkanSample::update_debug_window()
 {
+	auto        driver_version     = device->get_driver_version();
+	std::string driver_version_str = fmt::format("major: {} minor: {} patch: {}", driver_version.major, driver_version.minor, driver_version.patch);
+	get_debug_info().insert<field::Static, std::string>("driver_version", driver_version_str);
+
 	get_debug_info().insert<field::Static, std::string>("resolution",
 	                                                    utils::to_string(render_context->get_swapchain().get_extent()));
 
