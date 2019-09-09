@@ -33,7 +33,7 @@
 - [Build](#build)
   - [Supported Platforms](#supported-platforms)
 - [Usage](#usage)
-- [Testing](#testing)
+- [Testing](#tests)
 - [License](#license)
   - [Trademarks](#trademarks)
 - [Contributions](#contributions)
