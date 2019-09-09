@@ -55,7 +55,7 @@ class Subtest:
     def run(self, application_path):
         result = True
         path = root_path + application_path
-        arguments = ["--hide", "--test", "{}".format(self.test_name)]
+        arguments = ["--headless", "--test", "{}".format(self.test_name)]
         try:
             subprocess.run(path + " " + " ".join(arguments), cwd=root_path)
         except FileNotFoundError:

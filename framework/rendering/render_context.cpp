@@ -22,58 +22,239 @@
 
 namespace vkb
 {
-RenderContext::RenderContext(std::unique_ptr<Swapchain> &&s, uint16_t command_pools_per_frame, RenderTarget::CreateFunc create_rt) :
-    device{s->get_device()},
-    swapchain{std::move(s)},
-    present_queue{device.get_queue_by_present(0)},
-    create_render_target{create_rt}
+RenderContext::RenderContext(Device &d, VkSurfaceKHR surface, uint32_t window_width, uint32_t window_height) :
+    device{d},
+    queue{device.get_suitable_graphics_queue()}
 {
-	// Prepare is an expensive operation, we want to be sure it happens only once
-	assert(frames.empty());
+	if (surface != VK_NULL_HANDLE)
+	{
+		swapchain      = std::make_unique<Swapchain>(device, surface);
+		surface_extent = swapchain->get_extent();
+	}
+	else
+	{
+		surface_extent = {window_width, window_height};
+	}
+}
 
-	// Create the render frames
+void RenderContext::prepare(uint16_t command_pools_per_frame, RenderTarget::CreateFunc create_render_target_func)
+{
 	device.wait_idle();
-	surface_extent = swapchain->get_extent();
-	VkExtent3D extent{surface_extent.width, surface_extent.height, 1};
+
+	// If swapchain exists, create our RenderFrames from the swapchain (one for each image)
+	if (swapchain)
+	{
+		VkExtent3D extent{surface_extent.width, surface_extent.height, 1};
+
+		for (auto &image_handle : swapchain->get_images())
+		{
+			auto swapchain_image = core::Image{
+			    device, image_handle,
+			    extent,
+			    swapchain->get_format(),
+			    swapchain->get_usage()};
+			auto render_target = create_render_target_func(std::move(swapchain_image));
+			frames.emplace_back(RenderFrame{device, std::move(render_target), command_pools_per_frame});
+		}
+	}
+	else
+	{
+		// Otherwise, create a single RenderFrame
+		swapchain = nullptr;
+
+		auto color_image = core::Image{device,
+		                               VkExtent3D{surface_extent.width, surface_extent.height, 1},
+		                               VK_FORMAT_R8G8B8A8_SRGB,        // We can use any format here that we like
+		                               VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+		                               VMA_MEMORY_USAGE_GPU_ONLY};
+
+		auto render_target = create_render_target_func(std::move(color_image));
+		frames.emplace_back(RenderFrame{device, std::move(render_target), command_pools_per_frame});
+	}
+
+	this->prepared                  = true;
+	this->create_render_target_func = create_render_target_func;
+}
+
+void RenderContext::update_swapchain(const VkExtent2D &extent)
+{
+	if (!swapchain)
+	{
+		LOGW("Can't update the swapchains extent in headless mode, skipping.");
+		return;
+	}
+
+	device.get_resource_cache().clear_framebuffers();
+
+	swapchain = std::make_unique<Swapchain>(*swapchain, extent);
+
+	recreate();
+}
+
+void RenderContext::update_swapchain(const uint32_t image_count)
+{
+	if (!swapchain)
+	{
+		LOGW("Can't update the swapchains image count in headless mode, skipping.");
+		return;
+	}
+
+	device.get_resource_cache().clear_framebuffers();
+
+	swapchain = std::make_unique<Swapchain>(*swapchain, image_count);
+
+	recreate();
+}
+
+void RenderContext::update_swapchain(const std::set<VkImageUsageFlagBits> &image_usage_flags)
+{
+	if (!swapchain)
+	{
+		LOGW("Can't update the swapchains image usage in headless mode, skipping.");
+		return;
+	}
+
+	device.get_resource_cache().clear_framebuffers();
+
+	swapchain = std::make_unique<Swapchain>(*swapchain, image_usage_flags);
+
+	recreate();
+}
+
+void RenderContext::update_swapchain(const VkExtent2D &extent, const VkSurfaceTransformFlagBitsKHR transform)
+{
+	if (!swapchain)
+	{
+		LOGW("Can't update the swapchains extent and surface transform in headless mode, skipping.");
+		return;
+	}
+
+	device.get_resource_cache().clear_framebuffers();
+
+	swapchain = std::make_unique<Swapchain>(*swapchain, extent, transform);
+
+	recreate();
+}
+
+void RenderContext::recreate()
+{
+	VkExtent2D swapchain_extent = swapchain->get_extent();
+	VkExtent3D extent{swapchain_extent.width, swapchain_extent.height, 1};
+
+	auto frame_it = frames.begin();
 
 	for (auto &image_handle : swapchain->get_images())
 	{
-		auto swapchain_image = core::Image{
-		    device, image_handle,
-		    extent,
-		    swapchain->get_format(),
-		    swapchain->get_usage()};
-		auto render_target = create_render_target(std::move(swapchain_image));
-		frames.emplace_back(RenderFrame{device, std::move(render_target), command_pools_per_frame});
+		core::Image swapchain_image{device, image_handle,
+		                            extent,
+		                            swapchain->get_format(),
+		                            swapchain->get_usage()};
+
+		auto render_target = create_render_target_func(std::move(swapchain_image));
+		frame_it->update_render_target(std::move(render_target));
+
+		++frame_it;
 	}
+}
+
+bool RenderContext::has_swapchain()
+{
+	return swapchain != nullptr;
+}
+
+void RenderContext::handle_surface_changes()
+{
+	if (!swapchain)
+	{
+		LOGW("Can't handle surface changes in headless mode, skipping.");
+		return;
+	}
+
+	VkSurfaceCapabilitiesKHR surface_properties;
+	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.get_physical_device(),
+	                                                   swapchain->get_surface(),
+	                                                   &surface_properties));
+
+	if (surface_properties.currentExtent.width != surface_extent.width ||
+	    surface_properties.currentExtent.height != surface_extent.height)
+	{
+		// Recreate swapchain
+		device.wait_idle();
+
+		update_swapchain(surface_properties.currentExtent);
+
+		surface_extent = surface_properties.currentExtent;
+	}
+}
+
+CommandBuffer &RenderContext::begin()
+{
+	assert(prepared && "RenderContext not prepared for rendering, call prepare()");
+
+	acquired_semaphore = begin_frame();
+
+	if (acquired_semaphore == VK_NULL_HANDLE)
+	{
+		throw std::runtime_error("Couldn't begin frame");
+	}
+
+	const auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	return request_frame_command_buffer(queue);
+}
+
+void RenderContext::submit(CommandBuffer &command_buffer)
+{
+	assert(frame_active && "RenderContext is inactive, cannot submit command buffer. Please call begin()");
+
+	VkSemaphore render_semaphore = VK_NULL_HANDLE;
+
+	if (swapchain)
+	{
+		render_semaphore = submit(queue, command_buffer, acquired_semaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+	}
+	else
+	{
+		submit(queue, command_buffer);
+	}
+
+	end_frame(render_semaphore);
+
+	acquired_semaphore = VK_NULL_HANDLE;
 }
 
 VkSemaphore RenderContext::begin_frame()
 {
-	handle_surface_changes();
+	// Only handle surface changes if a swapchain exists
+	if (swapchain)
+	{
+		handle_surface_changes();
+	}
 
 	assert(!frame_active && "Frame is still active, please call end_frame");
 
 	auto &prev_frame = frames.at(active_frame_index);
 
-	auto fence = prev_frame.request_fence();
-
 	auto aquired_semaphore = prev_frame.request_semaphore();
 
-	auto result = swapchain->acquire_next_image(active_frame_index, aquired_semaphore, fence);
-
-	if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR)
+	if (swapchain)
 	{
-		handle_surface_changes();
+		auto fence = prev_frame.request_fence();
 
-		result = swapchain->acquire_next_image(active_frame_index, aquired_semaphore, fence);
-	}
+		auto result = swapchain->acquire_next_image(active_frame_index, aquired_semaphore, fence);
 
-	if (result != VK_SUCCESS)
-	{
-		prev_frame.reset();
+		if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR)
+		{
+			handle_surface_changes();
 
-		return VK_NULL_HANDLE;
+			result = swapchain->acquire_next_image(active_frame_index, aquired_semaphore, fence);
+		}
+
+		if (result != VK_SUCCESS)
+		{
+			prev_frame.reset();
+
+			return VK_NULL_HANDLE;
+		}
 	}
 
 	// Now the frame is active again
@@ -135,22 +316,26 @@ void RenderContext::end_frame(VkSemaphore semaphore)
 {
 	assert(frame_active && "Frame is not active, please call begin_frame");
 
-	VkSwapchainKHR vk_swapchain = swapchain->get_handle();
-
-	VkPresentInfoKHR present_info{VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
-
-	present_info.waitSemaphoreCount = 1;
-	present_info.pWaitSemaphores    = &semaphore;
-	present_info.swapchainCount     = 1;
-	present_info.pSwapchains        = &vk_swapchain;
-	present_info.pImageIndices      = &active_frame_index;
-
-	VkResult result = present_queue.present(present_info);
-
-	if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR)
+	if (swapchain)
 	{
-		handle_surface_changes();
+		VkSwapchainKHR vk_swapchain = swapchain->get_handle();
+
+		VkPresentInfoKHR present_info{VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
+
+		present_info.waitSemaphoreCount = 1;
+		present_info.pWaitSemaphores    = &semaphore;
+		present_info.swapchainCount     = 1;
+		present_info.pSwapchains        = &vk_swapchain;
+		present_info.pImageIndices      = &active_frame_index;
+
+		VkResult result = queue.present(present_info);
+
+		if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR)
+		{
+			handle_surface_changes();
+		}
 	}
+
 	// Frame is not active anymore
 	frame_active = false;
 }
@@ -183,55 +368,6 @@ VkSemaphore RenderContext::request_semaphore()
 Device &RenderContext::get_device()
 {
 	return device;
-}
-
-void RenderContext::update_swapchain(std::unique_ptr<Swapchain> &&new_swapchain)
-{
-	device.wait_idle();
-	device.get_resource_cache().clear_framebuffers();
-
-	swapchain = std::move(new_swapchain);
-
-	VkExtent2D swapchain_extent = swapchain->get_extent();
-	VkExtent3D extent{swapchain_extent.width, swapchain_extent.height, 1};
-
-	auto frame_it = frames.begin();
-
-	for (auto &image_handle : swapchain->get_images())
-	{
-		core::Image swapchain_image{device, image_handle,
-		                            extent,
-		                            swapchain->get_format(),
-		                            swapchain->get_usage()};
-
-		auto render_target = create_render_target(std::move(swapchain_image));
-		frame_it->update_render_target(std::move(render_target));
-
-		++frame_it;
-	}
-}
-
-void RenderContext::handle_surface_changes()
-{
-	VkSurfaceCapabilitiesKHR surface_properties;
-	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.get_physical_device(),
-	                                                   swapchain->get_surface(),
-	                                                   &surface_properties));
-
-	if (surface_properties.currentExtent.width != surface_extent.width ||
-	    surface_properties.currentExtent.height != surface_extent.height)
-	{
-		// Recreate swapchain
-		device.wait_idle();
-
-		auto new_swapchain = std::make_unique<vkb::Swapchain>(
-		    get_swapchain(),
-		    surface_properties.currentExtent);
-
-		update_swapchain(std::move(new_swapchain));
-
-		surface_extent = surface_properties.currentExtent;
-	}
 }
 
 Swapchain &RenderContext::get_swapchain()

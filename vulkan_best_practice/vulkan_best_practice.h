@@ -75,7 +75,7 @@ class VulkanBestPractice : public Application
 	bool skipped_first_frame{false};
 
 	/// The amount of time run per configuration for each sample
-	float sample_run_time_per_configuration{10.0f};
+	float sample_run_time_per_configuration{3.0f};
 
 	/// Used to calculate when the sample has exceeded the sample_run_time_per_configuration
 	float elapsed_time{0.0f};

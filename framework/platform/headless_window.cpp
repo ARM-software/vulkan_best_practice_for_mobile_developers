@@ -18,46 +18,33 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#include "headless_window.h"
 
-#include <iomanip>        // setprecision
-#include <sstream>        // stringstream
-
-#include "common/vk_common.h"
-#include "rendering/render_pipeline.h"
-#include "scene_graph/components/perspective_camera.h"
-#include "vulkan_sample.h"
-
-/**
- * @brief Appropriate use of surface rotation
- */
-class SurfaceRotation : public vkb::VulkanSample
+namespace vkb
 {
-  public:
-	SurfaceRotation();
+HeadlessWindow::HeadlessWindow(Platform &platform, uint32_t width, uint32_t height) :
+    Window(platform, width, height)
+{
+}
 
-	virtual ~SurfaceRotation() = default;
+VkSurfaceKHR HeadlessWindow::create_surface(VkInstance instance)
+{
+	return VK_NULL_HANDLE;
+}
 
-	virtual bool prepare(vkb::Platform &platform) override;
+bool HeadlessWindow::should_close()
+{
+	return closed;
+}
 
-	virtual void update(float delta_time) override;
+void HeadlessWindow::close()
+{
+	closed = true;
+}
 
-	static const char *transform_to_string(VkSurfaceTransformFlagBitsKHR flag);
-
-  private:
-	vkb::sg::PerspectiveCamera *camera{nullptr};
-
-	virtual void draw_gui() override;
-
-	void trigger_swapchain_recreation();
-
-	void recreate_swapchain();
-
-	void handle_surface_changes();
-
-	bool pre_rotate = false;
-
-	bool last_pre_rotate = false;
-};
-
-std::unique_ptr<vkb::VulkanSample> create_surface_rotation();
+float HeadlessWindow::get_dpi_factor() const
+{
+	// This factor is used for scaling UI elements, so return 1.0f (1 x n = n)
+	return 1.0f;
+}
+}        // namespace vkb

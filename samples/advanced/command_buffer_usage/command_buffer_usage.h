@@ -72,7 +72,7 @@ class CommandBufferUsage : public vkb::VulkanSample
 
 	void render(vkb::CommandBuffer &command_buffer) override;
 
-	void draw_swapchain_renderpass(vkb::CommandBuffer &primary_command_buffer, vkb::RenderTarget &render_target) override;
+	void draw_renderpass(vkb::CommandBuffer &primary_command_buffer, vkb::RenderTarget &render_target) override;
 
 	void draw_gui() override;
 

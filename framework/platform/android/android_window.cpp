@@ -18,41 +18,51 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "linux_platform.h"
+#include "android_window.h"
+
+#include "platform/android/android_platform.h"
 
 namespace vkb
 {
-namespace
+AndroidWindow::AndroidWindow(Platform &platform, ANativeWindow *&window, bool headless) :
+    Window(platform, 0, 0),
+    handle{window},
+    headless{headless}
 {
-inline const std::string get_temp_path_from_environment()
-{
-	std::string temp_path = "/tmp/";
+}
 
-	if (const char *env_ptr = std::getenv("TMPDIR"))
+VkSurfaceKHR AndroidWindow::create_surface(VkInstance instance)
+{
+	if (instance == VK_NULL_HANDLE || !handle || headless)
 	{
-		temp_path = std::string(env_ptr) + "/";
+		return VK_NULL_HANDLE;
 	}
 
-	return temp_path;
+	VkSurfaceKHR surface{};
+
+	VkAndroidSurfaceCreateInfoKHR info{VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR};
+
+	info.window = handle;
+
+	VK_CHECK(vkCreateAndroidSurfaceKHR(instance, &info, nullptr, &surface));
+
+	return surface;
 }
-}        // namespace
 
-namespace fs
+bool AndroidWindow::should_close()
 {
-void create_directory(const std::string &path)
-{
-	if (!is_directory(path))
-	{
-		mkdir(path.c_str(), 0777);
-	}
+	return handle == nullptr;
 }
-}        // namespace fs
 
-LinuxPlatform::LinuxPlatform(int argc, char **argv)
+void AndroidWindow::close()
 {
-	// Ignore the first argument containing the application full path
-	Platform::set_arguments({argv + 1, argv + argc});
+	auto &android_platform = dynamic_cast<AndroidPlatform &>(platform);
+	ANativeActivity_finish(android_platform.get_android_app()->activity);
+}
 
-	Platform::set_temp_directory(get_temp_path_from_environment());
+float AndroidWindow::get_dpi_factor() const
+{
+	auto &android_platform = dynamic_cast<AndroidPlatform &>(platform);
+	return AConfiguration_getDensity(android_platform.get_android_app()->config) / static_cast<float>(ACONFIGURATION_DENSITY_MEDIUM);
 }
 }        // namespace vkb

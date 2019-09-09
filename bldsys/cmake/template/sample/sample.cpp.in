@@ -42,14 +42,6 @@ bool @SAMPLE_NAME@::prepare(vkb::Platform &platform)
 	{
 		return false;
 	}
-
-	std::vector<const char *> extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
-	device = std::make_unique<vkb::Device>(get_gpu(), get_surface(), extensions);
-
-	auto swapchain = std::make_unique<vkb::Swapchain>(*device, get_surface());
-
-	render_context = std::make_unique<vkb::RenderContext>(std::move(swapchain));
 	
 	// Load a scene from the assets folder
 	load_scene("scenes/sponza/Sponza01.gltf");
@@ -61,7 +53,7 @@ bool @SAMPLE_NAME@::prepare(vkb::Platform &platform)
 	// Example Scene Render Pipeline
 	vkb::ShaderSource vert_shader(vkb::fs::read_shader("base.vert"));
 	vkb::ShaderSource frag_shader(vkb::fs::read_shader("base.frag"));
-	auto scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto scene_subpass = std::make_unique<vkb::SceneSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 	auto render_pipeline = vkb::RenderPipeline();
 	render_pipeline.add_subpass(std::move(scene_subpass));
 	set_render_pipeline(std::move(render_pipeline));

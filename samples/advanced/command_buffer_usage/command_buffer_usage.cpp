@@ -55,17 +55,9 @@ bool CommandBufferUsage::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	std::vector<const char *> extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
-	device = std::make_unique<vkb::Device>(get_gpu(), get_surface(), extensions);
-
-	auto swapchain = std::make_unique<vkb::Swapchain>(*device, get_surface());
-
 	auto enabled_stats = {vkb::StatIndex::frame_times, vkb::StatIndex::cpu_cycles};
 
 	stats = std::make_unique<vkb::Stats>(enabled_stats);
-
-	render_context = std::make_unique<vkb::RenderContext>(std::move(swapchain));
 
 	load_scene("scenes/bonza/Bonza.gltf");
 	auto &camera_node = add_free_camera("main_camera");
@@ -73,7 +65,7 @@ bool CommandBufferUsage::prepare(vkb::Platform &platform)
 
 	vkb::ShaderSource vert_shader(vkb::fs::read_shader("base.vert"));
 	vkb::ShaderSource frag_shader(vkb::fs::read_shader("base.frag"));
-	auto              scene_subpass = std::make_unique<SceneSubpassSecondary>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto              scene_subpass = std::make_unique<SceneSubpassSecondary>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 	scene_subpass_ptr               = scene_subpass.get();
 
 	auto render_pipeline = vkb::RenderPipeline();
@@ -81,7 +73,7 @@ bool CommandBufferUsage::prepare(vkb::Platform &platform)
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_dpi_factor());
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window().get_dpi_factor());
 
 	return true;
 }
@@ -94,35 +86,30 @@ void CommandBufferUsage::update(float delta_time)
 
 	update_gui(delta_time);
 
-	auto acquired_semaphore = render_context->begin_frame();
+	auto &render_context = get_render_context();
 
-	if (acquired_semaphore == VK_NULL_HANDLE)
-	{
-		return;
-	}
+	render_context.begin();
 
 	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
-	auto &render_target = render_context->get_active_frame().get_render_target();
+	auto &render_target = render_context.get_active_frame().get_render_target();
 
 	scene_subpass_ptr->set_command_buffer_reset_mode(static_cast<vkb::CommandBuffer::ResetMode>(reuse_selection));
 
-	auto &primary_command_buffer = render_context->request_frame_command_buffer(queue, static_cast<vkb::CommandBuffer::ResetMode>(reuse_selection));
+	auto &primary_command_buffer = render_context.request_frame_command_buffer(queue, static_cast<vkb::CommandBuffer::ResetMode>(reuse_selection));
 
 	primary_command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-	record_scene_rendering_commands(primary_command_buffer, render_target);
+	draw(primary_command_buffer, render_target);
 
 	primary_command_buffer.end();
 
-	auto render_semaphore = render_context->submit(queue, primary_command_buffer, acquired_semaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-
-	render_context->end_frame(render_semaphore);
+	render_context.submit(primary_command_buffer);
 }
 
 void CommandBufferUsage::draw_gui()
 {
-	auto     extent    = render_context->get_swapchain().get_extent();
+	auto     extent    = get_render_context().get_surface_extent();
 	bool     landscape = (extent.width / extent.height) > 1.0f;
 	uint32_t lines     = landscape ? 2 : 4;
 
@@ -151,16 +138,16 @@ void CommandBufferUsage::render(vkb::CommandBuffer &primary_command_buffer)
 			// Record a secondary command buffer for each object in the scene, and the GUI
 			// This is definitely not recommended. This sample offers this option to make
 			// the difference between the command buffer reset modes more pronounced
-			render_pipeline->draw(primary_command_buffer, render_context->get_active_frame().get_render_target(), VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+			render_pipeline->draw(primary_command_buffer, get_render_context().get_active_frame().get_render_target(), VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
 		}
 		else
 		{
-			render_pipeline->draw(primary_command_buffer, render_context->get_active_frame().get_render_target(), VK_SUBPASS_CONTENTS_INLINE);
+			render_pipeline->draw(primary_command_buffer, get_render_context().get_active_frame().get_render_target(), VK_SUBPASS_CONTENTS_INLINE);
 		}
 	}
 }
 
-void CommandBufferUsage::draw_swapchain_renderpass(vkb::CommandBuffer &primary_command_buffer, vkb::RenderTarget &render_target)
+void CommandBufferUsage::draw_renderpass(vkb::CommandBuffer &primary_command_buffer, vkb::RenderTarget &render_target)
 {
 	auto &extent = render_target.get_extent();
 
@@ -190,7 +177,7 @@ void CommandBufferUsage::draw_swapchain_renderpass(vkb::CommandBuffer &primary_c
 	{
 		if (use_secondary_command_buffers)
 		{
-			vkb::CommandBuffer &secondary_command_buffer = render_context->request_frame_command_buffer(queue, static_cast<vkb::CommandBuffer::ResetMode>(reuse_selection), VK_COMMAND_BUFFER_LEVEL_SECONDARY);
+			vkb::CommandBuffer &secondary_command_buffer = get_render_context().request_frame_command_buffer(queue, static_cast<vkb::CommandBuffer::ResetMode>(reuse_selection), VK_COMMAND_BUFFER_LEVEL_SECONDARY);
 
 			secondary_command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &primary_command_buffer);
 

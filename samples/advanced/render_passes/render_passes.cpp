@@ -107,17 +107,9 @@ bool RenderPassesSample::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	std::vector<const char *> extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
-	device = std::make_unique<vkb::Device>(get_gpu(), get_surface(), extensions);
-
 	auto enabled_stats = {vkb::StatIndex::l2_ext_read_bytes, vkb::StatIndex::l2_ext_write_bytes};
 
 	stats = std::make_unique<vkb::Stats>(enabled_stats);
-
-	auto swapchain = std::make_unique<vkb::Swapchain>(*device, get_surface());
-
-	render_context = std::make_unique<vkb::RenderContext>(std::move(swapchain));
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 	auto &camera_node = add_free_camera("main_camera");
@@ -125,19 +117,19 @@ bool RenderPassesSample::prepare(vkb::Platform &platform)
 
 	vkb::ShaderSource vert_shader(vkb::fs::read_shader("base.vert"));
 	vkb::ShaderSource frag_shader(vkb::fs::read_shader("base.frag"));
-	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 
 	auto render_pipeline = vkb::RenderPipeline();
 	render_pipeline.add_subpass(std::move(scene_subpass));
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_dpi_factor());
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window().get_dpi_factor());
 
 	return true;
 }
 
-void RenderPassesSample::draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void RenderPassesSample::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
 {
 	std::vector<vkb::LoadStoreInfo> load_store{2};
 

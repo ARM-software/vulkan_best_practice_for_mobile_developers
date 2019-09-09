@@ -18,17 +18,41 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#include "window.h"
 
-#include "platform/glfw_platform.h"
+#include "platform/platform.h"
 
 namespace vkb
 {
-class LinuxPlatform : public GlfwPlatform
+Window::Window(Platform &platform, uint32_t width, uint32_t height) :
+    platform{platform},
+    width{width},
+    height{height}
 {
-  public:
-	LinuxPlatform(int argc, char **argv);
+}
 
-	virtual ~LinuxPlatform() = default;
-};
+void Window::process_events()
+{
+}
+
+Platform &Window::get_platform()
+{
+	return platform;
+}
+
+void Window::resize(uint32_t width, uint32_t height)
+{
+	this->width  = width;
+	this->height = height;
+}
+
+uint32_t Window::get_width()
+{
+	return width;
+}
+
+uint32_t Window::get_height()
+{
+	return height;
+}
 }        // namespace vkb

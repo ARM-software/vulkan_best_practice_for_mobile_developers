@@ -18,46 +18,47 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#include "desktop_platform.h"
 
-#include <iomanip>        // setprecision
-#include <sstream>        // stringstream
+#include "common/error.h"
 
-#include "common/vk_common.h"
-#include "rendering/render_pipeline.h"
-#include "scene_graph/components/perspective_camera.h"
-#include "vulkan_sample.h"
+VKBP_DISABLE_WARNINGS()
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
+VKBP_ENABLE_WARNINGS()
 
-/**
- * @brief Appropriate use of surface rotation
- */
-class SurfaceRotation : public vkb::VulkanSample
+#include "platform/glfw_window.h"
+#include "platform/headless_window.h"
+
+namespace vkb
 {
-  public:
-	SurfaceRotation();
+DesktopPlatform::DesktopPlatform(const std::vector<std::string> &args, const std::string &temp_dir)
+{
+	Platform::set_arguments(args);
+	Platform::set_temp_directory(temp_dir);
+}
 
-	virtual ~SurfaceRotation() = default;
+bool DesktopPlatform::initialize(std::unique_ptr<Application> &&app)
+{
+	return Platform::initialize(std::move(app)) && prepare();
+}
 
-	virtual bool prepare(vkb::Platform &platform) override;
+void DesktopPlatform::create_window()
+{
+	if (active_app->is_headless())
+	{
+		window = std::make_unique<HeadlessWindow>(*this);
+	}
+	else
+	{
+		window = std::make_unique<GlfwWindow>(*this);
+	}
+}
 
-	virtual void update(float delta_time) override;
-
-	static const char *transform_to_string(VkSurfaceTransformFlagBitsKHR flag);
-
-  private:
-	vkb::sg::PerspectiveCamera *camera{nullptr};
-
-	virtual void draw_gui() override;
-
-	void trigger_swapchain_recreation();
-
-	void recreate_swapchain();
-
-	void handle_surface_changes();
-
-	bool pre_rotate = false;
-
-	bool last_pre_rotate = false;
-};
-
-std::unique_ptr<vkb::VulkanSample> create_surface_rotation();
+std::vector<spdlog::sink_ptr> DesktopPlatform::get_platform_sinks()
+{
+	std::vector<spdlog::sink_ptr> sinks;
+	sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
+	return sinks;
+}
+}        // namespace vkb

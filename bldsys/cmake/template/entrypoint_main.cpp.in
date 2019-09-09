@@ -38,21 +38,25 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	vkb::WindowsPlatform platform{hInstance, hPrevInstance,
 	                              lpCmdLine, nCmdShow};
 #else
-#	include "platform/linux/linux_platform.h"
+#	include "platform/unix/unix_platform.h"
 int main(int argc, char *argv[])
 {
-	vkb::LinuxPlatform platform{argc, argv};
+#if defined(VK_USE_PLATFORM_MACOS_MVK)
+	vkb::UnixPlatform platform{vkb::UnixType::Mac, argc, argv};
+#elif defined(VK_USE_PLATFORM_XCB_KHR)
+	vkb::UnixPlatform platform{vkb::UnixType::Linux, argc, argv};
+#endif
 #endif
 
 #ifdef DEBUG
 	try
 	{
 #endif
-		auto sample = create_@TARGET_CREATE_FUNC@();
-		sample->set_name("@TARGET_NAME@");
-		sample->parse_options(platform.get_arguments());
+		auto app = create_@TARGET_CREATE_FUNC@();
+		app->set_name("@TARGET_NAME@");
+		app->parse_options(platform.get_arguments());
 
-		if (platform.initialize(std::move(sample)))
+		if (platform.initialize(std::move(app)))
 		{
 			platform.main_loop();
 		}

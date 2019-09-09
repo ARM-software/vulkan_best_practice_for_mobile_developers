@@ -60,7 +60,7 @@ bool GLTFLoaderTest::prepare(vkb::Platform &platform)
 	vkb::ShaderSource vert_shader(vkb::fs::read_shader("base.vert"));
 	vkb::ShaderSource frag_shader(vkb::fs::read_shader("base.frag"));
 
-	auto scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, camera);
+	auto scene_subpass = std::make_unique<vkb::SceneSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, camera);
 
 	auto render_pipeline = vkb::RenderPipeline();
 	render_pipeline.add_subpass(std::move(scene_subpass));

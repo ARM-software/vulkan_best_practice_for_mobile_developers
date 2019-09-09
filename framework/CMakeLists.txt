@@ -160,6 +160,7 @@ set(CORE_FILES
     core/buffer.h
     core/image.h
     core/image_view.h
+    core/instance.h
     core/sampler.h
     core/framebuffer.h
     core/render_pass.h
@@ -179,6 +180,7 @@ set(CORE_FILES
     core/buffer.cpp
     core/image.cpp
     core/image_view.cpp
+    core/instance.cpp
     core/sampler.cpp
     core/framebuffer.cpp
     core/render_pass.cpp)
@@ -188,6 +190,9 @@ set(PLATFORM_FILES
     platform/application.h
     platform/options.h
     platform/platform.h
+    platform/window.h
+    platform/headless_window.h
+    platform/glfw_window.h
     platform/filesystem.h
     platform/input_events.h
     platform/configuration.h
@@ -195,6 +200,8 @@ set(PLATFORM_FILES
     platform/application.cpp
     platform/options.cpp
     platform/platform.cpp
+    platform/window.cpp
+    platform/headless_window.cpp
     platform/filesystem.cpp
     platform/input_events.cpp
     platform/configuration.cpp)
@@ -213,38 +220,41 @@ set(UTIL_FILES
     utils/graphs.cpp
     utils/strings.cpp)
 
-# Add files based on platform
-if(ANDROID)
-    list(APPEND PLATFORM_FILES
-        # Header Files
-        platform/android/android_platform.h
-        # Source Files
-        platform/android/android_platform.cpp)
-else()
-    list(APPEND PLATFORM_FILES
-        # Header Files
-        platform/glfw_platform.h
-        # Source Files
-        platform/glfw_platform.cpp)
+set(DESKTOP_FILES
+    # Header Files
+    platform/glfw_window.h
+    platform/desktop_platform.h
+    # Source Files
+    platform/glfw_window.cpp
+    platform/desktop_platform.cpp)
 
-    if(WIN32)
-        list(APPEND PLATFORM_FILES
-        # Header Files
-        platform/windows/windows_platform.h
-        # Source Files
-        platform/windows/windows_platform.cpp)
-    else()
-        list(APPEND PLATFORM_FILES
-        # Header Files
-        platform/linux/linux_platform.h
-        # Source Files
-        platform/linux/linux_platform.cpp)
-    endif()
-endif()
+set(ANDROID_FILES
+    # Header Files
+    platform/android/android_platform.h
+    platform/android/android_window.h
+    # Source Files
+    platform/android/android_platform.cpp
+    platform/android/android_window.cpp)
+
+set(WINDOWS_FILES
+    # Header Files
+    platform/windows/windows_platform.h
+    # Source Files
+    platform/windows/windows_platform.cpp)
+
+set(UNIX_FILES
+    # Header Files
+    platform/unix/unix_platform.h
+    # Source Files
+    platform/unix/unix_platform.cpp)
 
 source_group("\\" FILES ${FRAMEWORK_FILES})
 source_group("common\\" FILES ${COMMON_FILES})
 source_group("platform\\" FILES ${PLATFORM_FILES})
+source_group("platform\\" FILES ${DESKTOP_FILES})
+source_group("platform\\windows" FILES ${WINDOWS_FILES})
+source_group("platform\\android" FILES ${ANDROID_FILES})
+source_group("platform\\unix" FILES ${UNIX_FILES})
 source_group("core\\" FILES ${CORE_FILES})
 source_group("rendering\\" FILES ${RENDERING_FILES})
 source_group("rendering\\subpasses" FILES ${RENDERING_SUBPASSES_FILES})
@@ -255,6 +265,10 @@ source_group("utils\\" FILES ${UTIL_FILES})
 
 set(PROJECT_FILES
     ${PLATFORM_FILES}
+    ${DESKTOP_FILES}
+    ${ANDROID_FILES}
+    ${WINDOWS_FILES}
+    ${UNIX_FILES}
     ${COMMON_FILES}
     ${FRAMEWORK_FILES}
     ${CORE_FILES}
@@ -264,6 +278,19 @@ set(PROJECT_FILES
     ${SCENE_GRAPH_COMPONENT_FILES}
     ${SCENE_GRAPH_SCRIPTS_FILES}
     ${UTIL_FILES})
+	
+# Disable compilation on certain files depending on platform
+if(ANDROID)
+    set_source_files_properties(${DESKTOP_FILES} PROPERTIES HEADER_FILE_ONLY TRUE)
+    set_source_files_properties(${WINDOWS_FILES} PROPERTIES HEADER_FILE_ONLY TRUE)
+    set_source_files_properties(${UNIX_FILES} PROPERTIES HEADER_FILE_ONLY TRUE)
+elseif(WIN32)
+    set_source_files_properties(${ANDROID_FILES} PROPERTIES HEADER_FILE_ONLY TRUE)
+    set_source_files_properties(${UNIX_FILES} PROPERTIES HEADER_FILE_ONLY TRUE)
+elseif(UNIX)
+    set_source_files_properties(${ANDROID_FILES} PROPERTIES HEADER_FILE_ONLY TRUE)
+    set_source_files_properties(${WINDOWS_FILES} PROPERTIES HEADER_FILE_ONLY TRUE)
+endif()
 
 add_library(${PROJECT_NAME} STATIC ${PROJECT_FILES})
 

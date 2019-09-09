@@ -20,44 +20,26 @@
 
 #pragma once
 
-#include <iomanip>        // setprecision
-#include <sstream>        // stringstream
+#include "platform/desktop_platform.h"
 
-#include "common/vk_common.h"
-#include "rendering/render_pipeline.h"
-#include "scene_graph/components/perspective_camera.h"
-#include "vulkan_sample.h"
-
-/**
- * @brief Appropriate use of surface rotation
- */
-class SurfaceRotation : public vkb::VulkanSample
+namespace vkb
 {
-  public:
-	SurfaceRotation();
-
-	virtual ~SurfaceRotation() = default;
-
-	virtual bool prepare(vkb::Platform &platform) override;
-
-	virtual void update(float delta_time) override;
-
-	static const char *transform_to_string(VkSurfaceTransformFlagBitsKHR flag);
-
-  private:
-	vkb::sg::PerspectiveCamera *camera{nullptr};
-
-	virtual void draw_gui() override;
-
-	void trigger_swapchain_recreation();
-
-	void recreate_swapchain();
-
-	void handle_surface_changes();
-
-	bool pre_rotate = false;
-
-	bool last_pre_rotate = false;
+enum UnixType
+{
+	Mac,
+	Linux
 };
 
-std::unique_ptr<vkb::VulkanSample> create_surface_rotation();
+class UnixPlatform : public DesktopPlatform
+{
+  public:
+	UnixPlatform(const UnixType &type, int argc, char **argv);
+
+	virtual ~UnixPlatform() = default;
+
+	virtual const char *get_surface_extension() override;
+
+  private:
+	UnixType type;
+};
+}        // namespace vkb

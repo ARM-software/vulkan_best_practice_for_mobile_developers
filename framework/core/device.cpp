@@ -40,6 +40,7 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vect
 
 	// Gpu properties
 	vkGetPhysicalDeviceProperties(physical_device, &properties);
+	LOGI("GPU: {}", properties.deviceName);
 
 	uint32_t queue_family_properties_count = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_properties_count, nullptr);
@@ -105,7 +106,12 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vect
 		const VkQueueFamilyProperties &queue_family_property = queue_family_properties[queue_family_index];
 
 		VkBool32 present_supported{VK_FALSE};
-		VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, queue_family_index, surface, &present_supported));
+
+		// Only check if surface is valid to allow for headless applications
+		if (surface != VK_NULL_HANDLE)
+		{
+			VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, queue_family_index, surface, &present_supported));
+		}
 
 		for (uint32_t queue_index = 0U; queue_index < queue_family_property.queueCount; ++queue_index)
 		{
@@ -271,6 +277,23 @@ const Queue &Device::get_queue_by_present(uint32_t queue_index)
 	}
 
 	throw std::runtime_error("Queue not found");
+}
+
+const Queue &Device::get_suitable_graphics_queue()
+{
+	for (uint32_t queue_family_index = 0U; queue_family_index < queues.size(); ++queue_family_index)
+	{
+		Queue &first_queue = queues[queue_family_index][0];
+
+		uint32_t queue_count = first_queue.get_properties().queueCount;
+
+		if (first_queue.support_present() && 0 < queue_count)
+		{
+			return queues[queue_family_index][0];
+		}
+	}
+
+	return get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 }
 
 CommandBuffer &Device::request_command_buffer()

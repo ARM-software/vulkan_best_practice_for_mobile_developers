@@ -52,12 +52,12 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 {
 	VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
 
-	// We want the last completed frame since we don't want to be reading from an incomplete swapchain image
+	// We want the last completed frame since we don't want to be reading from an incomplete framebuffer
 	auto &frame          = render_context.get_last_rendered_frame();
 	auto &src_image_view = frame.get_render_target().get_views().at(0);
 
-	auto width  = render_context.get_swapchain().get_extent().width;
-	auto height = render_context.get_swapchain().get_extent().height;
+	auto width  = render_context.get_surface_extent().width;
+	auto height = render_context.get_surface_extent().height;
 
 	core::Image dst_image{render_context.get_device(),
 	                      VkExtent3D{width, height, 1},
@@ -89,7 +89,7 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 		cmd_buf.image_memory_barrier(dst_image_view, memory_barrier);
 	}
 
-	// Enable swapchain image to be read from
+	// Enable framebuffer image view to be read from
 	{
 		ImageMemoryBarrier memory_barrier{};
 		memory_barrier.old_layout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
@@ -102,11 +102,11 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 
 	bool swizzle = false;
 
-	// Check if swapchain images are in a BGR format
+	// Check if framebuffer images are in a BGR format
 	auto bgr_formats = {VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_SNORM};
-	swizzle          = std::find(bgr_formats.begin(), bgr_formats.end(), render_context.get_swapchain().get_format()) != bgr_formats.end();
+	swizzle          = std::find(bgr_formats.begin(), bgr_formats.end(), src_image_view.get_format()) != bgr_formats.end();
 
-	// Copy whole swapchain image
+	// Copy framebuffer image memory
 	VkImageCopy image_copy_region{};
 	image_copy_region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	image_copy_region.srcSubresource.layerCount = 1;
@@ -129,7 +129,7 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 		cmd_buf.image_memory_barrier(dst_image_view, memory_barrier);
 	}
 
-	// Revert back the swapchain image from transfer to present
+	// Revert back the framebuffer image view from transfer to present
 	{
 		ImageMemoryBarrier memory_barrier{};
 		memory_barrier.old_layout     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;

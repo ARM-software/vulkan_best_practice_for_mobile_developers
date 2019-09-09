@@ -200,10 +200,10 @@ class Gui
 
 	/**
 	 * @brief Initializes the Gui
-	 * @param sample_ A vulkan render context
+	 * @param sample A vulkan render context
 	 * @param dpi_factor The dpi scale factor
 	 */
-	Gui(VulkanSample &sample_, const float dpi_factor = 1.0);
+	Gui(VulkanSample &sample, const float dpi_factor = 1.0);
 
 	/**
 	 * @brief Destroys the Gui

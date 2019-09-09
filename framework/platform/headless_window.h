@@ -20,44 +20,33 @@
 
 #pragma once
 
-#include <iomanip>        // setprecision
-#include <sstream>        // stringstream
+#include "platform/window.h"
 
-#include "common/vk_common.h"
-#include "rendering/render_pipeline.h"
-#include "scene_graph/components/perspective_camera.h"
-#include "vulkan_sample.h"
-
+namespace vkb
+{
 /**
- * @brief Appropriate use of surface rotation
+ * @brief Surface-less implementation of a Window, for use in headless rendering
  */
-class SurfaceRotation : public vkb::VulkanSample
+class HeadlessWindow : public Window
 {
   public:
-	SurfaceRotation();
+	HeadlessWindow(Platform &platform, uint32_t width = 1028, uint32_t height = 720);
 
-	virtual ~SurfaceRotation() = default;
+	virtual ~HeadlessWindow() = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	/**
+	 * @brief A direct window doesn't have a surface
+	 * @returns VK_NULL_HANDLE
+	 */
+	virtual VkSurfaceKHR create_surface(VkInstance instance) override;
 
-	virtual void update(float delta_time) override;
+	virtual bool should_close() override;
 
-	static const char *transform_to_string(VkSurfaceTransformFlagBitsKHR flag);
+	virtual void close() override;
+
+	virtual float get_dpi_factor() const override;
 
   private:
-	vkb::sg::PerspectiveCamera *camera{nullptr};
-
-	virtual void draw_gui() override;
-
-	void trigger_swapchain_recreation();
-
-	void recreate_swapchain();
-
-	void handle_surface_changes();
-
-	bool pre_rotate = false;
-
-	bool last_pre_rotate = false;
+	bool closed{false};
 };
-
-std::unique_ptr<vkb::VulkanSample> create_surface_rotation();
+}        // namespace vkb

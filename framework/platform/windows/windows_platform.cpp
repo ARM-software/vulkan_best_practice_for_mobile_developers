@@ -24,6 +24,16 @@
 #include <shellapi.h>
 #include <stdexcept>
 
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS()
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
+VKBP_ENABLE_WARNINGS()
+
+#include "platform/glfw_window.h"
+#include "platform/headless_window.h"
+
 namespace vkb
 {
 namespace
@@ -65,32 +75,8 @@ std::string wstr_to_str(const std::wstring &wstr)
 	return str;
 }
 
-}        // namespace
-
-namespace fs
+inline std::vector<std::string> get_args()
 {
-void create_directory(const std::string &path)
-{
-	if (!is_directory(path))
-	{
-		CreateDirectory(path.c_str(), NULL);
-	}
-}
-}        // namespace fs
-
-WindowsPlatform::WindowsPlatform(HINSTANCE /*hInstance*/, HINSTANCE /*hPrevInstance*/,
-                                 PSTR /*lpCmdLine*/, INT /*nCmdShow*/)
-{
-	if (!AllocConsole())
-	{
-		throw std::runtime_error{"AllocConsole error"};
-	}
-
-	FILE *fp;
-	freopen_s(&fp, "conin$", "r", stdin);
-	freopen_s(&fp, "conout$", "w", stdout);
-	freopen_s(&fp, "conout$", "w", stderr);
-
 	LPWSTR *argv;
 	int     argc;
 
@@ -105,20 +91,44 @@ WindowsPlatform::WindowsPlatform(HINSTANCE /*hInstance*/, HINSTANCE /*hPrevInsta
 		args.push_back(wstr_to_str(arg));
 	}
 
-	Platform::set_arguments(args);
-
-	Platform::set_temp_directory(get_temp_path_from_environment());
+	return args;
 }
+}        // namespace
 
-bool WindowsPlatform::initialize(std::unique_ptr<Application> &&app)
+namespace fs
 {
-	return GlfwPlatform::initialize(std::move(app));
+void create_directory(const std::string &path)
+{
+	if (!is_directory(path))
+	{
+		CreateDirectory(path.c_str(), NULL);
+	}
+}
+}        // namespace fs
+
+WindowsPlatform::WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                                 PSTR lpCmdLine, INT nCmdShow) :
+    DesktopPlatform(get_args(), get_temp_path_from_environment())
+{
+	if (!AllocConsole())
+	{
+		throw std::runtime_error{"AllocConsole error"};
+	}
+
+	FILE *fp;
+	freopen_s(&fp, "conin$", "r", stdin);
+	freopen_s(&fp, "conout$", "w", stdout);
+	freopen_s(&fp, "conout$", "w", stderr);
 }
 
 void WindowsPlatform::terminate(ExitCode code)
 {
+	Platform::terminate(code);
 	FreeConsole();
+}
 
-	GlfwPlatform::terminate(code);
+const char *WindowsPlatform::get_surface_extension()
+{
+	return VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
 }
 }        // namespace vkb

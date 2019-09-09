@@ -99,6 +99,11 @@ vkb::RenderTarget RenderSubpasses::create_render_target(vkb::core::Image &&swapc
 	return vkb::RenderTarget{std::move(images)};
 }
 
+void RenderSubpasses::prepare_render_context()
+{
+	get_render_context().prepare(1, std::bind(&RenderSubpasses::create_render_target, this, std::placeholders::_1));
+}
+
 bool RenderSubpasses::prepare(vkb::Platform &platform)
 {
 	if (!VulkanSample::prepare(platform))
@@ -106,14 +111,8 @@ bool RenderSubpasses::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	std::vector<const char *> extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
-	device = std::make_unique<vkb::Device>(get_gpu(), get_surface(), extensions);
-
-	VkImageUsageFlags swapchain_usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
-	auto              swapchain       = std::make_unique<vkb::Swapchain>(*device, get_surface(), VkExtent2D{}, 3, VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR, VK_PRESENT_MODE_FIFO_KHR, swapchain_usage);
-
-	render_context = std::make_unique<vkb::RenderContext>(std::move(swapchain), 1, std::bind(&RenderSubpasses::create_render_target, this, std::placeholders::_1));
+	std::set<VkImageUsageFlagBits> usage = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT};
+	get_render_context().update_swapchain(usage);
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
@@ -126,7 +125,7 @@ bool RenderSubpasses::prepare(vkb::Platform &platform)
 	lighting_render_pipeline = create_lighting_renderpass();
 
 	// Enable gui
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_dpi_factor());
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window().get_dpi_factor());
 
 	// Enable stats
 	auto enabled_stats = {vkb::StatIndex::fragment_jobs,
@@ -147,7 +146,7 @@ void RenderSubpasses::update(float delta_time)
 		last_render_technique = configs[Config::RenderTechnique].value;
 
 		// Reset frames, their synchronization objects and their command buffers
-		for (auto &frame : render_context->get_render_frames())
+		for (auto &frame : get_render_context().get_render_frames())
 		{
 			frame.reset();
 		}
@@ -194,13 +193,13 @@ void RenderSubpasses::update(float delta_time)
 		}
 
 		// Reset frames, their synchronization objects and their command buffers
-		for (auto &frame : render_context->get_render_frames())
+		for (auto &frame : get_render_context().get_render_frames())
 		{
 			frame.reset();
 		}
 
 		LOGI("Recreating render target");
-		render_context->update_swapchain(std::make_unique<vkb::Swapchain>(std::move(render_context->get_swapchain())));
+		get_render_context().recreate();
 	}
 
 	VulkanSample::update(delta_time);
@@ -325,7 +324,7 @@ std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_one_renderpass_two_
 	// Geometry subpass
 	auto geometry_vs   = vkb::ShaderSource{vkb::fs::read_shader("deferred/geometry.vert")};
 	auto geometry_fs   = vkb::ShaderSource{vkb::fs::read_shader("deferred/geometry.frag")};
-	auto scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(geometry_vs), std::move(geometry_fs), *scene, *camera);
+	auto scene_subpass = std::make_unique<vkb::SceneSubpass>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs), *scene, *camera);
 
 	// Outputs are depth, albedo, and normal
 	scene_subpass->set_output_attachments({1, 2, 3});
@@ -333,7 +332,7 @@ std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_one_renderpass_two_
 	// Lighting subpass
 	auto lighting_vs      = vkb::ShaderSource{vkb::fs::read_shader("deferred/lighting.vert")};
 	auto lighting_fs      = vkb::ShaderSource{vkb::fs::read_shader("deferred/lighting.frag")};
-	auto lighting_subpass = std::make_unique<vkb::LightingSubpass>(*render_context, std::move(lighting_vs), std::move(lighting_fs), *camera);
+	auto lighting_subpass = std::make_unique<vkb::LightingSubpass>(get_render_context(), std::move(lighting_vs), std::move(lighting_fs), *camera);
 
 	// Inputs are depth, albedo, and normal from the geometry subpass
 	lighting_subpass->set_input_attachments({1, 2, 3});
@@ -384,7 +383,7 @@ std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_geometry_renderpass
 	// Geometry subpass
 	auto geometry_vs   = vkb::ShaderSource{vkb::fs::read_shader("deferred/geometry.vert")};
 	auto geometry_fs   = vkb::ShaderSource{vkb::fs::read_shader("deferred/geometry.frag")};
-	auto scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(geometry_vs), std::move(geometry_fs), *scene, *camera);
+	auto scene_subpass = std::make_unique<vkb::SceneSubpass>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs), *scene, *camera);
 
 	// Outputs are depth, albedo, and normal
 	scene_subpass->set_output_attachments({1, 2, 3});
@@ -407,7 +406,7 @@ std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_lighting_renderpass
 	// Lighting subpass
 	auto lighting_vs      = vkb::ShaderSource{vkb::fs::read_shader("deferred/lighting.vert")};
 	auto lighting_fs      = vkb::ShaderSource{vkb::fs::read_shader("deferred/lighting.frag")};
-	auto lighting_subpass = std::make_unique<vkb::LightingSubpass>(*render_context, std::move(lighting_vs), std::move(lighting_fs), *camera);
+	auto lighting_subpass = std::make_unique<vkb::LightingSubpass>(get_render_context(), std::move(lighting_vs), std::move(lighting_fs), *camera);
 
 	// Inputs are depth, albedo, and normal from the geometry subpass
 	lighting_subpass->set_input_attachments({1, 2, 3});
@@ -493,7 +492,7 @@ void RenderSubpasses::draw_renderpasses(vkb::CommandBuffer &command_buffer, vkb:
 	draw_pipeline(command_buffer, render_target, *lighting_render_pipeline, gui.get());
 }
 
-void RenderSubpasses::draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void RenderSubpasses::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
 {
 	if (configs[Config::RenderTechnique].value == 0)
 	{

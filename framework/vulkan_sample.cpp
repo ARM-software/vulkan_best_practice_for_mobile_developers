@@ -32,6 +32,7 @@ VKBP_ENABLE_WARNINGS()
 #include "common/vk_common.h"
 #include "gltf_loader.h"
 #include "platform/platform.h"
+#include "platform/window.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/script.h"
 #include "scene_graph/scripts/free_camera.h"
@@ -44,81 +45,6 @@ VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
-namespace
-{
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT /*type*/,
-                                                     uint64_t /*object*/, size_t /*location*/, int32_t /*message_code*/,
-                                                     const char *layer_prefix, const char *message, void * /*user_data*/)
-{
-	if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
-	{
-		LOGE("{}: {}", layer_prefix, message);
-	}
-	else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
-	{
-		LOGW("{}: {}", layer_prefix, message);
-	}
-	else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
-	{
-		LOGW("{}: {}", layer_prefix, message);
-	}
-	else
-	{
-		LOGI("{}: {}", layer_prefix, message);
-	}
-	return VK_FALSE;
-}
-#endif
-bool validate_extensions(const std::vector<const char *> &         required,
-                         const std::vector<VkExtensionProperties> &available)
-{
-	for (auto extension : required)
-	{
-		bool found = false;
-		for (auto &available_extension : available)
-		{
-			if (strcmp(available_extension.extensionName, extension) == 0)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		if (!found)
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
-
-bool validate_layers(const std::vector<const char *> &     required,
-                     const std::vector<VkLayerProperties> &available)
-{
-	for (auto extension : required)
-	{
-		bool found = false;
-		for (auto &available_extension : available)
-		{
-			if (strcmp(available_extension.layerName, extension) == 0)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		if (!found)
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
-}        // namespace
-
 VulkanSample::VulkanSample()
 {
 }
@@ -136,28 +62,10 @@ VulkanSample::~VulkanSample()
 
 	if (surface != VK_NULL_HANDLE)
 	{
-		vkDestroySurfaceKHR(instance, surface, nullptr);
+		vkDestroySurfaceKHR(instance->get_handle(), surface, nullptr);
 	}
 
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	vkDestroyDebugReportCallbackEXT(instance, debug_report_callback, nullptr);
-#endif
-
-	if (instance != VK_NULL_HANDLE)
-	{
-		vkDestroyInstance(instance, nullptr);
-	}
-}
-
-void VulkanSample::set_render_pipeline(RenderPipeline &&rp)
-{
-	render_pipeline = std::make_unique<RenderPipeline>(std::move(rp));
-}
-
-RenderPipeline &VulkanSample::get_render_pipeline()
-{
-	assert(render_pipeline && "Render pipeline was not created");
-	return *render_pipeline;
+	instance.reset();
 }
 
 bool VulkanSample::prepare(Platform &platform)
@@ -167,28 +75,34 @@ bool VulkanSample::prepare(Platform &platform)
 		return false;
 	}
 
-	get_debug_info().insert<field::MinMax, float>("fps", fps);
-	get_debug_info().insert<field::MinMax, float>("frame_time", frame_time);
+	LOGI("Initializing Vulkan sample");
 
-	LOGI("Initializing context");
+	// Creating the vulkan instance
+	std::vector<const char *> instance_extensions = get_instance_extensions();
+	instance_extensions.push_back(platform.get_surface_extension());
+	instance = std::make_unique<Instance>(get_name(), instance_extensions, get_validation_layers(), is_headless());
 
-	instance = create_instance({VK_KHR_SURFACE_EXTENSION_NAME}, get_sample_additional_layers());
-	surface  = platform.create_surface(instance);
+	// Getting a valid vulkan surface from the platform
+	surface = platform.get_window().create_surface(instance->get_handle());
 
-	uint32_t physical_device_count{0};
-	VK_CHECK(vkEnumeratePhysicalDevices(instance, &physical_device_count, nullptr));
-
-	if (physical_device_count < 1)
+	// Creating vulkan device, specifying the swapchain
+	std::vector<const char *> device_extensions = get_device_extensions();
+	if (!is_headless() || instance->is_enabled(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME))
 	{
-		LOGE("Failed to enumerate Vulkan physical device.");
-		return false;
+		device_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 	}
+	device = std::make_unique<vkb::Device>(instance->get_gpu(), surface, device_extensions);
 
-	gpus.resize(physical_device_count);
-
-	VK_CHECK(vkEnumeratePhysicalDevices(instance, &physical_device_count, gpus.data()));
+	// Preparing render context for rendering
+	render_context = std::make_unique<vkb::RenderContext>(*device, surface, platform.get_window().get_width(), platform.get_window().get_height());
+	prepare_render_context();
 
 	return true;
+}
+
+void VulkanSample::prepare_render_context()
+{
+	render_context->prepare();
 }
 
 void VulkanSample::update_scene(float delta_time)
@@ -246,7 +160,26 @@ void VulkanSample::update_gui(float delta_time)
 	}
 }
 
-void VulkanSample::record_scene_rendering_commands(CommandBuffer &command_buffer, RenderTarget &render_target)
+void VulkanSample::update(float delta_time)
+{
+	update_scene(delta_time);
+
+	update_stats(delta_time);
+
+	update_gui(delta_time);
+
+	auto &command_buffer = render_context->begin();
+
+	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+	draw(command_buffer, render_context->get_active_frame().get_render_target());
+
+	command_buffer.end();
+
+	render_context->submit(command_buffer);
+}
+
+void VulkanSample::draw(CommandBuffer &command_buffer, RenderTarget &render_target)
 {
 	auto &views = render_target.get_views();
 
@@ -278,7 +211,7 @@ void VulkanSample::record_scene_rendering_commands(CommandBuffer &command_buffer
 		command_buffer.image_memory_barrier(views.at(1), memory_barrier);
 	}
 
-	draw_swapchain_renderpass(command_buffer, render_target);
+	draw_renderpass(command_buffer, render_target);
 
 	{
 		ImageMemoryBarrier memory_barrier{};
@@ -292,36 +225,37 @@ void VulkanSample::record_scene_rendering_commands(CommandBuffer &command_buffer
 	}
 }
 
-void VulkanSample::update(float delta_time)
+void VulkanSample::draw_renderpass(CommandBuffer &command_buffer, RenderTarget &render_target)
 {
-	update_scene(delta_time);
+	auto &extent = render_target.get_extent();
 
-	update_stats(delta_time);
+	VkViewport viewport{};
+	viewport.width    = static_cast<float>(extent.width);
+	viewport.height   = static_cast<float>(extent.height);
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	command_buffer.set_viewport(0, {viewport});
 
-	update_gui(delta_time);
+	VkRect2D scissor{};
+	scissor.extent = extent;
+	command_buffer.set_scissor(0, {scissor});
 
-	auto acquired_semaphore = render_context->begin_frame();
+	render(command_buffer);
 
-	if (acquired_semaphore == VK_NULL_HANDLE)
+	if (gui)
 	{
-		return;
+		gui->draw(command_buffer);
 	}
 
-	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	command_buffer.end_render_pass();
+}
 
-	auto &render_target = render_context->get_active_frame().get_render_target();
-
-	auto &command_buffer = render_context->request_frame_command_buffer(queue);
-
-	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-
-	record_scene_rendering_commands(command_buffer, render_target);
-
-	command_buffer.end();
-
-	auto render_semaphore = render_context->submit(queue, command_buffer, acquired_semaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-
-	render_context->end_frame(render_semaphore);
+void VulkanSample::render(CommandBuffer &command_buffer)
+{
+	if (render_pipeline)
+	{
+		render_pipeline->draw(command_buffer, render_context->get_active_frame().get_render_target());
+	}
 }
 
 void VulkanSample::resize(uint32_t width, uint32_t height)
@@ -394,39 +328,14 @@ void VulkanSample::finish()
 	device->wait_idle();
 }
 
-VkPhysicalDevice VulkanSample::get_gpu()
+Device &VulkanSample::get_device()
 {
-	// Find a discrete GPU
-	for (auto gpu : gpus)
-	{
-		VkPhysicalDeviceProperties properties{};
-		vkGetPhysicalDeviceProperties(gpu, &properties);
-		if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-		{
-			return gpu;
-		}
-	}
-
-	// Otherwise just pick the first one
-	return gpus.at(0);
-}
-
-VkSurfaceKHR VulkanSample::get_surface()
-{
-	return surface;
+	return *device;
 }
 
 Configuration &VulkanSample::get_configuration()
 {
 	return configuration;
-}
-
-void VulkanSample::render(CommandBuffer &command_buffer)
-{
-	if (render_pipeline)
-	{
-		render_pipeline->draw(command_buffer, render_context->get_active_frame().get_render_target());
-	}
 }
 
 void VulkanSample::draw_gui()
@@ -503,138 +412,42 @@ void VulkanSample::load_scene(const std::string &path)
 	}
 }
 
+VkSurfaceKHR VulkanSample::get_surface()
+{
+	return surface;
+}
+
 RenderContext &VulkanSample::get_render_context()
 {
 	assert(render_context && "Render context is not valid");
 	return *render_context;
 }
 
-VkInstance VulkanSample::create_instance(const std::vector<const char *> &required_instance_extensions,
-                                         const std::vector<const char *> &required_instance_layers)
+void VulkanSample::set_render_pipeline(RenderPipeline &&rp)
 {
-	VkResult result = volkInitialize();
-	if (result)
-	{
-		throw VulkanException(result, "Failed to initialize volk.");
-	}
-
-	uint32_t instance_extension_count;
-	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
-
-	std::vector<VkExtensionProperties> instance_extensions(instance_extension_count);
-	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, instance_extensions.data()));
-
-	std::vector<const char *> active_instance_extensions(required_instance_extensions);
-
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	active_instance_extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-#endif
-
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-	active_instance_extensions.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
-#elif defined(VK_USE_PLATFORM_WIN32_KHR)
-	active_instance_extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
-#elif defined(VK_USE_PLATFORM_MACOS_MVK)
-	active_instance_extensions.push_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
-#elif defined(VK_USE_PLATFORM_XCB_KHR)
-	active_instance_extensions.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
-#endif
-
-	if (!validate_extensions(active_instance_extensions, instance_extensions))
-	{
-		throw std::runtime_error("Required instance extensions are missing.");
-	}
-
-	uint32_t instance_layer_count;
-	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr));
-
-	std::vector<VkLayerProperties> instance_layers(instance_layer_count);
-	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, instance_layers.data()));
-
-	std::vector<const char *> active_instance_layers(required_instance_layers);
-
-#ifdef VKB_VALIDATION_LAYERS
-	active_instance_layers.push_back("VK_LAYER_KHRONOS_validation");
-#endif
-
-	if (!validate_layers(active_instance_layers, instance_layers))
-	{
-		throw std::runtime_error("Required instance layers are missing.");
-	}
-
-	VkApplicationInfo app_info{VK_STRUCTURE_TYPE_APPLICATION_INFO};
-
-	app_info.pApplicationName   = get_name().c_str();
-	app_info.applicationVersion = 0;
-	app_info.pEngineName        = "Vulkan Best Practice";
-	app_info.engineVersion      = 0;
-	app_info.apiVersion         = VK_MAKE_VERSION(1, 0, 0);
-
-	VkInstanceCreateInfo instance_info = {VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
-
-	instance_info.pApplicationInfo = &app_info;
-
-	instance_info.enabledExtensionCount   = to_u32(active_instance_extensions.size());
-	instance_info.ppEnabledExtensionNames = active_instance_extensions.data();
-
-	instance_info.enabledLayerCount   = to_u32(active_instance_layers.size());
-	instance_info.ppEnabledLayerNames = active_instance_layers.data();
-
-	// Create the Vulkan instance
-
-	VkInstance new_instance;
-	result = vkCreateInstance(&instance_info, nullptr, &new_instance);
-	if (result != VK_SUCCESS)
-	{
-		throw VulkanException(result, "Could not create Vulkan instance");
-	}
-
-	volkLoadInstance(new_instance);
-
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	VkDebugReportCallbackCreateInfoEXT info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
-
-	info.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-	info.pfnCallback = debug_callback;
-
-	result = vkCreateDebugReportCallbackEXT(new_instance, &info, nullptr, &debug_report_callback);
-	if (result != VK_SUCCESS)
-	{
-		throw std::runtime_error("Could not create debug callback.");
-	}
-#endif
-
-	return new_instance;
+	render_pipeline.reset();
+	render_pipeline = std::make_unique<RenderPipeline>(std::move(rp));
 }
 
-std::vector<const char *> VulkanSample::get_sample_additional_layers()
+RenderPipeline &VulkanSample::get_render_pipeline()
+{
+	assert(render_pipeline && "Render pipeline was not created");
+	return *render_pipeline;
+}
+
+std::vector<const char *> VulkanSample::get_validation_layers()
 {
 	return {};
 }
 
-void VulkanSample::draw_swapchain_renderpass(CommandBuffer &command_buffer, RenderTarget &render_target)
+std::vector<const char *> VulkanSample::get_instance_extensions()
 {
-	auto &extent = render_target.get_extent();
+	return {};
+}
 
-	VkViewport viewport{};
-	viewport.width    = static_cast<float>(extent.width);
-	viewport.height   = static_cast<float>(extent.height);
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-	command_buffer.set_viewport(0, {viewport});
-
-	VkRect2D scissor{};
-	scissor.extent = extent;
-	command_buffer.set_scissor(0, {scissor});
-
-	render(command_buffer);
-
-	if (gui)
-	{
-		gui->draw(command_buffer);
-	}
-
-	command_buffer.end_render_pass();
+std::vector<const char *> VulkanSample::get_device_extensions()
+{
+	return {};
 }
 
 sg::Scene &VulkanSample::get_scene()

@@ -40,14 +40,6 @@ bool VulkanTest::prepare(vkb::Platform &platform)
 
 	this->platform = &platform;
 
-	std::vector<const char *> extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
-	device = std::make_unique<vkb::Device>(get_gpu(), get_surface(), extensions);
-
-	auto swapchain = std::make_unique<vkb::Swapchain>(*device, get_surface());
-
-	render_context = std::make_unique<vkb::RenderContext>(std::move(swapchain));
-
 	return true;
 }
 
@@ -55,7 +47,7 @@ void VulkanTest::update(float delta_time)
 {
 	VulkanSample::update(delta_time);
 
-	screenshot(*render_context, get_name());
+	screenshot(get_render_context(), get_name());
 
 	end();
 }

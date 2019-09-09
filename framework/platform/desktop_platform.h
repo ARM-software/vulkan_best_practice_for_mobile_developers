@@ -1,3 +1,4 @@
+#pragma once
 /* Copyright (c) 2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
@@ -20,35 +21,22 @@
 
 #pragma once
 
-#include "common/vk_common.h"
-#include "platform.h"
-
-struct GLFWwindow;
+#include "platform/platform.h"
 
 namespace vkb
 {
-class GlfwPlatform : public Platform
+class DesktopPlatform : public Platform
 {
   public:
-	GlfwPlatform() = default;
+	DesktopPlatform(const std::vector<std::string> &args, const std::string &temp_dir);
 
-	virtual ~GlfwPlatform() = default;
+	virtual ~DesktopPlatform() = default;
 
 	virtual bool initialize(std::unique_ptr<Application> &&app) override;
 
-	virtual VkSurfaceKHR create_surface(VkInstance instance) override;
-
-	virtual void main_loop() override;
-
-	virtual void terminate(ExitCode code) override;
-
-	virtual void close() const override;
-
-	float get_dpi_factor() const override;
+	virtual void create_window() override;
 
   private:
-	GLFWwindow *window = nullptr;
-
 	virtual std::vector<spdlog::sink_ptr> get_platform_sinks() override;
 };
 }        // namespace vkb

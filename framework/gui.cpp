@@ -79,8 +79,8 @@ const ImGuiWindowFlags Gui::options_flags = Gui::common_flags;
 const ImGuiWindowFlags Gui::info_flags = Gui::common_flags | ImGuiWindowFlags_NoInputs;
 
 Gui::Gui(VulkanSample &sample_, const float dpi_factor) :
-    dpi_factor{dpi_factor},
-    sample{sample_}
+    sample{sample_},
+    dpi_factor{dpi_factor}
 {
 	ImGui::CreateContext();
 
@@ -101,7 +101,7 @@ Gui::Gui(VulkanSample &sample_, const float dpi_factor) :
 
 	// Dimensions
 	ImGuiIO &io                = ImGui::GetIO();
-	auto &   extent            = sample.get_render_context().get_swapchain().get_extent();
+	auto     extent            = sample.get_render_context().get_surface_extent();
 	io.DisplaySize.x           = static_cast<float>(extent.width);
 	io.DisplaySize.y           = static_cast<float>(extent.height);
 	io.FontGlobalScale         = 1.0f;
@@ -341,22 +341,28 @@ void Gui::draw(CommandBuffer &command_buffer)
 	command_buffer.bind_image(*font_image_view, *sampler, 0, 0, 0);
 
 	// Pre-rotation
-	auto      transform      = sample.get_render_context().get_swapchain().get_transform();
-	auto &    io             = ImGui::GetIO();
-	auto      push_transform = glm::mat4(1.0f);
-	glm::vec3 rotation_axis  = glm::vec3(0.0f, 0.0f, 1.0f);
-	if (transform & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
+	auto &io             = ImGui::GetIO();
+	auto  push_transform = glm::mat4(1.0f);
+
+	if (sample.get_render_context().has_swapchain())
 	{
-		push_transform = glm::rotate(push_transform, glm::radians(90.0f), rotation_axis);
+		auto transform = sample.get_render_context().get_swapchain().get_transform();
+
+		glm::vec3 rotation_axis = glm::vec3(0.0f, 0.0f, 1.0f);
+		if (transform & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
+		{
+			push_transform = glm::rotate(push_transform, glm::radians(90.0f), rotation_axis);
+		}
+		else if (transform & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
+		{
+			push_transform = glm::rotate(push_transform, glm::radians(270.0f), rotation_axis);
+		}
+		else if (transform & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)
+		{
+			push_transform = glm::rotate(push_transform, glm::radians(180.0f), rotation_axis);
+		}
 	}
-	else if (transform & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
-	{
-		push_transform = glm::rotate(push_transform, glm::radians(270.0f), rotation_axis);
-	}
-	else if (transform & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)
-	{
-		push_transform = glm::rotate(push_transform, glm::radians(180.0f), rotation_axis);
-	}
+
 	// GUI coordinate space to screen space
 	push_transform = glm::translate(push_transform, glm::vec3(-1.0f, -1.0f, 0.0f));
 	push_transform = glm::scale(push_transform, glm::vec3(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y, 0.0f));
@@ -380,34 +386,37 @@ void Gui::draw(CommandBuffer &command_buffer)
 			{
 				const ImDrawCmd *cmd = &cmd_list->CmdBuffer[j];
 				VkRect2D         scissor_rect;
+				scissor_rect.offset.x      = std::max(static_cast<int32_t>(cmd->ClipRect.x), 0);
+				scissor_rect.offset.y      = std::max(static_cast<int32_t>(cmd->ClipRect.y), 0);
+				scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
+				scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
+
 				// Adjust for pre-rotation if necessary
-				if (transform & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
+				if (sample.get_render_context().has_swapchain())
 				{
-					scissor_rect.offset.x      = static_cast<uint32_t>(io.DisplaySize.y - cmd->ClipRect.w);
-					scissor_rect.offset.y      = static_cast<uint32_t>(cmd->ClipRect.x);
-					scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
-					scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
-				}
-				else if (transform & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
-				{
-					scissor_rect.offset.x      = static_cast<uint32_t>(cmd->ClipRect.y);
-					scissor_rect.offset.y      = static_cast<uint32_t>(io.DisplaySize.x - cmd->ClipRect.z);
-					scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
-					scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
-				}
-				else if (transform & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)
-				{
-					scissor_rect.offset.x      = static_cast<uint32_t>(io.DisplaySize.x - cmd->ClipRect.z);
-					scissor_rect.offset.y      = static_cast<uint32_t>(io.DisplaySize.y - cmd->ClipRect.w);
-					scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
-					scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
-				}
-				else
-				{
-					scissor_rect.offset.x      = std::max(static_cast<int32_t>(cmd->ClipRect.x), 0);
-					scissor_rect.offset.y      = std::max(static_cast<int32_t>(cmd->ClipRect.y), 0);
-					scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
-					scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
+					auto transform = sample.get_render_context().get_swapchain().get_transform();
+
+					if (transform & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
+					{
+						scissor_rect.offset.x      = static_cast<uint32_t>(io.DisplaySize.y - cmd->ClipRect.w);
+						scissor_rect.offset.y      = static_cast<uint32_t>(cmd->ClipRect.x);
+						scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
+						scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
+					}
+					else if (transform & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)
+					{
+						scissor_rect.offset.x      = static_cast<uint32_t>(io.DisplaySize.x - cmd->ClipRect.z);
+						scissor_rect.offset.y      = static_cast<uint32_t>(io.DisplaySize.y - cmd->ClipRect.w);
+						scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
+						scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
+					}
+					else if (transform & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
+					{
+						scissor_rect.offset.x      = static_cast<uint32_t>(cmd->ClipRect.y);
+						scissor_rect.offset.y      = static_cast<uint32_t>(io.DisplaySize.x - cmd->ClipRect.z);
+						scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
+						scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
+					}
 				}
 
 				command_buffer.set_scissor(0, {scissor_rect});

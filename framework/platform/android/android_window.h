@@ -20,44 +20,47 @@
 
 #pragma once
 
-#include <iomanip>        // setprecision
-#include <sstream>        // stringstream
+#include <android_native_app_glue.h>
 
 #include "common/vk_common.h"
-#include "rendering/render_pipeline.h"
-#include "scene_graph/components/perspective_camera.h"
-#include "vulkan_sample.h"
+#include "platform/window.h"
 
+namespace vkb
+{
 /**
- * @brief Appropriate use of surface rotation
+ * @brief Wrapper for a ANativeWindow, handles the window behaviour (including headless mode on Android)
+ *        This class should not be responsible for destroying the underlying data it points to
  */
-class SurfaceRotation : public vkb::VulkanSample
+class AndroidWindow : public Window
 {
   public:
-	SurfaceRotation();
+	/**
+	 * @brief Constructor
+	 * @param platform The platform this window is created for
+	 * @param window A reference to the location of the Android native window
+	 * @param headless Whether the application is being rendered in headless mode
+	 */
+	AndroidWindow(Platform &platform, ANativeWindow *&window, bool headless = false);
 
-	virtual ~SurfaceRotation() = default;
+	virtual ~AndroidWindow() = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	/**
+	 * @brief Creates a Vulkan surface to the native window
+	 *        If headless, this will return VK_NULL_HANDLE
+	 */
+	virtual VkSurfaceKHR create_surface(VkInstance instance) override;
 
-	virtual void update(float delta_time) override;
+	virtual bool should_close() override;
 
-	static const char *transform_to_string(VkSurfaceTransformFlagBitsKHR flag);
+	virtual void close() override;
+
+	virtual float get_dpi_factor() const override;
 
   private:
-	vkb::sg::PerspectiveCamera *camera{nullptr};
+	// Handle to the android window
+	ANativeWindow *&handle;
 
-	virtual void draw_gui() override;
-
-	void trigger_swapchain_recreation();
-
-	void recreate_swapchain();
-
-	void handle_surface_changes();
-
-	bool pre_rotate = false;
-
-	bool last_pre_rotate = false;
+	// If true, return a VK_NULL_HANDLE on create_surface()
+	bool headless;
 };
-
-std::unique_ptr<vkb::VulkanSample> create_surface_rotation();
+}        // namespace vkb

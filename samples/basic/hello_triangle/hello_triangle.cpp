@@ -1056,7 +1056,7 @@ bool HelloTriangle::prepare(vkb::Platform &platform)
 {
 	init_instance(context, {VK_KHR_SURFACE_EXTENSION_NAME}, {});
 
-	context.surface = platform.create_surface(context.instance);
+	context.surface = platform.get_window().create_surface(context.instance);
 
 	init_device(context, {"VK_KHR_swapchain"});
 

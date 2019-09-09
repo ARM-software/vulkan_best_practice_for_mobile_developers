@@ -51,17 +51,14 @@ bool SurfaceRotation::prepare(vkb::Platform &platform)
 		return false;
 	}
 
+	if (get_surface() == VK_NULL_HANDLE)
+	{
+		throw std::runtime_error("Requires a surface to run sample");
+	}
+
 	auto enabled_stats = {vkb::StatIndex::l2_ext_read_stalls, vkb::StatIndex::l2_ext_write_stalls};
 
 	stats = std::make_unique<vkb::Stats>(enabled_stats);
-
-	std::vector<const char *> extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
-	device = std::make_unique<vkb::Device>(get_gpu(), get_surface(), extensions);
-
-	auto swapchain = std::make_unique<vkb::Swapchain>(*device, get_surface());
-
-	render_context = std::make_unique<SurfaceRotation::RenderContext>(std::move(swapchain), pre_rotate);
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 	auto &camera_node = add_free_camera("main_camera");
@@ -69,14 +66,14 @@ bool SurfaceRotation::prepare(vkb::Platform &platform)
 
 	vkb::ShaderSource vert_shader(vkb::fs::read_shader("base.vert"));
 	vkb::ShaderSource frag_shader(vkb::fs::read_shader("base.frag"));
-	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 
 	auto render_pipeline = vkb::RenderPipeline();
 	render_pipeline.add_subpass(std::move(scene_subpass));
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_dpi_factor());
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window().get_dpi_factor());
 
 	return true;
 }
@@ -95,7 +92,7 @@ void SurfaceRotation::update(float delta_time)
 	// In pre-rotate mode, the application has to handle the rotation
 	glm::vec3 rotation_axis = glm::vec3(0.0f, 0.0f, -1.0f);
 
-	const auto &swapchain = render_context->get_swapchain();
+	const auto &swapchain = get_render_context().get_swapchain();
 
 	if (swapchain.get_transform() & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
 	{
@@ -123,10 +120,10 @@ void SurfaceRotation::draw_gui()
 {
 	std::string       rotation_by_str = pre_rotate ? "application" : "compositor";
 	auto              prerotate_str   = "Pre-rotate (" + rotation_by_str + " rotates)";
-	uint32_t          a_width         = render_context->get_swapchain().get_extent().width;
-	uint32_t          a_height        = render_context->get_swapchain().get_extent().height;
+	uint32_t          a_width         = get_render_context().get_swapchain().get_extent().width;
+	uint32_t          a_height        = get_render_context().get_swapchain().get_extent().height;
 	float             aspect_ratio    = static_cast<float>(a_width) / static_cast<float>(a_height);
-	auto              transform       = SurfaceRotation::transform_to_string(render_context->get_swapchain().get_transform());
+	auto              transform       = SurfaceRotation::transform_to_string(get_render_context().get_swapchain().get_transform());
 	auto              resolution_str  = "Res: " + std::to_string(a_width) + "x" + std::to_string(a_height);
 	std::stringstream fov_stream;
 	fov_stream << "FOV: " << std::fixed << std::setprecision(2) << camera->get_field_of_view() * 180.0f / glm::pi<float>();
@@ -134,7 +131,7 @@ void SurfaceRotation::draw_gui()
 
 	// If pre-rotate is enabled, the aspect ratio will not change, therefore need to check if the
 	// scene has been rotated
-	auto rotated = render_context->get_swapchain().get_transform() & (VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR | VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR);
+	auto rotated = get_render_context().get_swapchain().get_transform() & (VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR | VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR);
 	if (aspect_ratio > 1.0f || (aspect_ratio < 1.0f && rotated))
 	{
 		// GUI landscape layout
@@ -162,14 +159,12 @@ void SurfaceRotation::draw_gui()
 
 void SurfaceRotation::trigger_swapchain_recreation()
 {
-	SurfaceRotation::RenderContext &context = dynamic_cast<SurfaceRotation::RenderContext &>(*render_context);
-	context.set_pre_rotate(pre_rotate);
-	context.recreate_swapchain();
+	recreate_swapchain();
 
 	if (gui)
 	{
-		gui->resize(render_context->get_surface_extent().width,
-		            render_context->get_surface_extent().height);
+		gui->resize(get_render_context().get_surface_extent().width,
+		            get_render_context().get_surface_extent().height);
 	}
 }
 
@@ -207,18 +202,11 @@ std::unique_ptr<vkb::VulkanSample> create_surface_rotation()
 	return std::make_unique<SurfaceRotation>();
 }
 
-SurfaceRotation::RenderContext::RenderContext(std::unique_ptr<vkb::Swapchain> &&swapchain,
-                                              bool                              pre_rotate) :
-    vkb::RenderContext(std::move(swapchain)),
-    pre_rotate{pre_rotate}
-{
-}
-
-void SurfaceRotation::RenderContext::recreate_swapchain()
+void SurfaceRotation::recreate_swapchain()
 {
 	VkSurfaceCapabilitiesKHR surface_properties;
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_physical_device(),
-	                                                   get_swapchain().get_surface(),
+	                                                   get_surface(),
 	                                                   &surface_properties));
 
 	auto width  = surface_properties.currentExtent.width;
@@ -245,25 +233,21 @@ void SurfaceRotation::RenderContext::recreate_swapchain()
 
 	get_device().wait_idle();
 
-	// Create a new swapchain using the old one
-	auto new_swapchain = std::make_unique<vkb::Swapchain>(
-	    get_swapchain(),
-	    VkExtent2D{width, height},
-	    pre_transform);
-
-	update_swapchain(std::move(new_swapchain));
+	get_render_context().update_swapchain(VkExtent2D{width, height}, pre_transform);
 }
 
-void SurfaceRotation::RenderContext::handle_surface_changes()
+void SurfaceRotation::handle_surface_changes()
 {
+	auto surface_extent = get_render_context().get_surface_extent();
+
 	VkSurfaceCapabilitiesKHR surface_properties;
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_physical_device(),
-	                                                   get_swapchain().get_surface(),
+	                                                   get_surface(),
 	                                                   &surface_properties));
 
 	if (surface_properties.currentExtent.width != surface_extent.width ||
 	    surface_properties.currentExtent.height != surface_extent.height ||
-	    (pre_rotate && surface_properties.currentTransform != get_swapchain().get_transform()))
+	    (pre_rotate && surface_properties.currentTransform != get_render_context().get_swapchain().get_transform()))
 	{
 		recreate_swapchain();
 

@@ -56,7 +56,7 @@ class RenderPassesSample : public vkb::VulkanSample
   private:
 	void reset_stats_view() override;
 
-	void draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
+	void draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
 
 	vkb::sg::PerspectiveCamera *camera{nullptr};
 

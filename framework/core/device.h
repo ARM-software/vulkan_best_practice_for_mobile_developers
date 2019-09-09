@@ -28,6 +28,7 @@
 #include "core/descriptor_set.h"
 #include "core/descriptor_set_layout.h"
 #include "core/framebuffer.h"
+#include "core/instance.h"
 #include "core/pipeline.h"
 #include "core/pipeline_layout.h"
 #include "core/queue.h"
@@ -84,6 +85,11 @@ class Device : public NonCopyable
 	const Queue &get_queue_by_present(uint32_t queue_index);
 
 	/**
+	 * @brief Returns the first present supported graphics queue, otherwise just any graphics queue
+	 */
+	const Queue &get_suitable_graphics_queue();
+
+	/**
 	 * @return The command pool
 	 */
 	CommandPool &get_command_pool()
@@ -119,8 +125,6 @@ class Device : public NonCopyable
 	VkPhysicalDevice physical_device{VK_NULL_HANDLE};
 
 	VkPhysicalDeviceFeatures features{};
-
-	VkSurfaceKHR surface{VK_NULL_HANDLE};
 
 	uint32_t queue_family_count{0};
 

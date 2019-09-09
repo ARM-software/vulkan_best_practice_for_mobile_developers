@@ -113,18 +113,18 @@ VulkanBestPractice::VulkanBestPractice()
 	    R"(Vulkan Best Practice.
 	Usage:
 		vulkan_best_practice <sample>
-		vulkan_best_practice (--sample <arg> | --test <arg> | --batch <arg>) [--benchmark <frames>] [--width <arg>] [--height <arg>] [--hide]
+		vulkan_best_practice (--sample <arg> | --test <arg> | --batch <arg>) [--benchmark <frames>] [--width <arg>] [--height <arg>] [--headless] 
 		vulkan_best_practice --help
 
 	Options:
 		--help                    Show this screen.
-		--sample SAMPLE_ID        Run sample.
-		--test TEST_ID            Run test.
+		--sample SAMPLE_ID        Run a sample.
+		--test TEST_ID            Run a test.
 		--batch CATEGORY_NAME     Run all samples within a category, specify 'all' to run all.
-		--benchmark FRAMES        Run app under benchmark mode for n amount of frames.
+		--benchmark FRAMES        Run a fixed time step of a sample for n frames.
 		--width WIDTH             The width of the screen if visible [default: 1280].
 		--height HEIGHT           The height of the screen if visible [default: 720].
-		--hide                    Hides the window if possible.
+		--headless                Renders directly to display, skipping window creation.
 	)");
 }
 
@@ -245,12 +245,14 @@ bool VulkanBestPractice::prepare_active_app(CreateAppFunc create_app_func, const
 
 	if (batch)
 	{
-		this->batch_mode             = true;
+		this->batch_mode = true;
 	}
 	else if (is_benchmark_mode())
 	{
 		active_app->set_benchmark_mode(true);
 	}
+
+	active_app->set_headless(is_headless());
 
 	auto result = active_app->prepare(*platform);
 

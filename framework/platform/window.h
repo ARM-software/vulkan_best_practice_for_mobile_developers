@@ -20,44 +20,69 @@
 
 #pragma once
 
-#include <iomanip>        // setprecision
-#include <sstream>        // stringstream
-
 #include "common/vk_common.h"
-#include "rendering/render_pipeline.h"
-#include "scene_graph/components/perspective_camera.h"
-#include "vulkan_sample.h"
+
+namespace vkb
+{
+class Platform;
 
 /**
- * @brief Appropriate use of surface rotation
+ * @brief An interface class, declaring the behaviour of a Window
  */
-class SurfaceRotation : public vkb::VulkanSample
+class Window
 {
   public:
-	SurfaceRotation();
+	/**
+	 * @brief Constructs a Window
+	 * @param platform The platform this window is created for
+	 * @param width The width of the window
+	 * @param height The height of the window
+	 */
+	Window(Platform &platform, uint32_t width, uint32_t height);
 
-	virtual ~SurfaceRotation() = default;
+	virtual ~Window() = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	/**
+	 * @brief Gets a handle from the platform's Vulkan surface 
+	 * @param instance The Vulkan instance
+	 * @returns A VkSurfaceKHR handle, for use by the application
+	 */
+	virtual VkSurfaceKHR create_surface(VkInstance instance) = 0;
 
-	virtual void update(float delta_time) override;
+	/**
+	 * @brief Checks if the window should be closed
+	 */
+	virtual bool should_close() = 0;
 
-	static const char *transform_to_string(VkSurfaceTransformFlagBitsKHR flag);
+	/**
+	 * @brief Handles the processing of all underlying window events
+	 */
+	virtual void process_events();
+
+	/**
+	 * @brief Requests to close the window
+	 */
+	virtual void close() = 0;
+
+	/**
+	 * @return The dot-per-inch scale factor
+	 */
+	virtual float get_dpi_factor() const = 0;
+
+	Platform &get_platform();
+
+	void resize(uint32_t width, uint32_t height);
+
+	uint32_t get_width();
+
+	uint32_t get_height();
+
+  protected:
+	Platform &platform;
 
   private:
-	vkb::sg::PerspectiveCamera *camera{nullptr};
+	uint32_t width;
 
-	virtual void draw_gui() override;
-
-	void trigger_swapchain_recreation();
-
-	void recreate_swapchain();
-
-	void handle_surface_changes();
-
-	bool pre_rotate = false;
-
-	bool last_pre_rotate = false;
+	uint32_t height;
 };
-
-std::unique_ptr<vkb::VulkanSample> create_surface_rotation();
+}        // namespace vkb
