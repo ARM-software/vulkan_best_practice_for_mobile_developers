@@ -55,5 +55,6 @@ void VulkanTest::update(float delta_time)
 void VulkanTest::end()
 {
 	platform->close();
+	exit(0);
 }
 }        // namespace vkbtest

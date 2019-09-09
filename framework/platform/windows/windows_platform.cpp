@@ -21,6 +21,7 @@
 #include "windows_platform.h"
 
 #include <Windows.h>
+#include <iostream>
 #include <shellapi.h>
 #include <stdexcept>
 
@@ -123,7 +124,9 @@ WindowsPlatform::WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 void WindowsPlatform::terminate(ExitCode code)
 {
-	Platform::terminate(code);
+	std::cout << "Press enter to close...\n";
+	std::cin.get();
+
 	FreeConsole();
 }
 

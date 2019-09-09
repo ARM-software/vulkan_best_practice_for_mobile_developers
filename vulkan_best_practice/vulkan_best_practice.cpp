@@ -204,7 +204,8 @@ bool VulkanBestPractice::prepare(Platform &platform)
 		// The user didn't supply any arguments so print the usage
 		print_info();
 		options.print_usage();
-		throw std::runtime_error("No arguments given");
+		LOGE("No arguments given, exiting");
+		return false;
 	}
 
 	if (!result)
