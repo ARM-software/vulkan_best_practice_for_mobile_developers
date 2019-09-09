@@ -130,6 +130,22 @@ class ResourceCache : public NonCopyable
 	VkPipelineCache pipeline_cache{VK_NULL_HANDLE};
 
 	ResourceCacheState state;
+
+	std::mutex descriptor_set_mutex;
+
+	std::mutex pipeline_layout_mutex;
+
+	std::mutex shader_module_mutex;
+
+	std::mutex descriptor_set_layout_mutex;
+
+	std::mutex graphics_pipeline_mutex;
+
+	std::mutex render_pass_mutex;
+
+	std::mutex compute_pipeline_mutex;
+
+	std::mutex framebuffer_mutex;
 };
 }        // namespace vkb
 

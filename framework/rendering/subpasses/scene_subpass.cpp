@@ -38,10 +38,6 @@ SceneSubpass::SceneSubpass(RenderContext &render_context, ShaderSource &&vertex_
     meshes{scene.get_components<sg::Mesh>()},
     camera{camera}
 {
-	// Default light
-	global_uniform.light_pos   = glm::vec4(500.0f, 1550.0f, 0.0f, 1.0);
-	global_uniform.light_color = glm::vec4(1.0, 1.0, 1.0, 1.0);
-
 	// Build all shader variance upfront
 	auto &device = render_context.get_device();
 	for (auto &mesh : meshes)
@@ -131,15 +127,21 @@ void SceneSubpass::draw(CommandBuffer &command_buffer)
 	}
 }
 
-void SceneSubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &node)
+void SceneSubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t thread_index)
 {
+	GlobalUniform global_uniform;
+
+	// Default light
+	global_uniform.light_pos   = glm::vec4(500.0f, 1550.0f, 0.0f, 1.0);
+	global_uniform.light_color = glm::vec4(1.0, 1.0, 1.0, 1.0);
+
 	global_uniform.camera_view_proj = vkb::vulkan_style_projection(camera.get_projection()) * camera.get_view();
 
 	auto &render_frame = get_render_context().get_active_frame();
 
 	auto &transform = node.get_transform();
 
-	auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GlobalUniform));
+	auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GlobalUniform), thread_index);
 
 	global_uniform.model = transform.get_world_matrix();
 

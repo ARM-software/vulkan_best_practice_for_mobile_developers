@@ -88,7 +88,7 @@ class SceneSubpass : public Subpass
 	 */
 	virtual void draw(CommandBuffer &command_buffer) override;
 
-	void update_uniform(CommandBuffer &command_buffer, sg::Node &node);
+	void update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t thread_index = 0);
 
 	void draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh);
 
@@ -106,8 +106,6 @@ class SceneSubpass : public Subpass
 	sg::Camera &camera;
 
 	std::vector<sg::Mesh *> meshes;
-
-	GlobalUniform global_uniform;
 };
 
 }        // namespace vkb

@@ -94,9 +94,10 @@ class RenderFrame : public NonCopyable
 	/**
 	 * @param usage Usage of the buffer
 	 * @param size Amount of memory required
+	 * @param thread_index Index of the buffer pool to be used by the current thread
 	 * @return The requested allocation, it may be empty
 	 */
-	BufferAllocation allocate_buffer(VkBufferUsageFlags usage, VkDeviceSize size);
+	BufferAllocation allocate_buffer(VkBufferUsageFlags usage, VkDeviceSize size, size_t thread_index = 0);
 
   private:
 	Device &device;
@@ -112,6 +113,6 @@ class RenderFrame : public NonCopyable
 
 	RenderTarget swapchain_render_target;
 
-	std::map<VkBufferUsageFlags, std::pair<BufferPool, BufferBlock *>> buffer_pools;
+	std::map<VkBufferUsageFlags, std::vector<std::pair<BufferPool, BufferBlock *>>> buffer_pools;
 };
 }        // namespace vkb

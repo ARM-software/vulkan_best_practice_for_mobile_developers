@@ -31,9 +31,22 @@ RenderFrame::RenderFrame(Device &device, RenderTarget &&render_target, uint16_t 
     swapchain_render_target{std::move(render_target)},
     command_pool_count{command_pool_count}
 {
-	buffer_pools.emplace(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, std::make_pair(BufferPool{device, BUFFER_POOL_BLOCK_SIZE * 1024, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT}, nullptr));
-	buffer_pools.emplace(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, std::make_pair(BufferPool{device, BUFFER_POOL_BLOCK_SIZE * 1024, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT}, nullptr));
-	buffer_pools.emplace(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, std::make_pair(BufferPool{device, BUFFER_POOL_BLOCK_SIZE * 1024, VK_BUFFER_USAGE_INDEX_BUFFER_BIT}, nullptr));
+	const std::vector<VkBufferUsageFlags> supported_usages = {VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_BUFFER_USAGE_INDEX_BUFFER_BIT};
+	for (auto &usage : supported_usages)
+	{
+		std::vector<std::pair<BufferPool, BufferBlock *>> usage_buffer_pools;
+		for (int i = 0; i < command_pool_count; i++)
+		{
+			usage_buffer_pools.push_back(std::make_pair(BufferPool{device, BUFFER_POOL_BLOCK_SIZE * 1024, usage}, nullptr));
+		}
+
+		auto res_ins_it = buffer_pools.emplace(usage, std::move(usage_buffer_pools));
+
+		if (!res_ins_it.second)
+		{
+			throw std::runtime_error("Failed to insert buffer pool");
+		}
+	}
 }
 
 void RenderFrame::update_render_target(RenderTarget &&render_target)
@@ -55,14 +68,13 @@ void RenderFrame::reset()
 		}
 	}
 
-	for (auto &buffer_pool_it : buffer_pools)
+	for (auto &buffer_pools_per_usage : buffer_pools)
 	{
-		auto &buffer_pool  = buffer_pool_it.second.first;
-		auto *buffer_block = buffer_pool_it.second.second;
-
-		buffer_pool.reset();
-
-		buffer_block = nullptr;
+		for (auto &buffer_pool : buffer_pools_per_usage.second)
+		{
+			buffer_pool.first.reset();
+			buffer_pool.second = nullptr;
+		}
 	}
 
 	semaphore_pool.reset();
@@ -135,7 +147,7 @@ const RenderTarget &RenderFrame::get_render_target_const() const
 	return swapchain_render_target;
 }
 
-BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, const VkDeviceSize size)
+BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, const VkDeviceSize size, size_t thread_index)
 {
 	// Find a pool for this usage
 	auto buffer_pool_it = buffer_pools.find(usage);
@@ -145,8 +157,8 @@ BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, co
 		return BufferAllocation{};
 	}
 
-	auto &buffer_pool  = buffer_pool_it->second.first;
-	auto &buffer_block = buffer_pool_it->second.second;
+	auto &buffer_pool  = buffer_pool_it->second.at(thread_index).first;
+	auto &buffer_block = buffer_pool_it->second.at(thread_index).second;
 
 	if (!buffer_block)
 	{
