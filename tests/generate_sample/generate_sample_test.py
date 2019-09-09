@@ -21,7 +21,7 @@
 
 import sys, os, platform, subprocess, shutil
 
-generate_sample_script ="bldsys/scripts/generate_sample"
+generate_sample_script = "bldsys/scripts/generate_sample"
 script_path            = os.path.dirname(os.path.realpath(__file__))
 root_path              = os.path.join(script_path, "../../")
 
@@ -43,7 +43,17 @@ def add_sample():
         result = False
     return result
 
+def clear(platform):
+    try:
+        os.remove("build/" + platform + "/CMakeCache.txt")
+    except OSError:
+        pass
+
 def build():
+    clear("windows")
+    clear("linux")
+    clear("mac")
+
     result = True
     generate_command = ""
     build_command = ""
