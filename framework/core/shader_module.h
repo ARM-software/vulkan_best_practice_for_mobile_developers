@@ -157,7 +157,7 @@ class ShaderSource
  * It works similarly for attribute locations. A current limitation is that only set 0
  * is considered. Uniform buffers are currently hardcoded as well.
  */
-class ShaderModule : public NonCopyable
+class ShaderModule
 {
   public:
 	ShaderModule(Device &              device,
@@ -166,7 +166,13 @@ class ShaderModule : public NonCopyable
 	             const std::string &   entry_point,
 	             const ShaderVariant & shader_variant);
 
+	ShaderModule(const ShaderModule &) = delete;
+
 	ShaderModule(ShaderModule &&other);
+
+	ShaderModule &operator=(const ShaderModule &) = delete;
+
+	ShaderModule &operator=(ShaderModule &&) = delete;
 
 	size_t get_id() const;
 

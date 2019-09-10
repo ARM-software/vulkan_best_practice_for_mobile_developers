@@ -49,12 +49,20 @@ struct DriverVersion
 	uint16_t patch;
 };
 
-class Device : public NonCopyable
+class Device
 {
   public:
 	Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vector<const char *> extensions = {}, VkPhysicalDeviceFeatures features = {});
 
+	Device(const Device &) = delete;
+
+	Device(Device &&) = delete;
+
 	~Device();
+
+	Device &operator=(const Device &) = delete;
+
+	Device &operator=(Device &&) = delete;
 
 	VkPhysicalDevice get_physical_device() const;
 

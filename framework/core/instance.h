@@ -31,7 +31,7 @@ namespace vkb
  * This class is responsible for initializing volk, enumerating over all available extensions and validation layers
  * enabling them if they exist, setting up debug messaging and querying all the physical devices existing on the machine.
  */
-class Instance : public NonCopyable
+class Instance
 {
   public:
 	/**
@@ -47,7 +47,15 @@ class Instance : public NonCopyable
 	         const std::vector<const char *> &required_validation_layers = {},
 	         bool                             headless                   = false);
 
+	Instance(const Instance &) = delete;
+
+	Instance(Instance &&) = delete;
+
 	~Instance();
+
+	Instance &operator=(const Instance &) = delete;
+
+	Instance &operator=(Instance &&) = delete;
 
 	/**
 	 * @brief Tries to find the first available discrete GPU

@@ -47,7 +47,7 @@ class RenderTarget;
  * @brief Helper class to manage and record a command buffer, building and
  *        keeping track of pipeline state and resource bindings
  */
-class CommandBuffer : public NonCopyable
+class CommandBuffer
 {
   public:
 	enum class ResetMode
@@ -65,7 +65,7 @@ class CommandBuffer : public NonCopyable
 		Executable,
 	};
 
-	/*
+	/**
 	 * @brief Helper structure used to track render pass state
 	 */
 	struct RenderPassBinding
@@ -77,12 +77,15 @@ class CommandBuffer : public NonCopyable
 
 	CommandBuffer(CommandPool &command_pool, VkCommandBufferLevel level);
 
+	CommandBuffer(const CommandBuffer &) = delete;
+
+	CommandBuffer(CommandBuffer &&other);
+
 	~CommandBuffer();
 
-	/**
-	 * @brief Move constructs
-	 */
-	CommandBuffer(CommandBuffer &&other);
+	CommandBuffer &operator=(const CommandBuffer &) = delete;
+
+	CommandBuffer &operator=(CommandBuffer &&) = delete;
 
 	Device &get_device();
 
@@ -94,7 +97,9 @@ class CommandBuffer : public NonCopyable
 	 * @brief Sets the command buffer so that it is ready for recording
 	 *        If it is a secondary command buffer, a pointer to the
 	 *        primary command buffer it inherits from must be provided
-	 * @brief primary_cmd_buf (optional)
+	 * @param flags Usage behavior for the command buffer
+	 * @param primary_cmd_buf (optional)
+	 * @return Whether it succeded or not
 	 */
 	VkResult begin(VkCommandBufferUsageFlags flags, CommandBuffer *primary_cmd_buf = nullptr);
 

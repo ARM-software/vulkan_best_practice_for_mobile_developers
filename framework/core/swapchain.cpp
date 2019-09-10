@@ -328,6 +328,11 @@ Swapchain::Swapchain(Swapchain &&other) :
 	other.surface = VK_NULL_HANDLE;
 }
 
+Device &Swapchain::get_device()
+{
+	return device;
+}
+
 VkSwapchainKHR Swapchain::get_handle() const
 {
 	return handle;

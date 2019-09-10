@@ -27,7 +27,7 @@ namespace vkb
 {
 class Device;
 
-class Swapchain : public NonCopyable
+class Swapchain
 {
   public:
 	/**
@@ -78,20 +78,17 @@ class Swapchain : public NonCopyable
 	          const VkPresentModeKHR              present_mode = VK_PRESENT_MODE_FIFO_KHR,
 	          const VkImageUsageFlags             image_usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
-	/**
-	 * @brief Destructor
-	 */
-	~Swapchain();
+	Swapchain(const Swapchain &) = delete;
 
-	/**
-	 * @brief Move constructor
-	 */
 	Swapchain(Swapchain &&other);
 
-	Device &get_device()
-	{
-		return device;
-	}
+	~Swapchain();
+
+	Swapchain &operator=(const Swapchain &) = delete;
+
+	Swapchain &operator=(Swapchain &&) = delete;
+
+	Device &get_device();
 
 	VkSwapchainKHR get_handle() const;
 

@@ -28,15 +28,20 @@ namespace vkb
 {
 class Device;
 
-class CommandPool : public NonCopyable
+class CommandPool
 {
   public:
 	CommandPool(Device &device, uint32_t queue_family_index, CommandBuffer::ResetMode reset_mode = CommandBuffer::ResetMode::ResetPool);
 
+	CommandPool(const CommandPool &) = delete;
+
+	CommandPool(CommandPool &&other);
+
 	~CommandPool();
 
-	/// @brief Move construct
-	CommandPool(CommandPool &&other);
+	CommandPool &operator=(const CommandPool &) = delete;
+
+	CommandPool &operator=(CommandPool &&) = delete;
 
 	Device &get_device();
 

@@ -47,7 +47,7 @@ namespace vkb
  * the whole context must be destroyed. This is because each RenderFrame holds Vulkan objects
  * such as the swapchain image.
  */
-class RenderFrame : public NonCopyable
+class RenderFrame
 {
   public:
 	/**
@@ -57,12 +57,17 @@ class RenderFrame : public NonCopyable
 
 	RenderFrame(Device &device, RenderTarget &&render_target, uint16_t command_pool_count = 1);
 
+	RenderFrame(const RenderFrame &) = delete;
+
+	RenderFrame(RenderFrame &&) = default;
+
+	RenderFrame &operator=(const RenderFrame &) = delete;
+
+	RenderFrame &operator=(RenderFrame &&) = delete;
+
 	void reset();
 
-	Device &get_device()
-	{
-		return device;
-	}
+	Device &get_device();
 
 	/**
 	 * @brief Retrieve the frame's command pool(s)

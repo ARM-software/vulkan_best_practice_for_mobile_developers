@@ -30,16 +30,24 @@ class Device;
 
 struct ShaderResource;
 
-// Caches DescriptorSet objects for the shader's set index.
-// Creates a DescriptorPool to allocate the DescriptorSet objects
-class DescriptorSetLayout : public NonCopyable
+/**
+ * @brief Caches DescriptorSet objects for the shader's set index.
+ *        Creates a DescriptorPool to allocate the DescriptorSet objects
+ */
+class DescriptorSetLayout
 {
   public:
 	DescriptorSetLayout(Device &device, const std::vector<ShaderResource> &set_resources);
 
+	DescriptorSetLayout(const DescriptorSetLayout &) = delete;
+
 	DescriptorSetLayout(DescriptorSetLayout &&other);
 
 	~DescriptorSetLayout();
+
+	DescriptorSetLayout &operator=(const DescriptorSetLayout &) = delete;
+
+	DescriptorSetLayout &operator=(DescriptorSetLayout &&) = delete;
 
 	VkDescriptorSetLayout get_handle() const;
 

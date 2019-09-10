@@ -118,10 +118,14 @@ void CommandBufferUsage::draw_gui()
 		    ImGui::Checkbox("Secondary command buffers", &use_secondary_command_buffers);
 		    ImGui::RadioButton("Allocate and free", &reuse_selection, static_cast<int>(vkb::CommandBuffer::ResetMode::AlwaysAllocate));
 		    if (landscape)
+		    {
 			    ImGui::SameLine();
+		    }
 		    ImGui::RadioButton("Reset buffer", &reuse_selection, static_cast<int>(vkb::CommandBuffer::ResetMode::ResetIndividually));
 		    if (landscape)
+		    {
 			    ImGui::SameLine();
+		    }
 		    ImGui::RadioButton("Reset pool", &reuse_selection, static_cast<int>(vkb::CommandBuffer::ResetMode::ResetPool));
 	    },
 	    /* lines = */ lines);

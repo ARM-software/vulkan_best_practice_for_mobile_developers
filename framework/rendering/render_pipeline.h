@@ -37,14 +37,20 @@ namespace vkb
  * For example, postprocessing can be implemented with two pipelines which
  * share render targets.
  */
-class RenderPipeline : public NonCopyable
+class RenderPipeline
 {
   public:
 	RenderPipeline(std::vector<std::unique_ptr<Subpass>> &&subpasses = {});
 
+	RenderPipeline(const RenderPipeline &) = delete;
+
+	RenderPipeline(RenderPipeline &&) = default;
+
 	virtual ~RenderPipeline() = default;
 
-	RenderPipeline(RenderPipeline &&other) = default;
+	RenderPipeline &operator=(const RenderPipeline &) = delete;
+
+	RenderPipeline &operator=(RenderPipeline &&) = default;
 
 	/**
 	 * @return Load store info

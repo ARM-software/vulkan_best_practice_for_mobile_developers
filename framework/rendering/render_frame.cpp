@@ -49,6 +49,11 @@ RenderFrame::RenderFrame(Device &device, RenderTarget &&render_target, uint16_t 
 	}
 }
 
+Device &RenderFrame::get_device()
+{
+	return device;
+}
+
 void RenderFrame::update_render_target(RenderTarget &&render_target)
 {
 	swapchain_render_target = std::move(render_target);

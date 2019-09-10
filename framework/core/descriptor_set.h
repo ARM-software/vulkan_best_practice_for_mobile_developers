@@ -28,7 +28,7 @@ namespace vkb
 class Device;
 class DescriptorSetLayout;
 
-class DescriptorSet : public NonCopyable
+class DescriptorSet
 {
   public:
 	DescriptorSet(Device &                                  device,
@@ -36,9 +36,15 @@ class DescriptorSet : public NonCopyable
 	              const BindingMap<VkDescriptorBufferInfo> &buffer_infos = {},
 	              const BindingMap<VkDescriptorImageInfo> & image_infos  = {});
 
+	DescriptorSet(const DescriptorSet &) = delete;
+
 	DescriptorSet(DescriptorSet &&other);
 
 	~DescriptorSet();
+
+	DescriptorSet &operator=(const DescriptorSet &) = delete;
+
+	DescriptorSet &operator=(DescriptorSet &&) = delete;
 
 	void update(const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
 	            const BindingMap<VkDescriptorImageInfo> & image_infos);

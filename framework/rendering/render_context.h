@@ -55,7 +55,7 @@ namespace vkb
  * For headless rendering (no swapchain), the RenderContext can be given a valid Device, and
  * a width and height. A single RenderFrame will then be created.
  */
-class RenderContext : public NonCopyable
+class RenderContext
 {
   public:
 	/**
@@ -67,10 +67,15 @@ class RenderContext : public NonCopyable
 	 */
 	RenderContext(Device &device, VkSurfaceKHR surface, uint32_t window_width, uint32_t window_height);
 
+	RenderContext(const RenderContext &) = delete;
+
+	RenderContext(RenderContext &&) = default;
+
 	virtual ~RenderContext() = default;
 
-	RenderContext(RenderContext &&other) = default;
+	RenderContext &operator=(const RenderContext &) = delete;
 
+	RenderContext &operator=(RenderContext &&) = delete;
 	/**
 	 * @brief Prepares the RenderFrames for rendering
 	 * @param command_pools_per_frame The command pools to be allocated for each RenderFrame

@@ -32,7 +32,7 @@ namespace core
 /**
  * @brief Represents a Vulkan Sampler
  */
-class Sampler : public NonCopyable
+class Sampler
 {
   public:
 	/**
@@ -42,12 +42,15 @@ class Sampler : public NonCopyable
 	 */
 	Sampler(Device &d, const VkSamplerCreateInfo &info);
 
-	/**
-	 * @brief Move constructs
-	 */
+	Sampler(const Sampler &) = delete;
+
 	Sampler(Sampler &&sampler);
 
 	~Sampler();
+
+	Sampler &operator=(const Sampler &) = delete;
+
+	Sampler &operator=(Sampler &&) = delete;
 
 	/**
 	 * @return The vulkan sampler handle

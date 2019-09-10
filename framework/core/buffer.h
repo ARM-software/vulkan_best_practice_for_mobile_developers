@@ -29,14 +29,20 @@ class Device;
 
 namespace core
 {
-class Buffer : public NonCopyable
+class Buffer
 {
   public:
 	Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaAllocationCreateFlags flags = 0);
 
+	Buffer(const Buffer &) = delete;
+
 	Buffer(Buffer &&other);
 
 	~Buffer();
+
+	Buffer &operator=(const Buffer &) = delete;
+
+	Buffer &operator=(Buffer &&) = delete;
 
 	const Device &get_device() const;
 

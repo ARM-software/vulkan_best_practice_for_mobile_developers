@@ -75,10 +75,18 @@ struct ResourceCacheState
  * The cache holds pointers to objects and has a mapping from such pointers to hashes.
  * It can only be destroyed in bulk, single elements cannot be removed.
  */
-class ResourceCache : public NonCopyable
+class ResourceCache
 {
   public:
 	ResourceCache(Device &device);
+
+	ResourceCache(const ResourceCache &) = delete;
+
+	ResourceCache(ResourceCache &&) = delete;
+
+	ResourceCache &operator=(const ResourceCache &) = delete;
+
+	ResourceCache &operator=(ResourceCache &&) = delete;
 
 	void warmup(const std::vector<uint8_t> &data);
 

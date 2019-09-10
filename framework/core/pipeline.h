@@ -28,14 +28,20 @@ namespace vkb
 {
 class Device;
 
-class Pipeline : public NonCopyable
+class Pipeline
 {
   public:
 	Pipeline(Device &device);
 
+	Pipeline(const Pipeline &) = delete;
+
 	Pipeline(Pipeline &&other);
 
 	virtual ~Pipeline();
+
+	Pipeline &operator=(const Pipeline &) = delete;
+
+	Pipeline &operator=(Pipeline &&) = delete;
 
 	VkPipeline get_handle() const;
 

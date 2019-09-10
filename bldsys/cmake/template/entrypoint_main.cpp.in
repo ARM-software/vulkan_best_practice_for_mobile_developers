@@ -69,4 +69,8 @@ int main(int argc, char *argv[])
 		platform.terminate(vkb::ExitCode::Fatal);
 	}
 #endif
+
+#ifndef VK_USE_PLATFORM_ANDROID_KHR
+	return EXIT_SUCCESS;
+#endif
 }
