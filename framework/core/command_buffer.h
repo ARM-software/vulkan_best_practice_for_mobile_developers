@@ -93,6 +93,8 @@ class CommandBuffer
 
 	bool is_recording() const;
 
+	std::vector<uint8_t> stored_push_constants;
+
 	/**
 	 * @brief Sets the command buffer so that it is ready for recording
 	 *        If it is a secondary command buffer, a pointer to the
@@ -119,6 +121,16 @@ class CommandBuffer
 	void set_specialization_constant(uint32_t constant_id, const T &data);
 
 	void set_specialization_constant(uint32_t constant_id, const std::vector<uint8_t> &data);
+
+	/**
+	 * @brief Stores additional data which is prepended to the
+	 *        values passed to the push_constant() function
+	 * @param data Data to be stored
+	 */
+	template <class T>
+	void set_push_constants(const T &data);
+
+	void set_push_constants(const std::vector<uint8_t> &values);
 
 	void push_constants(uint32_t offset, const std::vector<uint8_t> &values);
 
@@ -232,6 +244,24 @@ class CommandBuffer
 };
 
 template <class T>
+inline void CommandBuffer::set_push_constants(const T &data)
+{
+	set_push_constants(
+	    {reinterpret_cast<const uint8_t *>(&data),
+	     reinterpret_cast<const uint8_t *>(&data) + sizeof(T)});
+}
+
+template <>
+inline void CommandBuffer::set_push_constants<bool>(const bool &data)
+{
+	uint32_t value = to_u32(data);
+
+	set_push_constants(
+	    {reinterpret_cast<const uint8_t *>(&value),
+	     reinterpret_cast<const uint8_t *>(&value) + sizeof(std::uint32_t)});
+}
+
+template <class T>
 inline void CommandBuffer::set_specialization_constant(uint32_t constant_id, const T &data)
 {
 	set_specialization_constant(constant_id,
@@ -242,7 +272,7 @@ inline void CommandBuffer::set_specialization_constant(uint32_t constant_id, con
 template <>
 inline void CommandBuffer::set_specialization_constant<bool>(std::uint32_t constant_id, const bool &data)
 {
-	std::uint32_t value = static_cast<std::uint32_t>(data);
+	uint32_t value = to_u32(data);
 
 	set_specialization_constant(
 	    constant_id,

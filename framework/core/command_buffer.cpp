@@ -93,6 +93,7 @@ VkResult CommandBuffer::begin(VkCommandBufferUsageFlags flags, CommandBuffer *pr
 	pipeline_state.reset();
 	resource_binding_state.reset();
 	descriptor_set_layout_state.clear();
+	stored_push_constants.clear();
 
 	VkCommandBufferBeginInfo       begin_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
 	VkCommandBufferInheritanceInfo inheritance = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO};
@@ -184,6 +185,9 @@ void CommandBuffer::next_subpass()
 	resource_binding_state.reset();
 	descriptor_set_layout_state.clear();
 
+	// Clear stored push constants
+	stored_push_constants.clear();
+
 	vkCmdNextSubpass(get_handle(), VK_SUBPASS_CONTENTS_INLINE);
 }
 
@@ -210,8 +214,16 @@ void CommandBuffer::set_specialization_constant(uint32_t constant_id, const std:
 	pipeline_state.set_specialization_constant(constant_id, data);
 }
 
+void CommandBuffer::set_push_constants(const std::vector<uint8_t> &values)
+{
+	stored_push_constants.insert(stored_push_constants.end(), values.begin(), values.end());
+}
+
 void CommandBuffer::push_constants(uint32_t offset, const std::vector<uint8_t> &values)
 {
+	auto accumulated_values = stored_push_constants;
+	accumulated_values.insert(accumulated_values.end(), values.begin(), values.end());
+
 	const PipelineLayout &pipeline_layout = pipeline_state.get_pipeline_layout();
 
 	VkShaderStageFlags shader_stage = pipeline_layout.get_push_constant_range_stage(offset, to_u32(values.size()));
