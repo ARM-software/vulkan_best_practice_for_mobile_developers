@@ -132,8 +132,8 @@ class RenderContext
 
 	/**
 	 * @brief begin_frame
-	 * 
-	 * @return VkSemaphore 
+	 *
+	 * @return VkSemaphore
 	 */
 	VkSemaphore begin_frame();
 
@@ -157,6 +157,13 @@ class RenderContext
 	 * @return The current active frame
 	 */
 	RenderFrame &get_active_frame();
+
+	/**
+	 * @brief An error should be raised if the frame is not active.
+	 *        A frame is active after @ref begin_frame has been called.
+	 * @return The current active frame index
+	 */
+	uint32_t get_active_frame_index();
 
 	/**
 	 * @brief An error should be raised if a frame is active.

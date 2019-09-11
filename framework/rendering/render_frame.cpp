@@ -21,6 +21,7 @@
 #include "render_frame.h"
 
 #include "common/logging.h"
+#include "common/utils.h"
 
 namespace vkb
 {
@@ -107,7 +108,7 @@ std::vector<std::unique_ptr<CommandPool>> &RenderFrame::get_command_pools(const 
 	std::vector<std::unique_ptr<CommandPool>> queue_command_pools;
 	for (int i = 0; i < command_pool_count; i++)
 	{
-		queue_command_pools.push_back(std::make_unique<CommandPool>(device, queue.get_family_index(), reset_mode));
+		queue_command_pools.push_back(std::make_unique<CommandPool>(device, queue.get_family_index(), this, reset_mode));
 	}
 
 	auto res_ins_it = command_pools.emplace(queue.get_family_index(), std::move(queue_command_pools));
@@ -152,6 +153,17 @@ const RenderTarget &RenderFrame::get_render_target_const() const
 	return swapchain_render_target;
 }
 
+DescriptorSet &RenderFrame::request_descriptor_set(DescriptorSetLayout &descriptor_set_layout, const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos)
+{
+	auto &descriptor_pool = request_resource(device, nullptr, descriptor_pools, descriptor_set_layout);
+	return request_resource(device, nullptr, descriptor_sets, descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
+}
+
+void RenderFrame::set_buffer_allocation_strategy(BufferAllocationStrategy new_strategy)
+{
+	buffer_allocation_strategy = new_strategy;
+}
+
 BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, const VkDeviceSize size, size_t thread_index)
 {
 	// Find a pool for this usage
@@ -165,10 +177,10 @@ BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, co
 	auto &buffer_pool  = buffer_pool_it->second.at(thread_index).first;
 	auto &buffer_block = buffer_pool_it->second.at(thread_index).second;
 
-	if (!buffer_block)
+	if (buffer_allocation_strategy == BufferAllocationStrategy::OneAllocationPerBuffer || !buffer_block)
 	{
-		// If there is no block associated with the pool
-		// Request one with that size
+		// If there is no block associated with the pool or we are creating a buffer for each allocation,
+		// request a new buffer block
 		buffer_block = &buffer_pool.request_buffer_block(to_u32(size));
 	}
 

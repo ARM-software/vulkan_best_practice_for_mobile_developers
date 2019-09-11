@@ -23,6 +23,7 @@
 #include "command_pool.h"
 #include "common/error.h"
 #include "device.h"
+#include "rendering/render_frame.h"
 
 namespace vkb
 {
@@ -114,9 +115,7 @@ VkResult CommandBuffer::begin(VkCommandBufferUsageFlags flags, CommandBuffer *pr
 		begin_info.pInheritanceInfo = &inheritance;
 	}
 
-	vkBeginCommandBuffer(get_handle(), &begin_info);
-
-	return VK_SUCCESS;
+	return vkBeginCommandBuffer(get_handle(), &begin_info);
 }
 
 VkResult CommandBuffer::end()
@@ -491,6 +490,8 @@ void CommandBuffer::flush_pipeline_state(VkPipelineBindPoint pipeline_bind_point
 
 void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_point)
 {
+	assert(command_pool.get_render_frame() && "The command pool must be associated to a render frame");
+
 	PipelineLayout &pipeline_layout = const_cast<PipelineLayout &>(pipeline_state.get_pipeline_layout());
 
 	const auto &set_bindings = pipeline_layout.get_bindings();
@@ -643,7 +644,7 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 				}
 			}
 
-			auto &descriptor_set = get_device().get_resource_cache().request_descriptor_set(descriptor_set_layout, buffer_infos, image_infos);
+			auto &descriptor_set = command_pool.get_render_frame()->request_descriptor_set(descriptor_set_layout, buffer_infos, image_infos);
 
 			VkDescriptorSet descriptor_set_handle = descriptor_set.get_handle();
 

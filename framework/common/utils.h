@@ -52,5 +52,4 @@ std::string to_snake_case(const std::string &name);
  * @param filename The name of the file to save the output to
  */
 void screenshot(RenderContext &render_context, const std::string &filename);
-
 }        // namespace vkb

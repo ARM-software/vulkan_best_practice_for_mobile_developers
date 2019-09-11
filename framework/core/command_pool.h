@@ -27,11 +27,13 @@
 namespace vkb
 {
 class Device;
+class RenderFrame;
 
 class CommandPool
 {
   public:
-	CommandPool(Device &device, uint32_t queue_family_index, CommandBuffer::ResetMode reset_mode = CommandBuffer::ResetMode::ResetPool);
+	CommandPool(Device &device, uint32_t queue_family_index, RenderFrame *render_frame = nullptr,
+	            CommandBuffer::ResetMode reset_mode = CommandBuffer::ResetMode::ResetPool);
 
 	CommandPool(const CommandPool &) = delete;
 
@@ -49,6 +51,8 @@ class CommandPool
 
 	VkCommandPool get_handle() const;
 
+	RenderFrame *get_render_frame();
+
 	VkResult reset_pool();
 
 	CommandBuffer &request_command_buffer(VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
@@ -59,6 +63,8 @@ class CommandPool
 	Device &device;
 
 	VkCommandPool handle{VK_NULL_HANDLE};
+
+	RenderFrame *render_frame{nullptr};
 
 	uint32_t queue_family_index{0};
 

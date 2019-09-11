@@ -22,6 +22,7 @@
 
 #include "buffer_pool.h"
 #include "common/helpers.h"
+#include "common/resource_caching.h"
 #include "common/vk_common.h"
 #include "core/buffer.h"
 #include "core/command_pool.h"
@@ -34,6 +35,12 @@
 
 namespace vkb
 {
+enum BufferAllocationStrategy
+{
+	OneAllocationPerBuffer,
+	MultipleAllocationsPerBuffer
+};
+
 /**
  * @brief RenderFrame is a container for per-frame data, including BufferPool objects,
  * synchronization primitives (semaphores, fences) and the swapchain RenderTarget.
@@ -96,6 +103,16 @@ class RenderFrame
 
 	const RenderTarget &get_render_target_const() const;
 
+	DescriptorSet &request_descriptor_set(DescriptorSetLayout &                     descriptor_set_layout,
+	                                      const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
+	                                      const BindingMap<VkDescriptorImageInfo> & image_infos);
+
+	/**
+	 * @brief Sets a new buffer allocation strategy
+	 * @param new_strategy The new buffer allocation strategy
+	 */
+	void set_buffer_allocation_strategy(BufferAllocationStrategy new_strategy);
+
 	/**
 	 * @param usage Usage of the buffer
 	 * @param size Amount of memory required
@@ -110,6 +127,14 @@ class RenderFrame
 	/// Commands pools associated to the frame
 	std::map<uint32_t, std::vector<std::unique_ptr<CommandPool>>> command_pools;
 
+	/// Descriptor pools for the frame
+	std::unordered_map<std::size_t, DescriptorPool> descriptor_pools;
+
+	/// Descriptor sets for the frame
+	std::unordered_map<std::size_t, DescriptorSet> descriptor_sets;
+
+	ResourceRecord recorder;
+
 	FencePool fence_pool;
 
 	SemaphorePool semaphore_pool;
@@ -117,6 +142,8 @@ class RenderFrame
 	uint16_t command_pool_count;
 
 	RenderTarget swapchain_render_target;
+
+	BufferAllocationStrategy buffer_allocation_strategy{BufferAllocationStrategy::MultipleAllocationsPerBuffer};
 
 	std::map<VkBufferUsageFlags, std::vector<std::pair<BufferPool, BufferBlock *>>> buffer_pools;
 };

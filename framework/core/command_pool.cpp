@@ -21,11 +21,13 @@
 #include "command_pool.h"
 
 #include "device.h"
+#include "rendering/render_frame.h"
 
 namespace vkb
 {
-CommandPool::CommandPool(Device &d, uint32_t queue_family_index, CommandBuffer::ResetMode reset_mode) :
+CommandPool::CommandPool(Device &d, uint32_t queue_family_index, RenderFrame *render_frame, CommandBuffer::ResetMode reset_mode) :
     device{d},
+    render_frame{render_frame},
     reset_mode{reset_mode}
 {
 	VkCommandPoolCreateFlags flags;
@@ -93,6 +95,11 @@ uint32_t CommandPool::get_queue_family_index() const
 VkCommandPool CommandPool::get_handle() const
 {
 	return handle;
+}
+
+RenderFrame *CommandPool::get_render_frame()
+{
+	return render_frame;
 }
 
 VkResult CommandPool::reset_pool()

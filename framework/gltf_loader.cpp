@@ -427,7 +427,7 @@ sg::Scene GLTFLoader::load_scene()
 
 	auto &command_buffer = device.request_command_buffer();
 
-	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, 0);
 
 	for (size_t image_index = 0; image_index < image_count; image_index++)
 	{

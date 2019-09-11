@@ -51,8 +51,6 @@ class DescriptorSetLayout
 
 	VkDescriptorSetLayout get_handle() const;
 
-	DescriptorPool &get_descriptor_pool();
-
 	const std::vector<VkDescriptorSetLayoutBinding> &get_bindings() const;
 
 	bool get_layout_binding(uint32_t binding_index, VkDescriptorSetLayoutBinding &binding) const;
@@ -61,8 +59,6 @@ class DescriptorSetLayout
 
   private:
 	Device &device;
-
-	std::unique_ptr<DescriptorPool> descriptor_pool;
 
 	VkDescriptorSetLayout handle{VK_NULL_HANDLE};
 

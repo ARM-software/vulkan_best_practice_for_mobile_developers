@@ -346,6 +346,12 @@ RenderFrame &RenderContext::get_active_frame()
 	return frames.at(active_frame_index);
 }
 
+uint32_t RenderContext::get_active_frame_index()
+{
+	assert(frame_active && "Frame is not active, please call begin_frame");
+	return active_frame_index;
+}
+
 RenderFrame &RenderContext::get_last_rendered_frame()
 {
 	assert(!frame_active && "Frame is still active, please call end_frame");

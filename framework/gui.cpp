@@ -138,7 +138,7 @@ Gui::Gui(VulkanSample &sample_, const float dpi_factor) :
 		FencePool fence_pool{device};
 
 		// Begin recording
-		command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+		command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, 0);
 
 		{
 			// Prepare for transfer
