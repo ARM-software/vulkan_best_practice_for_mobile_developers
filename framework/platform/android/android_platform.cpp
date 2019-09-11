@@ -442,9 +442,10 @@ void AndroidPlatform::terminate(ExitCode code)
 	switch (code)
 	{
 		case ExitCode::Success:
+		case ExitCode::UnableToRun:
 			log_output.clear();
 			break;
-		case ExitCode::Fatal:
+		case ExitCode::FatalError:
 			send_notification(log_output);
 			break;
 	}

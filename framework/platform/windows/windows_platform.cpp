@@ -124,8 +124,13 @@ WindowsPlatform::WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 void WindowsPlatform::terminate(ExitCode code)
 {
-	std::cout << "Press enter to close...\n";
-	std::cin.get();
+	Platform::terminate(code);
+
+	if (code != ExitCode::Success)
+	{
+		std::cout << "Press enter to close...\n";
+		std::cin.get();
+	}
 
 	FreeConsole();
 }

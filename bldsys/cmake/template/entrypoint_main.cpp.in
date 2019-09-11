@@ -59,14 +59,18 @@ int main(int argc, char *argv[])
 		if (platform.initialize(std::move(app)))
 		{
 			platform.main_loop();
+			platform.terminate(vkb::ExitCode::Success);
 		}
-		platform.terminate(vkb::ExitCode::Success);
+		else
+		{
+			platform.terminate(vkb::ExitCode::UnableToRun);
+		}
 #ifdef DEBUG
 	}
 	catch (const std::exception &e)
 	{
 		LOGE(e.what());
-		platform.terminate(vkb::ExitCode::Fatal);
+		platform.terminate(vkb::ExitCode::FatalError);
 	}
 #endif
 
