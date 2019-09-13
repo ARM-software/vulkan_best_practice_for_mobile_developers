@@ -26,7 +26,6 @@
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_map>
-#include <variant>
 
 #include <nlohmann/json.hpp>
 #include <spdlog/fmt/fmt.h>
