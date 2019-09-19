@@ -25,18 +25,18 @@
 
 namespace vkb
 {
-RenderFrame::RenderFrame(Device &device, RenderTarget &&render_target, uint16_t command_pool_count) :
+RenderFrame::RenderFrame(Device &device, RenderTarget &&render_target, size_t thread_count) :
     device{device},
     fence_pool{device},
     semaphore_pool{device},
     swapchain_render_target{std::move(render_target)},
-    command_pool_count{command_pool_count}
+    thread_count{thread_count}
 {
 	const std::vector<VkBufferUsageFlags> supported_usages = {VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_BUFFER_USAGE_INDEX_BUFFER_BIT};
 	for (auto &usage : supported_usages)
 	{
 		std::vector<std::pair<BufferPool, BufferBlock *>> usage_buffer_pools;
-		for (int i = 0; i < command_pool_count; i++)
+		for (int i = 0; i < thread_count; i++)
 		{
 			usage_buffer_pools.push_back(std::make_pair(BufferPool{device, BUFFER_POOL_BLOCK_SIZE * 1024, usage}, nullptr));
 		}
@@ -47,6 +47,12 @@ RenderFrame::RenderFrame(Device &device, RenderTarget &&render_target, uint16_t 
 		{
 			throw std::runtime_error("Failed to insert buffer pool");
 		}
+	}
+
+	for (int i = 0; i < thread_count; i++)
+	{
+		descriptor_pools.push_back(std::make_unique<std::unordered_map<std::size_t, DescriptorPool>>());
+		descriptor_sets.push_back(std::make_unique<std::unordered_map<std::size_t, DescriptorSet>>());
 	}
 }
 
@@ -106,9 +112,9 @@ std::vector<std::unique_ptr<CommandPool>> &RenderFrame::get_command_pools(const 
 	}
 
 	std::vector<std::unique_ptr<CommandPool>> queue_command_pools;
-	for (int i = 0; i < command_pool_count; i++)
+	for (int i = 0; i < thread_count; i++)
 	{
-		queue_command_pools.push_back(std::make_unique<CommandPool>(device, queue.get_family_index(), this, reset_mode));
+		queue_command_pools.push_back(std::make_unique<CommandPool>(device, queue.get_family_index(), this, i, reset_mode));
 	}
 
 	auto res_ins_it = command_pools.emplace(queue.get_family_index(), std::move(queue_command_pools));
@@ -153,10 +159,23 @@ const RenderTarget &RenderFrame::get_render_target_const() const
 	return swapchain_render_target;
 }
 
-DescriptorSet &RenderFrame::request_descriptor_set(DescriptorSetLayout &descriptor_set_layout, const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos)
+CommandBuffer &RenderFrame::request_command_buffer(const Queue &queue, CommandBuffer::ResetMode reset_mode, VkCommandBufferLevel level, size_t thread_index)
 {
-	auto &descriptor_pool = request_resource(device, nullptr, descriptor_pools, descriptor_set_layout);
-	return request_resource(device, nullptr, descriptor_sets, descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
+	assert(thread_index < thread_count && "Thread index is out of bounds");
+
+	auto &command_pools = get_command_pools(queue, reset_mode);
+
+	auto command_pool_it = std::find_if(command_pools.begin(), command_pools.end(), [&thread_index](std::unique_ptr<CommandPool> &cmd_pool) { return cmd_pool->get_thread_index() == thread_index; });
+
+	return (*command_pool_it)->request_command_buffer(level);
+}
+
+DescriptorSet &RenderFrame::request_descriptor_set(DescriptorSetLayout &descriptor_set_layout, const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos, size_t thread_index)
+{
+	assert(thread_index < thread_count && "Thread index is out of bounds");
+
+	auto &descriptor_pool = request_resource(device, nullptr, *descriptor_pools.at(thread_index), descriptor_set_layout);
+	return request_resource(device, nullptr, *descriptor_sets.at(thread_index), descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
 }
 
 void RenderFrame::set_buffer_allocation_strategy(BufferAllocationStrategy new_strategy)
@@ -166,6 +185,8 @@ void RenderFrame::set_buffer_allocation_strategy(BufferAllocationStrategy new_st
 
 BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, const VkDeviceSize size, size_t thread_index)
 {
+	assert(thread_index < thread_count && "Thread index is out of bounds");
+
 	// Find a pool for this usage
 	auto buffer_pool_it = buffer_pools.find(usage);
 	if (buffer_pool_it == buffer_pools.end())

@@ -78,10 +78,10 @@ class RenderContext
 	RenderContext &operator=(RenderContext &&) = delete;
 	/**
 	 * @brief Prepares the RenderFrames for rendering
-	 * @param command_pools_per_frame The command pools to be allocated for each RenderFrame
+	 * @param thread_count The number of threads in the application, necessary to allocate this many resource pools for each RenderFrame
 	 * @param create_render_target_func A function delegate, used to create a RenderTarget
 	 */
-	void prepare(uint16_t command_pools_per_frame = 1, RenderTarget::CreateFunc create_render_target_func = RenderTarget::DEFAULT_CREATE_FUNC);
+	void prepare(size_t thread_count = 1, RenderTarget::CreateFunc create_render_target_func = RenderTarget::DEFAULT_CREATE_FUNC);
 
 	/**
 	 * @brief Updates the swapchains extent, if a swapchain exists
@@ -171,21 +171,6 @@ class RenderContext
 	 * @return The previous frame
 	 */
 	RenderFrame &get_last_rendered_frame();
-
-	/**
-	 * @brief Requests a command buffer to the command pool of the active frame
-	 *        A frame should be active at the moment of requesting it
-	 * @param queue The queue command buffers will be submitted on
-	 * @param reset_mode Indicate how the command buffer will be used, may trigger a
-	 *        pool re-creation to set necessary flags
-	 * @param level Command buffer level, either primary or secondary
-	 * @param pool_index Select the frame command pool to use to manage the buffer
-	 * @return A command buffer related to the current active frame
-	 */
-	CommandBuffer &request_frame_command_buffer(const Queue &            queue,
-	                                            CommandBuffer::ResetMode reset_mode = CommandBuffer::ResetMode::ResetPool,
-	                                            VkCommandBufferLevel     level      = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-	                                            uint16_t                 pool_index = 0);
 
 	VkSemaphore request_semaphore();
 

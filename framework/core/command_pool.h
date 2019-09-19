@@ -33,7 +33,8 @@ class CommandPool
 {
   public:
 	CommandPool(Device &device, uint32_t queue_family_index, RenderFrame *render_frame = nullptr,
-	            CommandBuffer::ResetMode reset_mode = CommandBuffer::ResetMode::ResetPool);
+	            size_t                   thread_index = 0,
+	            CommandBuffer::ResetMode reset_mode   = CommandBuffer::ResetMode::ResetPool);
 
 	CommandPool(const CommandPool &) = delete;
 
@@ -53,6 +54,8 @@ class CommandPool
 
 	RenderFrame *get_render_frame();
 
+	size_t get_thread_index() const;
+
 	VkResult reset_pool();
 
 	CommandBuffer &request_command_buffer(VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
@@ -65,6 +68,8 @@ class CommandPool
 	VkCommandPool handle{VK_NULL_HANDLE};
 
 	RenderFrame *render_frame{nullptr};
+
+	size_t thread_index{0};
 
 	uint32_t queue_family_index{0};
 

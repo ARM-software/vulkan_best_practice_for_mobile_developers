@@ -96,7 +96,7 @@ void CommandBufferUsage::update(float delta_time)
 
 	scene_subpass_ptr->set_command_buffer_reset_mode(static_cast<vkb::CommandBuffer::ResetMode>(reuse_selection));
 
-	auto &primary_command_buffer = render_context.request_frame_command_buffer(queue, static_cast<vkb::CommandBuffer::ResetMode>(reuse_selection));
+	auto &primary_command_buffer = render_context.get_active_frame().request_command_buffer(queue, static_cast<vkb::CommandBuffer::ResetMode>(reuse_selection));
 
 	primary_command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -181,7 +181,7 @@ void CommandBufferUsage::draw_renderpass(vkb::CommandBuffer &primary_command_buf
 	{
 		if (use_secondary_command_buffers)
 		{
-			vkb::CommandBuffer &secondary_command_buffer = get_render_context().request_frame_command_buffer(queue, static_cast<vkb::CommandBuffer::ResetMode>(reuse_selection), VK_COMMAND_BUFFER_LEVEL_SECONDARY);
+			vkb::CommandBuffer &secondary_command_buffer = get_render_context().get_active_frame().request_command_buffer(queue, static_cast<vkb::CommandBuffer::ResetMode>(reuse_selection), VK_COMMAND_BUFFER_LEVEL_SECONDARY);
 
 			secondary_command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &primary_command_buffer);
 
@@ -241,7 +241,7 @@ void CommandBufferUsage::SceneSubpassSecondary::draw(vkb::CommandBuffer &primary
 	{
 		if (use_secondary_command_buffers)
 		{
-			vkb::CommandBuffer &secondary_command_buffer = render_context.request_frame_command_buffer(queue, command_buffer_reset_mode, VK_COMMAND_BUFFER_LEVEL_SECONDARY);
+			vkb::CommandBuffer &secondary_command_buffer = render_context.get_active_frame().request_command_buffer(queue, command_buffer_reset_mode, VK_COMMAND_BUFFER_LEVEL_SECONDARY);
 
 			secondary_command_buffer.begin(secondary_usage_flags, &primary_command_buffer);
 
@@ -281,7 +281,7 @@ void CommandBufferUsage::SceneSubpassSecondary::draw(vkb::CommandBuffer &primary
 	{
 		if (use_secondary_command_buffers)
 		{
-			vkb::CommandBuffer &secondary_command_buffer = render_context.request_frame_command_buffer(queue, command_buffer_reset_mode, VK_COMMAND_BUFFER_LEVEL_SECONDARY);
+			vkb::CommandBuffer &secondary_command_buffer = render_context.get_active_frame().request_command_buffer(queue, command_buffer_reset_mode, VK_COMMAND_BUFFER_LEVEL_SECONDARY);
 
 			secondary_command_buffer.begin(secondary_usage_flags, &primary_command_buffer);
 

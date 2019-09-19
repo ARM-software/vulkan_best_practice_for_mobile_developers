@@ -644,7 +644,7 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 				}
 			}
 
-			auto &descriptor_set = command_pool.get_render_frame()->request_descriptor_set(descriptor_set_layout, buffer_infos, image_infos);
+			auto &descriptor_set = command_pool.get_render_frame()->request_descriptor_set(descriptor_set_layout, buffer_infos, image_infos, command_pool.get_thread_index());
 
 			VkDescriptorSet descriptor_set_handle = descriptor_set.get_handle();
 

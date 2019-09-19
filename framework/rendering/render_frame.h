@@ -25,6 +25,7 @@
 #include "common/resource_caching.h"
 #include "common/vk_common.h"
 #include "core/buffer.h"
+#include "core/command_buffer.h"
 #include "core/command_pool.h"
 #include "core/device.h"
 #include "core/image.h"
@@ -62,7 +63,7 @@ class RenderFrame
 	 */
 	static constexpr uint32_t BUFFER_POOL_BLOCK_SIZE = 256;
 
-	RenderFrame(Device &device, RenderTarget &&render_target, uint16_t command_pool_count = 1);
+	RenderFrame(Device &device, RenderTarget &&render_target, size_t thread_count = 1);
 
 	RenderFrame(const RenderFrame &) = delete;
 
@@ -75,15 +76,6 @@ class RenderFrame
 	void reset();
 
 	Device &get_device();
-
-	/**
-	 * @brief Retrieve the frame's command pool(s)
-	 * @param queue The queue command buffers will be submitted on
-	 * @param reset_mode Indicate how the command buffers will be reset after execution,
-	 *        may trigger a pool re-creation to set necessary flags
-	 * @return The frame's command pool(s)
-	 */
-	std::vector<std::unique_ptr<CommandPool>> &get_command_pools(const Queue &queue, CommandBuffer::ResetMode reset_mode);
 
 	const FencePool &get_fence_pool() const;
 
@@ -103,9 +95,25 @@ class RenderFrame
 
 	const RenderTarget &get_render_target_const() const;
 
+	/**
+	 * @brief Requests a command buffer to the command pool of the active frame
+	 *        A frame should be active at the moment of requesting it
+	 * @param queue The queue command buffers will be submitted on
+	 * @param reset_mode Indicate how the command buffer will be used, may trigger a
+	 *        pool re-creation to set necessary flags
+	 * @param level Command buffer level, either primary or secondary
+	 * @param thread_index Selects the thread's command pool used to manage the buffer
+	 * @return A command buffer related to the current active frame
+	 */
+	CommandBuffer &request_command_buffer(const Queue &            queue,
+	                                      CommandBuffer::ResetMode reset_mode   = CommandBuffer::ResetMode::ResetPool,
+	                                      VkCommandBufferLevel     level        = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+	                                      size_t                   thread_index = 0);
+
 	DescriptorSet &request_descriptor_set(DescriptorSetLayout &                     descriptor_set_layout,
 	                                      const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
-	                                      const BindingMap<VkDescriptorImageInfo> & image_infos);
+	                                      const BindingMap<VkDescriptorImageInfo> & image_infos,
+	                                      size_t                                    thread_index = 0);
 
 	/**
 	 * @brief Sets a new buffer allocation strategy
@@ -124,22 +132,29 @@ class RenderFrame
   private:
 	Device &device;
 
+	/**
+	 * @brief Retrieve the frame's command pool(s)
+	 * @param queue The queue command buffers will be submitted on
+	 * @param reset_mode Indicate how the command buffers will be reset after execution,
+	 *        may trigger a pool re-creation to set necessary flags
+	 * @return The frame's command pool(s)
+	 */
+	std::vector<std::unique_ptr<CommandPool>> &get_command_pools(const Queue &queue, CommandBuffer::ResetMode reset_mode);
+
 	/// Commands pools associated to the frame
 	std::map<uint32_t, std::vector<std::unique_ptr<CommandPool>>> command_pools;
 
 	/// Descriptor pools for the frame
-	std::unordered_map<std::size_t, DescriptorPool> descriptor_pools;
+	std::vector<std::unique_ptr<std::unordered_map<std::size_t, DescriptorPool>>> descriptor_pools;
 
 	/// Descriptor sets for the frame
-	std::unordered_map<std::size_t, DescriptorSet> descriptor_sets;
-
-	ResourceRecord recorder;
+	std::vector<std::unique_ptr<std::unordered_map<std::size_t, DescriptorSet>>> descriptor_sets;
 
 	FencePool fence_pool;
 
 	SemaphorePool semaphore_pool;
 
-	uint16_t command_pool_count;
+	size_t thread_count;
 
 	RenderTarget swapchain_render_target;
 

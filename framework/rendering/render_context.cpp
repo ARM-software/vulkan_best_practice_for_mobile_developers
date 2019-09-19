@@ -37,7 +37,7 @@ RenderContext::RenderContext(Device &d, VkSurfaceKHR surface, uint32_t window_wi
 	}
 }
 
-void RenderContext::prepare(uint16_t command_pools_per_frame, RenderTarget::CreateFunc create_render_target_func)
+void RenderContext::prepare(size_t thread_count, RenderTarget::CreateFunc create_render_target_func)
 {
 	device.wait_idle();
 
@@ -54,7 +54,7 @@ void RenderContext::prepare(uint16_t command_pools_per_frame, RenderTarget::Crea
 			    swapchain->get_format(),
 			    swapchain->get_usage()};
 			auto render_target = create_render_target_func(std::move(swapchain_image));
-			frames.emplace_back(RenderFrame{device, std::move(render_target), command_pools_per_frame});
+			frames.emplace_back(RenderFrame{device, std::move(render_target), thread_count});
 		}
 	}
 	else
@@ -69,7 +69,7 @@ void RenderContext::prepare(uint16_t command_pools_per_frame, RenderTarget::Crea
 		                               VMA_MEMORY_USAGE_GPU_ONLY};
 
 		auto render_target = create_render_target_func(std::move(color_image));
-		frames.emplace_back(RenderFrame{device, std::move(render_target), command_pools_per_frame});
+		frames.emplace_back(RenderFrame{device, std::move(render_target), thread_count});
 	}
 
 	this->prepared                  = true;
@@ -199,7 +199,7 @@ CommandBuffer &RenderContext::begin()
 	}
 
 	const auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-	return request_frame_command_buffer(queue);
+	return get_active_frame().request_command_buffer(queue);
 }
 
 void RenderContext::submit(CommandBuffer &command_buffer)
@@ -356,13 +356,6 @@ RenderFrame &RenderContext::get_last_rendered_frame()
 {
 	assert(!frame_active && "Frame is still active, please call end_frame");
 	return frames.at(active_frame_index);
-}
-
-CommandBuffer &RenderContext::request_frame_command_buffer(const Queue &queue, CommandBuffer::ResetMode reset_mode, VkCommandBufferLevel level, uint16_t pool_index)
-{
-	auto &command_pools = get_active_frame().get_command_pools(queue, reset_mode);
-
-	return command_pools.at(pool_index)->request_command_buffer(level);
 }
 
 VkSemaphore RenderContext::request_semaphore()

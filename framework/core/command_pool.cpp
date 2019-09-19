@@ -25,9 +25,10 @@
 
 namespace vkb
 {
-CommandPool::CommandPool(Device &d, uint32_t queue_family_index, RenderFrame *render_frame, CommandBuffer::ResetMode reset_mode) :
+CommandPool::CommandPool(Device &d, uint32_t queue_family_index, RenderFrame *render_frame, size_t thread_index, CommandBuffer::ResetMode reset_mode) :
     device{d},
     render_frame{render_frame},
+    thread_index{thread_index},
     reset_mode{reset_mode}
 {
 	VkCommandPoolCreateFlags flags;
@@ -73,6 +74,8 @@ CommandPool::CommandPool(CommandPool &&other) :
     queue_family_index{other.queue_family_index},
     command_buffers{std::move(other.command_buffers)},
     active_command_buffer_count{other.active_command_buffer_count},
+    render_frame{other.render_frame},
+    thread_index{other.thread_index},
     reset_mode{other.reset_mode}
 {
 	other.handle = VK_NULL_HANDLE;
@@ -100,6 +103,11 @@ VkCommandPool CommandPool::get_handle() const
 RenderFrame *CommandPool::get_render_frame()
 {
 	return render_frame;
+}
+
+size_t CommandPool::get_thread_index() const
+{
+	return thread_index;
 }
 
 VkResult CommandPool::reset_pool()
