@@ -184,6 +184,8 @@ class RenderContext
 
 	std::vector<RenderFrame> &get_render_frames();
 
+	void set_pre_transform(VkSurfaceTransformFlagBitsKHR pre_transform);
+
   protected:
 	VkExtent2D surface_extent;
 
@@ -213,6 +215,8 @@ class RenderContext
 	bool frame_active{false};
 
 	RenderTarget::CreateFunc create_render_target_func = RenderTarget::DEFAULT_CREATE_FUNC;
+
+	VkSurfaceTransformFlagBitsKHR pre_transform{VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR};
 };
 
 }        // namespace vkb

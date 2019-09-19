@@ -80,10 +80,13 @@ bool SurfaceRotation::prepare(vkb::Platform &platform)
 
 void SurfaceRotation::update(float delta_time)
 {
+	handle_no_resize_rotations();
+
 	// Process GUI input
 	if (pre_rotate != last_pre_rotate)
 	{
-		trigger_swapchain_recreation();
+		recreate_swapchain();
+
 		last_pre_rotate = pre_rotate;
 	}
 
@@ -112,6 +115,8 @@ void SurfaceRotation::update(float delta_time)
 	VkExtent2D extent = swapchain.get_extent();
 	camera->set_aspect_ratio(static_cast<float>(extent.width) / extent.height);
 	camera->set_pre_rotation(pre_rotate_mat);
+
+	get_render_context().set_pre_transform(select_pre_transform());
 
 	VulkanSample::update(delta_time);
 }
@@ -157,14 +162,59 @@ void SurfaceRotation::draw_gui()
 	}
 }
 
-void SurfaceRotation::trigger_swapchain_recreation()
+VkSurfaceTransformFlagBitsKHR SurfaceRotation::select_pre_transform()
 {
-	recreate_swapchain();
+	VkSurfaceCapabilitiesKHR surface_properties;
+	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_physical_device(),
+	                                                   get_surface(),
+	                                                   &surface_properties));
+
+	VkSurfaceTransformFlagBitsKHR pre_transform;
+
+	if (pre_rotate)
+	{
+		// Best practice: adjust the preTransform attribute in the swapchain properties
+		// so that it matches the value in the surface properties. This is to
+		// communicate to the presentation engine that the application is pre-rotating
+		pre_transform = surface_properties.currentTransform;
+	}
+	else
+	{
+		// Bad practice: keep preTransform as identity
+		pre_transform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+	}
+
+	return pre_transform;
+}
+
+void SurfaceRotation::handle_no_resize_rotations()
+{
+	VkSurfaceCapabilitiesKHR surface_properties;
+	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_physical_device(),
+	                                                   get_surface(),
+	                                                   &surface_properties));
+
+	if (surface_properties.currentExtent.width == get_render_context().get_surface_extent().width &&
+	    surface_properties.currentExtent.height == get_render_context().get_surface_extent().height &&
+	    (pre_rotate && surface_properties.currentTransform != get_render_context().get_swapchain().get_transform()))
+	{
+		recreate_swapchain();
+	}
+}
+
+void SurfaceRotation::recreate_swapchain()
+{
+	LOGI("Recreating swapchain");
+
+	get_device().wait_idle();
+
+	auto surface_extent = get_render_context().get_surface_extent();
+
+	get_render_context().update_swapchain(surface_extent, select_pre_transform());
 
 	if (gui)
 	{
-		gui->resize(get_render_context().get_surface_extent().width,
-		            get_render_context().get_surface_extent().height);
+		gui->resize(surface_extent.width, surface_extent.height);
 	}
 }
 
@@ -200,57 +250,4 @@ const char *SurfaceRotation::transform_to_string(VkSurfaceTransformFlagBitsKHR f
 std::unique_ptr<vkb::VulkanSample> create_surface_rotation()
 {
 	return std::make_unique<SurfaceRotation>();
-}
-
-void SurfaceRotation::recreate_swapchain()
-{
-	VkSurfaceCapabilitiesKHR surface_properties;
-	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_physical_device(),
-	                                                   get_surface(),
-	                                                   &surface_properties));
-
-	auto width  = surface_properties.currentExtent.width;
-	auto height = surface_properties.currentExtent.height;
-
-	VkSurfaceTransformFlagBitsKHR pre_transform;
-
-	if (pre_rotate)
-	{
-		// Best practice: adjust the preTransform attribute in the swapchain properties
-		pre_transform = surface_properties.currentTransform;
-
-		// Always use native orientation i.e. if rotated, use width and height of identity transform
-		if (pre_transform == VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR || pre_transform == VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
-		{
-			std::swap(width, height);
-		}
-	}
-	else
-	{
-		// Bad practice: keep preTransform as identity
-		pre_transform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-	}
-
-	get_device().wait_idle();
-
-	get_render_context().update_swapchain(VkExtent2D{width, height}, pre_transform);
-}
-
-void SurfaceRotation::handle_surface_changes()
-{
-	auto surface_extent = get_render_context().get_surface_extent();
-
-	VkSurfaceCapabilitiesKHR surface_properties;
-	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_physical_device(),
-	                                                   get_surface(),
-	                                                   &surface_properties));
-
-	if (surface_properties.currentExtent.width != surface_extent.width ||
-	    surface_properties.currentExtent.height != surface_extent.height ||
-	    (pre_rotate && surface_properties.currentTransform != get_render_context().get_swapchain().get_transform()))
-	{
-		recreate_swapchain();
-
-		surface_extent = surface_properties.currentExtent;
-	}
 }

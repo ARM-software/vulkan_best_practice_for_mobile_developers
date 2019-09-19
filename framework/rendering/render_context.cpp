@@ -131,7 +131,17 @@ void RenderContext::update_swapchain(const VkExtent2D &extent, const VkSurfaceTr
 
 	device.get_resource_cache().clear_framebuffers();
 
-	swapchain = std::make_unique<Swapchain>(*swapchain, extent, transform);
+	auto width  = extent.width;
+	auto height = extent.height;
+	if (transform == VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR || transform == VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
+	{
+		// Pre-rotation: always use native orientation i.e. if rotated, use width and height of identity transform
+		std::swap(width, height);
+	}
+
+	swapchain = std::make_unique<Swapchain>(*swapchain, VkExtent2D{width, height}, transform);
+
+	set_pre_transform(transform);
 
 	recreate();
 }
@@ -181,7 +191,9 @@ void RenderContext::handle_surface_changes()
 		// Recreate swapchain
 		device.wait_idle();
 
-		update_swapchain(surface_properties.currentExtent);
+		LOGI("Recreating swapchain");
+
+		update_swapchain(surface_properties.currentExtent, pre_transform);
 
 		surface_extent = surface_properties.currentExtent;
 	}
@@ -388,5 +400,10 @@ uint32_t RenderContext::get_active_frame_index() const
 std::vector<RenderFrame> &RenderContext::get_render_frames()
 {
 	return frames;
+}
+
+void RenderContext::set_pre_transform(VkSurfaceTransformFlagBitsKHR pre_transform)
+{
+	this->pre_transform = pre_transform;
 }
 }        // namespace vkb
