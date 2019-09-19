@@ -88,19 +88,13 @@ void CommandBufferUsage::update(float delta_time)
 
 	auto &render_context = get_render_context();
 
-	render_context.begin();
-
-	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-
-	auto &render_target = render_context.get_active_frame().get_render_target();
+	auto &primary_command_buffer = render_context.begin(static_cast<vkb::CommandBuffer::ResetMode>(reuse_selection));
 
 	scene_subpass_ptr->set_command_buffer_reset_mode(static_cast<vkb::CommandBuffer::ResetMode>(reuse_selection));
 
-	auto &primary_command_buffer = render_context.get_active_frame().request_command_buffer(queue, static_cast<vkb::CommandBuffer::ResetMode>(reuse_selection));
-
 	primary_command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-	draw(primary_command_buffer, render_target);
+	draw(primary_command_buffer, render_context.get_active_frame().get_render_target());
 
 	primary_command_buffer.end();
 

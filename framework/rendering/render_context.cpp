@@ -199,7 +199,7 @@ void RenderContext::handle_surface_changes()
 	}
 }
 
-CommandBuffer &RenderContext::begin()
+CommandBuffer &RenderContext::begin(CommandBuffer::ResetMode reset_mode)
 {
 	assert(prepared && "RenderContext not prepared for rendering, call prepare()");
 
@@ -211,7 +211,7 @@ CommandBuffer &RenderContext::begin()
 	}
 
 	const auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-	return get_active_frame().request_command_buffer(queue);
+	return get_active_frame().request_command_buffer(queue, reset_mode);
 }
 
 void RenderContext::submit(CommandBuffer &command_buffer)

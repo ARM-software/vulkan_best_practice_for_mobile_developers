@@ -59,7 +59,8 @@ CommandPool::CommandPool(Device &d, uint32_t queue_family_index, RenderFrame *re
 
 CommandPool::~CommandPool()
 {
-	command_buffers.clear();
+	primary_command_buffers.clear();
+	secondary_command_buffers.clear();
 
 	// Destroy command pool
 	if (handle != VK_NULL_HANDLE)
@@ -72,8 +73,10 @@ CommandPool::CommandPool(CommandPool &&other) :
     device{other.device},
     handle{other.handle},
     queue_family_index{other.queue_family_index},
-    command_buffers{std::move(other.command_buffers)},
-    active_command_buffer_count{other.active_command_buffer_count},
+    primary_command_buffers{std::move(other.primary_command_buffers)},
+    active_primary_command_buffer_count{other.active_primary_command_buffer_count},
+    secondary_command_buffers{std::move(other.secondary_command_buffers)},
+    active_secondary_command_buffer_count{other.active_secondary_command_buffer_count},
     render_frame{other.render_frame},
     thread_index{other.thread_index},
     reset_mode{other.reset_mode}
@@ -82,7 +85,9 @@ CommandPool::CommandPool(CommandPool &&other) :
 
 	other.queue_family_index = 0;
 
-	other.active_command_buffer_count = 0;
+	other.active_primary_command_buffer_count = 0;
+
+	other.active_secondary_command_buffer_count = 0;
 }
 
 Device &CommandPool::get_device()
@@ -137,9 +142,11 @@ VkResult CommandPool::reset_pool()
 		}
 		case CommandBuffer::ResetMode::AlwaysAllocate:
 		{
-			command_buffers.clear();
+			primary_command_buffers.clear();
+			active_primary_command_buffer_count = 0;
 
-			active_command_buffer_count = 0;
+			secondary_command_buffers.clear();
+			active_secondary_command_buffer_count = 0;
 
 			break;
 		}
@@ -154,7 +161,7 @@ VkResult CommandPool::reset_command_buffers()
 {
 	VkResult result = VK_SUCCESS;
 
-	for (auto &cmd_buf : command_buffers)
+	for (auto &cmd_buf : primary_command_buffers)
 	{
 		result = cmd_buf->reset(reset_mode);
 
@@ -164,23 +171,51 @@ VkResult CommandPool::reset_command_buffers()
 		}
 	}
 
-	active_command_buffer_count = 0;
+	active_primary_command_buffer_count = 0;
+
+	for (auto &cmd_buf : secondary_command_buffers)
+	{
+		result = cmd_buf->reset(reset_mode);
+
+		if (result != VK_SUCCESS)
+		{
+			return result;
+		}
+	}
+
+	active_secondary_command_buffer_count = 0;
 
 	return result;
 }
 
 CommandBuffer &CommandPool::request_command_buffer(VkCommandBufferLevel level)
 {
-	if (active_command_buffer_count < command_buffers.size())
+	if (level == VK_COMMAND_BUFFER_LEVEL_PRIMARY)
 	{
-		return *command_buffers.at(active_command_buffer_count++);
+		if (active_primary_command_buffer_count < primary_command_buffers.size())
+		{
+			return *primary_command_buffers.at(active_primary_command_buffer_count++);
+		}
+
+		primary_command_buffers.emplace_back(std::make_unique<CommandBuffer>(*this, level));
+
+		active_primary_command_buffer_count++;
+
+		return *primary_command_buffers.back();
 	}
+	else
+	{
+		if (active_secondary_command_buffer_count < secondary_command_buffers.size())
+		{
+			return *secondary_command_buffers.at(active_secondary_command_buffer_count++);
+		}
 
-	command_buffers.emplace_back(std::make_unique<CommandBuffer>(*this, level));
+		secondary_command_buffers.emplace_back(std::make_unique<CommandBuffer>(*this, level));
 
-	active_command_buffer_count++;
+		active_secondary_command_buffer_count++;
 
-	return *command_buffers.back();
+		return *secondary_command_buffers.back();
+	}
 }
 
 CommandBuffer::ResetMode const CommandPool::get_reset_mode() const

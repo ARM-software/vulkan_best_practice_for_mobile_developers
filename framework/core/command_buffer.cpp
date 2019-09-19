@@ -110,7 +110,7 @@ VkResult CommandBuffer::begin(VkCommandBufferUsageFlags flags, CommandBuffer *pr
 
 		inheritance.renderPass  = current_render_pass.render_pass->get_handle();
 		inheritance.framebuffer = current_render_pass.framebuffer->get_handle();
-		inheritance.subpass     = pipeline_state.get_subpass_index();
+		inheritance.subpass     = primary_cmd_buf->get_current_subpass_index();
 
 		begin_info.pInheritanceInfo = &inheritance;
 	}
@@ -663,6 +663,16 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 const CommandBuffer::State CommandBuffer::get_state() const
 {
 	return state;
+}
+
+const CommandBuffer::RenderPassBinding &CommandBuffer::get_current_render_pass() const
+{
+	return current_render_pass;
+}
+
+const uint32_t CommandBuffer::get_current_subpass_index() const
+{
+	return pipeline_state.get_subpass_index();
 }
 
 VkResult CommandBuffer::reset(ResetMode reset_mode)

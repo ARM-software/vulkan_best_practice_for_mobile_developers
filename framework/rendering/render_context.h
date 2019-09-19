@@ -120,9 +120,10 @@ class RenderContext
 
 	/**
 	 * @brief Prepares the next available frame for rendering
+	 * @param reset_mode How to reset the command buffer
 	 * @returns A valid command buffer to record commands to be submitted
 	 */
-	CommandBuffer &begin();
+	CommandBuffer &begin(CommandBuffer::ResetMode reset_mode = CommandBuffer::ResetMode::ResetPool);
 
 	/**
 	 * @brief Submits the command buffer to the right queue
