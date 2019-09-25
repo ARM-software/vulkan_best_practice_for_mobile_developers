@@ -54,7 +54,9 @@ The Vulkan Best Practice for Mobile Developers is collection of resources to hel
 
 ## Tutorials
 - **General**
-  - [Controls](./docs/controls.md)
+  - [Controls](./docs/misc.md#controls)
+  - [Debug window](./docs/misc.md#debug-window)
+  - [Driver version](./docs/misc.md#driver-version)
   - [Create a Sample](./docs/create_sample.md)
 - **Vulkan Essentials**  
   - [How does Vulkan compare to OpenGL ES? What should you expect when targeting Vulkan?](./samples/vulkan_basics.md)
