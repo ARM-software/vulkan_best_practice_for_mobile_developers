@@ -127,8 +127,6 @@ class ResourceCache
 
 	void clear_framebuffers();
 
-	void clear_descriptors(size_t frame_index);
-
 	void clear();
 
 	const ResourceCacheState &get_internal_state() const;

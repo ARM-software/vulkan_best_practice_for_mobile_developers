@@ -105,7 +105,7 @@ BufferBlock &BufferPool::request_buffer_block(const VkDeviceSize minimum_size)
 		return *it;
 	}
 
-	LOGI("Building #{} buffer block ({})", buffer_blocks.size(), usage);
+	LOGD("Building #{} buffer block ({})", buffer_blocks.size(), usage);
 
 	// Create a new block, store and return it
 	buffer_blocks.emplace_back(device, std::max(block_size, minimum_size), usage, memory_usage);

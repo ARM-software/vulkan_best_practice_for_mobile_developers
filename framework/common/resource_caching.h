@@ -680,9 +680,7 @@ T &request_resource(Device &device, ResourceRecord *recorder, std::unordered_map
 	const char *res_type = typeid(T).name();
 	size_t      res_id   = resources.size();
 
-#ifdef VKB_DEBUG
-	LOGI("Building #{} cache object ({})", res_id, res_type);
-#endif
+	LOGD("Building #{} cache object ({})", res_id, res_type);
 
 	try
 	{

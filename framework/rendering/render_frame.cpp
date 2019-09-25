@@ -178,6 +178,22 @@ DescriptorSet &RenderFrame::request_descriptor_set(DescriptorSetLayout &descript
 	return request_resource(device, nullptr, *descriptor_sets.at(thread_index), descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
 }
 
+void RenderFrame::clear_descriptors()
+{
+	for (auto &desc_sets_per_thread : descriptor_sets)
+	{
+		desc_sets_per_thread->clear();
+	}
+
+	for (auto &desc_pools_per_thread : descriptor_pools)
+	{
+		for (auto &desc_pool : *desc_pools_per_thread)
+		{
+			desc_pool.second.reset();
+		}
+	}
+}
+
 void RenderFrame::set_buffer_allocation_strategy(BufferAllocationStrategy new_strategy)
 {
 	buffer_allocation_strategy = new_strategy;

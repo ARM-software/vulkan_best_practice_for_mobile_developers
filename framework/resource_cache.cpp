@@ -198,12 +198,6 @@ void ResourceCache::clear_framebuffers()
 	state.framebuffers.clear();
 }
 
-void ResourceCache::clear_descriptors(size_t frame_index)
-{
-	state.descriptor_sets.clear();
-	state.descriptor_pools.clear();
-}
-
 void ResourceCache::clear()
 {
 	state.shader_modules.clear();

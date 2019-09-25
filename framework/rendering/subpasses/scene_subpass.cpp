@@ -101,7 +101,12 @@ void SceneSubpass::draw(CommandBuffer &command_buffer)
 	{
 		update_uniform(command_buffer, *node_it->second.first);
 
-		draw_submesh(command_buffer, *node_it->second.second);
+		// Invert the front face if the mesh was flipped
+		const auto &scale      = node_it->second.first->get_transform().get_scale();
+		bool        flipped    = scale.x * scale.y * scale.z < 0;
+		VkFrontFace front_face = flipped ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE;
+
+		draw_submesh(command_buffer, *node_it->second.second, front_face);
 	}
 
 	// Enable alpha blending
@@ -150,11 +155,12 @@ void SceneSubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &node,
 	command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
 }
 
-void SceneSubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh)
+void SceneSubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh, VkFrontFace front_face)
 {
 	auto &device = command_buffer.get_device();
 
 	RasterizationState rasterization_state{};
+	rasterization_state.front_face = front_face;
 
 	if (sub_mesh.get_material()->double_sided)
 	{

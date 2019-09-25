@@ -48,6 +48,13 @@ bool Platform::initialize(std::unique_ptr<Application> &&app)
 	auto sinks = get_platform_sinks();
 
 	auto logger = std::make_shared<spdlog::logger>("logger", sinks.begin(), sinks.end());
+
+#ifdef VKB_DEBUG
+	logger->set_level(spdlog::level::debug);
+#else
+	logger->set_level(spdlog::level::info);
+#endif
+
 	logger->set_pattern(LOGGER_FORMAT);
 	spdlog::set_default_logger(logger);
 

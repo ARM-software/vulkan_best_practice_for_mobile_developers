@@ -115,6 +115,8 @@ class RenderFrame
 	                                      const BindingMap<VkDescriptorImageInfo> & image_infos,
 	                                      size_t                                    thread_index = 0);
 
+	void clear_descriptors();
+
 	/**
 	 * @brief Sets a new buffer allocation strategy
 	 * @param new_strategy The new buffer allocation strategy
