@@ -71,6 +71,8 @@ void RenderPipeline::draw(CommandBuffer &command_buffer, RenderTarget &render_ta
 
 	for (size_t i = 0; i < subpasses.size(); ++i)
 	{
+		active_subpass_index = i;
+
 		auto &subpass = subpasses[i];
 
 		subpass->update_render_target_attachments();
@@ -88,6 +90,12 @@ void RenderPipeline::draw(CommandBuffer &command_buffer, RenderTarget &render_ta
 
 		subpass->draw(command_buffer);
 	}
+
+	active_subpass_index = 0;
 }
 
+std::unique_ptr<Subpass> &RenderPipeline::get_active_subpass()
+{
+	return subpasses[active_subpass_index];
+}
 }        // namespace vkb

@@ -61,7 +61,6 @@ The Vulkan Best Practice for Mobile Developers is collection of resources to hel
 - **Vulkan Essentials**  
   - [How does Vulkan compare to OpenGL ES? What should you expect when targeting Vulkan?](./samples/vulkan_basics.md)
 - **Vulkan Swapchains**  
-More detailed look at swapchains, and how you might want to use them
   - [Appropriate use of N-buffering](./samples/advanced/swapchain_images/swapchain_images_tutorial.md)
   - [Appropriate use of surface rotation](./samples/advanced/surface_rotation/surface_rotation_tutorial.md)
 - **Pipelines**
@@ -73,7 +72,8 @@ More detailed look at swapchains, and how you might want to use them
 - **Render Subpasses**
   - [Benefits of subpasses over multiple render passes, use of transient attachments, and G-buffer recommended size](./samples/advanced/render_subpasses/render_subpasses_tutorial.md)
 - **Command Buffers**
-  - [Allocation and management of command buffers](./samples/advanced/command_buffer_usage/command_buffer_usage_tutorial.md)
+  - [Allocation and management of command buffers](./samples/advanced/command_buffer_usage/command_buffer_usage_tutorial.md#Recycling-strategies)
+  - [Multi-threaded recording with secondary command buffers](./samples/advanced/command_buffer_usage/command_buffer_usage_tutorial.md#Multi-threaded-recording)
 - **AFBC**
   - [Appropriate use of AFBC](./samples/advanced/afbc/afbc_tutorial.md)
 

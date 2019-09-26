@@ -94,8 +94,6 @@ void SceneSubpass::draw(CommandBuffer &command_buffer)
 
 	get_sorted_nodes(opaque_nodes, transparent_nodes);
 
-	auto &render_frame = get_render_context().get_active_frame();
-
 	// Draw opaque objects in front-to-back order
 	for (auto node_it = opaque_nodes.begin(); node_it != opaque_nodes.end(); node_it++)
 	{

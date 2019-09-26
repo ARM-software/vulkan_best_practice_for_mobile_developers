@@ -190,6 +190,11 @@ void CommandBuffer::next_subpass()
 	vkCmdNextSubpass(get_handle(), VK_SUBPASS_CONTENTS_INLINE);
 }
 
+void CommandBuffer::execute_commands(CommandBuffer &secondary_command_buffer)
+{
+	vkCmdExecuteCommands(get_handle(), 1, &secondary_command_buffer.get_handle());
+}
+
 void CommandBuffer::execute_commands(std::vector<CommandBuffer *> &secondary_command_buffers)
 {
 	std::vector<VkCommandBuffer> sec_cmd_buf_handles(secondary_command_buffers.size(), VK_NULL_HANDLE);

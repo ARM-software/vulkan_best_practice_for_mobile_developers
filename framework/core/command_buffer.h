@@ -111,6 +111,8 @@ class CommandBuffer
 
 	void next_subpass();
 
+	void execute_commands(CommandBuffer &secondary_command_buffer);
+
 	void execute_commands(std::vector<CommandBuffer *> &secondary_command_buffers);
 
 	void end_render_pass();

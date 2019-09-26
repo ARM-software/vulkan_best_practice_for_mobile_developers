@@ -83,6 +83,12 @@ class RenderPipeline
 	 */
 	void draw(CommandBuffer &command_buffer, RenderTarget &render_target, VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
 
+	/**
+	 * @return Subpass currently being recorded, or the first one
+	 *         if drawing has not started
+	 */
+	std::unique_ptr<Subpass> &get_active_subpass();
+
   private:
 	std::vector<std::unique_ptr<Subpass>> subpasses;
 
@@ -91,5 +97,7 @@ class RenderPipeline
 
 	/// Default to two clear values
 	std::vector<VkClearValue> clear_value = std::vector<VkClearValue>(2);
+
+	size_t active_subpass_index{0};
 };
 }        // namespace vkb
