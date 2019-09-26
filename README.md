@@ -66,6 +66,8 @@ More detailed look at swapchains, and how you might want to use them
   - [Appropriate use of surface rotation](./samples/advanced/surface_rotation/surface_rotation_tutorial.md)
 - **Pipelines**
   - [Use of pipeline caches to avoid startup latency](./samples/advanced/pipeline_cache/pipeline_cache_tutorial.md)
+- **Descriptors**
+  - [Descriptor and buffer management](./samples/advanced/descriptor_management/descriptor_management_tutorial.md)
 - **Render Passes**
   - [Appropriate use of load/store operations, and use of transient attachments](./samples/advanced/render_passes/render_passes_tutorial.md)
 - **Render Subpasses**
@@ -103,7 +105,7 @@ The following shows some example command line usage on how to configure and run 
 vulkan_best_practice swapchain_images
 
 # Run AFBC sample in benchmark mode for 5000 frames
-vulkan_best_practice --sample afbc --benchmark 5000 
+vulkan_best_practice --sample afbc --benchmark 5000
 
 # Run bonza test offscreen
 vulkan_best_practice --test bonza --hide
