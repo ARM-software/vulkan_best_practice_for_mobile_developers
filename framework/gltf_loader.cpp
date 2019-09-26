@@ -39,6 +39,7 @@ VKBP_ENABLE_WARNINGS()
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/image/astc.h"
+#include "scene_graph/components/light.h"
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/pbr_material.h"
 #include "scene_graph/components/perspective_camera.h"
@@ -326,6 +327,9 @@ inline void upload_image_to_gpu(CommandBuffer &command_buffer, core::Buffer &sta
 }
 }        // namespace
 
+std::unordered_map<std::string, bool> GLTFLoader::supported_extensions = {
+    {KHR_LIGHTS_PUNCTUAL_EXTENSION, false}};
+
 GLTFLoader::GLTFLoader(Device &device) :
     device{device}
 {
@@ -378,6 +382,38 @@ sg::Scene GLTFLoader::load_scene()
 	auto scene = sg::Scene();
 
 	scene.set_name("gltf_scene");
+
+	// Check extensions
+	for (auto &used_extension : model.extensionsUsed)
+	{
+		auto it = supported_extensions.find(used_extension);
+
+		// Check if extension isn't supported by the GLTFLoader
+		if (it == supported_extensions.end())
+		{
+			// If extension is required then we shouldn't allow the scene to be loaded
+			if (std::find(model.extensionsRequired.begin(), model.extensionsRequired.end(), used_extension) != model.extensionsRequired.end())
+			{
+				throw std::runtime_error("Cannot load glTF file. Contains a required unsupported extension: " + used_extension);
+			}
+			else
+			{
+				// Otherwise, if extension isn't required (but is in the file) then print a warning to the user
+				LOGW("glTF file contains an unsupported extension, unexpected results may occur: {}", used_extension);
+			}
+		}
+		else
+		{
+			// Extension is supported, so enable it
+			LOGI("glTF file contains extension: {}", used_extension);
+			it->second = true;
+		}
+	}
+
+	// Load lights
+	std::vector<std::unique_ptr<sg::Light>> light_components = parse_khr_lights_punctual();
+
+	scene.set_components(std::move(light_components));
 
 	// Load samplers
 	std::vector<std::unique_ptr<sg::Sampler>>
@@ -669,6 +705,16 @@ sg::Scene GLTFLoader::load_scene()
 			camera->set_node(*node);
 		}
 
+		if (auto extension = get_extension(gltf_node.extensions, KHR_LIGHTS_PUNCTUAL_EXTENSION))
+		{
+			auto lights = scene.get_components<sg::Light>();
+			auto light  = lights.at(static_cast<size_t>(extension->Get("light").Get<int>()));
+
+			node->set_component(*light);
+
+			light->set_node(*node);
+		}
+
 		nodes.push_back(std::move(node));
 	}
 
@@ -958,5 +1004,130 @@ std::unique_ptr<sg::Camera> GLTFLoader::create_default_camera()
 	gltf_camera.perspective.zfar        = 1000.0f;
 
 	return parse_camera(gltf_camera);
+}
+
+std::vector<std::unique_ptr<sg::Light>> GLTFLoader::parse_khr_lights_punctual()
+{
+	if (is_extension_enabled(KHR_LIGHTS_PUNCTUAL_EXTENSION) && model.extensions.at(KHR_LIGHTS_PUNCTUAL_EXTENSION).Has("lights"))
+	{
+		auto &khr_lights = model.extensions.at(KHR_LIGHTS_PUNCTUAL_EXTENSION).Get("lights");
+
+		std::vector<std::unique_ptr<sg::Light>> light_components(khr_lights.ArrayLen());
+
+		for (size_t light_index = 0; light_index < khr_lights.ArrayLen(); ++light_index)
+		{
+			auto &khr_light = khr_lights.Get(static_cast<int>(light_index));
+
+			// Spec states a light has to have a type to be valid
+			if (!khr_light.Has("type"))
+			{
+				LOGE("KHR_lights_punctual extension: light {} doesn't have a type!", light_index);
+				throw std::runtime_error("Couldn't load glTF file, KHR_lights_punctual extension is invalid");
+			}
+
+			auto light = std::make_unique<sg::Light>(khr_light.Get("name").Get<std::string>());
+
+			sg::LightType       type;
+			sg::LightProperties properties;
+
+			// Get type
+			auto &gltf_light_type = khr_light.Get("type").Get<std::string>();
+			if (gltf_light_type == "point")
+			{
+				type = sg::LightType::Point;
+			}
+			else if (gltf_light_type == "spot")
+			{
+				type = sg::LightType::Spot;
+			}
+			else if (gltf_light_type == "directional")
+			{
+				type = sg::LightType::Directional;
+			}
+			else
+			{
+				LOGE("KHR_lights_punctual extension: light type '{}' is invalid", gltf_light_type);
+				throw std::runtime_error("Couldn't load glTF file, KHR_lights_punctual extension is invalid");
+			}
+
+			// Get properties
+			if (khr_light.Has("color"))
+			{
+				properties.color = glm::vec3(
+				    static_cast<float>(khr_light.Get("color").Get(0).Get<double>()),
+				    static_cast<float>(khr_light.Get("color").Get(1).Get<double>()),
+				    static_cast<float>(khr_light.Get("color").Get(2).Get<double>()));
+			}
+			properties.intensity = static_cast<float>(khr_light.Get("intensity").Get<double>());
+			if (type != sg::LightType::Directional)
+			{
+				properties.range = static_cast<float>(khr_light.Get("range").Get<double>());
+				if (type != sg::LightType::Point)
+				{
+					if (!khr_light.Has("spot"))
+					{
+						LOGE("KHR_lights_punctual extension: spot light doesn't have a 'spot' property set", gltf_light_type);
+						throw std::runtime_error("Couldn't load glTF file, KHR_lights_punctual extension is invalid");
+					}
+
+					properties.inner_cone_angle = static_cast<float>(khr_light.Get("spot").Get("innerConeAngle").Get<double>());
+
+					if (khr_light.Get("spot").Has("outerConeAngle"))
+					{
+						properties.outer_cone_angle = static_cast<float>(khr_light.Get("spot").Get("outerConeAngle").Get<double>());
+					}
+					else
+					{
+						// Spec states default value is PI/4
+						properties.outer_cone_angle = glm::pi<float>() / 4.0f;
+					}
+				}
+			}
+			else if (type == sg::LightType::Directional || type == sg::LightType::Spot)
+			{
+				// The spec states that the light will inherit the transform of the node.
+				// The light's direction is defined as the 3-vector (0.0, 0.0, -1.0) and
+				// the rotation of the node orients the light accordingly.
+				properties.direction = glm::vec3(0.0f, 0.0f, -1.0f);
+			}
+
+			light->set_light_type(type);
+			light->set_properties(properties);
+
+			light_components[light_index] = std::move(light);
+		}
+
+		return light_components;
+	}
+	else
+	{
+		return {};
+	}
+}
+
+bool GLTFLoader::is_extension_enabled(const std::string &requested_extension)
+{
+	auto it = supported_extensions.find(requested_extension);
+	if (it != supported_extensions.end())
+	{
+		return it->second;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+tinygltf::Value *GLTFLoader::get_extension(tinygltf::ExtensionMap &tinygltf_extensions, const std::string &extension)
+{
+	auto it = tinygltf_extensions.find(extension);
+	if (it != tinygltf_extensions.end())
+	{
+		return &it->second;
+	}
+	else
+	{
+		return nullptr;
+	}
 }
 }        // namespace vkb
