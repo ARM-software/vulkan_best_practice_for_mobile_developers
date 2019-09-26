@@ -45,6 +45,11 @@ void RenderPipeline::add_subpass(std::unique_ptr<Subpass> &&subpass)
 	subpasses.emplace_back(std::move(subpass));
 }
 
+std::vector<std::unique_ptr<Subpass>> &RenderPipeline::get_subpasses()
+{
+	return subpasses;
+}
+
 const std::vector<LoadStoreInfo> &RenderPipeline::get_load_store() const
 {
 	return load_store;
@@ -79,12 +84,10 @@ void RenderPipeline::draw(CommandBuffer &command_buffer, RenderTarget &render_ta
 
 		if (i == 0)
 		{
-			// Begin render pass
-			command_buffer.begin_render_pass(render_target, load_store, clear_value, contents, subpasses);
+			command_buffer.begin_render_pass(render_target, load_store, clear_value, subpasses, contents);
 		}
 		else
 		{
-			// Start next subpass
 			command_buffer.next_subpass();
 		}
 

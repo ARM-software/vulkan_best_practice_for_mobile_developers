@@ -36,9 +36,11 @@ RenderPassesSample::RenderPassesSample()
 {
 	auto &config = get_configuration();
 
+	config.insert<vkb::BoolSetting>(0, cmd_clear, false);
 	config.insert<vkb::IntSetting>(0, load.value, 0);
 	config.insert<vkb::IntSetting>(0, store.value, 0);
 
+	config.insert<vkb::BoolSetting>(1, cmd_clear, true);
 	config.insert<vkb::IntSetting>(1, load.value, 1);
 	config.insert<vkb::IntSetting>(1, store.value, 1);
 }
@@ -58,7 +60,7 @@ void RenderPassesSample::reset_stats_view()
 
 void RenderPassesSample::draw_gui()
 {
-	auto lines = radio_buttons.size();
+	auto lines = radio_buttons.size() + 1 /* checkbox */;
 	if (camera->get_aspect_ratio() < 1.0f)
 	{
 		// In portrait, show buttons below heading
@@ -67,6 +69,9 @@ void RenderPassesSample::draw_gui()
 
 	gui->show_options_window(
 	    /* body = */ [this, lines]() {
+		    // Checkbox vkCmdClear
+		    ImGui::Checkbox("Use vkCmdClearAttachments (color)", &cmd_clear);
+
 		    // For every option set
 		    for (size_t i = 0; i < radio_buttons.size(); ++i)
 		    {
@@ -107,7 +112,9 @@ bool RenderPassesSample::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	auto enabled_stats = {vkb::StatIndex::l2_ext_read_bytes, vkb::StatIndex::l2_ext_write_bytes};
+	auto enabled_stats = {vkb::StatIndex::fragment_cycles,
+	                      vkb::StatIndex::l2_ext_read_bytes,
+	                      vkb::StatIndex::l2_ext_write_bytes};
 
 	stats = std::make_unique<vkb::Stats>(enabled_stats);
 
@@ -157,20 +164,29 @@ void RenderPassesSample::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb
 	scissor.extent = extent;
 	command_buffer.set_scissor(0, {scissor});
 
-	render(command_buffer);
+	auto &subpasses = render_pipeline->get_subpasses();
+	command_buffer.begin_render_pass(render_target, load_store, render_pipeline->get_clear_value(), subpasses);
+
+	if (cmd_clear)
+	{
+		VkClearAttachment attachment = {};
+		// Clear color only
+		attachment.aspectMask      = VK_IMAGE_ASPECT_COLOR_BIT;
+		attachment.clearValue      = {0, 0, 0};
+		attachment.colorAttachment = 0;
+
+		VkClearRect rect = {};
+		rect.layerCount  = 1;
+		rect.rect.extent = extent;
+
+		command_buffer.clear(attachment, rect);
+	}
+
+	subpasses.at(0)->draw(command_buffer);
 
 	gui->draw(command_buffer);
 
 	command_buffer.end_render_pass();
-}
-
-void RenderPassesSample::update(float delta_time)
-{
-	VulkanSample::update(delta_time);
-
-	// Use an exponential moving average to smooth values
-	const float alpha = 0.01f;
-	frame_rate        = (1.0f / delta_time) * alpha + frame_rate * (1.0f - alpha);
 }
 
 std::unique_ptr<vkb::VulkanSample> create_render_passes()

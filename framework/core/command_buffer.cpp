@@ -79,6 +79,11 @@ bool CommandBuffer::is_recording() const
 	return state == State::Recording;
 }
 
+void CommandBuffer::clear(VkClearAttachment attachment, VkClearRect rect)
+{
+	vkCmdClearAttachments(handle, 1, &attachment, 1, &rect);
+}
+
 VkResult CommandBuffer::begin(VkCommandBufferUsageFlags flags, CommandBuffer *primary_cmd_buf)
 {
 	assert(!is_recording() && "Command buffer is already recording, please call end before beginning again");
@@ -134,7 +139,7 @@ VkResult CommandBuffer::end()
 	return VK_SUCCESS;
 }
 
-void CommandBuffer::begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values, VkSubpassContents contents, const std::vector<std::unique_ptr<Subpass>> &subpasses)
+void CommandBuffer::begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values, const std::vector<std::unique_ptr<Subpass>> &subpasses, VkSubpassContents contents)
 {
 	// Reset state
 	pipeline_state.reset();
@@ -142,6 +147,7 @@ void CommandBuffer::begin_render_pass(const RenderTarget &render_target, const s
 	descriptor_set_layout_state.clear();
 
 	// Create render pass
+	assert(subpasses.size() > 0 && "Cannot create a render pass without any subpass");
 	std::vector<SubpassInfo> subpass_infos(subpasses.size());
 	auto                     subpass_info_it = subpass_infos.begin();
 	for (auto &subpass : subpasses)

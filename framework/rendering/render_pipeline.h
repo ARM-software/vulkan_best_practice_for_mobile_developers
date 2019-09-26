@@ -78,6 +78,8 @@ class RenderPipeline
 	 */
 	void add_subpass(std::unique_ptr<Subpass> &&subpass);
 
+	std::vector<std::unique_ptr<Subpass>> &get_subpasses();
+
 	/**
 	 * @brief Record draw commands for each Subpass
 	 */
