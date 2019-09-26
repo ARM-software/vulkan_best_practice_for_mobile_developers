@@ -29,13 +29,8 @@
 #include <glm/gtx/string_cast.hpp>
 #include <spdlog/fmt/fmt.h>
 
+#include "utils/graph/node.h"
 #include "utils/strings.h"
-
-template <typename T>
-std::uintptr_t handle_to_uintptr_t(T handle)
-{
-	return reinterpret_cast<std::uintptr_t>(reinterpret_cast<void *>(handle));
-}
 
 namespace vkb
 {
@@ -73,6 +68,7 @@ std::unordered_map<FrameworkNodeType, std::string> FrameworkNode::framework_node
     {FrameworkNodeType::ColorBlendState, "ColorBlendState"},
     {FrameworkNodeType::ColorBlendAttachmentState, "ColorBlendAttachmentState"},
     {FrameworkNodeType::VkImage, "VkImage"},
+    {FrameworkNodeType::VkImageView, "VkImageView"},
     {FrameworkNodeType::Device, "Device"}};
 
 template <typename T>
@@ -248,7 +244,7 @@ FrameworkNode::FrameworkNode(size_t id, const DescriptorSetLayout &descriptor_se
 	}
 
 	attributes["data"] = nlohmann::json{{"hash", hash},
-	                                    {"handle", handle_to_uintptr_t(descriptor_set_layout.get_handle())},
+	                                    {"handle", Node::handle_to_uintptr_t(descriptor_set_layout.get_handle())},
 	                                    {"VkDescriptorSetLayoutBinding", bindings}};
 
 	attributes["group"] = "Core";
@@ -260,7 +256,7 @@ FrameworkNode::FrameworkNode(size_t id, const Framebuffer &framebuffer, size_t h
 	attributes["type"] = FrameworkNode::get_type_str(FrameworkNodeType::Framebuffer);
 
 	attributes["data"] = nlohmann::json{{"hash", hash},
-	                                    {"handle", handle_to_uintptr_t(framebuffer.get_handle())}};
+	                                    {"handle", Node::handle_to_uintptr_t(framebuffer.get_handle())}};
 
 	attributes["group"] = "Core";
 }
@@ -271,7 +267,7 @@ FrameworkNode::FrameworkNode(size_t id, const RenderPass &render_pass, size_t ha
 	attributes["type"] = FrameworkNode::get_type_str(FrameworkNodeType::RenderPass);
 
 	attributes["data"] = nlohmann::json{{"hash", hash},
-	                                    {"handle", handle_to_uintptr_t(render_pass.get_handle())}};
+	                                    {"handle", Node::handle_to_uintptr_t(render_pass.get_handle())}};
 
 	attributes["group"] = "Rendering";
 }
@@ -281,7 +277,7 @@ FrameworkNode::FrameworkNode(size_t id, const RenderPass &render_pass)
 	attributes["id"]   = id;
 	attributes["type"] = FrameworkNode::get_type_str(FrameworkNodeType::RenderPass);
 
-	attributes["data"] = nlohmann::json{{"handle", handle_to_uintptr_t(render_pass.get_handle())}};
+	attributes["data"] = nlohmann::json{{"handle", Node::handle_to_uintptr_t(render_pass.get_handle())}};
 
 	attributes["group"] = "Rendering";
 }
@@ -333,7 +329,7 @@ FrameworkNode::FrameworkNode(size_t id, const PipelineLayout &pipeline_layout, s
 	attributes["type"] = FrameworkNode::get_type_str(FrameworkNodeType::PipelineLayout);
 
 	attributes["data"] = nlohmann::json{{"hash", hash},
-	                                    {"handle", handle_to_uintptr_t(pipeline_layout.get_handle())}};
+	                                    {"handle", Node::handle_to_uintptr_t(pipeline_layout.get_handle())}};
 
 	attributes["group"] = "Core";
 }
@@ -343,7 +339,7 @@ FrameworkNode::FrameworkNode(size_t id, const PipelineLayout &pipeline_layout)
 	attributes["id"]   = id;
 	attributes["type"] = FrameworkNode::get_type_str(FrameworkNodeType::PipelineLayout);
 
-	attributes["data"] = nlohmann::json{{"handle", handle_to_uintptr_t(pipeline_layout.get_handle())}};
+	attributes["data"] = nlohmann::json{{"handle", Node::handle_to_uintptr_t(pipeline_layout.get_handle())}};
 
 	attributes["group"] = "Core";
 }
@@ -354,7 +350,7 @@ FrameworkNode::FrameworkNode(size_t id, const GraphicsPipeline &graphics_pipelin
 	attributes["type"] = FrameworkNode::get_type_str(FrameworkNodeType::GraphicsPipeline);
 
 	attributes["data"] = nlohmann::json{{"hash", hash},
-	                                    {"handle", handle_to_uintptr_t(graphics_pipeline.get_handle())}};
+	                                    {"handle", Node::handle_to_uintptr_t(graphics_pipeline.get_handle())}};
 
 	attributes["group"] = "Core";
 }
@@ -364,7 +360,7 @@ FrameworkNode::FrameworkNode(size_t id, const ComputePipeline &compute_pipeline,
 	attributes["type"] = FrameworkNode::get_type_str(FrameworkNodeType::ComputePipeline);
 
 	attributes["data"] = nlohmann::json{{"hash", hash},
-	                                    {"handle", handle_to_uintptr_t(compute_pipeline.get_handle())}};
+	                                    {"handle", Node::handle_to_uintptr_t(compute_pipeline.get_handle())}};
 
 	attributes["group"] = "Core";
 }
@@ -386,7 +382,7 @@ FrameworkNode::FrameworkNode(size_t id, const DescriptorSet &descriptor_set, siz
 	attributes["cid"]  = "ds";
 
 	attributes["data"] = nlohmann::json{{"hash", hash},
-	                                    {"handle", handle_to_uintptr_t(descriptor_set.get_handle())}};
+	                                    {"handle", Node::handle_to_uintptr_t(descriptor_set.get_handle())}};
 
 	attributes["group"] = "Core";
 }
@@ -564,14 +560,5 @@ FrameworkNode::FrameworkNode(size_t id, const Swapchain &swapchain)
 	attributes["group"] = "Core";
 }
 
-FrameworkNode::FrameworkNode(size_t id, const VkImage &image)
-{
-	attributes["id"]   = id;
-	attributes["type"] = FrameworkNode::get_type_str(FrameworkNodeType::VkImage);
-
-	attributes["data"] = nlohmann::json{{"VkImage", handle_to_uintptr_t(image)}};
-
-	attributes["group"] = "Vulkan";
-}
 }        // namespace utils
 }        // namespace vkb

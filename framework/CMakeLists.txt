@@ -213,12 +213,14 @@ set(UTIL_FILES
     utils/graph/graph.h
     utils/graph/nodes/framework.h
     utils/graph/nodes/scene.h
+    utils/graph/node.h
     utils/graphs.h
     utils/strings.h
     # Source Files
     utils/graph/graph.cpp
     utils/graph/nodes/framework.cpp
     utils/graph/nodes/scene.cpp
+    utils/graph/node.cpp
     utils/graphs.cpp
     utils/strings.cpp)
 
@@ -333,8 +335,7 @@ target_link_libraries(${PROJECT_NAME}
     glslang-default-resource-limits
     spdlog
     ctpl
-    docopt
-    nlohmann_json::nlohmann_json)
+    docopt)
 
 # Link platform specific libraries
 if(ANDROID)

@@ -25,9 +25,10 @@
 #include <iostream>
 #include <vector>
 
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 
 #include "common/error.h"
+#include "node.h"
 
 namespace vkb
 {
@@ -50,18 +51,10 @@ struct Edge
  * 
  * @tparam NodeType either FrameworkNode or SceneNode
  */
-template <class NodeType>
 class Graph
 {
   public:
-	Graph(const char *name_);
-
-	/**
-	 * @brief add a node to the graph and pass its id
-	 * All Node types must have at least two parameters: size_t id, T node
-	 * @param node 
-	 */
-	void add_node(NodeType node);
+	Graph(const char *name);
 
 	/**
 	 * @brief Create a node object
@@ -71,22 +64,40 @@ class Graph
 	 * @param args 
 	 * @return size_t id of the node in the graph
 	 */
-	template <typename T, typename... Args>
+	template <class NodeType, typename T, typename... Args>
 	size_t create_node(const T &node, Args... args)
 	{
-		const void *uid;
-		uid     = reinterpret_cast<const void *>(&node);
-		auto it = uids.find(uid);
-		if (it != uids.end())
+		const void *addr = reinterpret_cast<const void *>(&node);
+		const void *uid  = get_uid(addr);
+		if (!uid)
 		{
-			return it->second;
+			size_t id = new_id();
+			uids[uid] = id;
+			nodes[id] = std::make_unique<NodeType>(id, node, args...);
+			return id;
 		}
+		return reinterpret_cast<size_t>(addr);
+	}
 
-		size_t id = get_id();
-		uids[uid] = id;
-		nodes[id] = NodeType{id, node, args...};
+	size_t create_vk_image(const VkImage &image);
+
+	size_t create_vk_image_view(const VkImageView &image);
+
+	template <typename T>
+	size_t create_vk_node(const char *name, const T &handle)
+	{
+		size_t id = new_id();
+		nodes[id] = std::make_unique<Node>(id, name, "Vulkan", nlohmann::json{{name, Node::handle_to_uintptr_t(handle)}});
 		return id;
 	}
+
+	/**
+	 * @brief Get the uid of a node
+	 * 
+	 * @param addr 
+	 * @return const void* if null node doesnt exist
+	 */
+	const void *get_uid(const void *addr);
 
 	/**
 	 * @brief Add an edge to the graph
@@ -104,104 +115,18 @@ class Graph
 
 	/**
 	 * @brief Dump the graphs state to json in the given file name
-	 * @param file to dump to
+	 * @param file_name to dump to
 	 */
-	void dump_to_file(std::string file);
+	bool dump_to_file(std::string file_name);
 
-	size_t get_id();
+	size_t new_id();
 
   private:
-	size_t                                   next_id = 0;
-	std::vector<Edge>                        adj;
-	std::unordered_map<size_t, NodeType>     nodes;
-	std::unordered_map<const void *, size_t> uids;
-	std::string                              name;
+	size_t                                            next_id = 0;
+	std::vector<Edge>                                 adj;
+	std::unordered_map<size_t, std::unique_ptr<Node>> nodes;
+	std::unordered_map<const void *, size_t>          uids;
+	std::string                                       name;
 };
-
-template <class T>
-Graph<T>::Graph(const char *name_)
-{
-	name = name_;
-}
-
-template <class T>
-size_t Graph<T>::get_id()
-{
-	return next_id++;
-}
-
-template <class NodeType>
-void Graph<NodeType>::add_node(NodeType node)
-{
-	size_t id = get_id();
-	nodes.insert({id, {node}});
-}
-
-template <class NodeType>
-void Graph<NodeType>::add_edge(size_t from, size_t to)
-{
-	auto it = std::find_if(adj.begin(), adj.end(), [from, to](auto &e) -> bool { return e.from == from && e.to == to; });
-	if (it == adj.end())
-	{
-		adj.push_back({get_id(), from, to});
-	}
-}
-
-template <class NodeType>
-void Graph<NodeType>::remove_edge(size_t from, size_t to)
-{
-	auto it = std::find_if(adj.begin(), adj.end(), [from, to](auto &e) -> bool { return e.from == from && e.to == to; });
-	if (it != adj.end())
-	{
-		adj.erase(it);
-	}
-}
-
-template <class NodeType>
-void Graph<NodeType>::dump_to_file(std::string file)
-{
-	std::vector<nlohmann::json> edges;
-	for (auto &e : adj)
-	{
-		auto it = nodes.find(e.from);
-		if (it != nodes.end())
-		{
-			e.options["group"] = it->second.attributes["group"];
-		}
-		e.options["id"]     = e.id;
-		e.options["source"] = e.from;
-		e.options["target"] = e.to;
-		edges.push_back({{"data", e.options}});
-	}
-
-	std::vector<nlohmann::json> node_json;
-	auto                        it = nodes.begin();
-	while (it != nodes.end())
-	{
-		node_json.push_back(it->second.attributes);
-		it++;
-	}
-
-	nlohmann::json j = {
-	    {"name", name},
-	    {"nodes", node_json},
-	    {"edges", edges}};
-
-	std::ofstream o;
-
-	o.open(file, std::ios::out | std::ios::trunc);
-
-	if (o.good())
-	{
-		// Whitespace needed as last character is overritten on android causing the json to be corrupt
-		o << j << " ";
-	}
-	else
-	{
-		LOGE("Error outputting graph");
-	};
-
-	o.close();
-}
 }        // namespace utils
 }        // namespace vkb

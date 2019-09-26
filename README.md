@@ -137,11 +137,11 @@ This project has some third-party dependencies, each of which may have independe
   - [dear imgui shaders](https://github.com/SaschaWillems/Vulkan/tree/master/data/shaders/imgui): GLSL shaders for dear imgui
 - [HWCPipe](https://github.com/ARM-software/HWCPipe): Interface to mobile Hardware Counters
 - [KTX-Software](https://github.com/KhronosGroup/KTX-Software): Khronos Texture Library and Tools
-- [nlohmann json](https://github.com/nlohmann/json): C++ JSON Library
 - [spdlog](https://github.com/gabime/spdlog): Fast C++ logging library
 - [SPIRV-Cross](https://github.com/KhronosGroup/SPIRV-Cross): Parses and converts SPIR-V to other shader languages
 - [stb](https://github.com/nothings/stb): Single-file public domain (or MIT licensed) libraries
 - [tinygltf](https://github.com/syoyo/tinygltf): Header only C++11 tiny glTF 2.0 library
+  - [nlohmann json](https://github.com/nlohmann/json): C++ JSON Library (included by [tinygltf](https://github.com/syoyo/tinygltf))
 - [vma](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator): Vulkan Memory Allocator
 - [volk](https://github.com/zeux/volk): Meta loader for Vulkan API
 - [vulkan](https://github.com/KhronosGroup/Vulkan-Docs): Sources for the formal documentation of the Vulkan API

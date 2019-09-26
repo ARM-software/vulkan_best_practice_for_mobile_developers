@@ -182,5 +182,35 @@ void write_image(const uint8_t *data, const std::string &filename, const uint32_
 {
 	stbi_write_png((path::get(path::Type::Screenshots) + filename + ".png").c_str(), width, height, components, data, row_stride);
 }
+
+bool write_json(nlohmann::json &data, const std::string &filename)
+{
+	std::stringstream json;
+
+	// Whitespace needed as last character is overwritten on android causing the json to be corrupt
+	json << data << " ";
+
+	if (!nlohmann::json::accept(json.str()))
+	{
+		LOGE("Invalid JSON string");
+		return false;
+	}
+
+	std::ofstream out_stream;
+	out_stream.open(fs::path::get(vkb::fs::path::Type::Graphs) + filename, std::ios::out | std::ios::trunc);
+
+	if (out_stream.good())
+	{
+		out_stream << json.str();
+	}
+	else
+	{
+		LOGE("Could not load JSON file " + filename);
+		return false;
+	}
+
+	out_stream.close();
+	return true;
+}
 }        // namespace fs
 }        // namespace vkb

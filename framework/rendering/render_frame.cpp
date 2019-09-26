@@ -36,7 +36,7 @@ RenderFrame::RenderFrame(Device &device, RenderTarget &&render_target, size_t th
 	for (auto &usage : supported_usages)
 	{
 		std::vector<std::pair<BufferPool, BufferBlock *>> usage_buffer_pools;
-		for (int i = 0; i < thread_count; i++)
+		for (size_t i = 0; i < thread_count; i++)
 		{
 			usage_buffer_pools.push_back(std::make_pair(BufferPool{device, BUFFER_POOL_BLOCK_SIZE * 1024, usage}, nullptr));
 		}
@@ -49,7 +49,7 @@ RenderFrame::RenderFrame(Device &device, RenderTarget &&render_target, size_t th
 		}
 	}
 
-	for (int i = 0; i < thread_count; i++)
+	for (size_t i = 0; i < thread_count; i++)
 	{
 		descriptor_pools.push_back(std::make_unique<std::unordered_map<std::size_t, DescriptorPool>>());
 		descriptor_sets.push_back(std::make_unique<std::unordered_map<std::size_t, DescriptorSet>>());
@@ -112,7 +112,7 @@ std::vector<std::unique_ptr<CommandPool>> &RenderFrame::get_command_pools(const 
 	}
 
 	std::vector<std::unique_ptr<CommandPool>> queue_command_pools;
-	for (int i = 0; i < thread_count; i++)
+	for (size_t i = 0; i < thread_count; i++)
 	{
 		queue_command_pools.push_back(std::make_unique<CommandPool>(device, queue.get_family_index(), this, i, reset_mode));
 	}

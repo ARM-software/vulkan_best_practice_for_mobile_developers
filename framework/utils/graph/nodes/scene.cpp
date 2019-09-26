@@ -27,6 +27,7 @@
 #include <type_traits>
 
 #include <glm/gtx/string_cast.hpp>
+#include <json.hpp>
 #include <spdlog/fmt/fmt.h>
 
 #include "utils/strings.h"
@@ -35,12 +36,6 @@ namespace vkb
 {
 namespace utils
 {
-template <typename T>
-SceneNode::SceneNode(T data)
-{
-	attributes["data"] = data;
-}
-
 template <typename T>
 std::string SceneNode::get_id(SceneNodeType type, T value)
 {

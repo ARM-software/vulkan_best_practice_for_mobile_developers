@@ -26,9 +26,8 @@
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_map>
-#include <variant>
 
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 #include <spdlog/fmt/fmt.h>
 
 #include "core/device.h"
@@ -41,6 +40,7 @@
 #include "rendering/render_target.h"
 #include "resource_cache.h"
 #include "semaphore_pool.h"
+#include "utils/graph/node.h"
 
 namespace vkb
 {
@@ -79,7 +79,8 @@ enum class FrameworkNodeType
 	ColorBlendState,
 	ColorBlendAttachmentState,
 	VkImage,
-	Device
+	Device,
+	VkImageView
 };
 
 /**
@@ -87,7 +88,7 @@ enum class FrameworkNodeType
  * This structure allows for minimum code cluttering when using the graph api.
  * Note: if you want to add a new framework node definition to the graph it must also be defined here
  */
-class FrameworkNode
+class FrameworkNode : public Node
 {
 	enum class Group
 	{
@@ -133,14 +134,11 @@ class FrameworkNode
 	FrameworkNode(size_t id, const DepthStencilState &depth_stencil_state);
 	FrameworkNode(size_t id, const ColorBlendState &color_blend_state);
 	FrameworkNode(size_t id, const ColorBlendAttachmentState &state);
-	FrameworkNode(size_t id, const VkImage &image);
 
 	template <typename T>
 	static std::string get_id(FrameworkNodeType type, T value);
 
 	static std::string get_type_str(FrameworkNodeType type);
-
-	nlohmann::json attributes;
 
   private:
 	static std::unordered_map<FrameworkNodeType, std::string> framework_node_type_strings;

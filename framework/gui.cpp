@@ -41,6 +41,7 @@ VKBP_ENABLE_WARNINGS()
 #include "imgui_internal.h"
 #include "platform/filesystem.h"
 #include "rendering/render_context.h"
+#include "timer.h"
 #include "utils/graphs.h"
 #include "vulkan_sample.h"
 
@@ -577,9 +578,41 @@ void Gui::show_debug_window(DebugInfo &debug_info, const ImVec2 &position)
 	ImGui::Columns(1);
 	ImGui::EndChild();
 
+	static Timer       timer;
+	static const char *message;
+
 	if (ImGui::Button("Save Debug Graphs"))
 	{
-		utils::debug_graphs(sample.get_render_context(), sample.get_scene());
+		if (utils::debug_graphs(sample.get_render_context(), sample.get_scene()))
+		{
+			message = "Graphs Saved!";
+		}
+		else
+		{
+			message = "Error outputting graphs!";
+		}
+
+		if (timer.is_running())
+		{
+			timer.lap();
+		}
+		else
+		{
+			timer.start();
+		}
+	}
+
+	if (timer.is_running())
+	{
+		if (timer.elapsed() > 2.0)
+		{
+			timer.stop();
+		}
+		else
+		{
+			ImGui::SameLine();
+			ImGui::Text("%s", message);
+		}
 	}
 
 	ImGui::PopFont();

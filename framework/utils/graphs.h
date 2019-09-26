@@ -27,7 +27,6 @@ namespace vkb
 {
 namespace utils
 {
-void debug_graphs(RenderContext &context, sg::Scene &scene);
-
+bool debug_graphs(RenderContext &context, sg::Scene &scene);
 }        // namespace utils
 }        // namespace vkb

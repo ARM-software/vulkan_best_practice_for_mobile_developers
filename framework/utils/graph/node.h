@@ -17,34 +17,28 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+#pragma once
 
-#include "timer.h"
+#include <json.hpp>
 
 namespace vkb
 {
-Timer::Timer() :
-    start_time{Clock::now()},
-    previous_tick{Clock::now()}
+namespace utils
 {
-}
+class Node
+{
+  public:
+	Node(){};
 
-void Timer::start()
-{
-	if (!running)
+	Node(size_t id, const char *type, const char *group, nlohmann::json data);
+
+	template <typename T>
+	static std::uintptr_t handle_to_uintptr_t(T handle)
 	{
-		running    = true;
-		start_time = Clock::now();
+		return reinterpret_cast<std::uintptr_t>(reinterpret_cast<void *>(handle));
 	}
-}
 
-void Timer::lap()
-{
-	lapping  = true;
-	lap_time = Clock::now();
-}
-
-bool Timer::is_running() const
-{
-	return running;
-}
+	nlohmann::json attributes;
+};
+}        // namespace utils
 }        // namespace vkb

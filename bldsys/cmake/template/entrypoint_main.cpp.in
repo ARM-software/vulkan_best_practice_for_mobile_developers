@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 #endif
 #endif
 
-#ifdef DEBUG
+#ifndef DEBUG
 	try
 	{
 #endif
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 		{
 			platform.terminate(vkb::ExitCode::UnableToRun);
 		}
-#ifdef DEBUG
+#ifndef DEBUG
 	}
 	catch (const std::exception &e)
 	{

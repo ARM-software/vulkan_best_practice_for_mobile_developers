@@ -25,9 +25,8 @@
 #include <string>
 #include <typeindex>
 #include <unordered_map>
-#include <variant>
 
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 #include <spdlog/fmt/fmt.h>
 
 #include "scene_graph/component.h"
@@ -38,6 +37,7 @@
 #include "scene_graph/components/transform.h"
 #include "scene_graph/node.h"
 #include "scene_graph/scene.h"
+#include "utils/graph/node.h"
 
 using namespace nlohmann;
 
@@ -62,7 +62,7 @@ enum class SceneNodeType
  * This structure allows for minimum code cluttering when using the graph api.
  * Note: if you want to add a new scene node definition to the graph it must also be defined here
  */
-class SceneNode
+class SceneNode : public Node
 {
   public:
 	enum class Group
@@ -74,9 +74,6 @@ class SceneNode
 
 	SceneNode()
 	{}
-
-	template <typename T>
-	SceneNode(T data);
 
 	SceneNode(size_t id, std::string text);
 
@@ -93,8 +90,6 @@ class SceneNode
 	static std::string get_id(SceneNodeType type, T value);
 
 	static std::string get_type_str(SceneNodeType type);
-
-	json attributes;
 
   private:
 	static std::unordered_map<SceneNodeType, std::string> SceneNodeTypeStrings;
