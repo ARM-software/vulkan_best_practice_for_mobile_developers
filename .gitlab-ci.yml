@@ -110,6 +110,7 @@ GenerateSample:
   script:
    - cd tests/generate_sample
    - python generate_sample_test.py
+  allow_failure: true
 
 SystemTest:
  stage: Test
