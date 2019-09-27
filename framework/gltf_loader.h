@@ -28,21 +28,28 @@
 #define TINYGLTF_NO_EXTERNAL_IMAGE
 #include <tiny_gltf.h>
 
-#include "core/device.h"
-#include "core/sampler.h"
-#include "scene_graph/components/camera.h"
-#include "scene_graph/components/image.h"
-#include "scene_graph/components/mesh.h"
-#include "scene_graph/components/pbr_material.h"
-#include "scene_graph/components/sampler.h"
-#include "scene_graph/components/sub_mesh.h"
-#include "scene_graph/components/texture.h"
-#include "scene_graph/node.h"
-#include "scene_graph/scene.h"
 #include "timer.h"
+
+#define KHR_LIGHTS_PUNCTUAL_EXTENSION "KHR_lights_punctual"
 
 namespace vkb
 {
+class Device;
+
+namespace sg
+{
+class Camera;
+class Image;
+class Light;
+class Mesh;
+class Node;
+class PBRMaterial;
+class Sampler;
+class Scene;
+class SubMesh;
+class Texture;
+}        // namespace sg
+
 /**
  * @brief Helper Function to change array type T to array type Y
  * Create a struct that can be used with std::transform so that we do not need to recreate lambda functions
@@ -66,6 +73,8 @@ class GLTFLoader
   public:
 	GLTFLoader(Device &device);
 
+	virtual ~GLTFLoader() = default;
+
 	std::unique_ptr<sg::Scene> read_scene_from_file(const std::string &file_name);
 
   protected:
@@ -74,8 +83,6 @@ class GLTFLoader
 	virtual std::unique_ptr<sg::Camera> parse_camera(const tinygltf::Camera &gltf_camera) const;
 
 	virtual std::unique_ptr<sg::Mesh> parse_mesh(const tinygltf::Mesh &gltf_mesh) const;
-
-	virtual std::unique_ptr<sg::SubMesh> parse_primitive(const tinygltf::Primitive &gltf_primitive) const;
 
 	virtual std::unique_ptr<sg::PBRMaterial> parse_material(const tinygltf::Material &gltf_material) const;
 
@@ -91,11 +98,34 @@ class GLTFLoader
 
 	virtual std::unique_ptr<sg::Camera> create_default_camera();
 
+	/**
+	 * @brief Parses and returns a list of scene graph lights from the KHR_lights_punctual extension
+	 */
+	std::vector<std::unique_ptr<sg::Light>> parse_khr_lights_punctual();
+
+	/**
+	 * @brief Checks if the GLTFLoader supports an extension, and that it is present in the glTF file
+	 * @param requested_extension The extension to check
+	 * @returns True if the loader knows how to load the extension and it is present in the glTF file, false if not
+	 */
+	bool is_extension_enabled(const std::string &requested_extension);
+
+	/**
+	 * @brief Finds whether an extension exists inside a tinygltf extension map and returns the result
+	 * @param tinygltf_extensions The extension map associated with a given tinygltf object
+	 * @param extension The extension to check
+	 * @returns A pointer to the value of the extension object, nullptr if it isn't found
+	 */
+	tinygltf::Value *get_extension(tinygltf::ExtensionMap &tinygltf_extensions, const std::string &extension);
+
 	Device &device;
 
 	tinygltf::Model model;
 
 	std::string model_path;
+
+	/// The extensions that the GLTFLoader can load mapped to whether they should be enabled or not
+	static std::unordered_map<std::string, bool> supported_extensions;
 
   private:
 	sg::Scene load_scene();

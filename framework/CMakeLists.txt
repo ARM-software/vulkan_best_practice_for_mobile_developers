@@ -17,13 +17,13 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
-cmake_minimum_required(VERSION 3.8)
+
+cmake_minimum_required(VERSION 3.10)
 
 project(framework LANGUAGES C CXX)
 
 set(FRAMEWORK_FILES
     # Header Files
-    utils.h
     gui.h
     stats.h
     glsl_compiler.h
@@ -33,8 +33,6 @@ set(FRAMEWORK_FILES
     debug_info.h
     fence_pool.h
     semaphore_pool.h
-    command_record.h
-    command_replay.h
     resource_binding_state.h
     resource_cache.h
     resource_record.h
@@ -42,7 +40,6 @@ set(FRAMEWORK_FILES
     vulkan_sample.h
     timer.h
     # Source Files
-    utils.cpp
     gui.cpp
     stats.cpp
     glsl_compiler.cpp
@@ -52,8 +49,6 @@ set(FRAMEWORK_FILES
     buffer_pool.cpp
     fence_pool.cpp
     semaphore_pool.cpp
-    command_record.cpp
-    command_replay.cpp
     resource_binding_state.cpp
     resource_cache.cpp
     resource_record.cpp
@@ -67,9 +62,11 @@ set(COMMON_FILES
     common/logging.h
     common/helpers.h
     common/error.h
+    common/utils.h
     # Source Files
     common/error.cpp
-    common/vk_common.cpp)
+    common/vk_common.cpp
+    common/utils.cpp)
 
 set(RENDERING_FILES
     # Header files
@@ -113,6 +110,7 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/camera.h
     scene_graph/components/perspective_camera.h
     scene_graph/components/image.h
+    scene_graph/components/light.h
     scene_graph/components/material.h
     scene_graph/components/mesh.h
     scene_graph/components/pbr_material.h
@@ -128,6 +126,7 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/camera.cpp
     scene_graph/components/perspective_camera.cpp
     scene_graph/components/image.cpp
+    scene_graph/components/light.cpp
     scene_graph/components/material.cpp
     scene_graph/components/mesh.cpp
     scene_graph/components/pbr_material.cpp
@@ -163,6 +162,7 @@ set(CORE_FILES
     core/buffer.h
     core/image.h
     core/image_view.h
+    core/instance.h
     core/sampler.h
     core/framebuffer.h
     core/render_pass.h
@@ -182,6 +182,7 @@ set(CORE_FILES
     core/buffer.cpp
     core/image.cpp
     core/image_view.cpp
+    core/instance.cpp
     core/sampler.cpp
     core/framebuffer.cpp
     core/render_pass.cpp)
@@ -191,6 +192,9 @@ set(PLATFORM_FILES
     platform/application.h
     platform/options.h
     platform/platform.h
+    platform/window.h
+    platform/headless_window.h
+    platform/glfw_window.h
     platform/filesystem.h
     platform/input_events.h
     platform/configuration.h
@@ -198,51 +202,77 @@ set(PLATFORM_FILES
     platform/application.cpp
     platform/options.cpp
     platform/platform.cpp
+    platform/window.cpp
+    platform/headless_window.cpp
     platform/filesystem.cpp
     platform/input_events.cpp
     platform/configuration.cpp)
 
-# Add files based on platform
-if(ANDROID)
-    list(APPEND PLATFORM_FILES
-        # Header Files
-        platform/android/android_platform.h
-        # Source Files
-        platform/android/android_platform.cpp)
-else()
-    list(APPEND PLATFORM_FILES
-        # Header Files
-        platform/glfw_platform.h
-        # Source Files
-        platform/glfw_platform.cpp)
+set(UTIL_FILES
+    # Header Files
+    utils/graph/graph.h
+    utils/graph/nodes/framework.h
+    utils/graph/nodes/scene.h
+    utils/graph/node.h
+    utils/graphs.h
+    utils/strings.h
+    # Source Files
+    utils/graph/graph.cpp
+    utils/graph/nodes/framework.cpp
+    utils/graph/nodes/scene.cpp
+    utils/graph/node.cpp
+    utils/graphs.cpp
+    utils/strings.cpp)
 
-    if(WIN32)
-        list(APPEND PLATFORM_FILES
-        # Header Files
-        platform/windows/windows_platform.h
-        # Source Files
-        platform/windows/windows_platform.cpp)
-    else()
-        list(APPEND PLATFORM_FILES
-        # Header Files
-        platform/linux/linux_platform.h
-        # Source Files
-        platform/linux/linux_platform.cpp)
-    endif()
-endif()
+set(DESKTOP_FILES
+    # Header Files
+    platform/glfw_window.h
+    platform/desktop_platform.h
+    # Source Files
+    platform/glfw_window.cpp
+    platform/desktop_platform.cpp)
+
+set(ANDROID_FILES
+    # Header Files
+    platform/android/android_platform.h
+    platform/android/android_window.h
+    # Source Files
+    platform/android/android_platform.cpp
+    platform/android/android_window.cpp)
+
+set(WINDOWS_FILES
+    # Header Files
+    platform/windows/windows_platform.h
+    # Source Files
+    platform/windows/windows_platform.cpp)
+
+set(UNIX_FILES
+    # Header Files
+    platform/unix/unix_platform.h
+    # Source Files
+    platform/unix/unix_platform.cpp)
 
 source_group("\\" FILES ${FRAMEWORK_FILES})
 source_group("common\\" FILES ${COMMON_FILES})
 source_group("platform\\" FILES ${PLATFORM_FILES})
+source_group("platform\\" FILES ${DESKTOP_FILES})
+source_group("platform\\windows" FILES ${WINDOWS_FILES})
+source_group("platform\\android" FILES ${ANDROID_FILES})
+source_group("platform\\unix" FILES ${UNIX_FILES})
 source_group("core\\" FILES ${CORE_FILES})
 source_group("rendering\\" FILES ${RENDERING_FILES})
 source_group("rendering\\subpasses" FILES ${RENDERING_SUBPASSES_FILES})
 source_group("scene_graph\\" FILES ${SCENE_GRAPH_FILES})
 source_group("scene_graph\\components\\" FILES ${SCENE_GRAPH_COMPONENT_FILES})
 source_group("scene_graph\\scripts\\" FILES ${SCENE_GRAPH_SCRIPTS_FILES})
+source_group("utils\\" FILES ${UTIL_FILES})
 
 set(PROJECT_FILES
     ${PLATFORM_FILES}
+    ${DESKTOP_FILES}
+    ${ANDROID_FILES}
+    ${WINDOWS_FILES}
+    ${UNIX_FILES}
     ${COMMON_FILES}
     ${FRAMEWORK_FILES}
     ${CORE_FILES}
@@ -250,7 +280,21 @@ set(PROJECT_FILES
     ${RENDERING_SUBPASSES_FILES}
     ${SCENE_GRAPH_FILES}
     ${SCENE_GRAPH_COMPONENT_FILES}
-    ${SCENE_GRAPH_SCRIPTS_FILES})
+    ${SCENE_GRAPH_SCRIPTS_FILES}
+    ${UTIL_FILES})
+	
+# Disable compilation on certain files depending on platform
+if(ANDROID)
+    set_source_files_properties(${DESKTOP_FILES} PROPERTIES HEADER_FILE_ONLY TRUE)
+    set_source_files_properties(${WINDOWS_FILES} PROPERTIES HEADER_FILE_ONLY TRUE)
+    set_source_files_properties(${UNIX_FILES} PROPERTIES HEADER_FILE_ONLY TRUE)
+elseif(WIN32)
+    set_source_files_properties(${ANDROID_FILES} PROPERTIES HEADER_FILE_ONLY TRUE)
+    set_source_files_properties(${UNIX_FILES} PROPERTIES HEADER_FILE_ONLY TRUE)
+elseif(UNIX)
+    set_source_files_properties(${ANDROID_FILES} PROPERTIES HEADER_FILE_ONLY TRUE)
+    set_source_files_properties(${WINDOWS_FILES} PROPERTIES HEADER_FILE_ONLY TRUE)
+endif()
 
 add_library(${PROJECT_NAME} STATIC ${PROJECT_FILES})
 

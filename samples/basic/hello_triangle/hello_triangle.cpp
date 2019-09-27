@@ -650,7 +650,7 @@ VkShaderModule HelloTriangle::load_shader_module(Context &context, const char *p
 {
 	vkb::GLSLCompiler glsl_compiler;
 
-	auto buffer = vkb::fs::read_asset(path);
+	auto buffer = vkb::fs::read_shader(path);
 
 	std::string file_ext = path;
 
@@ -733,13 +733,13 @@ void HelloTriangle::init_pipeline(Context &context)
 	// Vertex stage of the pipeline
 	shader_stages[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stages[0].stage  = VK_SHADER_STAGE_VERTEX_BIT;
-	shader_stages[0].module = load_shader_module(context, "shaders/triangle.vert");
+	shader_stages[0].module = load_shader_module(context, "triangle.vert");
 	shader_stages[0].pName  = "main";
 
 	// Fragment stage of the pipeline
 	shader_stages[1].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stages[1].stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
-	shader_stages[1].module = load_shader_module(context, "shaders/triangle.frag");
+	shader_stages[1].module = load_shader_module(context, "triangle.frag");
 	shader_stages[1].pName  = "main";
 
 	VkGraphicsPipelineCreateInfo pipe{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
@@ -1056,7 +1056,7 @@ bool HelloTriangle::prepare(vkb::Platform &platform)
 {
 	init_instance(context, {VK_KHR_SURFACE_EXTENSION_NAME}, {});
 
-	context.surface = platform.create_surface(context.instance);
+	context.surface = platform.get_window().create_surface(context.instance);
 
 	init_device(context, {"VK_KHR_swapchain"});
 

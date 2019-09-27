@@ -104,3 +104,28 @@ function(add_android_package_project)
             ${TARGET_DEPENDS})
 
 endfunction()
+
+function(android_sync_folder)
+    set(options)
+    set(oneValueArgs PATH)
+    set(multiValueArgs)
+
+    cmake_parse_arguments(PARSE_ARGV 0 TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}")
+    get_filename_component(FOLDER_NAME "${TARGET_PATH}" NAME)
+
+    set(SYNC_COMMAND ${CMAKE_COMMAND}
+            -DCMAKE_MODULE_PATH=${CMAKE_MODULE_PATH}
+            -DFOLDER_DIR=${TARGET_PATH}/.
+            -DDEVICE_DIR=/sdcard/Android/data/com.arm.${PROJECT_NAME}/files/${FOLDER_NAME}/
+            -P "${SCRIPT_DIR}/android_sync_folder.cmake")
+
+    add_custom_target(
+            sync.${FOLDER_NAME}.stamp
+            COMMAND
+            ${SYNC_COMMAND}
+            COMMENT
+            "Update ${FOLDER_NAME} in external storage"
+            VERBATIM)
+
+    add_dependencies(${PROJECT_NAME} sync.${FOLDER_NAME}.stamp)
+endfunction()

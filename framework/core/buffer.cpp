@@ -30,25 +30,21 @@ Buffer::Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usag
     device{device},
     size{size}
 {
+	assert(((flags & VMA_ALLOCATION_CREATE_MAPPED_BIT) == 0) && "Buffer memory should be mapped explicitly outside the constructor");
+
 	VkBufferCreateInfo buffer_info{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
 	buffer_info.usage = buffer_usage;
 	buffer_info.size  = size;
 
 	VmaAllocationCreateInfo memory_info{};
-	memory_info.usage = memory_usage;
 	memory_info.flags = flags;
+	memory_info.usage = memory_usage;
 
 	VmaAllocationInfo alloc_info{};
 	auto              result = vmaCreateBuffer(device.get_memory_allocator(),
                                   &buffer_info, &memory_info,
                                   &handle, &memory,
                                   &alloc_info);
-
-	if (flags & VMA_ALLOCATION_CREATE_MAPPED_BIT)
-	{
-		// No need to unmap in this case
-		mapped_data = static_cast<uint8_t *>(alloc_info.pMappedData);
-	}
 
 	if (result != VK_SUCCESS)
 	{
@@ -110,11 +106,6 @@ uint8_t *Buffer::map()
 	return mapped_data;
 }
 
-void Buffer::flush() const
-{
-	vmaFlushAllocation(device.get_memory_allocator(), memory, 0, size);
-}
-
 void Buffer::unmap()
 {
 	if (mapped)
@@ -123,6 +114,11 @@ void Buffer::unmap()
 		mapped_data = nullptr;
 		mapped      = false;
 	}
+}
+
+void Buffer::flush()
+{
+	vmaFlushAllocation(device.get_memory_allocator(), memory, 0, size);
 }
 
 void Buffer::update(const std::vector<uint8_t> &data, size_t offset)
@@ -135,9 +131,7 @@ void Buffer::update(const uint8_t *src, const size_t size, const size_t offset)
 	map();
 	std::copy(src, src + size, mapped_data + offset);
 	flush();
-#ifdef VK_USE_PLATFORM_MACOS_MVK
-	unmap();        // Mac MoltenVK requires unmapping
-#endif              // VK_USE_PLATFORM_MACOS_MVK
+	unmap();        // Workaround for Mac MoltenVK requiring unmapping (https://github.com/KhronosGroup/MoltenVK/issues/175)
 }
 
 }        // namespace core

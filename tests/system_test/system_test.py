@@ -31,7 +31,7 @@ test_desktop      = True
 test_android      = True
 comparison_metric = "MAE"
 current_dir       = os.getcwd()
-script_path         = os.path.dirname(os.path.realpath(__file__))
+script_path       = os.path.dirname(os.path.realpath(__file__))
 root_path         = os.path.join(script_path, "../../")
 build_path        = ""
 build_config      = ""
@@ -41,7 +41,7 @@ archive_path      = os.path.join(script_path, "artifacts/")
 image_ext         = ".png"
 android_timeout   = 60 # How long in seconds should we wait before timing out on Android
 check_step        = 5
-threshold         = 0.9998 # How similar the images are allowed to be before they pass
+threshold         = 0.999 # How similar the images are allowed to be before they pass
 
 class Subtest:
     result = False
@@ -55,9 +55,9 @@ class Subtest:
     def run(self, application_path):
         result = True
         path = root_path + application_path
-        arguments = ["--hide", "--test", "{}".format(self.test_name)]
+        arguments = ["--test", "{}".format(self.test_name), "--headless"]
         try:
-            subprocess.run(path + " " + " ".join(arguments), cwd=root_path)
+            subprocess.run([path] + arguments, cwd=root_path)
         except FileNotFoundError:
             print("\t\t\t(Error) Couldn't find application ({})".format(path))
             result = False
@@ -170,7 +170,7 @@ def compare(metric, base_image, test_image, diff_image = "null:"):
     """
     output = ""
     try:
-        output = subprocess.check_output([get_command("magick"), "compare", "-metric", metric, base_image, test_image, diff_image], stderr=subprocess.STDOUT, shell=True)
+        output = subprocess.check_output([get_command("magick"), "compare", "-metric", metric, base_image, test_image, diff_image], stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         output = e.output
         pass

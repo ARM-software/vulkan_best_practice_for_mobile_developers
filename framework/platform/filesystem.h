@@ -28,7 +28,11 @@
 #include <unordered_map>
 #include <vector>
 
-namespace vkb::fs
+#include <json.hpp>
+
+namespace vkb
+{
+namespace fs
 {
 namespace path
 {
@@ -36,9 +40,11 @@ enum Type
 {
 	//Relative paths
 	Assets,
+	Shaders,
 	Storage,
 	Screenshots,
 	Logs,
+	Graphs,
 	/* NewFolder */
 	TotalRelativePathTypes,
 
@@ -90,6 +96,14 @@ void create_path(const std::string &root, const std::string &path);
 std::vector<uint8_t> read_asset(const std::string &filename, const uint32_t count = 0);
 
 /**
+ * @brief Helper to read a shader file into a byte-array
+ *
+ * @param filename The path to the file (relative to the assets directory)
+ * @return A vector filled with data read from the file
+ */
+std::vector<uint8_t> read_shader(const std::string &filename);
+
+/**
  * @brief Helper to read a temporary file into a byte-array
  *
  * @param filename The path to the file (relative to the temporary storage directory)
@@ -120,4 +134,13 @@ void write_temp(const std::vector<uint8_t> &data, const std::string &filename, c
  * @param row_stride The stride in bytes of a row of pixels
  */
 void write_image(const uint8_t *data, const std::string &filename, const uint32_t width, const uint32_t height, const uint32_t components, const uint32_t row_stride);
-}        // namespace vkb::fs
+
+/**
+ * @brief Helper to output a json graph
+ * 
+ * @param data A json object
+ * @param filename The name of the file
+ */
+bool write_json(nlohmann::json &data, const std::string &filename);
+}        // namespace fs
+}        // namespace vkb

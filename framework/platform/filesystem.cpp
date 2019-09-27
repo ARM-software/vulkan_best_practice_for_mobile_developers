@@ -29,14 +29,18 @@ VKBP_ENABLE_WARNINGS()
 
 #include "platform/platform.h"
 
-namespace vkb::fs
+namespace vkb
+{
+namespace fs
 {
 namespace path
 {
 const std::unordered_map<Type, std::string> relative_paths = {{Type::Assets, "assets/"},
+                                                              {Type::Shaders, "shaders/"},
                                                               {Type::Storage, "output/"},
                                                               {Type::Screenshots, "output/images/"},
-                                                              {Type::Logs, "output/logs/"}};
+                                                              {Type::Logs, "output/logs/"},
+                                                              {Type::Graphs, "output/graphs/"}};
 
 const std::string get(const Type type)
 {
@@ -159,6 +163,11 @@ std::vector<uint8_t> read_asset(const std::string &filename, const uint32_t coun
 	return read_binary_file(path::get(path::Type::Assets) + filename, count);
 }
 
+std::vector<uint8_t> read_shader(const std::string &filename)
+{
+	return read_binary_file(path::get(path::Type::Shaders) + filename, 0);
+}
+
 std::vector<uint8_t> read_temp(const std::string &filename, const uint32_t count)
 {
 	return read_binary_file(path::get(path::Type::Temp) + filename, count);
@@ -173,4 +182,35 @@ void write_image(const uint8_t *data, const std::string &filename, const uint32_
 {
 	stbi_write_png((path::get(path::Type::Screenshots) + filename + ".png").c_str(), width, height, components, data, row_stride);
 }
-}        // namespace vkb::fs
+
+bool write_json(nlohmann::json &data, const std::string &filename)
+{
+	std::stringstream json;
+
+	// Whitespace needed as last character is overwritten on android causing the json to be corrupt
+	json << data << " ";
+
+	if (!nlohmann::json::accept(json.str()))
+	{
+		LOGE("Invalid JSON string");
+		return false;
+	}
+
+	std::ofstream out_stream;
+	out_stream.open(fs::path::get(vkb::fs::path::Type::Graphs) + filename, std::ios::out | std::ios::trunc);
+
+	if (out_stream.good())
+	{
+		out_stream << json.str();
+	}
+	else
+	{
+		LOGE("Could not load JSON file " + filename);
+		return false;
+	}
+
+	out_stream.close();
+	return true;
+}
+}        // namespace fs
+}        // namespace vkb

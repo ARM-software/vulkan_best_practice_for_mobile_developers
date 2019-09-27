@@ -20,6 +20,8 @@
 
 #include "rendering/render_target.h"
 
+#include "core/device.h"
+
 namespace vkb
 {
 namespace
@@ -57,11 +59,18 @@ RenderTarget &RenderTarget::operator=(RenderTarget &&other) noexcept
 	if (this != &other)
 	{
 		assert(&device == &other.device && "Cannot move assign with a render target created with a different device");
-		extent             = std::move(other.extent);
-		images             = std::move(other.images);
-		views              = std::move(other.views);
-		attachments        = std::move(other.attachments);
-		output_attachments = std::move(other.output_attachments);
+
+		// Update those descriptor sets referring to old views
+		for (size_t i = 0; i < views.size(); ++i)
+		{
+			device.get_resource_cache().update_descriptor_sets(views, other.views);
+		}
+
+		std::swap(extent, other.extent);
+		std::swap(images, other.images);
+		std::swap(views, other.views);
+		std::swap(attachments, other.attachments);
+		std::swap(output_attachments, other.output_attachments);
 	}
 	return *this;
 }

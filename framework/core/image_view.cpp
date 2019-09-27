@@ -23,7 +23,9 @@
 #include "core/image.h"
 #include "device.h"
 
-namespace vkb::core
+namespace vkb
+{
+namespace core
 {
 ImageView::ImageView(Image &img, VkImageViewType view_type, VkFormat format) :
     device{img.get_device()},
@@ -128,4 +130,5 @@ VkImageSubresourceLayers ImageView::get_subresource_layers() const
 	subresource.mipLevel       = subresource_range.baseMipLevel;
 	return subresource;
 }
-}        // namespace vkb::core
+}        // namespace core
+}        // namespace vkb

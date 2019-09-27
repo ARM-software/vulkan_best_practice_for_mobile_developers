@@ -89,6 +89,10 @@ class Application
 
 	void set_benchmark_mode(bool benchmark_mode);
 
+	bool is_headless() const;
+
+	void set_headless(bool headless);
+
 	bool is_focused() const;
 
 	void set_focus(bool flag);
@@ -116,6 +120,8 @@ class Application
 	bool focus{true};
 
 	Timer timer;
+
+	bool headless{false};
 
 	bool benchmark_mode{false};
 

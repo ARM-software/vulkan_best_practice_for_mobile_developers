@@ -18,7 +18,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "rendering/render_pipeline.h"
+#include "render_pipeline.h"
 
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"
@@ -43,6 +43,11 @@ RenderPipeline::RenderPipeline(std::vector<std::unique_ptr<Subpass>> &&subpasses
 void RenderPipeline::add_subpass(std::unique_ptr<Subpass> &&subpass)
 {
 	subpasses.emplace_back(std::move(subpass));
+}
+
+std::vector<std::unique_ptr<Subpass>> &RenderPipeline::get_subpasses()
+{
+	return subpasses;
 }
 
 const std::vector<LoadStoreInfo> &RenderPipeline::get_load_store() const
@@ -71,23 +76,29 @@ void RenderPipeline::draw(CommandBuffer &command_buffer, RenderTarget &render_ta
 
 	for (size_t i = 0; i < subpasses.size(); ++i)
 	{
+		active_subpass_index = i;
+
 		auto &subpass = subpasses[i];
 
 		subpass->update_render_target_attachments();
 
 		if (i == 0)
 		{
-			// Begin render pass
-			command_buffer.begin_render_pass(render_target, load_store, clear_value, contents);
+			command_buffer.begin_render_pass(render_target, load_store, clear_value, subpasses, contents);
 		}
 		else
 		{
-			// Start next subpass
 			command_buffer.next_subpass();
 		}
 
 		subpass->draw(command_buffer);
 	}
+
+	active_subpass_index = 0;
 }
 
+std::unique_ptr<Subpass> &RenderPipeline::get_active_subpass()
+{
+	return subpasses[active_subpass_index];
+}
 }        // namespace vkb

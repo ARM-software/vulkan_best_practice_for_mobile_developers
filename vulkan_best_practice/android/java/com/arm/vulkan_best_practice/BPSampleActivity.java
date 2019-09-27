@@ -27,11 +27,9 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
-import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -63,6 +61,7 @@ public class BPSampleActivity extends AppCompatActivity {
     private TextView textPermissions;
 
     private boolean isBenchmarkMode = false;
+    private boolean isHeadless = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -146,6 +145,9 @@ public class BPSampleActivity extends AppCompatActivity {
         super.onPrepareOptionsMenu(menu);
         MenuItem checkable = menu.findItem(R.id.menu_benchmark_mode);
         checkable.setChecked(isBenchmarkMode);
+
+        checkable = menu.findItem(R.id.menu_headless);
+        checkable.setChecked(isHeadless);
         return true;
     }
 
@@ -167,6 +169,10 @@ public class BPSampleActivity extends AppCompatActivity {
             case R.id.menu_benchmark_mode:
                 isBenchmarkMode = !item.isChecked();
                 item.setChecked(isBenchmarkMode);
+                return true;
+            case R.id.menu_headless:
+                isHeadless = !item.isChecked();
+                item.setChecked(isHeadless);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -200,6 +206,9 @@ public class BPSampleActivity extends AppCompatActivity {
         if (isBenchmarkMode) {
             args.add("--benchmark");
             args.add("2000");
+        }
+        if (isHeadless) {
+            args.add("--headless");
         }
         String[] argArray = new String[args.size()];
         sendArgumentsToPlatform(args.toArray(argArray));

@@ -25,12 +25,12 @@
 #include "vulkan_sample.h"
 
 /**
- * @brief The RenderSubpasses sample shows how a significant amount of bandwidth
- *        (L2 cache ext reads and writes) can be saved, by using sub-passes instead
- *        of multiple render passes. In order to highlight the difference, it
- *        implements deferred rendering with and without sub-passes, giving the
- *        user the possibility to change some key settings.
- */
+  * @brief The RenderSubpasses sample shows how a significant amount of bandwidth
+  *        (L2 cache ext reads and writes) can be saved, by using sub-passes instead
+  *        of multiple render passes. In order to highlight the difference, it
+  *        implements deferred rendering with and without sub-passes, giving the
+  *        user the possibility to change some key settings.
+  */
 class RenderSubpasses : public vkb::VulkanSample
 {
   public:
@@ -38,11 +38,15 @@ class RenderSubpasses : public vkb::VulkanSample
 
 	bool prepare(vkb::Platform &platform) override;
 
+	void update(float delta_time) override;
+
 	virtual ~RenderSubpasses() = default;
 
 	void draw_gui() override;
 
   private:
+	virtual void prepare_render_context() override;
+
 	/**
 	 * @return A good pipeline
 	 */
@@ -68,7 +72,7 @@ class RenderSubpasses : public vkb::VulkanSample
 	 */
 	void draw_renderpasses(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target);
 
-	void draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
+	void draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
 
 	vkb::RenderTarget create_render_target(vkb::core::Image &&swapchain_image);
 
@@ -109,6 +113,14 @@ class RenderSubpasses : public vkb::VulkanSample
 		int value;
 	};
 
+	uint16_t last_render_technique{0};
+	uint16_t last_transient_attachment{0};
+	uint16_t last_g_buffer_size{0};
+
+	VkFormat          albedo_format{VK_FORMAT_R8G8B8A8_UNORM};
+	VkFormat          normal_format{VK_FORMAT_A2R10G10B10_UNORM_PACK32};
+	VkImageUsageFlags rt_usage_flags{VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT};
+
 	std::vector<Config> configs = {
 	    {/* config      = */ Config::RenderTechnique,
 	     /* description = */ "Render technique",
@@ -118,7 +130,7 @@ class RenderSubpasses : public vkb::VulkanSample
 	     /* description = */ "Transient attachments",
 	     /* options     = */ {"Enabled", "Disabled"},
 	     /* value       = */ 0},
-	    {/* config      = */ Config::TransientAttachments,
+	    {/* config      = */ Config::GBufferSize,
 	     /* description = */ "G-Buffer size",
 	     /* options     = */ {"128-bit", "More"},
 	     /* value       = */ 0}};

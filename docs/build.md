@@ -38,7 +38,7 @@
 - [Linux](#linux)
   - [Dependencies](#dependencies-1)
   - [Build with CMake](#build-with-cmake-1)
-- [Mac](#mac)
+- [macOS](#macos)
   - [Dependencies](#dependencies-2)
   - [Build with CMake](#build-with-cmake-2)
 - [Android](#android)
@@ -105,14 +105,15 @@ Treat all warnings as errors
 
 # 3D models
 
-Before you build the project make sure you download the 3D models this project uses. Download zip file located [here](https://github.com/ARM-software/vulkan_best_practice_for_mobile_developers/releases/download/v1.0.0/scenes.zip "Models") and extract it into `vulkan_best_practice_for_mobile_developers/assets` folder. You should now have a `scenes` folder containing all the 3D scenes the project uses.
+Before you build the project make sure you download the 3D models this project uses. Run the helper script `bldsys/scripts/download_assets.py`. You should now have a `scenes` folder containing all the 3D scenes the project uses.
 
-On Android CMake will use `adb` to sync assets to the device, ensure that the target device is connected before building with CMake.
+On Android, Gradle will run CMake which will sync assets to the device if there has been a change.
 
-Alternatively, they may be synced manually:
+However, to sync them manually you may run the following command to ensure up to date assets are on the device:
 
 ```
 adb push --sync assets /sdcard/Android/data/com.arm.vulkan_best_practice/files/
+adb push --sync shaders /sdcard/Android/data/com.arm.vulkan_best_practice/files/
 ```
 
 # Performance data
@@ -133,10 +134,17 @@ adb shell setprop security.perf_harden 0
 
 ## Dependencies
 
-- CMake v3.8+
-- Visual Studio 2017
+- CMake v3.10+
+- Visual Studio 2017 or above
+- [clang-format-8](#clang-format-and-visual-studio)
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
+
+## Clang Format and Visual Studio
+
+Visual Studio comes with `clang-format-6` which is incompatible with some of the styles we use in our `.clang-format` file. It is recommended to point to a `clang-format-8.exe` binary within the in-built clang formatter, or disable it and use a third party extension that is more up to date.
+
+Go to the [LLVM downloads page](http://releases.llvm.org/download.html) to get clang.
 
 ## Build with CMake
 
@@ -167,8 +175,8 @@ build\windows\vulkan_best_practice\bin\Release\AMD64\vulkan_best_practice.exe
 
 ## Dependencies
 
-- CMake v3.8+
-- C++17 Compiler (tested on GCC 7.3)
+- CMake v3.10+
+- C++14 Compiler (tested on GCC 7.3)
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
 
@@ -200,7 +208,7 @@ cmake --build build/linux --config Release --target vulkan_best_practice -- -j4
 
 ## Dependencies
 
-- CMake v3.8+
+- CMake v3.10+
 - Command Line Tools (CLT) for Xcode `xcode-select --install`
 - [Vulkan SDK](https://vulkan.lunarg.com/doc/sdk/latest/mac/getting_started.html) `./install_vulkan.py`
 - [CMake Options](#cmake-options)
@@ -233,7 +241,7 @@ cmake --build build/mac --config Release --target vulkan_best_practice -- -j4
 
 For all dependencies set the following environment variables.
 
-- CMake v3.8+
+- CMake v3.10+
 - JDK 8+ `JAVA_HOME=<SYSTEM_DIR>/java`
 - Android NDK r18+ `ANDROID_NDK_ROOT=<WORK_DIR>/android-ndk`
 - Android SDK `ANDROID_HOME=<WORK_DIR>/android-sdk`

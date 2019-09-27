@@ -35,6 +35,7 @@ VKBP_DISABLE_WARNINGS()
 VKBP_ENABLE_WARNINGS()
 
 #include "common/logging.h"
+#include "platform/android/android_window.h"
 #include "platform/input_events.h"
 #include "vulkan_sample.h"
 
@@ -288,6 +289,7 @@ void on_app_cmd(android_app *app, int32_t cmd)
 	{
 		case APP_CMD_INIT_WINDOW:
 		{
+			platform->get_window().resize(ANativeWindow_getWidth(app->window), ANativeWindow_getHeight(app->window));
 			app->destroyRequested = !platform->prepare();
 			break;
 		}
@@ -297,6 +299,7 @@ void on_app_cmd(android_app *app, int32_t cmd)
 			auto width  = app->contentRect.right - app->contentRect.left;
 			auto height = app->contentRect.bottom - app->contentRect.top;
 			platform->get_app().resize(width, height);
+			platform->get_window().resize(width, height);
 			break;
 		}
 		case APP_CMD_GAINED_FOCUS:
@@ -393,22 +396,10 @@ bool AndroidPlatform::initialize(std::unique_ptr<Application> &&application)
 	return Platform::initialize(std::move(application));
 }
 
-VkSurfaceKHR AndroidPlatform::create_surface(VkInstance instance)
+void AndroidPlatform::create_window()
 {
-	if (instance == VK_NULL_HANDLE || !app->window)
-	{
-		return VK_NULL_HANDLE;
-	}
-
-	VkSurfaceKHR surface{};
-
-	VkAndroidSurfaceCreateInfoKHR info{VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR};
-
-	info.window = app->window;
-
-	VK_CHECK(vkCreateAndroidSurfaceKHR(instance, &info, nullptr, &surface));
-
-	return surface;
+	// Required so that the vulkan sample can create a VkSurface
+	window = std::make_unique<AndroidWindow>(*this, app->window, active_app->is_headless());
 }
 
 void AndroidPlatform::main_loop()
@@ -439,7 +430,7 @@ void AndroidPlatform::main_loop()
 			break;
 		}
 
-		if (app->window)
+		if (!window->should_close())
 		{
 			run();
 		}
@@ -451,9 +442,10 @@ void AndroidPlatform::terminate(ExitCode code)
 	switch (code)
 	{
 		case ExitCode::Success:
+		case ExitCode::UnableToRun:
 			log_output.clear();
 			break;
-		case ExitCode::Fatal:
+		case ExitCode::FatalError:
 			send_notification(log_output);
 			break;
 	}
@@ -461,9 +453,9 @@ void AndroidPlatform::terminate(ExitCode code)
 	Platform::terminate(code);
 }
 
-void AndroidPlatform::close() const
+const char *AndroidPlatform::get_surface_extension()
 {
-	ANativeActivity_finish(app->activity);
+	return VK_KHR_ANDROID_SURFACE_EXTENSION_NAME;
 }
 
 void AndroidPlatform::send_notification(const std::string &message)
@@ -480,9 +472,9 @@ ANativeActivity *AndroidPlatform::get_activity()
 	return app->activity;
 }
 
-float AndroidPlatform::get_dpi_factor() const
+android_app *AndroidPlatform::get_android_app()
 {
-	return AConfiguration_getDensity(app->config) / static_cast<float>(ACONFIGURATION_DENSITY_MEDIUM);
+	return app;
 }
 
 std::vector<spdlog::sink_ptr> AndroidPlatform::get_platform_sinks()

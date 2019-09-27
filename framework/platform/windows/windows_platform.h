@@ -20,11 +20,11 @@
 
 #pragma once
 
-#include "platform/glfw_platform.h"
+#include "platform/desktop_platform.h"
 
 namespace vkb
 {
-class WindowsPlatform : public GlfwPlatform
+class WindowsPlatform : public DesktopPlatform
 {
   public:
 	WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
@@ -32,8 +32,8 @@ class WindowsPlatform : public GlfwPlatform
 
 	virtual ~WindowsPlatform() = default;
 
-	virtual bool initialize(std::unique_ptr<Application> &&app) override;
-
 	virtual void terminate(ExitCode code) override;
+
+	virtual const char *get_surface_extension() override;
 };
 }        // namespace vkb

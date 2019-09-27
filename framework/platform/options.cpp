@@ -29,8 +29,12 @@ void Options::parse(const std::string &usage, const std::vector<std::string> &ar
 {
 	if (usage.size() != 0)
 	{
-		this->usage        = usage;
-		this->parse_result = docopt::docopt(usage, args, false);
+		this->usage = usage;
+
+		if (args.size() > 0)
+		{
+			this->parse_result = docopt::docopt(usage, args, false);
+		}
 	}
 }
 

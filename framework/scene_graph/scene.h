@@ -27,6 +27,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "scene_graph/components/texture.h"
+
 namespace vkb
 {
 namespace sg

@@ -63,7 +63,7 @@ inline void read(std::istringstream &is, std::string &value)
 	std::size_t size;
 	read(is, size);
 	value.resize(size);
-	is.read(value.data(), size);
+	is.read(const_cast<char *>(value.data()), size);
 }
 
 template <class T>
@@ -216,42 +216,4 @@ uint32_t to_u32(T value)
 	return static_cast<uint32_t>(value);
 }
 
-/**
- * @brief Helper class to disable the copy constructor and copy
- *        assignment operator of any inherited a class to be non copyable.
- */
-class NonCopyable
-{
-  public:
-	/**
-	 * @brief Constructor
-	 */
-	NonCopyable() = default;
-
-	/**
-	 * @brief Destructor
-	 */
-	~NonCopyable() = default;
-
-	/**
-	 * @brief Move constructor
-	 */
-	NonCopyable(NonCopyable &&) = default;
-
-	/**
-	 * @brief Move assignment operator
-	 */
-	NonCopyable &operator=(NonCopyable &&) noexcept = default;
-
-  private:
-	/**
-	 * @brief Deleted copy constructor
-	 */
-	NonCopyable(const NonCopyable &) = delete;
-
-	/**
-	 * @brief Deleted copy assignment operator
-	 */
-	NonCopyable &operator=(const NonCopyable &) = delete;
-};
 }        // namespace vkb

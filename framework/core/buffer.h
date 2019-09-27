@@ -29,14 +29,20 @@ class Device;
 
 namespace core
 {
-class Buffer : public NonCopyable
+class Buffer
 {
   public:
-	Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaAllocationCreateFlags flags);
+	Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaAllocationCreateFlags flags = 0);
+
+	Buffer(const Buffer &) = delete;
 
 	Buffer(Buffer &&other);
 
 	~Buffer();
+
+	Buffer &operator=(const Buffer &) = delete;
+
+	Buffer &operator=(Buffer &&) = delete;
 
 	const Device &get_device() const;
 
@@ -56,9 +62,9 @@ class Buffer : public NonCopyable
 	void unmap();
 
 	/**
-	 * @brief Flushes if memory is HOST_VISIBLE or it is not HOST_COHERENT
+	 * @brief Flushes memory if it is HOST_VISIBLE and not HOST_COHERENT
 	 */
-	void flush() const;
+	void flush();
 
 	/**
 	 * @return The size of the buffer
@@ -97,7 +103,7 @@ class Buffer : public NonCopyable
 	uint8_t *mapped_data{nullptr};
 
 	/// Whether it has been mapped with vmaMapMemory
-	bool mapped = false;
+	bool mapped{false};
 };
 }        // namespace core
 }        // namespace vkb

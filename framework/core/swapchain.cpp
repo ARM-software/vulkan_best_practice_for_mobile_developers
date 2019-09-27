@@ -328,6 +328,11 @@ Swapchain::Swapchain(Swapchain &&other) :
 	other.surface = VK_NULL_HANDLE;
 }
 
+Device &Swapchain::get_device()
+{
+	return device;
+}
+
 VkSwapchainKHR Swapchain::get_handle() const
 {
 	return handle;
@@ -366,5 +371,10 @@ VkSurfaceKHR Swapchain::get_surface() const
 VkImageUsageFlags Swapchain::get_usage() const
 {
 	return image_usage;
+}
+
+VkPresentModeKHR Swapchain::get_present_mode() const
+{
+	return present_mode;
 }
 }        // namespace vkb

@@ -34,6 +34,10 @@ Application::Application() :
 
 bool Application::prepare(Platform & /*platform*/)
 {
+	auto &debug_info = get_debug_info();
+	debug_info.insert<field::MinMax, float>("fps", fps);
+	debug_info.insert<field::MinMax, float>("frame_time", frame_time);
+
 	timer.start();
 	return true;
 }
@@ -131,6 +135,16 @@ const Options &Application::get_options()
 void Application::set_benchmark_mode(bool benchmark_mode_)
 {
 	benchmark_mode = benchmark_mode_;
+}
+
+bool Application::is_headless() const
+{
+	return headless;
+}
+
+void Application::set_headless(bool headless)
+{
+	this->headless = headless;
 }
 
 void Application::set_focus(bool flag)

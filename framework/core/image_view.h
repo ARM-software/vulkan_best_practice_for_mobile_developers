@@ -24,16 +24,24 @@
 #include "common/vk_common.h"
 #include "core/image.h"
 
-namespace vkb::core
+namespace vkb
 {
-class ImageView : public NonCopyable
+namespace core
+{
+class ImageView
 {
   public:
 	ImageView(Image &image, VkImageViewType view_type, VkFormat format = VK_FORMAT_UNDEFINED);
 
+	ImageView(ImageView &) = delete;
+
 	ImageView(ImageView &&other);
 
 	~ImageView();
+
+	ImageView &operator=(const ImageView &) = delete;
+
+	ImageView &operator=(ImageView &&) = delete;
 
 	const Image &get_image() const;
 
@@ -62,4 +70,5 @@ class ImageView : public NonCopyable
 
 	VkImageSubresourceRange subresource_range{};
 };
-}        // namespace vkb::core
+}        // namespace core
+}        // namespace vkb

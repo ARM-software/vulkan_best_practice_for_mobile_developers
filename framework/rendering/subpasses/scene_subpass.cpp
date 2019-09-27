@@ -19,6 +19,7 @@
  */
 
 #include "rendering/subpasses/scene_subpass.h"
+#include "common/utils.h"
 #include "common/vk_common.h"
 #include "rendering/render_context.h"
 #include "scene_graph/components/camera.h"
@@ -29,7 +30,6 @@
 #include "scene_graph/components/texture.h"
 #include "scene_graph/node.h"
 #include "scene_graph/scene.h"
-#include "utils.h"
 
 namespace vkb
 {
@@ -38,10 +38,6 @@ SceneSubpass::SceneSubpass(RenderContext &render_context, ShaderSource &&vertex_
     meshes{scene.get_components<sg::Mesh>()},
     camera{camera}
 {
-	// Default light
-	global_uniform.light_pos   = glm::vec4(500.0f, 1550.0f, 0.0f, 1.0);
-	global_uniform.light_color = glm::vec4(1.0, 1.0, 1.0, 1.0);
-
 	// Build all shader variance upfront
 	auto &device = render_context.get_device();
 	for (auto &mesh : meshes)
@@ -98,14 +94,17 @@ void SceneSubpass::draw(CommandBuffer &command_buffer)
 
 	get_sorted_nodes(opaque_nodes, transparent_nodes);
 
-	auto &render_frame = get_render_context().get_active_frame();
-
 	// Draw opaque objects in front-to-back order
 	for (auto node_it = opaque_nodes.begin(); node_it != opaque_nodes.end(); node_it++)
 	{
 		update_uniform(command_buffer, *node_it->second.first);
 
-		draw_submesh(command_buffer, *node_it->second.second);
+		// Invert the front face if the mesh was flipped
+		const auto &scale      = node_it->second.first->get_transform().get_scale();
+		bool        flipped    = scale.x * scale.y * scale.z < 0;
+		VkFrontFace front_face = flipped ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE;
+
+		draw_submesh(command_buffer, *node_it->second.second, front_face);
 	}
 
 	// Enable alpha blending
@@ -131,15 +130,21 @@ void SceneSubpass::draw(CommandBuffer &command_buffer)
 	}
 }
 
-void SceneSubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &node)
+void SceneSubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t thread_index)
 {
+	GlobalUniform global_uniform;
+
+	// Default light
+	global_uniform.light_pos   = glm::vec4(500.0f, 1550.0f, 0.0f, 1.0);
+	global_uniform.light_color = glm::vec4(1.0, 1.0, 1.0, 1.0);
+
 	global_uniform.camera_view_proj = vkb::vulkan_style_projection(camera.get_projection()) * camera.get_view();
 
 	auto &render_frame = get_render_context().get_active_frame();
 
 	auto &transform = node.get_transform();
 
-	auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GlobalUniform));
+	auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GlobalUniform), thread_index);
 
 	global_uniform.model = transform.get_world_matrix();
 
@@ -148,11 +153,12 @@ void SceneSubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &node)
 	command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
 }
 
-void SceneSubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh)
+void SceneSubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh, VkFrontFace front_face)
 {
 	auto &device = command_buffer.get_device();
 
 	RasterizationState rasterization_state{};
+	rasterization_state.front_face = front_face;
 
 	if (sub_mesh.get_material()->double_sided)
 	{

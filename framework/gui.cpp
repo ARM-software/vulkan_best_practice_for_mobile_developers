@@ -31,6 +31,7 @@ VKBP_ENABLE_WARNINGS()
 
 #include "buffer_pool.h"
 #include "common/logging.h"
+#include "common/utils.h"
 #include "common/vk_common.h"
 #include "core/descriptor_set.h"
 #include "core/descriptor_set_layout.h"
@@ -40,7 +41,8 @@ VKBP_ENABLE_WARNINGS()
 #include "imgui_internal.h"
 #include "platform/filesystem.h"
 #include "rendering/render_context.h"
-#include "utils.h"
+#include "timer.h"
+#include "utils/graphs.h"
 #include "vulkan_sample.h"
 
 namespace vkb
@@ -77,8 +79,8 @@ const ImGuiWindowFlags Gui::options_flags = Gui::common_flags;
 
 const ImGuiWindowFlags Gui::info_flags = Gui::common_flags | ImGuiWindowFlags_NoInputs;
 
-Gui::Gui(RenderContext &render_context, const float dpi_factor) :
-    render_context{render_context},
+Gui::Gui(VulkanSample &sample_, const float dpi_factor) :
+    sample{sample_},
     dpi_factor{dpi_factor}
 {
 	ImGui::CreateContext();
@@ -100,7 +102,7 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 
 	// Dimensions
 	ImGuiIO &io                = ImGui::GetIO();
-	auto &   extent            = render_context.get_swapchain().get_extent();
+	auto     extent            = sample.get_render_context().get_surface_extent();
 	io.DisplaySize.x           = static_cast<float>(extent.width);
 	io.DisplaySize.y           = static_cast<float>(extent.height);
 	io.FontGlobalScale         = 1.0f;
@@ -118,7 +120,7 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 	io.Fonts->GetTexDataAsRGBA32(&font_data, &tex_width, &tex_height);
 	size_t upload_size = tex_width * tex_height * 4 * sizeof(char);
 
-	auto &device = render_context.get_device();
+	auto &device = sample.get_render_context().get_device();
 
 	// Create target image for copy
 	VkExtent3D font_extent{to_u32(tex_width), to_u32(tex_height), 1u};
@@ -137,7 +139,7 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 		FencePool fence_pool{device};
 
 		// Begin recording
-		command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+		command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, 0);
 
 		{
 			// Prepare for transfer
@@ -197,8 +199,8 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor) :
 	sampler_info.addressModeW  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_info.borderColor   = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 
-	vkb::ShaderSource vert_shader(vkb::fs::read_asset("shaders/imgui.vert"));
-	vkb::ShaderSource frag_shader(vkb::fs::read_asset("shaders/imgui.frag"));
+	vkb::ShaderSource vert_shader(vkb::fs::read_shader("imgui.vert"));
+	vkb::ShaderSource frag_shader(vkb::fs::read_shader("imgui.frag"));
 
 	std::vector<vkb::ShaderModule *> shader_modules;
 	shader_modules.push_back(&device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vert_shader, {}));
@@ -253,7 +255,7 @@ void Gui::update_buffers(CommandBuffer &command_buffer)
 		idx_dst += cmd_list->IdxBuffer.Size;
 	}
 
-	auto vertex_allocation = render_context.get_active_frame().allocate_buffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertex_buffer_size);
+	auto vertex_allocation = sample.get_render_context().get_active_frame().allocate_buffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertex_buffer_size);
 
 	vertex_allocation.update(vertex_data);
 
@@ -264,7 +266,7 @@ void Gui::update_buffers(CommandBuffer &command_buffer)
 
 	command_buffer.bind_vertex_buffers(0, buffers, offsets);
 
-	auto index_allocation = render_context.get_active_frame().allocate_buffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, index_buffer_size);
+	auto index_allocation = sample.get_render_context().get_active_frame().allocate_buffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, index_buffer_size);
 
 	index_allocation.update(index_data);
 
@@ -340,22 +342,28 @@ void Gui::draw(CommandBuffer &command_buffer)
 	command_buffer.bind_image(*font_image_view, *sampler, 0, 0, 0);
 
 	// Pre-rotation
-	auto      transform      = render_context.get_swapchain().get_transform();
-	auto &    io             = ImGui::GetIO();
-	auto      push_transform = glm::mat4(1.0f);
-	glm::vec3 rotation_axis  = glm::vec3(0.0f, 0.0f, 1.0f);
-	if (transform & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
+	auto &io             = ImGui::GetIO();
+	auto  push_transform = glm::mat4(1.0f);
+
+	if (sample.get_render_context().has_swapchain())
 	{
-		push_transform = glm::rotate(push_transform, glm::radians(90.0f), rotation_axis);
+		auto transform = sample.get_render_context().get_swapchain().get_transform();
+
+		glm::vec3 rotation_axis = glm::vec3(0.0f, 0.0f, 1.0f);
+		if (transform & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
+		{
+			push_transform = glm::rotate(push_transform, glm::radians(90.0f), rotation_axis);
+		}
+		else if (transform & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
+		{
+			push_transform = glm::rotate(push_transform, glm::radians(270.0f), rotation_axis);
+		}
+		else if (transform & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)
+		{
+			push_transform = glm::rotate(push_transform, glm::radians(180.0f), rotation_axis);
+		}
 	}
-	else if (transform & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
-	{
-		push_transform = glm::rotate(push_transform, glm::radians(270.0f), rotation_axis);
-	}
-	else if (transform & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)
-	{
-		push_transform = glm::rotate(push_transform, glm::radians(180.0f), rotation_axis);
-	}
+
 	// GUI coordinate space to screen space
 	push_transform = glm::translate(push_transform, glm::vec3(-1.0f, -1.0f, 0.0f));
 	push_transform = glm::scale(push_transform, glm::vec3(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y, 0.0f));
@@ -379,34 +387,37 @@ void Gui::draw(CommandBuffer &command_buffer)
 			{
 				const ImDrawCmd *cmd = &cmd_list->CmdBuffer[j];
 				VkRect2D         scissor_rect;
+				scissor_rect.offset.x      = std::max(static_cast<int32_t>(cmd->ClipRect.x), 0);
+				scissor_rect.offset.y      = std::max(static_cast<int32_t>(cmd->ClipRect.y), 0);
+				scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
+				scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
+
 				// Adjust for pre-rotation if necessary
-				if (transform & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
+				if (sample.get_render_context().has_swapchain())
 				{
-					scissor_rect.offset.x      = static_cast<uint32_t>(io.DisplaySize.y - cmd->ClipRect.w);
-					scissor_rect.offset.y      = static_cast<uint32_t>(cmd->ClipRect.x);
-					scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
-					scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
-				}
-				else if (transform & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
-				{
-					scissor_rect.offset.x      = static_cast<uint32_t>(cmd->ClipRect.y);
-					scissor_rect.offset.y      = static_cast<uint32_t>(io.DisplaySize.x - cmd->ClipRect.z);
-					scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
-					scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
-				}
-				else if (transform & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)
-				{
-					scissor_rect.offset.x      = static_cast<uint32_t>(io.DisplaySize.x - cmd->ClipRect.z);
-					scissor_rect.offset.y      = static_cast<uint32_t>(io.DisplaySize.y - cmd->ClipRect.w);
-					scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
-					scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
-				}
-				else
-				{
-					scissor_rect.offset.x      = std::max(static_cast<int32_t>(cmd->ClipRect.x), 0);
-					scissor_rect.offset.y      = std::max(static_cast<int32_t>(cmd->ClipRect.y), 0);
-					scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
-					scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
+					auto transform = sample.get_render_context().get_swapchain().get_transform();
+
+					if (transform & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
+					{
+						scissor_rect.offset.x      = static_cast<uint32_t>(io.DisplaySize.y - cmd->ClipRect.w);
+						scissor_rect.offset.y      = static_cast<uint32_t>(cmd->ClipRect.x);
+						scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
+						scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
+					}
+					else if (transform & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)
+					{
+						scissor_rect.offset.x      = static_cast<uint32_t>(io.DisplaySize.x - cmd->ClipRect.z);
+						scissor_rect.offset.y      = static_cast<uint32_t>(io.DisplaySize.y - cmd->ClipRect.w);
+						scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
+						scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
+					}
+					else if (transform & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
+					{
+						scissor_rect.offset.x      = static_cast<uint32_t>(cmd->ClipRect.y);
+						scissor_rect.offset.y      = static_cast<uint32_t>(io.DisplaySize.x - cmd->ClipRect.z);
+						scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
+						scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
+					}
 				}
 
 				command_buffer.set_scissor(0, {scissor_rect});
@@ -516,7 +527,7 @@ void Gui::show_app_info(const std::string &app_name)
 	ImGui::Text("%s", app_name.c_str());
 
 	// GPU name
-	auto &device            = render_context.get_device();
+	auto &device            = sample.get_render_context().get_device();
 	auto  device_name_label = "GPU: " + std::string(device.get_properties().deviceName);
 	ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize(device_name_label.c_str()).x);
 	ImGui::Text("%s", device_name_label.c_str());
@@ -567,15 +578,54 @@ void Gui::show_debug_window(DebugInfo &debug_info, const ImVec2 &position)
 	ImGui::Columns(1);
 	ImGui::EndChild();
 
+	static Timer       timer;
+	static const char *message;
+
+	if (ImGui::Button("Save Debug Graphs"))
+	{
+		if (utils::debug_graphs(sample.get_render_context(), sample.get_scene()))
+		{
+			message = "Graphs Saved!";
+		}
+		else
+		{
+			message = "Error outputting graphs!";
+		}
+
+		if (timer.is_running())
+		{
+			timer.lap();
+		}
+		else
+		{
+			timer.start();
+		}
+	}
+
+	if (timer.is_running())
+	{
+		if (timer.elapsed() > 2.0)
+		{
+			timer.stop();
+		}
+		else
+		{
+			ImGui::SameLine();
+			ImGui::Text("%s", message);
+		}
+	}
+
 	ImGui::PopFont();
 	ImGui::End();
 }
 
-Gui::StatsView::GraphData::GraphData(const std::string &graph_label_format_,
+Gui::StatsView::GraphData::GraphData(const std::string &name_,
+                                     const std::string &graph_label_format_,
                                      float              scale_factor_,
                                      bool               has_fixed_max_,
                                      float              max_value_) :
-    graph_label_format{graph_label_format_},
+    name(name_),
+    format{graph_label_format_},
     scale_factor{scale_factor_},
     has_fixed_max{has_fixed_max_},
     max_value{max_value_}
@@ -587,11 +637,8 @@ void Gui::show_stats(const Stats &stats)
 	{
 		// Find the graph data of this stat index
 		auto pr = stats_view.graph_map.find(stat_index);
-		if (pr == stats_view.graph_map.end())
-		{
-			ImGui::Text("Stat not found");
-			continue;
-		}
+
+		assert(pr != stats_view.graph_map.end() && "StatIndex not implemented in gui graph_map");
 
 		// Draw graph
 		auto &      graph_data     = pr->second;
@@ -618,11 +665,11 @@ void Gui::show_stats(const Stats &stats)
 		// Check if the stat is available in the current platform
 		if (!stats.is_available(stat_index))
 		{
-			graph_label << "Stat not available";
+			graph_label << graph_data.name << ": not available";
 		}
 		else
 		{
-			graph_label << fmt::format(graph_data.graph_label_format, avg * graph_data.scale_factor);
+			graph_label << fmt::format(graph_data.name + ": " + graph_data.format, avg * graph_data.scale_factor);
 		}
 
 		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
@@ -765,5 +812,4 @@ bool Gui::input_event(const InputEvent &input_event)
 
 	return capture_move_event;
 }
-
 }        // namespace vkb

@@ -31,16 +31,24 @@ VKBP_DISABLE_WARNINGS()
 VKBP_ENABLE_WARNINGS()
 
 #include "common/logging.h"
+#include "common/utils.h"
 #include "common/vk_common.h"
 #include "core/device.h"
 #include "core/image.h"
 #include "platform/filesystem.h"
+#include "scene_graph/components/camera.h"
+#include "scene_graph/components/image.h"
 #include "scene_graph/components/image/astc.h"
+#include "scene_graph/components/light.h"
+#include "scene_graph/components/mesh.h"
+#include "scene_graph/components/pbr_material.h"
 #include "scene_graph/components/perspective_camera.h"
+#include "scene_graph/components/sampler.h"
+#include "scene_graph/components/sub_mesh.h"
 #include "scene_graph/components/texture.h"
 #include "scene_graph/components/transform.h"
 #include "scene_graph/node.h"
-#include "utils.h"
+#include "scene_graph/scene.h"
 
 #include <ctpl_stl.h>
 
@@ -253,24 +261,27 @@ inline VkFormat get_attribute_format(const tinygltf::Model *model, uint32_t acce
 	return format;
 };
 
-inline std::vector<uint8_t> convert_data(const std::vector<uint8_t> &srcData, uint32_t srcStride, uint32_t dstStride)
+inline std::vector<uint8_t> convert_underlying_data_stride(const std::vector<uint8_t> &src_data, uint32_t src_stride, uint32_t dst_stride)
 {
-	auto elem_count = to_u32(srcData.size()) / srcStride;
+	auto elem_count = to_u32(src_data.size()) / src_stride;
 
-	std::vector<uint8_t> result(elem_count * dstStride);
+	std::vector<uint8_t> result(elem_count * dst_stride);
 
 	for (uint32_t idxSrc = 0, idxDst = 0;
-	     idxSrc < srcData.size() && idxDst < result.size();
-	     idxSrc += srcStride, idxDst += dstStride)
+	     idxSrc < src_data.size() && idxDst < result.size();
+	     idxSrc += src_stride, idxDst += dst_stride)
 	{
-		std::copy(srcData.begin() + idxSrc, srcData.begin() + idxSrc + srcStride, result.begin() + idxDst);
+		std::copy(src_data.begin() + idxSrc, src_data.begin() + idxSrc + src_stride, result.begin() + idxDst);
 	}
 
 	return result;
 }
 
-inline void upload_image(CommandBuffer &command_buffer, core::Buffer &data, sg::Image &image)
+inline void upload_image_to_gpu(CommandBuffer &command_buffer, core::Buffer &staging_buffer, sg::Image &image)
 {
+	// Clean up the image data, as they are copied in the staging buffer
+	image.clear_data();
+
 	{
 		ImageMemoryBarrier memory_barrier{};
 		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -300,7 +311,7 @@ inline void upload_image(CommandBuffer &command_buffer, core::Buffer &data, sg::
 		copy_region.imageExtent               = mipmap.extent;
 	}
 
-	command_buffer.copy_buffer_to_image(data, image.get_vk_image(), buffer_copy_regions);
+	command_buffer.copy_buffer_to_image(staging_buffer, image.get_vk_image(), buffer_copy_regions);
 
 	{
 		ImageMemoryBarrier memory_barrier{};
@@ -315,6 +326,9 @@ inline void upload_image(CommandBuffer &command_buffer, core::Buffer &data, sg::
 	}
 }
 }        // namespace
+
+std::unordered_map<std::string, bool> GLTFLoader::supported_extensions = {
+    {KHR_LIGHTS_PUNCTUAL_EXTENSION, false}};
 
 GLTFLoader::GLTFLoader(Device &device) :
     device{device}
@@ -369,6 +383,38 @@ sg::Scene GLTFLoader::load_scene()
 
 	scene.set_name("gltf_scene");
 
+	// Check extensions
+	for (auto &used_extension : model.extensionsUsed)
+	{
+		auto it = supported_extensions.find(used_extension);
+
+		// Check if extension isn't supported by the GLTFLoader
+		if (it == supported_extensions.end())
+		{
+			// If extension is required then we shouldn't allow the scene to be loaded
+			if (std::find(model.extensionsRequired.begin(), model.extensionsRequired.end(), used_extension) != model.extensionsRequired.end())
+			{
+				throw std::runtime_error("Cannot load glTF file. Contains a required unsupported extension: " + used_extension);
+			}
+			else
+			{
+				// Otherwise, if extension isn't required (but is in the file) then print a warning to the user
+				LOGW("glTF file contains an unsupported extension, unexpected results may occur: {}", used_extension);
+			}
+		}
+		else
+		{
+			// Extension is supported, so enable it
+			LOGI("glTF file contains extension: {}", used_extension);
+			it->second = true;
+		}
+	}
+
+	// Load lights
+	std::vector<std::unique_ptr<sg::Light>> light_components = parse_khr_lights_punctual();
+
+	scene.set_components(std::move(light_components));
+
 	// Load samplers
 	std::vector<std::unique_ptr<sg::Sampler>>
 	    sampler_components(model.samplers.size());
@@ -417,7 +463,7 @@ sg::Scene GLTFLoader::load_scene()
 
 	auto &command_buffer = device.request_command_buffer();
 
-	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, 0);
 
 	for (size_t image_index = 0; image_index < image_count; image_index++)
 	{
@@ -426,13 +472,11 @@ sg::Scene GLTFLoader::load_scene()
 		core::Buffer stage_buffer{device,
 		                          image->get_data().size(),
 		                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		                          VMA_MEMORY_USAGE_CPU_ONLY,
-		                          0};
+		                          VMA_MEMORY_USAGE_CPU_ONLY};
 
 		stage_buffer.update(image->get_data());
-		// Clean up the image data, as they are copied in the staging buffer
-		image->clear_data();
-		upload_image(command_buffer, stage_buffer, *image);
+
+		upload_image_to_gpu(command_buffer, stage_buffer, *image);
 
 		transient_buffers.push_back(std::move(stage_buffer));
 	}
@@ -521,13 +565,81 @@ sg::Scene GLTFLoader::load_scene()
 	// Load meshes
 	auto materials = scene.get_components<sg::PBRMaterial>();
 
+	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
 	for (auto &gltf_mesh : model.meshes)
 	{
 		auto mesh = parse_mesh(gltf_mesh);
 
 		for (auto &gltf_primitive : gltf_mesh.primitives)
 		{
-			auto submesh = parse_primitive(gltf_primitive);
+			auto submesh = std::make_unique<sg::SubMesh>();
+
+			for (auto &attribute : gltf_primitive.attributes)
+			{
+				std::string attrib_name = attribute.first;
+				std::transform(attrib_name.begin(), attrib_name.end(), attrib_name.begin(), ::tolower);
+
+				auto vertex_data = get_attribute_data(&model, attribute.second);
+
+				if (attrib_name == "position")
+				{
+					submesh->vertices_count = to_u32(model.accessors.at(attribute.second).count);
+				}
+
+				core::Buffer buffer{device,
+				                    vertex_data.size(),
+				                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+				                    VMA_MEMORY_USAGE_GPU_TO_CPU};
+				buffer.update(vertex_data);
+
+				submesh->vertex_buffers.insert(std::make_pair(attrib_name, std::move(buffer)));
+
+				sg::VertexAttribute attrib;
+				attrib.format = get_attribute_format(&model, attribute.second);
+				attrib.stride = to_u32(get_attribute_stride(&model, attribute.second));
+
+				submesh->set_attribute(attrib_name, attrib);
+			}
+
+			if (gltf_primitive.indices >= 0)
+			{
+				submesh->vertex_indices = to_u32(get_attribute_size(&model, gltf_primitive.indices));
+
+				auto format = get_attribute_format(&model, gltf_primitive.indices);
+
+				auto vertex_data = get_attribute_data(&model, gltf_primitive.indices);
+				auto index_data  = get_attribute_data(&model, gltf_primitive.indices);
+
+				switch (format)
+				{
+					case VK_FORMAT_R8_UINT:
+						// Converts uint8 data into uint16 data, still represented by a uint8 vector
+						index_data          = convert_underlying_data_stride(index_data, 1, 2);
+						submesh->index_type = VK_INDEX_TYPE_UINT16;
+						break;
+					case VK_FORMAT_R16_UINT:
+						submesh->index_type = VK_INDEX_TYPE_UINT16;
+						break;
+					case VK_FORMAT_R32_UINT:
+						submesh->index_type = VK_INDEX_TYPE_UINT32;
+						break;
+					default:
+						LOGE("gltf primitive has invalid format type");
+						break;
+				}
+
+				submesh->index_buffer = std::make_unique<core::Buffer>(device,
+				                                                       index_data.size(),
+				                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+				                                                       VMA_MEMORY_USAGE_GPU_TO_CPU);
+
+				submesh->index_buffer->update(index_data);
+			}
+			else
+			{
+				submesh->vertices_count = to_u32(get_attribute_size(&model, gltf_primitive.attributes.at("POSITION")));
+			}
 
 			if (gltf_primitive.material < 0)
 			{
@@ -545,6 +657,16 @@ sg::Scene GLTFLoader::load_scene()
 
 		scene.add_component(std::move(mesh));
 	}
+
+	command_buffer.end();
+
+	queue.submit(command_buffer, device.request_fence());
+
+	device.get_fence_pool().wait();
+	device.get_fence_pool().reset();
+	device.get_command_pool().reset_pool();
+
+	transient_buffers.clear();
 
 	scene.add_component(std::move(default_material));
 
@@ -581,6 +703,16 @@ sg::Scene GLTFLoader::load_scene()
 			node->set_component(*camera);
 
 			camera->set_node(*node);
+		}
+
+		if (auto extension = get_extension(gltf_node.extensions, KHR_LIGHTS_PUNCTUAL_EXTENSION))
+		{
+			auto lights = scene.get_components<sg::Light>();
+			auto light  = lights.at(static_cast<size_t>(extension->Get("light").Get<int>()));
+
+			node->set_component(*light);
+
+			light->set_node(*node);
 		}
 
 		nodes.push_back(std::move(node));
@@ -707,81 +839,6 @@ std::unique_ptr<sg::Camera> GLTFLoader::parse_camera(const tinygltf::Camera &glt
 std::unique_ptr<sg::Mesh> GLTFLoader::parse_mesh(const tinygltf::Mesh &gltf_mesh) const
 {
 	return std::make_unique<sg::Mesh>(gltf_mesh.name);
-}
-
-std::unique_ptr<sg::SubMesh> GLTFLoader::parse_primitive(const tinygltf::Primitive &gltf_primitive) const
-{
-	auto submesh = std::make_unique<sg::SubMesh>();
-
-	for (auto &attribute : gltf_primitive.attributes)
-	{
-		std::string attrib_name = attribute.first;
-		std::transform(attrib_name.begin(), attrib_name.end(), attrib_name.begin(), ::tolower);
-		auto vertex_data = get_attribute_data(&model, attribute.second);
-
-		if (attrib_name == "position")
-		{
-			submesh->vertices_count = to_u32(model.accessors.at(attribute.second).count);
-		}
-
-		core::Buffer buffer{device,
-		                    vertex_data.size(),
-		                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		                    VMA_MEMORY_USAGE_CPU_TO_GPU,
-		                    VMA_ALLOCATION_CREATE_MAPPED_BIT};
-		buffer.update(vertex_data);
-
-		auto pair = std::make_pair(attrib_name, std::move(buffer));
-
-		submesh->vertex_buffers.insert(std::move(pair));
-
-		sg::VertexAttribute attrib;
-		attrib.format = get_attribute_format(&model, attribute.second);
-		attrib.stride = to_u32(get_attribute_stride(&model, attribute.second));
-
-		submesh->set_attribute(attrib_name, attrib);
-	}
-
-	if (gltf_primitive.indices >= 0)
-	{
-		submesh->vertex_indices = to_u32(get_attribute_size(&model, gltf_primitive.indices));
-
-		auto format = get_attribute_format(&model, gltf_primitive.indices);
-
-		auto vertex_data = get_attribute_data(&model, gltf_primitive.indices);
-		auto index_data  = get_attribute_data(&model, gltf_primitive.indices);
-
-		switch (format)
-		{
-			case VK_FORMAT_R8_UINT:
-				index_data = convert_data(index_data, 1, 2);
-
-				submesh->index_type = VK_INDEX_TYPE_UINT16;
-				break;
-			case VK_FORMAT_R16_UINT:
-				submesh->index_type = VK_INDEX_TYPE_UINT16;
-				break;
-			case VK_FORMAT_R32_UINT:
-				submesh->index_type = VK_INDEX_TYPE_UINT32;
-				break;
-			default:
-				LOGE("gltf primitive has invalid format type");
-				break;
-		}
-
-		submesh->index_buffer = std::make_unique<core::Buffer>(device,
-		                                                       index_data.size(),
-		                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		                                                       VMA_MEMORY_USAGE_CPU_TO_GPU,
-		                                                       VMA_ALLOCATION_CREATE_MAPPED_BIT);
-		submesh->index_buffer->update(index_data);
-	}
-	else
-	{
-		submesh->vertices_count = to_u32(get_attribute_size(&model, gltf_primitive.attributes.at("POSITION")));
-	}
-
-	return submesh;
 }
 
 std::unique_ptr<sg::PBRMaterial> GLTFLoader::parse_material(const tinygltf::Material &gltf_material) const
@@ -947,5 +1004,130 @@ std::unique_ptr<sg::Camera> GLTFLoader::create_default_camera()
 	gltf_camera.perspective.zfar        = 1000.0f;
 
 	return parse_camera(gltf_camera);
+}
+
+std::vector<std::unique_ptr<sg::Light>> GLTFLoader::parse_khr_lights_punctual()
+{
+	if (is_extension_enabled(KHR_LIGHTS_PUNCTUAL_EXTENSION) && model.extensions.at(KHR_LIGHTS_PUNCTUAL_EXTENSION).Has("lights"))
+	{
+		auto &khr_lights = model.extensions.at(KHR_LIGHTS_PUNCTUAL_EXTENSION).Get("lights");
+
+		std::vector<std::unique_ptr<sg::Light>> light_components(khr_lights.ArrayLen());
+
+		for (size_t light_index = 0; light_index < khr_lights.ArrayLen(); ++light_index)
+		{
+			auto &khr_light = khr_lights.Get(static_cast<int>(light_index));
+
+			// Spec states a light has to have a type to be valid
+			if (!khr_light.Has("type"))
+			{
+				LOGE("KHR_lights_punctual extension: light {} doesn't have a type!", light_index);
+				throw std::runtime_error("Couldn't load glTF file, KHR_lights_punctual extension is invalid");
+			}
+
+			auto light = std::make_unique<sg::Light>(khr_light.Get("name").Get<std::string>());
+
+			sg::LightType       type;
+			sg::LightProperties properties;
+
+			// Get type
+			auto &gltf_light_type = khr_light.Get("type").Get<std::string>();
+			if (gltf_light_type == "point")
+			{
+				type = sg::LightType::Point;
+			}
+			else if (gltf_light_type == "spot")
+			{
+				type = sg::LightType::Spot;
+			}
+			else if (gltf_light_type == "directional")
+			{
+				type = sg::LightType::Directional;
+			}
+			else
+			{
+				LOGE("KHR_lights_punctual extension: light type '{}' is invalid", gltf_light_type);
+				throw std::runtime_error("Couldn't load glTF file, KHR_lights_punctual extension is invalid");
+			}
+
+			// Get properties
+			if (khr_light.Has("color"))
+			{
+				properties.color = glm::vec3(
+				    static_cast<float>(khr_light.Get("color").Get(0).Get<double>()),
+				    static_cast<float>(khr_light.Get("color").Get(1).Get<double>()),
+				    static_cast<float>(khr_light.Get("color").Get(2).Get<double>()));
+			}
+			properties.intensity = static_cast<float>(khr_light.Get("intensity").Get<double>());
+			if (type != sg::LightType::Directional)
+			{
+				properties.range = static_cast<float>(khr_light.Get("range").Get<double>());
+				if (type != sg::LightType::Point)
+				{
+					if (!khr_light.Has("spot"))
+					{
+						LOGE("KHR_lights_punctual extension: spot light doesn't have a 'spot' property set", gltf_light_type);
+						throw std::runtime_error("Couldn't load glTF file, KHR_lights_punctual extension is invalid");
+					}
+
+					properties.inner_cone_angle = static_cast<float>(khr_light.Get("spot").Get("innerConeAngle").Get<double>());
+
+					if (khr_light.Get("spot").Has("outerConeAngle"))
+					{
+						properties.outer_cone_angle = static_cast<float>(khr_light.Get("spot").Get("outerConeAngle").Get<double>());
+					}
+					else
+					{
+						// Spec states default value is PI/4
+						properties.outer_cone_angle = glm::pi<float>() / 4.0f;
+					}
+				}
+			}
+			else if (type == sg::LightType::Directional || type == sg::LightType::Spot)
+			{
+				// The spec states that the light will inherit the transform of the node.
+				// The light's direction is defined as the 3-vector (0.0, 0.0, -1.0) and
+				// the rotation of the node orients the light accordingly.
+				properties.direction = glm::vec3(0.0f, 0.0f, -1.0f);
+			}
+
+			light->set_light_type(type);
+			light->set_properties(properties);
+
+			light_components[light_index] = std::move(light);
+		}
+
+		return light_components;
+	}
+	else
+	{
+		return {};
+	}
+}
+
+bool GLTFLoader::is_extension_enabled(const std::string &requested_extension)
+{
+	auto it = supported_extensions.find(requested_extension);
+	if (it != supported_extensions.end())
+	{
+		return it->second;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+tinygltf::Value *GLTFLoader::get_extension(tinygltf::ExtensionMap &tinygltf_extensions, const std::string &extension)
+{
+	auto it = tinygltf_extensions.find(extension);
+	if (it != tinygltf_extensions.end())
+	{
+		return &it->second;
+	}
+	else
+	{
+		return nullptr;
+	}
 }
 }        // namespace vkb

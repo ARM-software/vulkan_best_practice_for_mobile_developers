@@ -42,4 +42,9 @@ void Timer::lap()
 	lapping  = true;
 	lap_time = Clock::now();
 }
+
+bool Timer::is_running() const
+{
+	return running;
+}
 }        // namespace vkb

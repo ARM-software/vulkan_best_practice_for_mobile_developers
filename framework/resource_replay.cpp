@@ -22,8 +22,8 @@
 
 #include "common/logging.h"
 #include "common/vk_common.h"
+#include "rendering/pipeline_state.h"
 #include "resource_cache.h"
-#include "resource_record.h"
 
 namespace vkb
 {

@@ -20,10 +20,10 @@
 
 #pragma once
 
+#include "common/utils.h"
 #include "common/vk_common.h"
 #include "rendering/render_pipeline.h"
 #include "scene_graph/components/camera.h"
-#include "utils.h"
 #include "vulkan_sample.h"
 
 /**

@@ -33,7 +33,7 @@
 - [Build](#build)
   - [Supported Platforms](#supported-platforms)
 - [Usage](#usage)
-- [Testing](#testing)
+- [Testing](#tests)
 - [License](#license)
   - [Trademarks](#trademarks)
 - [Contributions](#contributions)
@@ -54,22 +54,26 @@ The Vulkan Best Practice for Mobile Developers is collection of resources to hel
 
 ## Tutorials
 - **General**
-  - [Controls](./docs/controls.md)
+  - [Controls](./docs/misc.md#controls)
+  - [Debug window](./docs/misc.md#debug-window)
+  - [Driver version](./docs/misc.md#driver-version)
   - [Create a Sample](./docs/create_sample.md)
 - **Vulkan Essentials**  
   - [How does Vulkan compare to OpenGL ES? What should you expect when targeting Vulkan?](./samples/vulkan_basics.md)
 - **Vulkan Swapchains**  
-More detailed look at swapchains, and how you might want to use them
   - [Appropriate use of N-buffering](./samples/advanced/swapchain_images/swapchain_images_tutorial.md)
   - [Appropriate use of surface rotation](./samples/advanced/surface_rotation/surface_rotation_tutorial.md)
 - **Pipelines**
   - [Use of pipeline caches to avoid startup latency](./samples/advanced/pipeline_cache/pipeline_cache_tutorial.md)
+- **Descriptors**
+  - [Descriptor and buffer management](./samples/advanced/descriptor_management/descriptor_management_tutorial.md)
 - **Render Passes**
   - [Appropriate use of load/store operations, and use of transient attachments](./samples/advanced/render_passes/render_passes_tutorial.md)
 - **Render Subpasses**
   - [Benefits of subpasses over multiple render passes, use of transient attachments, and G-buffer recommended size](./samples/advanced/render_subpasses/render_subpasses_tutorial.md)
 - **Command Buffers**
-  - [Allocation and management of command buffers](./samples/advanced/command_buffer_usage/command_buffer_usage_tutorial.md)
+  - [Allocation and management of command buffers](./samples/advanced/command_buffer_usage/command_buffer_usage_tutorial.md#Recycling-strategies)
+  - [Multi-threaded recording with secondary command buffers](./samples/advanced/command_buffer_usage/command_buffer_usage_tutorial.md#Multi-threaded-recording)
 - **AFBC**
   - [Appropriate use of AFBC](./samples/advanced/afbc/afbc_tutorial.md)
 
@@ -89,10 +93,8 @@ Follow build instructions for your platform below.
 ### Supported Platforms
 - Windows - [Build Guide](./docs/build.md#windows "Windows Build Guide")
 - Linux - [Build Guide](./docs/build.md#linux "Linux Build Guide")
-- Mac OSX - [Build Guide](./docs/build.md#mac "Mac OSX Build Guide")
+- macOS - [Build Guide](./docs/build.md#macos "macOS Build Guide")
 - Android - [Build Guide](./docs/build.md#android "Android Build Guide")
-
-> Tested on: Samsung Galaxy S9, Samsung Galaxy S10, Huawei Mate 20 Pro, OPPO R15
 
 ## Usage
 
@@ -103,7 +105,7 @@ The following shows some example command line usage on how to configure and run 
 vulkan_best_practice swapchain_images
 
 # Run AFBC sample in benchmark mode for 5000 frames
-vulkan_best_practice --sample afbc --benchmark 5000 
+vulkan_best_practice --sample afbc --benchmark 5000
 
 # Run bonza test offscreen
 vulkan_best_practice --test bonza --hide
@@ -113,9 +115,10 @@ vulkan_best_practice --batch advanced
 ```
 
 
-## Testing
+## Tests
 
 - System Test - [Usage Guide](docs/testing.md#system-test "System Test Guide")
+- Generate Sample - [Usage Guide](docs/testing.md#generate-sample-test "Generate Sample Test Guide")
 
 
 ## License
@@ -138,6 +141,7 @@ This project has some third-party dependencies, each of which may have independe
 - [SPIRV-Cross](https://github.com/KhronosGroup/SPIRV-Cross): Parses and converts SPIR-V to other shader languages
 - [stb](https://github.com/nothings/stb): Single-file public domain (or MIT licensed) libraries
 - [tinygltf](https://github.com/syoyo/tinygltf): Header only C++11 tiny glTF 2.0 library
+  - [nlohmann json](https://github.com/nlohmann/json): C++ JSON Library (included by [tinygltf](https://github.com/syoyo/tinygltf))
 - [vma](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator): Vulkan Memory Allocator
 - [volk](https://github.com/zeux/volk): Meta loader for Vulkan API
 - [vulkan](https://github.com/KhronosGroup/Vulkan-Docs): Sources for the formal documentation of the Vulkan API

@@ -47,37 +47,25 @@ bool AFBCSample::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	std::vector<const char *> extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
-	device = std::make_unique<vkb::Device>(get_gpu(), get_surface(), extensions);
-
-	auto swapchain = std::make_unique<vkb::Swapchain>(*device,
-	                                                  get_surface(),
-	                                                  VkExtent2D({}),
-	                                                  3,
-	                                                  VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
-	                                                  VK_PRESENT_MODE_FIFO_KHR,
-	                                                  /* We want AFBC disabled by default, hence we create swapchain with VK_IMAGE_USAGE_STORAGE_BIT. */
-	                                                  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT);
-
-	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::l2_ext_write_bytes});
-
-	render_context = std::make_unique<vkb::RenderContext>(std::move(swapchain));
+	// We want AFBC disabled by default, hence we create swapchain with 'VK_IMAGE_USAGE_STORAGE_BIT'
+	std::set<VkImageUsageFlagBits> image_usage = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_STORAGE_BIT};
+	get_render_context().update_swapchain(image_usage);
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 	auto &camera_node = add_free_camera("main_camera");
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
-	vkb::ShaderSource vert_shader(vkb::fs::read_asset("shaders/base.vert"));
-	vkb::ShaderSource frag_shader(vkb::fs::read_asset("shaders/base.frag"));
-	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	vkb::ShaderSource vert_shader(vkb::fs::read_shader("base.vert"));
+	vkb::ShaderSource frag_shader(vkb::fs::read_shader("base.frag"));
+	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 
 	auto render_pipeline = vkb::RenderPipeline();
 	render_pipeline.add_subpass(std::move(scene_subpass));
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	gui = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor());
+	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::l2_ext_write_bytes});
+	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window().get_dpi_factor());
 
 	return true;
 }
@@ -93,13 +81,9 @@ void AFBCSample::update(float delta_time)
 			image_usage_flags.insert(VK_IMAGE_USAGE_STORAGE_BIT);
 		}
 
-		render_context->get_device().wait_idle();
+		get_device().wait_idle();
 
-		auto new_swapchain = std::make_unique<vkb::Swapchain>(
-		    render_context->get_swapchain(),
-		    image_usage_flags);
-
-		render_context->update_swapchain(std::move(new_swapchain));
+		get_render_context().update_swapchain(image_usage_flags);
 
 		afbc_enabled_last_value = afbc_enabled;
 	}

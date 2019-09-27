@@ -70,104 +70,6 @@ const std::unordered_map<uint32_t, SetBindings> &ResourceBindingState::get_set_b
 	return set_bindings;
 }
 
-VkDescriptorImageInfo ResourceInfo::get_image_info() const
-{
-	VkDescriptorImageInfo image_info{};
-
-	// Can be null for input attachments
-	image_info.sampler   = sampler ? sampler->get_handle() : VK_NULL_HANDLE;
-	image_info.imageView = image_view->get_handle();
-
-	return image_info;
-}
-
-const core::ImageView &ResourceInfo::get_image_view() const
-{
-	return *image_view;
-}
-
-void ResourceInfo::reset()
-{
-	clear_dirty();
-
-	buffer = nullptr;
-
-	image_view = nullptr;
-
-	sampler = VK_NULL_HANDLE;
-
-	offset = 0;
-
-	range = 0;
-}
-
-bool ResourceInfo::is_dirty() const
-{
-	return dirty;
-}
-
-void ResourceInfo::clear_dirty()
-{
-	dirty = false;
-}
-
-bool ResourceInfo::is_buffer() const
-{
-	return buffer != nullptr;
-}
-
-bool ResourceInfo::is_sampler_only() const
-{
-	return image_view == nullptr && sampler != VK_NULL_HANDLE;
-}
-
-bool ResourceInfo::is_image_only() const
-{
-	return image_view != nullptr && sampler == VK_NULL_HANDLE;
-}
-
-bool ResourceInfo::is_image_sampler() const
-{
-	return image_view != nullptr && sampler != VK_NULL_HANDLE;
-}
-
-void ResourceInfo::bind_buffer(const core::Buffer &buffer_, VkDeviceSize offset_, VkDeviceSize range_)
-{
-	buffer = &buffer_;
-
-	offset = offset_;
-
-	range = range_;
-
-	dirty = true;
-}
-
-void ResourceInfo::bind_image(const core::ImageView &image_view_, const core::Sampler &sampler_)
-{
-	image_view = &image_view_;
-
-	sampler = &sampler_;
-
-	dirty = true;
-}
-
-void ResourceInfo::bind_input(const core::ImageView &iv)
-{
-	image_view = &iv;
-	dirty      = true;
-}
-
-VkDescriptorBufferInfo ResourceInfo::get_buffer_info() const
-{
-	VkDescriptorBufferInfo buffer_info{};
-
-	buffer_info.buffer = buffer->get_handle();
-	buffer_info.offset = offset;
-	buffer_info.range  = range;
-
-	return buffer_info;
-}
-
 void SetBindings::reset()
 {
 	clear_dirty();
@@ -187,26 +89,33 @@ void SetBindings::clear_dirty()
 
 void SetBindings::clear_dirty(uint32_t binding, uint32_t array_element)
 {
-	resource_bindings[binding][array_element].clear_dirty();
+	resource_bindings[binding][array_element].dirty = false;
 }
 
 void SetBindings::bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t binding, uint32_t array_element)
 {
-	resource_bindings[binding][array_element].bind_buffer(buffer, offset, range);
+	resource_bindings[binding][array_element].dirty  = true;
+	resource_bindings[binding][array_element].buffer = &buffer;
+	resource_bindings[binding][array_element].offset = offset;
+	resource_bindings[binding][array_element].range  = range;
 
 	dirty = true;
 }
 
 void SetBindings::bind_image(const core::ImageView &image_view, const core::Sampler &sampler, uint32_t binding, uint32_t array_element)
 {
-	resource_bindings[binding][array_element].bind_image(image_view, sampler);
+	resource_bindings[binding][array_element].dirty      = true;
+	resource_bindings[binding][array_element].image_view = &image_view;
+	resource_bindings[binding][array_element].sampler    = &sampler;
 
 	dirty = true;
 }
 
 void SetBindings::bind_input(const core::ImageView &image_view, const uint32_t binding, const uint32_t array_element)
 {
-	resource_bindings[binding][array_element].bind_input(image_view);
+	resource_bindings[binding][array_element].dirty      = true;
+	resource_bindings[binding][array_element].image_view = &image_view;
+
 	dirty = true;
 }
 

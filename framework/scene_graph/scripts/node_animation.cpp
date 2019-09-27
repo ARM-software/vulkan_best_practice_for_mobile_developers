@@ -59,6 +59,5 @@ void NodeAnimation::clear_animation()
 {
 	animation_fn = {};
 }
-
 }        // namespace sg
 }        // namespace vkb

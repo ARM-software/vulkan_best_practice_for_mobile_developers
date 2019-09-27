@@ -20,8 +20,6 @@
 
 #include "glsl_compiler.h"
 
-#include "common/error.h"
-
 VKBP_DISABLE_WARNINGS()
 #include <SPIRV/GLSL.std.450.h>
 #include <SPIRV/GlslangToSpv.h>

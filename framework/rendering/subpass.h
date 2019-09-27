@@ -21,12 +21,13 @@
 #pragma once
 
 #include "common/helpers.h"
-#include "core/command_buffer.h"
 #include "core/shader_module.h"
+#include "rendering/pipeline_state.h"
 
 namespace vkb
 {
 class RenderContext;
+class CommandBuffer;
 
 /**
  * @brief Calculates the vulkan style projection matrix
@@ -40,12 +41,20 @@ glm::mat4 vulkan_style_projection(const glm::mat4 &proj);
  *        where they need to implement the draw function.
  *        It is used to construct a RenderPipeline
  */
-class Subpass : public NonCopyable
+class Subpass
 {
   public:
 	Subpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader);
 
+	Subpass(const Subpass &) = delete;
+
+	Subpass(Subpass &&) = default;
+
 	virtual ~Subpass() = default;
+
+	Subpass &operator=(const Subpass &) = delete;
+
+	Subpass &operator=(Subpass &&) = delete;
 
 	/**
 	 * @brief Updates the render target attachments with the ones stored in this subpass

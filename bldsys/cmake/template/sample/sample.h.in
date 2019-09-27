@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "rendering/render_pipeline.h"
+#include "scene_graph/components/camera.h"
 #include "vulkan_sample.h"
 
 class @SAMPLE_NAME@ : public vkb::VulkanSample

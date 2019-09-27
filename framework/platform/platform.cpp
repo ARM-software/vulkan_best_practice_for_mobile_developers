@@ -29,7 +29,6 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/spdlog.h>
 
-#include "application.h"
 #include "common/logging.h"
 #include "platform/filesystem.h"
 
@@ -41,24 +40,27 @@ std::string Platform::external_storage_directory = "";
 
 std::string Platform::temp_directory = "";
 
-Platform::Platform()
-{
-}
-
 bool Platform::initialize(std::unique_ptr<Application> &&app)
 {
 	assert(app && "Application is not valid");
 	active_app = std::move(app);
 
-	// Override initialize_sinks in the derived platforms
 	auto sinks = get_platform_sinks();
 
 	auto logger = std::make_shared<spdlog::logger>("logger", sinks.begin(), sinks.end());
+
+#ifdef VKB_DEBUG
+	logger->set_level(spdlog::level::debug);
+#else
+	logger->set_level(spdlog::level::info);
+#endif
+
 	logger->set_pattern(LOGGER_FORMAT);
 	spdlog::set_default_logger(logger);
 
 	LOGI("Logger initialized");
 
+	// Set the app to execute as a benchmark
 	if (active_app->get_options().contains("--benchmark"))
 	{
 		benchmark_mode             = true;
@@ -66,6 +68,18 @@ bool Platform::initialize(std::unique_ptr<Application> &&app)
 		remaining_benchmark_frames = total_benchmark_frames;
 		active_app->set_benchmark_mode(true);
 	}
+
+	// Set the app as headless
+	active_app->set_headless(active_app->get_options().contains("--headless"));
+
+	create_window();
+
+	if (!window)
+	{
+		throw std::runtime_error("Window creation failed, make sure platform overrides create_window() and creates a valid window.");
+	}
+
+	LOGI("Window created");
 
 	return true;
 }
@@ -79,6 +93,16 @@ bool Platform::prepare()
 	return false;
 }
 
+void Platform::main_loop()
+{
+	while (!window->should_close())
+	{
+		run();
+
+		window->process_events();
+	}
+}
+
 void Platform::run()
 {
 	if (benchmark_mode)
@@ -90,6 +114,7 @@ void Platform::run()
 			auto time_taken = timer.stop();
 			LOGI("Benchmark completed in {} seconds (ran {} frames, averaged {} fps)", time_taken, total_benchmark_frames, total_benchmark_frames / time_taken);
 			close();
+			return;
 		}
 	}
 
@@ -108,7 +133,14 @@ void Platform::terminate(ExitCode code)
 	}
 
 	active_app.reset();
+	window.reset();
+
 	spdlog::drop_all();
+}
+
+void Platform::close() const
+{
+	window->close();
 }
 
 const std::string &Platform::get_external_storage_directory()
@@ -155,5 +187,10 @@ void Platform::set_temp_directory(const std::string &dir)
 std::vector<spdlog::sink_ptr> Platform::get_platform_sinks()
 {
 	return {};
+}
+
+Window &Platform::get_window() const
+{
+	return *window;
 }
 }        // namespace vkb

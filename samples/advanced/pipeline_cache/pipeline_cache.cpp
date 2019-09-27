@@ -80,10 +80,6 @@ bool PipelineCache::prepare(vkb::Platform &platform)
 		LOGW("No pipeline cache found. {}", ex.what());
 	}
 
-	std::vector<const char *> extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
-	device = std::make_unique<vkb::Device>(get_gpu(), get_surface(), extensions);
-
 	/* Add initial pipeline cache data from the cached file */
 	VkPipelineCacheCreateInfo create_info{VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO};
 	create_info.initialDataSize = pipeline_data.size();
@@ -111,26 +107,22 @@ bool PipelineCache::prepare(vkb::Platform &platform)
 	// Build all pipelines from a previous run
 	resource_cache.warmup(data_cache);
 
-	auto swapchain = std::make_unique<vkb::Swapchain>(*device, get_surface());
-
 	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times});
 
-	render_context = std::make_unique<vkb::RenderContext>(std::move(swapchain));
-
-	float dpi_factor = platform.get_dpi_factor();
+	float dpi_factor = platform.get_window().get_dpi_factor();
 
 	button_size.x = button_size.x * dpi_factor;
 	button_size.y = button_size.y * dpi_factor;
 
-	gui = std::make_unique<vkb::Gui>(*render_context, dpi_factor);
+	gui = std::make_unique<vkb::Gui>(*this, dpi_factor);
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 	auto &camera_node = add_free_camera("main_camera");
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
-	vkb::ShaderSource vert_shader(vkb::fs::read_asset("shaders/base.vert"));
-	vkb::ShaderSource frag_shader(vkb::fs::read_asset("shaders/base.frag"));
-	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	vkb::ShaderSource vert_shader(vkb::fs::read_shader("base.vert"));
+	vkb::ShaderSource frag_shader(vkb::fs::read_shader("base.frag"));
+	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 
 	auto render_pipeline = vkb::RenderPipeline();
 	render_pipeline.add_subpass(std::move(scene_subpass));

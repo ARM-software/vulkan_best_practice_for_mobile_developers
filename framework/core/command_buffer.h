@@ -20,8 +20,8 @@
 
 #pragma once
 
-#include "command_record.h"
-#include "command_replay.h"
+#include <list>
+
 #include "common/helpers.h"
 #include "common/vk_common.h"
 #include "core/buffer.h"
@@ -30,16 +30,24 @@
 #include "core/sampler.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_target.h"
+#include "rendering/subpass.h"
+#include "resource_binding_state.h"
 
 namespace vkb
 {
 class CommandPool;
+class DescriptorSet;
+class Framebuffer;
+class Pipeline;
+class PipelineLayout;
+class PipelineState;
+class RenderTarget;
 
 /**
- * @brief Records Vulkan commands after begin function and replays them before end function is called.
- *        Helper class to build graphics/compute pipelines and descriptor sets
+ * @brief Helper class to manage and record a command buffer, building and
+ *        keeping track of pipeline state and resource bindings
  */
-class CommandBuffer : public NonCopyable
+class CommandBuffer
 {
   public:
 	enum class ResetMode
@@ -57,40 +65,55 @@ class CommandBuffer : public NonCopyable
 		Executable,
 	};
 
+	/**
+	 * @brief Helper structure used to track render pass state
+	 */
+	struct RenderPassBinding
+	{
+		const RenderPass *render_pass;
+
+		const Framebuffer *framebuffer;
+	};
+
 	CommandBuffer(CommandPool &command_pool, VkCommandBufferLevel level);
+
+	CommandBuffer(const CommandBuffer &) = delete;
+
+	CommandBuffer(CommandBuffer &&other);
 
 	~CommandBuffer();
 
-	/**
-	 * @brief Move constructs
-	 */
-	CommandBuffer(CommandBuffer &&other);
+	CommandBuffer &operator=(const CommandBuffer &) = delete;
+
+	CommandBuffer &operator=(CommandBuffer &&) = delete;
 
 	Device &get_device();
-
-	CommandRecord &get_recorder();
-
-	CommandReplay &get_replayer();
 
 	const VkCommandBuffer &get_handle() const;
 
 	bool is_recording() const;
 
+	std::vector<uint8_t> stored_push_constants;
+
 	/**
 	 * @brief Sets the command buffer so that it is ready for recording
 	 *        If it is a secondary command buffer, a pointer to the
 	 *        primary command buffer it inherits from must be provided
-	 * @brief primary_cmd_buf (optional)
+	 * @param flags Usage behavior for the command buffer
+	 * @param primary_cmd_buf (optional)
+	 * @return Whether it succeded or not
 	 */
 	VkResult begin(VkCommandBufferUsageFlags flags, CommandBuffer *primary_cmd_buf = nullptr);
 
 	VkResult end();
 
-	void begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values, VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
+	void clear(VkClearAttachment info, VkClearRect rect);
+
+	void begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values, const std::vector<std::unique_ptr<Subpass>> &subpasses, VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
 
 	void next_subpass();
 
-	void resolve_subpasses();
+	void execute_commands(CommandBuffer &secondary_command_buffer);
 
 	void execute_commands(std::vector<CommandBuffer *> &secondary_command_buffers);
 
@@ -102,6 +125,16 @@ class CommandBuffer : public NonCopyable
 	void set_specialization_constant(uint32_t constant_id, const T &data);
 
 	void set_specialization_constant(uint32_t constant_id, const std::vector<uint8_t> &data);
+
+	/**
+	 * @brief Stores additional data which is prepended to the
+	 *        values passed to the push_constant() function
+	 * @param data Data to be stored
+	 */
+	template <class T>
+	void set_push_constants(const T &data);
+
+	void set_push_constants(const std::vector<uint8_t> &values);
 
 	void push_constants(uint32_t offset, const std::vector<uint8_t> &values);
 
@@ -163,6 +196,8 @@ class CommandBuffer : public NonCopyable
 
 	void blit_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageBlit> &regions);
 
+	void copy_buffer(const core::Buffer &src_buffer, const core::Buffer &dst_buffer, VkDeviceSize size);
+
 	void copy_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageCopy> &regions);
 
 	void copy_buffer_to_image(const core::Buffer &buffer, const core::Image &image, const std::vector<VkBufferImageCopy> &regions);
@@ -172,8 +207,6 @@ class CommandBuffer : public NonCopyable
 	void buffer_memory_barrier(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier);
 
 	const State get_state() const;
-
-	const VkCommandBufferUsageFlags get_usage_flags() const;
 
 	/**
 	 * @brief Reset the command buffer to a state where it can be recorded to
@@ -190,12 +223,46 @@ class CommandBuffer : public NonCopyable
 
 	VkCommandBuffer handle{VK_NULL_HANDLE};
 
-	CommandRecord recorder;
+	RenderPassBinding current_render_pass;
 
-	CommandReplay replayer;
+	PipelineState pipeline_state;
 
-	VkCommandBufferUsageFlags usage_flags{};
+	ResourceBindingState resource_binding_state;
+
+	std::unordered_map<uint32_t, DescriptorSetLayout *> descriptor_set_layout_state;
+
+	const RenderPassBinding &get_current_render_pass() const;
+
+	const uint32_t get_current_subpass_index() const;
+
+	/**
+	 * @brief Flush the piplines state
+	 */
+	void flush_pipeline_state(VkPipelineBindPoint pipeline_bind_point);
+
+	/**
+	 * @brief Flush the descriptor set state
+	 */
+	void flush_descriptor_state(VkPipelineBindPoint pipeline_bind_point);
 };
+
+template <class T>
+inline void CommandBuffer::set_push_constants(const T &data)
+{
+	set_push_constants(
+	    {reinterpret_cast<const uint8_t *>(&data),
+	     reinterpret_cast<const uint8_t *>(&data) + sizeof(T)});
+}
+
+template <>
+inline void CommandBuffer::set_push_constants<bool>(const bool &data)
+{
+	uint32_t value = to_u32(data);
+
+	set_push_constants(
+	    {reinterpret_cast<const uint8_t *>(&value),
+	     reinterpret_cast<const uint8_t *>(&value) + sizeof(std::uint32_t)});
+}
 
 template <class T>
 inline void CommandBuffer::set_specialization_constant(uint32_t constant_id, const T &data)
@@ -208,7 +275,7 @@ inline void CommandBuffer::set_specialization_constant(uint32_t constant_id, con
 template <>
 inline void CommandBuffer::set_specialization_constant<bool>(std::uint32_t constant_id, const bool &data)
 {
-	std::uint32_t value = static_cast<std::uint32_t>(data);
+	uint32_t value = to_u32(data);
 
 	set_specialization_constant(
 	    constant_id,

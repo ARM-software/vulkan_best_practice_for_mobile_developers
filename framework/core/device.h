@@ -28,6 +28,7 @@
 #include "core/descriptor_set.h"
 #include "core/descriptor_set_layout.h"
 #include "core/framebuffer.h"
+#include "core/instance.h"
 #include "core/pipeline.h"
 #include "core/pipeline_layout.h"
 #include "core/queue.h"
@@ -41,12 +42,27 @@
 
 namespace vkb
 {
-class Device : public NonCopyable
+struct DriverVersion
+{
+	uint16_t major;
+	uint16_t minor;
+	uint16_t patch;
+};
+
+class Device
 {
   public:
 	Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vector<const char *> extensions = {}, VkPhysicalDeviceFeatures features = {});
 
+	Device(const Device &) = delete;
+
+	Device(Device &&) = delete;
+
 	~Device();
+
+	Device &operator=(const Device &) = delete;
+
+	Device &operator=(Device &&) = delete;
 
 	VkPhysicalDevice get_physical_device() const;
 
@@ -57,6 +73,11 @@ class Device : public NonCopyable
 	VmaAllocator get_memory_allocator() const;
 
 	const VkPhysicalDeviceProperties &get_properties() const;
+
+	/**
+	 * @return The version of the driver of the current physical device
+	 */
+	DriverVersion get_driver_version() const;
 
 	/**
 	 * @return Whether an image format is supported by the GPU
@@ -70,6 +91,11 @@ class Device : public NonCopyable
 	const Queue &get_queue_by_flags(VkQueueFlags queue_flags, uint32_t queue_index);
 
 	const Queue &get_queue_by_present(uint32_t queue_index);
+
+	/**
+	 * @brief Returns the first present supported graphics queue, otherwise just any graphics queue
+	 */
+	const Queue &get_suitable_graphics_queue();
 
 	/**
 	 * @return The command pool
@@ -107,8 +133,6 @@ class Device : public NonCopyable
 	VkPhysicalDevice physical_device{VK_NULL_HANDLE};
 
 	VkPhysicalDeviceFeatures features{};
-
-	VkSurfaceKHR surface{VK_NULL_HANDLE};
 
 	uint32_t queue_family_count{0};
 

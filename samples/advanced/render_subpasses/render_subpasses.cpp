@@ -64,32 +64,22 @@ vkb::RenderTarget RenderSubpasses::create_render_target(vkb::core::Image &&swapc
 	// Albedo                  RGBA8_UNORM   (32-bit)
 	// Normal                  RGB10A2_UNORM (32-bit)
 
-	VkImageUsageFlags usage_flags = VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
-	if (configs[Config::TransientAttachments].value == 0)
-	{
-		usage_flags |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
-	}
-	else
-	{
-		LOGI("Creating non transient attachments");
-	}
-
 	vkb::core::Image depth_image{device,
 	                             extent,
 	                             VK_FORMAT_D32_SFLOAT,
-	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | usage_flags,
+	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | rt_usage_flags,
 	                             VMA_MEMORY_USAGE_GPU_ONLY};
 
 	vkb::core::Image albedo_image{device,
 	                              extent,
-	                              configs[Config::GBufferSize].value == 0 ? VK_FORMAT_R8G8B8A8_UNORM : VK_FORMAT_R16G16B16A16_UNORM,
-	                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | usage_flags,
+	                              albedo_format,
+	                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | rt_usage_flags,
 	                              VMA_MEMORY_USAGE_GPU_ONLY};
 
 	vkb::core::Image normal_image{device,
 	                              extent,
-	                              configs[Config::GBufferSize].value == 0 ? VK_FORMAT_A2R10G10B10_UNORM_PACK32 : VK_FORMAT_R16G16B16A16_UNORM,
-	                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | usage_flags,
+	                              normal_format,
+	                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | rt_usage_flags,
 	                              VMA_MEMORY_USAGE_GPU_ONLY};
 
 	std::vector<vkb::core::Image> images;
@@ -109,6 +99,11 @@ vkb::RenderTarget RenderSubpasses::create_render_target(vkb::core::Image &&swapc
 	return vkb::RenderTarget{std::move(images)};
 }
 
+void RenderSubpasses::prepare_render_context()
+{
+	get_render_context().prepare(1, std::bind(&RenderSubpasses::create_render_target, this, std::placeholders::_1));
+}
+
 bool RenderSubpasses::prepare(vkb::Platform &platform)
 {
 	if (!VulkanSample::prepare(platform))
@@ -116,14 +111,8 @@ bool RenderSubpasses::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	std::vector<const char *> extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
-	device = std::make_unique<vkb::Device>(get_gpu(), get_surface(), extensions);
-
-	VkImageUsageFlags swapchain_usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
-	auto              swapchain       = std::make_unique<vkb::Swapchain>(*device, get_surface(), VkExtent2D{}, 3, VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR, VK_PRESENT_MODE_FIFO_KHR, swapchain_usage);
-
-	render_context = std::make_unique<vkb::RenderContext>(std::move(swapchain), std::bind(&RenderSubpasses::create_render_target, this, std::placeholders::_1));
+	std::set<VkImageUsageFlagBits> usage = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT};
+	get_render_context().update_swapchain(usage);
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
@@ -136,7 +125,7 @@ bool RenderSubpasses::prepare(vkb::Platform &platform)
 	lighting_render_pipeline = create_lighting_renderpass();
 
 	// Enable gui
-	gui = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor());
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window().get_dpi_factor());
 
 	// Enable stats
 	auto enabled_stats = {vkb::StatIndex::fragment_jobs,
@@ -146,6 +135,74 @@ bool RenderSubpasses::prepare(vkb::Platform &platform)
 	stats              = std::make_unique<vkb::Stats>(enabled_stats);
 
 	return true;
+}
+
+void RenderSubpasses::update(float delta_time)
+{
+	// Check whether the user changed the render technique
+	if (configs[Config::RenderTechnique].value != last_render_technique)
+	{
+		LOGI("Changing render technique");
+		last_render_technique = configs[Config::RenderTechnique].value;
+
+		// Reset frames, their synchronization objects and their command buffers
+		for (auto &frame : get_render_context().get_render_frames())
+		{
+			frame.reset();
+		}
+	}
+
+	// Check whether the user switched the attachment or the G-buffer option
+	if (configs[Config::TransientAttachments].value != last_transient_attachment ||
+	    configs[Config::GBufferSize].value != last_g_buffer_size)
+	{
+		// If attachment option has changed
+		if (configs[Config::TransientAttachments].value != last_transient_attachment)
+		{
+			rt_usage_flags = VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+
+			// If attachment should be transient
+			if (configs[Config::TransientAttachments].value == 0)
+			{
+				rt_usage_flags |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
+			}
+			else
+			{
+				LOGI("Creating non transient attachments");
+			}
+			last_transient_attachment = configs[Config::TransientAttachments].value;
+		}
+
+		// It G-buffer option has changed
+		if (configs[Config::GBufferSize].value != last_g_buffer_size)
+		{
+			if (configs[Config::GBufferSize].value == 0)
+			{
+				// Use less bits
+				albedo_format = VK_FORMAT_R8G8B8A8_UNORM;                  // 32-bit
+				normal_format = VK_FORMAT_A2R10G10B10_UNORM_PACK32;        // 32-bit
+			}
+			else
+			{
+				// Use more bits
+				albedo_format = VK_FORMAT_R16G16B16A16_UNORM;        // 64-bit
+				normal_format = VK_FORMAT_R16G16B16A16_UNORM;        // 64-bit
+			}
+
+			last_g_buffer_size = configs[Config::GBufferSize].value;
+		}
+
+		// Reset frames, their synchronization objects and their command buffers
+		for (auto &frame : get_render_context().get_render_frames())
+		{
+			frame.reset();
+		}
+
+		LOGI("Recreating render target");
+		get_render_context().recreate();
+	}
+
+	VulkanSample::update(delta_time);
 }
 
 void RenderSubpasses::draw_gui()
@@ -178,15 +235,7 @@ void RenderSubpasses::draw_gui()
 			    // Create a radio button for every option
 			    for (size_t j = 0; j < config.options.size(); ++j)
 			    {
-				    if (ImGui::RadioButton(config.options[j], &config.value, vkb::to_u32(j)))
-				    {
-					    if (config.type == Config::TransientAttachments ||
-					        config.type == Config::GBufferSize)
-					    {
-						    LOGI("Recreating render target");
-						    render_context->update_swapchain(std::make_unique<vkb::Swapchain>(std::move(render_context->get_swapchain())));
-					    }
-				    }
+				    ImGui::RadioButton(config.options[j], &config.value, vkb::to_u32(j));
 
 				    // Keep it on the same line til the last one
 				    if (j < config.options.size() - 1)
@@ -199,6 +248,33 @@ void RenderSubpasses::draw_gui()
 		    }
 	    },
 	    /* lines = */ vkb::to_u32(lines));
+}
+
+/**
+ * @return Load store info to load all and store only the swapchain
+ */
+std::vector<vkb::LoadStoreInfo> get_load_all_store_swapchain()
+{
+	// Load every attachment and store only swapchain
+	std::vector<vkb::LoadStoreInfo> load_store{4};
+
+	// Swapchain
+	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	load_store[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
+
+	// Depth
+	load_store[1].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
+	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	// Albedo
+	load_store[2].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
+	load_store[2].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	// Normal
+	load_store[3].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
+	load_store[3].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	return load_store;
 }
 
 /**
@@ -246,17 +322,17 @@ std::vector<VkClearValue> get_clear_value()
 std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_one_renderpass_two_subpasses()
 {
 	// Geometry subpass
-	auto geometry_vs   = vkb::ShaderSource{vkb::fs::read_asset("shaders/deferred/geometry.vert")};
-	auto geometry_fs   = vkb::ShaderSource{vkb::fs::read_asset("shaders/deferred/geometry.frag")};
-	auto scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(geometry_vs), std::move(geometry_fs), *scene, *camera);
+	auto geometry_vs   = vkb::ShaderSource{vkb::fs::read_shader("deferred/geometry.vert")};
+	auto geometry_fs   = vkb::ShaderSource{vkb::fs::read_shader("deferred/geometry.frag")};
+	auto scene_subpass = std::make_unique<vkb::SceneSubpass>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs), *scene, *camera);
 
 	// Outputs are depth, albedo, and normal
 	scene_subpass->set_output_attachments({1, 2, 3});
 
 	// Lighting subpass
-	auto lighting_vs      = vkb::ShaderSource{vkb::fs::read_asset("shaders/deferred/lighting.vert")};
-	auto lighting_fs      = vkb::ShaderSource{vkb::fs::read_asset("shaders/deferred/lighting.frag")};
-	auto lighting_subpass = std::make_unique<vkb::LightingSubpass>(*render_context, std::move(lighting_vs), std::move(lighting_fs), *camera);
+	auto lighting_vs      = vkb::ShaderSource{vkb::fs::read_shader("deferred/lighting.vert")};
+	auto lighting_fs      = vkb::ShaderSource{vkb::fs::read_shader("deferred/lighting.frag")};
+	auto lighting_subpass = std::make_unique<vkb::LightingSubpass>(get_render_context(), std::move(lighting_vs), std::move(lighting_fs), *camera);
 
 	// Inputs are depth, albedo, and normal from the geometry subpass
 	lighting_subpass->set_input_attachments({1, 2, 3});
@@ -305,9 +381,9 @@ std::vector<vkb::LoadStoreInfo> get_clear_store_all()
 std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_geometry_renderpass()
 {
 	// Geometry subpass
-	auto geometry_vs   = vkb::ShaderSource{vkb::fs::read_asset("shaders/deferred/geometry.vert")};
-	auto geometry_fs   = vkb::ShaderSource{vkb::fs::read_asset("shaders/deferred/geometry.frag")};
-	auto scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(geometry_vs), std::move(geometry_fs), *scene, *camera);
+	auto geometry_vs   = vkb::ShaderSource{vkb::fs::read_shader("deferred/geometry.vert")};
+	auto geometry_fs   = vkb::ShaderSource{vkb::fs::read_shader("deferred/geometry.frag")};
+	auto scene_subpass = std::make_unique<vkb::SceneSubpass>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs), *scene, *camera);
 
 	// Outputs are depth, albedo, and normal
 	scene_subpass->set_output_attachments({1, 2, 3});
@@ -328,9 +404,9 @@ std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_geometry_renderpass
 std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_lighting_renderpass()
 {
 	// Lighting subpass
-	auto lighting_vs      = vkb::ShaderSource{vkb::fs::read_asset("shaders/deferred/lighting.vert")};
-	auto lighting_fs      = vkb::ShaderSource{vkb::fs::read_asset("shaders/deferred/lighting.frag")};
-	auto lighting_subpass = std::make_unique<vkb::LightingSubpass>(*render_context, std::move(lighting_vs), std::move(lighting_fs), *camera);
+	auto lighting_vs      = vkb::ShaderSource{vkb::fs::read_shader("deferred/lighting.vert")};
+	auto lighting_fs      = vkb::ShaderSource{vkb::fs::read_shader("deferred/lighting.frag")};
+	auto lighting_subpass = std::make_unique<vkb::LightingSubpass>(get_render_context(), std::move(lighting_vs), std::move(lighting_fs), *camera);
 
 	// Inputs are depth, albedo, and normal from the geometry subpass
 	lighting_subpass->set_input_attachments({1, 2, 3});
@@ -340,7 +416,7 @@ std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_lighting_renderpass
 
 	auto lighting_render_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(lighting_subpasses));
 
-	lighting_render_pipeline->set_load_store(get_clear_all_store_swapchain());
+	lighting_render_pipeline->set_load_store(get_load_all_store_swapchain());
 
 	lighting_render_pipeline->set_clear_value(get_clear_value());
 
@@ -369,7 +445,6 @@ void draw_pipeline(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render
 		gui->draw(command_buffer);
 	}
 
-	command_buffer.resolve_subpasses();
 	command_buffer.end_render_pass();
 }
 
@@ -383,11 +458,41 @@ void RenderSubpasses::draw_renderpasses(vkb::CommandBuffer &command_buffer, vkb:
 	// First render pass (no gui)
 	draw_pipeline(command_buffer, render_target, *geometry_render_pipeline);
 
+	// Memory barriers needed
+	for (size_t i = 1; i < render_target.get_views().size(); ++i)
+	{
+		auto &view = render_target.get_views().at(i);
+
+		vkb::ImageMemoryBarrier barrier;
+
+		if (i == 1)
+		{
+			barrier.old_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			barrier.new_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+
+			barrier.src_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			barrier.src_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		}
+		else
+		{
+			barrier.old_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			barrier.new_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+			barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			barrier.src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		}
+
+		barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		barrier.dst_access_mask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+
+		command_buffer.image_memory_barrier(view, barrier);
+	}
+
 	// Second render pass
 	draw_pipeline(command_buffer, render_target, *lighting_render_pipeline, gui.get());
 }
 
-void RenderSubpasses::draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void RenderSubpasses::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
 {
 	if (configs[Config::RenderTechnique].value == 0)
 	{

@@ -20,7 +20,7 @@
 
  ]]
 
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.10)
 
 set(SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 set(ROOT_DIR ${SCRIPT_DIR}/../..)

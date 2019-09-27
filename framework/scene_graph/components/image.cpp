@@ -29,11 +29,11 @@ VKBP_DISABLE_WARNINGS()
 #include <stb_image_resize.h>
 VKBP_ENABLE_WARNINGS()
 
+#include "common/utils.h"
 #include "platform/filesystem.h"
 #include "scene_graph/components/image/astc.h"
 #include "scene_graph/components/image/ktx.h"
 #include "scene_graph/components/image/stb.h"
-#include "utils.h"
 
 namespace vkb
 {

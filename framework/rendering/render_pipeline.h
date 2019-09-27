@@ -21,10 +21,10 @@
 #pragma once
 
 #include "common/helpers.h"
+#include "common/utils.h"
 #include "core/buffer.h"
 #include "rendering/render_frame.h"
 #include "rendering/subpass.h"
-#include "utils.h"
 
 namespace vkb
 {
@@ -37,14 +37,20 @@ namespace vkb
  * For example, postprocessing can be implemented with two pipelines which
  * share render targets.
  */
-class RenderPipeline : public NonCopyable
+class RenderPipeline
 {
   public:
 	RenderPipeline(std::vector<std::unique_ptr<Subpass>> &&subpasses = {});
 
+	RenderPipeline(const RenderPipeline &) = delete;
+
+	RenderPipeline(RenderPipeline &&) = default;
+
 	virtual ~RenderPipeline() = default;
 
-	RenderPipeline(RenderPipeline &&other) = default;
+	RenderPipeline &operator=(const RenderPipeline &) = delete;
+
+	RenderPipeline &operator=(RenderPipeline &&) = default;
 
 	/**
 	 * @return Load store info
@@ -72,10 +78,18 @@ class RenderPipeline : public NonCopyable
 	 */
 	void add_subpass(std::unique_ptr<Subpass> &&subpass);
 
+	std::vector<std::unique_ptr<Subpass>> &get_subpasses();
+
 	/**
 	 * @brief Record draw commands for each Subpass
 	 */
 	void draw(CommandBuffer &command_buffer, RenderTarget &render_target, VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
+
+	/**
+	 * @return Subpass currently being recorded, or the first one
+	 *         if drawing has not started
+	 */
+	std::unique_ptr<Subpass> &get_active_subpass();
 
   private:
 	std::vector<std::unique_ptr<Subpass>> subpasses;
@@ -85,5 +99,7 @@ class RenderPipeline : public NonCopyable
 
 	/// Default to two clear values
 	std::vector<VkClearValue> clear_value = std::vector<VkClearValue>(2);
+
+	size_t active_subpass_index{0};
 };
 }        // namespace vkb
