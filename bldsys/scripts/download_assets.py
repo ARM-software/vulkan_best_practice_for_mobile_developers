@@ -29,7 +29,7 @@ import os, requests
 assets_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../assets")
 
 if __name__ == "__main__":
-    url = "https://github.com/ARM-software/vulkan_best_practice_for_mobile_developers/releases/download/v1.1.2/scenes.zip"
+    url = "https://github.com/ARM-software/vulkan_best_practice_for_mobile_developers/releases/download/v1.2.0/scenes.zip"
 
     try:
         request = requests.get(url, stream=True)
