@@ -63,7 +63,7 @@ ClangTidy:
     - docker
   script:
     - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -H. -Bbuild/clang
-    - python3 /usr/local/bin/run-clang-tidy.py -p build/clang -clang-tidy-binary=clang-tidy-8 -header-filter=.*,-third_party -checks=-*,google-*,-google-runtime-references -quiet framework samples app
+    - python3 /usr/local/bin/run-clang-tidy.py -j $(($(nproc)/2+1)) -p build/clang -clang-tidy-binary=clang-tidy-8 -header-filter=framework,samples,vulkan_best_practice -checks=-*,google-*,-google-runtime-references -quiet framework/* samples/* vulkan_best_practice/*
 
 Linux:
   stage: Build
@@ -75,7 +75,7 @@ Linux:
     - docker
   script:
     - cmake -G "Unix Makefiles" -H. -Bbuild/linux -DCMAKE_BUILD_TYPE=Release -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
-    - cmake --build build/linux --target vulkan_best_practice --config Release
+    - cmake --build build/linux --target vulkan_best_practice --config Release -- -j$(($(nproc)/2+1))
 
 Windows:
   stage: Build
@@ -98,7 +98,7 @@ Android:
     - docker
   script:
     - cmake -G "Unix Makefiles" -H. -Bbuild/android -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
-    - cmake --build build/android --config Release --target vulkan_best_practice_package
+    - cmake --build build/android --config Release --target vulkan_best_practice_package -- -j$(($(nproc)/2+1))
 
 GenerateSample:
   stage: Test
