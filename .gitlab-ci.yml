@@ -63,7 +63,7 @@ ClangTidy:
     - docker
   script:
     - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -H. -Bbuild/clang
-    - python3 /usr/local/bin/run-clang-tidy.py -j $(($(nproc)/2+1)) -p build/clang -clang-tidy-binary=clang-tidy-8 -header-filter=framework,samples,vulkan_best_practice -checks=-*,google-*,-google-runtime-references -quiet framework/* samples/* vulkan_best_practice/*
+    - python3 /usr/local/bin/run-clang-tidy.py -j $(($(nproc)/2+1)) -p build/clang -clang-tidy-binary=clang-tidy-8 -header-filter=framework,samples,vulkan_best_practice -checks=-*,google-*,-google-runtime-references -quiet framework/* samples/* vulkan_best_practice/* tests/*
 
 Linux:
   stage: Build
@@ -81,6 +81,10 @@ Windows:
   stage: Build
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
+  artifacts:
+    paths:
+      - build/windows
+    expire_in: 1h
   tags:
     - windows
     - shell
@@ -104,6 +108,8 @@ GenerateSample:
   stage: Test
   variables:
    GIT_SUBMODULE_STRATEGY: recursive
+  dependencies:
+    - Windows
   tags:
    - windows
    - shell
@@ -116,6 +122,13 @@ SystemTest:
  stage: Test
  variables:
    GIT_SUBMODULE_STRATEGY: recursive
+ artifacts:
+   paths:
+     - tests/system_test/artifacts
+   expire_in: 1d
+   when: on_failure
+ dependencies:
+  - Windows
  tags:
    - windows
    - shell
