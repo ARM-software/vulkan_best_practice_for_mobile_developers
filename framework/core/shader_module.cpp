@@ -49,7 +49,7 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
 	// Compile the GLSL source
 	if (!glsl_compiler.compile_to_spirv(stage, glsl_source.get_data(), entry_point, shader_variant, spirv, info_log))
 	{
-		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
+		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED, "Shader not compiled: " + info_log};
 	}
 
 	SPIRVReflection spirv_reflection;

@@ -158,6 +158,12 @@ Sponza model downloaded from Morgan McGuire's [Computer Graphics Archive](https:
 
 Fonts downloaded from [Google Fonts](https://fonts.google.com), under license [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0)
 
+PBR References:
+
+- [Frostbite to PBR course notes](https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf)
+- [Learn OpenGL](https://learnopengl.com/PBR/Theory)
+
+
 ### Trademarks
 
 Vulkan is a registered trademark of the Khronos Group Inc.

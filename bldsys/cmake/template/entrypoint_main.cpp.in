@@ -48,6 +48,7 @@ int main(int argc, char *argv[])
 #endif
 #endif
 
+// Only error handle in release
 #ifndef DEBUG
 	try
 	{

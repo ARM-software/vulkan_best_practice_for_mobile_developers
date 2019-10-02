@@ -20,55 +20,58 @@
 
 #pragma once
 
-#include "buffer_pool.h"
-#include "rendering/subpass.h"
+#include "common/error.h"
 
-#define MAX_DEFERRED_LIGHT_COUNT 100
+VKBP_DISABLE_WARNINGS()
+#include <glm/glm.hpp>
+VKBP_ENABLE_WARNINGS()
+
+#include "buffer_pool.h"
+#include "rendering/subpasses/geometry_subpass.h"
+
+#define MAX_FORWARD_LIGHT_COUNT 16
 
 namespace vkb
 {
 namespace sg
 {
-class Camera;
-class Light;
 class Scene;
+class Node;
+class Mesh;
+class SubMesh;
+class Camera;
 }        // namespace sg
 
-/**
- * @brief Light uniform structure for lighting shader
- * Inverse view projection matrix and inverse resolution vector are used
- * in lighting pass to reconstruct position from depth and frag coord
- */
-struct alignas(16) LightUniform
-{
-	glm::mat4 inv_view_proj;
-	glm::vec2 inv_resolution;
-};
-
-struct alignas(16) DeferredLights
+struct alignas(16) ForwardLights
 {
 	uint32_t count;
-	Light    lights[MAX_DEFERRED_LIGHT_COUNT];
+	Light    lights[MAX_FORWARD_LIGHT_COUNT];
 };
 
 /**
- * @brief Lighting pass of Deferred Rendering
+ * @brief This subpass is responsible for rendering a Scene
  */
-class LightingSubpass : public Subpass
+class ForwardSubpass : public GeometrySubpass
 {
   public:
-	LightingSubpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Camera &camera, sg::Scene &scene);
+	/**
+	 * @brief Constructs a subpass designed for forward rendering
+	 * @param render_context Render context
+	 * @param vertex_shader Vertex shader source
+	 * @param fragment_shader Fragment shader source
+	 * @param scene Scene to render on this subpass
+	 * @param camera Camera used to look at the scene
+	 */
+	ForwardSubpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Scene &scene, sg::Camera &camera);
+
+	virtual ~ForwardSubpass() = default;
 
 	virtual void prepare() override;
 
-	void draw(CommandBuffer &command_buffer) override;
-
-  private:
-	sg::Camera &camera;
-
-	sg::Scene &scene;
-
-	ShaderVariant lighting_variant;
+	/**
+	 * @brief Record draw commands
+	 */
+	virtual void draw(CommandBuffer &command_buffer) override;
 };
 
 }        // namespace vkb

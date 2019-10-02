@@ -27,7 +27,7 @@
 #include "gui.h"
 #include "platform/filesystem.h"
 #include "platform/platform.h"
-#include "rendering/subpasses/scene_subpass.h"
+#include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/node.h"
 #include "stats.h"
 
@@ -117,12 +117,13 @@ bool PipelineCache::prepare(vkb::Platform &platform)
 	gui = std::make_unique<vkb::Gui>(*this, dpi_factor);
 
 	load_scene("scenes/sponza/Sponza01.gltf");
+
 	auto &camera_node = add_free_camera("main_camera");
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
 	vkb::ShaderSource vert_shader(vkb::fs::read_shader("base.vert"));
 	vkb::ShaderSource frag_shader(vkb::fs::read_shader("base.frag"));
-	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 
 	auto render_pipeline = vkb::RenderPipeline();
 	render_pipeline.add_subpass(std::move(scene_subpass));

@@ -30,7 +30,6 @@
 #include "core/sampler.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_target.h"
-#include "rendering/subpass.h"
 #include "resource_binding_state.h"
 
 namespace vkb
@@ -42,6 +41,7 @@ class Pipeline;
 class PipelineLayout;
 class PipelineState;
 class RenderTarget;
+class Subpass;
 
 /**
  * @brief Helper class to manage and record a command buffer, building and

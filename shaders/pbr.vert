@@ -1,3 +1,4 @@
+#version 320 es
 /* Copyright (c) 2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
@@ -18,22 +19,44 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "bonza.h"
+#define MAX_FORWARD_LIGHT_COUNT 16
 
-#include "gltf_loader.h"
-#include "gui.h"
-#include "platform/platform.h"
-#include "stats.h"
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-#	include "platform/android/android_platform.h"
-#endif
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec2 texcoord_0;
+layout(location = 2) in vec3 normal;
 
-BonzaTest::BonzaTest() :
-    vkbtest::GLTFLoaderTest("scenes/bonza/Bonza.gltf")
+layout(set = 0, binding = 1) uniform GlobalUniform
 {
+	mat4 model;
+	mat4 view_proj;
+	vec3 camera_position;
 }
+global_uniform;
 
-std::unique_ptr<vkb::VulkanSample> create_bonza_test()
+struct Light
 {
-	return std::make_unique<BonzaTest>();
+	vec4 position;
+	vec4 color;
+};
+
+layout(set = 0, binding = 4) uniform LightsInfo
+{
+	uint  count;
+	Light lights[MAX_FORWARD_LIGHT_COUNT];
+}
+lights;
+
+layout(location = 0) out vec3 o_pos;
+layout(location = 1) out vec2 o_uv;
+layout(location = 2) out vec3 o_normal;
+
+void main(void)
+{
+	o_pos = vec3(global_uniform.model * vec4(position, 1.0));
+
+	o_uv = texcoord_0;
+
+	o_normal = mat3(global_uniform.model) * normal;
+
+	gl_Position = global_uniform.view_proj * global_uniform.model * vec4(position, 1.0);
 }

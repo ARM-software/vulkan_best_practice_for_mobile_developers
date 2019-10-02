@@ -66,7 +66,7 @@ bool CommandBufferUsage::prepare(vkb::Platform &platform)
 
 	vkb::ShaderSource vert_shader(vkb::fs::read_shader("base.vert"));
 	vkb::ShaderSource frag_shader(vkb::fs::read_shader("base.frag"));
-	auto              scene_subpass = std::make_unique<SceneSubpassSecondary>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto              scene_subpass = std::make_unique<ForwardSubpassSecondary>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 
 	auto render_pipeline = vkb::RenderPipeline();
 	render_pipeline.add_subpass(std::move(scene_subpass));
@@ -103,7 +103,7 @@ void CommandBufferUsage::prepare_render_context()
 
 void CommandBufferUsage::update(float delta_time)
 {
-	auto &subpass_state = static_cast<SceneSubpassSecondary *>(render_pipeline->get_active_subpass().get())->get_state();
+	auto &subpass_state = static_cast<ForwardSubpassSecondary *>(render_pipeline->get_active_subpass().get())->get_state();
 
 	// Process GUI input
 	subpass_state.secondary_cmd_buf_count = vkb::to_u32(gui_secondary_cmd_buf_count);
@@ -141,7 +141,7 @@ void CommandBufferUsage::draw_gui()
 	const bool landscape = camera->get_aspect_ratio() > 1.0f;
 	uint32_t   lines     = landscape ? 3 : 5;
 
-	const auto &subpass = static_cast<SceneSubpassSecondary *>(render_pipeline->get_active_subpass().get());
+	const auto &subpass = static_cast<ForwardSubpassSecondary *>(render_pipeline->get_active_subpass().get());
 
 	gui->show_options_window(
 	    /* body = */ [&]() {
@@ -191,7 +191,7 @@ void CommandBufferUsage::render(vkb::CommandBuffer &primary_command_buffer)
 
 void CommandBufferUsage::draw_renderpass(vkb::CommandBuffer &primary_command_buffer, vkb::RenderTarget &render_target)
 {
-	const auto &subpass = static_cast<SceneSubpassSecondary *>(render_pipeline->get_active_subpass().get());
+	const auto &subpass = static_cast<ForwardSubpassSecondary *>(render_pipeline->get_active_subpass().get());
 	auto &      extent  = render_target.get_extent();
 
 	VkViewport viewport{};
@@ -239,19 +239,21 @@ void CommandBufferUsage::draw_renderpass(vkb::CommandBuffer &primary_command_buf
 	primary_command_buffer.end_render_pass();
 }
 
-CommandBufferUsage::SceneSubpassSecondary::SceneSubpassSecondary(vkb::RenderContext &render_context,
-                                                                 vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader, vkb::sg::Scene &scene, vkb::sg::Camera &camera) :
-    vkb::SceneSubpass{render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera}
+CommandBufferUsage::ForwardSubpassSecondary::ForwardSubpassSecondary(vkb::RenderContext &render_context,
+                                                                     vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader, vkb::sg::Scene &scene_, vkb::sg::Camera &camera) :
+    vkb::ForwardSubpass{render_context, std::move(vertex_shader), std::move(fragment_shader), scene_, camera}
 {
 }
 
-void CommandBufferUsage::SceneSubpassSecondary::record_draw(vkb::CommandBuffer &                                               command_buffer,
-                                                            const std::vector<std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> &nodes,
-                                                            uint32_t mesh_start, uint32_t mesh_end, size_t thread_index)
+void CommandBufferUsage::ForwardSubpassSecondary::record_draw(vkb::CommandBuffer &                                               command_buffer,
+                                                              const std::vector<std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> &nodes,
+                                                              uint32_t mesh_start, uint32_t mesh_end, size_t thread_index)
 {
 	command_buffer.set_color_blend_state(color_blend_state);
 
 	command_buffer.set_depth_stencil_state(get_depth_stencil_state());
+
+	command_buffer.bind_buffer(light_buffer.get_buffer(), light_buffer.get_offset(), light_buffer.get_size(), 0, 4, 0);
 
 	for (uint32_t i = mesh_start; i < mesh_end; i++)
 	{
@@ -261,9 +263,9 @@ void CommandBufferUsage::SceneSubpassSecondary::record_draw(vkb::CommandBuffer &
 	}
 }
 
-vkb::CommandBuffer *CommandBufferUsage::SceneSubpassSecondary::record_draw_secondary(vkb::CommandBuffer &                                               primary_command_buffer,
-                                                                                     const std::vector<std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> &nodes,
-                                                                                     uint32_t mesh_start, uint32_t mesh_end, size_t thread_index)
+vkb::CommandBuffer *CommandBufferUsage::ForwardSubpassSecondary::record_draw_secondary(vkb::CommandBuffer &                                               primary_command_buffer,
+                                                                                       const std::vector<std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> &nodes,
+                                                                                       uint32_t mesh_start, uint32_t mesh_end, size_t thread_index)
 {
 	const auto &queue = render_context.get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
@@ -281,8 +283,7 @@ vkb::CommandBuffer *CommandBufferUsage::SceneSubpassSecondary::record_draw_secon
 
 	return &secondary_command_buffer;
 }
-
-void CommandBufferUsage::SceneSubpassSecondary::draw(vkb::CommandBuffer &primary_command_buffer)
+void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::CommandBuffer &primary_command_buffer)
 {
 	std::multimap<float, std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> opaque_nodes;
 
@@ -305,6 +306,8 @@ void CommandBufferUsage::SceneSubpassSecondary::draw(vkb::CommandBuffer &primary
 		sorted_transparent_nodes.push_back(node_it->second);
 	}
 	const auto transparent_submeshes = vkb::to_u32(sorted_transparent_nodes.size());
+
+	light_buffer = allocate_lights<vkb::ForwardLights>(scene.get_components<vkb::sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
 
 	color_blend_attachment.blend_enable = VK_FALSE;
 	color_blend_state.attachments.resize(get_output_attachments().size());
@@ -397,22 +400,22 @@ void CommandBufferUsage::SceneSubpassSecondary::draw(vkb::CommandBuffer &primary
 	}
 }
 
-void CommandBufferUsage::SceneSubpassSecondary::set_viewport(VkViewport &viewport)
+void CommandBufferUsage::ForwardSubpassSecondary::set_viewport(VkViewport &viewport)
 {
 	this->viewport = viewport;
 }
 
-void CommandBufferUsage::SceneSubpassSecondary::set_scissor(VkRect2D &scissor)
+void CommandBufferUsage::ForwardSubpassSecondary::set_scissor(VkRect2D &scissor)
 {
 	this->scissor = scissor;
 }
 
-float CommandBufferUsage::SceneSubpassSecondary::get_avg_draws_per_buffer() const
+float CommandBufferUsage::ForwardSubpassSecondary::get_avg_draws_per_buffer() const
 {
 	return avg_draws_per_buffer;
 }
 
-CommandBufferUsage::SceneSubpassSecondaryState &CommandBufferUsage::SceneSubpassSecondary::get_state()
+CommandBufferUsage::ForwardSubpassSecondaryState &CommandBufferUsage::ForwardSubpassSecondary::get_state()
 {
 	return state;
 }

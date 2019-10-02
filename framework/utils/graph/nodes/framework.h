@@ -27,9 +27,6 @@
 #include <typeinfo>
 #include <unordered_map>
 
-#include <json.hpp>
-#include <spdlog/fmt/fmt.h>
-
 #include "core/device.h"
 #include "core/image_view.h"
 #include "core/shader_module.h"

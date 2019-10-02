@@ -22,9 +22,10 @@
 
 #include <ctpl_stl.h>
 
+#include "buffer_pool.h"
 #include "common/utils.h"
 #include "rendering/render_pipeline.h"
-#include "rendering/subpasses/scene_subpass.h"
+#include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/perspective_camera.h"
@@ -49,7 +50,7 @@ class CommandBufferUsage : public vkb::VulkanSample
 	/**
 	 * @brief Helper structure used to set subpass state
 	 */
-	struct SceneSubpassSecondaryState
+	struct ForwardSubpassSecondaryState
 	{
 		uint32_t secondary_cmd_buf_count = 0;
 
@@ -65,12 +66,12 @@ class CommandBufferUsage : public vkb::VulkanSample
 	 *        into multiple secondary command buffers, optionally
 	 *        in different threads
 	 */
-	class SceneSubpassSecondary : public vkb::SceneSubpass
+	class ForwardSubpassSecondary : public vkb::ForwardSubpass
 	{
 	  public:
-		SceneSubpassSecondary(vkb::RenderContext &render_context,
-		                      vkb::ShaderSource &&vertex_source, vkb::ShaderSource &&fragment_source,
-		                      vkb::sg::Scene &scene, vkb::sg::Camera &camera);
+		ForwardSubpassSecondary(vkb::RenderContext &render_context,
+		                        vkb::ShaderSource &&vertex_source, vkb::ShaderSource &&fragment_source,
+		                        vkb::sg::Scene &scene, vkb::sg::Camera &camera);
 
 		void draw(vkb::CommandBuffer &primary_command_buffer) override;
 
@@ -80,7 +81,7 @@ class CommandBufferUsage : public vkb::VulkanSample
 
 		float get_avg_draws_per_buffer() const;
 
-		SceneSubpassSecondaryState &get_state();
+		ForwardSubpassSecondaryState &get_state();
 
 	  private:
 		/**
@@ -116,11 +117,13 @@ class CommandBufferUsage : public vkb::VulkanSample
 
 		vkb::ColorBlendState color_blend_state{};
 
-		SceneSubpassSecondaryState state{};
+		ForwardSubpassSecondaryState state{};
 
 		float avg_draws_per_buffer{0};
 
 		ctpl::thread_pool thread_pool;
+
+		vkb::BufferAllocation light_buffer;
 	};
 
   private:

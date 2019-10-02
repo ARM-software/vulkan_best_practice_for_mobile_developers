@@ -27,6 +27,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "scene_graph/components/light.h"
 #include "scene_graph/components/texture.h"
 
 namespace vkb
@@ -54,8 +55,6 @@ class Scene
 	void add_node(std::unique_ptr<Node> &&node);
 
 	void add_child(Node &child);
-
-	const std::vector<Node *> &get_children() const;
 
 	void add_component(std::unique_ptr<Component> &&component);
 
@@ -88,13 +87,18 @@ class Scene
 	template <class T>
 	std::vector<T *> get_components() const
 	{
-		auto &scene_components = get_components(typeid(T));
+		std::vector<T *> result;
+		if (has_component(typeid(T)))
+		{
+			auto &scene_components = get_components(typeid(T));
 
-		std::vector<T *> result(scene_components.size());
-		std::transform(scene_components.begin(), scene_components.end(), result.begin(),
-		               [](const std::unique_ptr<Component> &component) -> T * {
-			               return dynamic_cast<T *>(component.get());
-		               });
+			result.resize(scene_components.size());
+			std::transform(scene_components.begin(), scene_components.end(), result.begin(),
+			               [](const std::unique_ptr<Component> &component) -> T * {
+				               return dynamic_cast<T *>(component.get());
+			               });
+		}
+
 		return result;
 	}
 
@@ -113,13 +117,17 @@ class Scene
 
 	Node *find_node(const std::string &name);
 
+	void set_root_node(Node &node);
+
+	Node &get_root_node();
+
   private:
 	std::string name;
 
 	/// List of all the nodes
 	std::vector<std::unique_ptr<Node>> nodes;
 
-	std::vector<Node *> children;
+	Node *root{nullptr};
 
 	std::unordered_map<std::type_index, std::vector<std::unique_ptr<Component>>> components;
 };

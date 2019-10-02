@@ -18,7 +18,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "rendering/subpasses/scene_subpass.h"
+#include "rendering/subpasses/geometry_subpass.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "rendering/render_context.h"
@@ -33,10 +33,15 @@
 
 namespace vkb
 {
-SceneSubpass::SceneSubpass(RenderContext &render_context, ShaderSource &&vertex_source, ShaderSource &&fragment_source, sg::Scene &scene, sg::Camera &camera) :
+GeometrySubpass::GeometrySubpass(RenderContext &render_context, ShaderSource &&vertex_source, ShaderSource &&fragment_source, sg::Scene &scene_, sg::Camera &camera) :
     Subpass{render_context, std::move(vertex_source), std::move(fragment_source)},
-    meshes{scene.get_components<sg::Mesh>()},
-    camera{camera}
+    meshes{scene_.get_components<sg::Mesh>()},
+    camera{camera},
+    scene{scene_}
+{
+}
+
+void GeometrySubpass::prepare()
 {
 	// Build all shader variance upfront
 	auto &device = render_context.get_device();
@@ -54,8 +59,7 @@ SceneSubpass::SceneSubpass(RenderContext &render_context, ShaderSource &&vertex_
 	}
 }
 
-void SceneSubpass::get_sorted_nodes(std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &opaque_nodes,
-                                    std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &transparent_nodes)
+void GeometrySubpass::get_sorted_nodes(std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &opaque_nodes, std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &transparent_nodes)
 {
 	auto camera_transform = camera.get_node()->get_transform().get_world_matrix();
 
@@ -87,7 +91,7 @@ void SceneSubpass::get_sorted_nodes(std::multimap<float, std::pair<sg::Node *, s
 	}
 }
 
-void SceneSubpass::draw(CommandBuffer &command_buffer)
+void GeometrySubpass::draw(CommandBuffer &command_buffer)
 {
 	std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> opaque_nodes;
 	std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> transparent_nodes;
@@ -130,13 +134,9 @@ void SceneSubpass::draw(CommandBuffer &command_buffer)
 	}
 }
 
-void SceneSubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t thread_index)
+void GeometrySubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t thread_index)
 {
 	GlobalUniform global_uniform;
-
-	// Default light
-	global_uniform.light_pos   = glm::vec4(500.0f, 1550.0f, 0.0f, 1.0);
-	global_uniform.light_color = glm::vec4(1.0, 1.0, 1.0, 1.0);
 
 	global_uniform.camera_view_proj = vkb::vulkan_style_projection(camera.get_projection()) * camera.get_view();
 
@@ -148,12 +148,14 @@ void SceneSubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &node,
 
 	global_uniform.model = transform.get_world_matrix();
 
+	global_uniform.camera_position = glm::vec3(glm::inverse(camera.get_view())[3]);
+
 	allocation.update(global_uniform);
 
 	command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
 }
 
-void SceneSubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh, VkFrontFace front_face)
+void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh, VkFrontFace front_face)
 {
 	auto &device = command_buffer.get_device();
 
@@ -247,7 +249,7 @@ void SceneSubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_
 	draw_submesh_command(command_buffer, sub_mesh);
 }
 
-void SceneSubpass::draw_submesh_command(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh)
+void GeometrySubpass::draw_submesh_command(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh)
 {
 	// Draw submesh indexed if indices exists
 	if (sub_mesh.vertex_indices != 0)

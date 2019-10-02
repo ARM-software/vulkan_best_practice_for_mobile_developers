@@ -29,6 +29,7 @@
 
 #include <glm/glm.hpp>
 
+#include "core/shader_module.h"
 #include "scene_graph/component.h"
 
 namespace vkb
@@ -87,5 +88,6 @@ class Light : public Component
 
 	LightProperties properties;
 };
+
 }        // namespace sg
 }        // namespace vkb

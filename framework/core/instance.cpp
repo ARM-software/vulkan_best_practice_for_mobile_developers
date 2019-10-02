@@ -33,19 +33,19 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
 {
 	if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
 	{
-		LOGE("{}: {}", layer_prefix, message);
+		spdlog::error("[layers:{}]: {}", layer_prefix, message);
 	}
 	else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
 	{
-		LOGW("{}: {}", layer_prefix, message);
+		LOGW("[layers:{}]: {}", layer_prefix, message);
 	}
 	else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
 	{
-		LOGW("{}: {}", layer_prefix, message);
+		LOGW("[layers:{}]: {}", layer_prefix, message);
 	}
 	else
 	{
-		LOGI("{}: {}", layer_prefix, message);
+		LOGI("[layers:{}]: {}", layer_prefix, message);
 	}
 	return VK_FALSE;
 }

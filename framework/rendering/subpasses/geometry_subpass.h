@@ -48,9 +48,7 @@ struct alignas(16) GlobalUniform
 
 	glm::mat4 camera_view_proj;
 
-	glm::vec4 light_pos;
-
-	glm::vec4 light_color;
+	glm::vec3 camera_position;
 };
 
 /**
@@ -68,20 +66,22 @@ struct PBRMaterialUniform
 /**
  * @brief This subpass is responsible for rendering a Scene
  */
-class SceneSubpass : public Subpass
+class GeometrySubpass : public Subpass
 {
   public:
 	/**
-	 * @brief Constructs a subpass
+	 * @brief Constructs a subpass for the geometry pass of Deferred rendering
 	 * @param render_context Render context
 	 * @param vertex_shader Vertex shader source
 	 * @param fragment_shader Fragment shader source
 	 * @param scene Scene to render on this subpass
 	 * @param camera Camera used to look at the scene
 	 */
-	SceneSubpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Scene &scene, sg::Camera &camera);
+	GeometrySubpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Scene &scene, sg::Camera &camera);
 
-	virtual ~SceneSubpass() = default;
+	virtual ~GeometrySubpass() = default;
+
+	virtual void prepare() override;
 
 	/**
 	 * @brief Record draw commands
@@ -100,12 +100,14 @@ class SceneSubpass : public Subpass
 	void get_sorted_nodes(std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &opaque_nodes,
 	                      std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &transparent_nodes);
 
-  private:
-	void draw_submesh_command(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh);
-
 	sg::Camera &camera;
 
 	std::vector<sg::Mesh *> meshes;
+
+	sg::Scene &scene;
+
+  private:
+	void draw_submesh_command(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh);
 };
 
 }        // namespace vkb

@@ -32,9 +32,13 @@
 
 namespace vkb
 {
-RenderPipeline::RenderPipeline(std::vector<std::unique_ptr<Subpass>> &&subpasses) :
-    subpasses{std::move(subpasses)}
+RenderPipeline::RenderPipeline(std::vector<std::unique_ptr<Subpass>> &&subpasses_) :
+    subpasses{std::move(subpasses_)}
 {
+	for (auto &subpass : subpasses)
+	{
+		subpass->prepare();
+	}
 	// Default clear value
 	clear_value[0].color        = {0.0f, 0.0f, 0.0f, 1.0f};
 	clear_value[1].depthStencil = {1.0f, ~0U};
@@ -42,6 +46,7 @@ RenderPipeline::RenderPipeline(std::vector<std::unique_ptr<Subpass>> &&subpasses
 
 void RenderPipeline::add_subpass(std::unique_ptr<Subpass> &&subpass)
 {
+	subpass->prepare();
 	subpasses.emplace_back(std::move(subpass));
 }
 

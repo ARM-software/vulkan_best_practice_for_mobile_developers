@@ -24,7 +24,7 @@
 #include "gui.h"
 #include "platform/filesystem.h"
 #include "platform/platform.h"
-#include "rendering/subpasses/scene_subpass.h"
+#include "rendering/subpasses/forward_subpass.h"
 #include "stats.h"
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
@@ -46,6 +46,25 @@ bool GLTFLoaderTest::prepare(vkb::Platform &platform)
 
 	load_scene(scene_path);
 
+	auto light = std::make_unique<vkb::sg::Light>("light");
+	auto node  = std::make_unique<vkb::sg::Node>("light node");
+
+	vkb::sg::LightProperties props;
+	props.color     = glm::vec3(1.0, 1.0, 1.0);
+	props.intensity = 1.0f;
+
+	light->set_node(*node);
+	light->set_light_type(vkb::sg::LightType::Point);
+	light->set_properties(props);
+
+	auto &t = node->get_transform();
+	t.set_translation({500.0f, 1550.0f, 0.0f});
+
+	node->set_component(*light);
+	scene->add_child(*node);
+	scene->add_component(std::move(light));
+	scene->add_node(std::move(node));
+
 	auto camera_node = scene->find_node("main_camera");
 
 	if (!camera_node)
@@ -60,7 +79,7 @@ bool GLTFLoaderTest::prepare(vkb::Platform &platform)
 	vkb::ShaderSource vert_shader(vkb::fs::read_shader("base.vert"));
 	vkb::ShaderSource frag_shader(vkb::fs::read_shader("base.frag"));
 
-	auto scene_subpass = std::make_unique<vkb::SceneSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, camera);
+	auto scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, camera);
 
 	auto render_pipeline = vkb::RenderPipeline();
 	render_pipeline.add_subpass(std::move(scene_subpass));

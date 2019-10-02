@@ -231,7 +231,7 @@ bool debug_graphs(RenderContext &context, sg::Scene &scene)
 
 	size_t scene_id = scene_graph.create_node<SceneNode>(scene);
 
-	get_node(scene_graph, scene.get_children(), scene_id);
+	get_node(scene_graph, scene.get_root_node().get_children(), scene_id);
 
 	return framework_graph.dump_to_file("framework.json") && scene_graph.dump_to_file("scene.json");
 }

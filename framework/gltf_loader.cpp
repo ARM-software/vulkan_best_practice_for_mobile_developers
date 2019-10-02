@@ -335,7 +335,7 @@ GLTFLoader::GLTFLoader(Device &device) :
 {
 }
 
-std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &file_name)
+std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &file_name, int scene_index)
 {
 	std::string err;
 	std::string warn;
@@ -374,10 +374,10 @@ std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &f
 		model_path.clear();
 	}
 
-	return std::make_unique<sg::Scene>(load_scene());
+	return std::make_unique<sg::Scene>(load_scene(scene_index));
 }
 
-sg::Scene GLTFLoader::load_scene()
+sg::Scene GLTFLoader::load_scene(int scene_index)
 {
 	auto scene = sg::Scene();
 
@@ -721,35 +721,52 @@ sg::Scene GLTFLoader::load_scene()
 	// Load scenes
 	std::queue<std::pair<sg::Node &, int>> traverse_nodes;
 
-	for (auto &gltf_scene : model.scenes)
+	tinygltf::Scene *gltf_scene{nullptr};
+
+	if (scene_index >= 0 && scene_index < static_cast<int>(model.scenes.size()))
 	{
-		auto root_node = std::make_unique<sg::Node>(gltf_scene.name);
-
-		for (auto node_index : gltf_scene.nodes)
-		{
-			traverse_nodes.push(std::make_pair(std::ref(*root_node), node_index));
-		}
-
-		while (!traverse_nodes.empty())
-		{
-			auto node_it = traverse_nodes.front();
-			traverse_nodes.pop();
-
-			auto &current_node       = *nodes.at(node_it.second);
-			auto &traverse_root_node = node_it.first;
-
-			current_node.set_parent(traverse_root_node);
-			traverse_root_node.add_child(current_node);
-
-			for (auto child_node_index : model.nodes[node_it.second].children)
-			{
-				traverse_nodes.push(std::make_pair(std::ref(traverse_root_node), child_node_index));
-			}
-		}
-
-		scene.add_child(*root_node);
-		nodes.push_back(std::move(root_node));
+		gltf_scene = &model.scenes[scene_index];
 	}
+	else if (model.defaultScene >= 0 && model.defaultScene < static_cast<int>(model.scenes.size()))
+	{
+		gltf_scene = &model.scenes[model.defaultScene];
+	}
+	else if (model.scenes.size() > 0)
+	{
+		gltf_scene = &model.scenes[0];
+	}
+
+	if (!gltf_scene)
+	{
+		throw std::runtime_error("Couldn't determine which scene to load!");
+	}
+
+	auto root_node = std::make_unique<sg::Node>(gltf_scene->name);
+
+	for (auto node_index : gltf_scene->nodes)
+	{
+		traverse_nodes.push(std::make_pair(std::ref(*root_node), node_index));
+	}
+
+	while (!traverse_nodes.empty())
+	{
+		auto node_it = traverse_nodes.front();
+		traverse_nodes.pop();
+
+		auto &current_node       = *nodes.at(node_it.second);
+		auto &traverse_root_node = node_it.first;
+
+		current_node.set_parent(traverse_root_node);
+		traverse_root_node.add_child(current_node);
+
+		for (auto child_node_index : model.nodes[node_it.second].children)
+		{
+			traverse_nodes.push(std::make_pair(std::ref(traverse_root_node), child_node_index));
+		}
+	}
+
+	scene.set_root_node(*root_node);
+	nodes.push_back(std::move(root_node));
 
 	// Store nodes into the scene
 	scene.set_nodes(std::move(nodes));
@@ -762,7 +779,7 @@ sg::Scene GLTFLoader::load_scene()
 	camera_node->set_component(*default_camera);
 	scene.add_component(std::move(default_camera));
 
-	scene.add_child(*camera_node);
+	scene.get_root_node().add_child(*camera_node);
 	scene.add_node(std::move(camera_node));
 
 	return scene;

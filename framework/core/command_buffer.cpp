@@ -24,6 +24,7 @@
 #include "common/error.h"
 #include "device.h"
 #include "rendering/render_frame.h"
+#include "rendering/subpass.h"
 
 namespace vkb
 {

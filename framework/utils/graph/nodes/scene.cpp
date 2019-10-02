@@ -84,10 +84,7 @@ SceneNode::SceneNode(size_t id, const sg::Scene &scene)
 	attributes["id"]    = id;
 	attributes["type"]  = SceneNode::get_type_str(SceneNodeType::Scene);
 	attributes["label"] = label(SceneNodeType::Scene, scene);
-
-	attributes["data"] = nlohmann::json{
-	    {"children_count", scene.get_children().size()}};
-
+	attributes["data"]  = nlohmann::json{};
 	attributes["group"] = "Scene";
 }
 

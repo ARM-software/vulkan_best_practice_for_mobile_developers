@@ -27,6 +27,7 @@
 #include <type_traits>
 
 #include <glm/gtx/string_cast.hpp>
+#include <json.hpp>
 #include <spdlog/fmt/fmt.h>
 
 #include "utils/graph/node.h"
