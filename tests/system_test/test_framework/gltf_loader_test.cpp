@@ -46,6 +46,8 @@ bool GLTFLoaderTest::prepare(vkb::Platform &platform)
 
 	load_scene(scene_path);
 
+	scene->clear_components<vkb::sg::Light>();
+
 	auto light = std::make_unique<vkb::sg::Light>("light");
 	auto node  = std::make_unique<vkb::sg::Node>("light node");
 

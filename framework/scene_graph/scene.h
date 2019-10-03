@@ -82,6 +82,15 @@ class Scene
 	}
 
 	/**
+	 * @brief Clears a list of components
+	 */
+	template <class T>
+	void clear_components()
+	{
+		set_components(typeid(T), {});
+	}
+
+	/**
 	 * @return List of pointers to components casted to the given template type
 	 */
 	template <class T>

@@ -1075,7 +1075,12 @@ std::vector<std::unique_ptr<sg::Light>> GLTFLoader::parse_khr_lights_punctual()
 				    static_cast<float>(khr_light.Get("color").Get(1).Get<double>()),
 				    static_cast<float>(khr_light.Get("color").Get(2).Get<double>()));
 			}
-			properties.intensity = static_cast<float>(khr_light.Get("intensity").Get<double>());
+
+			if (khr_light.Has("intensity"))
+			{
+				properties.intensity = static_cast<float>(khr_light.Get("intensity").Get<double>());
+			}
+
 			if (type != sg::LightType::Directional)
 			{
 				properties.range = static_cast<float>(khr_light.Get("range").Get<double>());

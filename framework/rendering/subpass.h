@@ -126,13 +126,13 @@ class Subpass
 		light_info.count = to_u32(scene_lights.size());
 
 		std::transform(scene_lights.begin(), scene_lights.end(), light_info.lights, [](sg::Light *light) -> Light {
-			const auto &props     = light->get_properties();
-			auto &      transform = light->get_node()->get_transform();
+			const auto &properties = light->get_properties();
+			auto &      transform  = light->get_node()->get_transform();
 
 			return {{transform.get_translation(), static_cast<float>(light->get_light_type())},
-			        {props.color, props.intensity},
-			        {props.direction, props.range},
-			        {props.inner_cone_angle, props.outer_cone_angle}};
+			        {properties.color, properties.intensity},
+			        {transform.get_rotation() * properties.direction, properties.range},
+			        {properties.inner_cone_angle, properties.outer_cone_angle}};
 		});
 
 		auto &           render_frame = get_render_context().get_active_frame();
