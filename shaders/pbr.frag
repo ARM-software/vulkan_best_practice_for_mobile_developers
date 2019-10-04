@@ -168,6 +168,44 @@ vec3 saturate(vec3 t)
 	return clamp(t, 0.0, 1.0);
 }
 
+vec3 apply_directional_light(uint index, vec3 normal)
+{
+	vec3 world_to_light = -lights.lights[index].direction.xyz;
+
+	world_to_light = normalize(world_to_light);
+
+	float ndotl = clamp(dot(normal, world_to_light), 0.0, 1.0);
+
+	return ndotl * lights.lights[index].color.w * lights.lights[index].color.rgb;
+}
+
+vec3 apply_point_light(uint index, vec3 normal)
+{
+	vec3 world_to_light = lights.lights[index].position.xyz - in_pos.xyz;
+
+	float dist = length(world_to_light);
+
+	float atten = 1.0 / dist * dist;
+
+	world_to_light = normalize(world_to_light);
+
+	float ndotl = clamp(dot(normal, world_to_light), 0.0, 1.0);
+
+	return ndotl * lights.lights[index].color.w * atten * lights.lights[index].color.rgb;
+}
+
+vec3 get_light_direction(uint index)
+{
+	if (lights.lights[index].position.w == DIRECTIONAL_LIGHT)
+	{
+		return -lights.lights[index].direction.xyz;
+	}
+	if (lights.lights[index].position.w == POINT_LIGHT)
+	{
+		return lights.lights[index].position.xyz - in_pos.xyz;
+	}
+}
+
 void main(void)
 {
 	// vec3 position = vec3(0, 0, 0);
@@ -198,7 +236,7 @@ void main(void)
 
 	for (uint i = 0U; i < lights.count; ++i)
 	{
-		vec3 L = normalize(lights.lights[i].position.rgb - in_pos).rgb;
+		vec3 L = get_light_direction(i);
 		vec3 H = normalize(V + L);
 
 		float LdotH = saturate(dot(L, H));
@@ -212,7 +250,14 @@ void main(void)
 
 		float Fd = Fr_DisneyDiffuse(NdotV, NdotL, LdotH, roughness);
 
-		LightContribution += lights.lights[i].color.a * lights.lights[i].color.rgb * (diffuse_color * (vec3(1.0) - F) * Fd + Fr) * NdotL;
+		if (lights.lights[i].position.w == DIRECTIONAL_LIGHT)
+		{
+			LightContribution += apply_directional_light(i, N) * (diffuse_color * (vec3(1.0) - F) * Fd + Fr);
+		}
+		if (lights.lights[i].position.w == POINT_LIGHT)
+		{
+			LightContribution += apply_point_light(i, N) * (diffuse_color * (vec3(1.0) - F) * Fd + Fr);
+		}
 	}
 
 	// [1] Tempory irradiance to fix dark metals
