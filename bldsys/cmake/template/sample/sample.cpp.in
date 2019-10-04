@@ -42,12 +42,12 @@ bool @SAMPLE_NAME@::prepare(vkb::Platform &platform)
 	{
 		return false;
 	}
-	
+
 	// Load a scene from the assets folder
 	load_scene("scenes/sponza/Sponza01.gltf");
 
 	// Attach a move script to the camera component in the scene
-	auto &camera_node = add_free_camera("main_camera");
+	auto &camera_node = vkb::add_free_camera(*scene, "main_camera");
 	auto camera = &camera_node.get_component<vkb::sg::Camera>();
 
 	// Example Scene Render Pipeline

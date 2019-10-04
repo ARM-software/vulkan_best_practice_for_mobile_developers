@@ -118,7 +118,7 @@ bool PipelineCache::prepare(vkb::Platform &platform)
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
-	auto &camera_node = add_free_camera("main_camera");
+	auto &camera_node = vkb::add_free_camera(*scene, "main_camera");
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
 	vkb::ShaderSource vert_shader(vkb::fs::read_shader("base.vert"));

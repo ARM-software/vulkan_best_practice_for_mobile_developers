@@ -782,6 +782,12 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 	scene.get_root_node().add_child(*camera_node);
 	scene.add_node(std::move(camera_node));
 
+	if (!scene.has_component<vkb::sg::Light>())
+	{
+		// Add a default light if none are present
+		vkb::add_directional_light(scene, {0.132f, 0.278f, 0.278f, -0.910f});
+	}
+
 	return scene;
 }
 

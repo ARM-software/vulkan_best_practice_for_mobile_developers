@@ -116,6 +116,8 @@ bool RenderSubpasses::prepare(vkb::Platform &platform)
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
+	scene->clear_components<vkb::sg::Light>();
+
 	auto light_pos   = glm::vec3(0.0f, 128.0f, -225.0f);
 	auto light_color = glm::vec3(1.0, 1.0, 1.0);
 
@@ -141,24 +143,12 @@ bool RenderSubpasses::prepare(vkb::Platform &platform)
 				props.color     = light_color;
 				props.intensity = 1.0f;
 
-				auto light = std::make_unique<vkb::sg::Light>("light");
-				light->set_light_type(vkb::sg::LightType::Point);
-				light->set_properties(props);
-
-				auto  node = std::make_unique<vkb::sg::Node>("light");
-				auto &t    = node->get_transform();
-				t.set_translation(pos);
-
-				light->set_node(*node);
-				node->set_component(*light);
-				scene->add_component(std::move(light));
-				scene->add_child(*node);
-				scene->add_node(std::move(node));
+				vkb::add_point_light(*scene, pos, props);
 			}
 		}
 	}
 
-	auto &camera_node = add_free_camera("main_camera");
+	auto &camera_node = vkb::add_free_camera(*scene, "main_camera");
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
 	render_pipeline = create_one_renderpass_two_subpasses();

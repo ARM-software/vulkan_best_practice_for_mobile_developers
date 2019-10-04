@@ -48,24 +48,7 @@ bool GLTFLoaderTest::prepare(vkb::Platform &platform)
 
 	scene->clear_components<vkb::sg::Light>();
 
-	auto light = std::make_unique<vkb::sg::Light>("light");
-	auto node  = std::make_unique<vkb::sg::Node>("light node");
-
-	vkb::sg::LightProperties props;
-	props.color     = glm::vec3(1.0, 1.0, 1.0);
-	props.intensity = 1.0f;
-
-	light->set_node(*node);
-	light->set_light_type(vkb::sg::LightType::Point);
-	light->set_properties(props);
-
-	auto &t = node->get_transform();
-	t.set_translation({500.0f, 1550.0f, 0.0f});
-
-	node->set_component(*light);
-	scene->add_child(*node);
-	scene->add_component(std::move(light));
-	scene->add_node(std::move(node));
+	vkb::add_point_light(get_scene(), {500.0f, 1550.0f, 0.0f});
 
 	auto camera_node = scene->find_node("main_camera");
 

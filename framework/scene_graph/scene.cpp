@@ -90,7 +90,8 @@ const std::vector<std::unique_ptr<Component>> &Scene::get_components(const std::
 
 bool Scene::has_component(const std::type_index &type_info) const
 {
-	return components.find(type_info) != components.end();
+	auto component = components.find(type_info);
+	return (component != components.end() && !component->second.empty());
 }
 
 Node *Scene::find_node(const std::string &node_name)
