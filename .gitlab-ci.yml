@@ -84,7 +84,7 @@ Windows:
   artifacts:
     paths:
       - build/windows
-    expire_in: 1h
+    expire_in: 1d
   tags:
     - windows
     - shell
