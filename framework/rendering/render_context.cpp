@@ -141,13 +141,16 @@ void RenderContext::update_swapchain(const VkExtent2D &extent, const VkSurfaceTr
 
 	swapchain = std::make_unique<Swapchain>(*swapchain, VkExtent2D{width, height}, transform);
 
-	set_pre_transform(transform);
+	// Save the preTransform attribute for future rotations
+	pre_transform = transform;
 
 	recreate();
 }
 
 void RenderContext::recreate()
 {
+	LOGI("Recreated swapchain");
+
 	VkExtent2D swapchain_extent = swapchain->get_extent();
 	VkExtent3D extent{swapchain_extent.width, swapchain_extent.height, 1};
 
@@ -190,8 +193,6 @@ void RenderContext::handle_surface_changes()
 	{
 		// Recreate swapchain
 		device.wait_idle();
-
-		LOGI("Recreating swapchain");
 
 		update_swapchain(surface_properties.currentExtent, pre_transform);
 
@@ -402,8 +403,4 @@ std::vector<RenderFrame> &RenderContext::get_render_frames()
 	return frames;
 }
 
-void RenderContext::set_pre_transform(VkSurfaceTransformFlagBitsKHR pre_transform)
-{
-	this->pre_transform = pre_transform;
-}
 }        // namespace vkb

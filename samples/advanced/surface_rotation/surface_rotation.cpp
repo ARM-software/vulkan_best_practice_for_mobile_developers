@@ -81,22 +81,26 @@ bool SurfaceRotation::prepare(vkb::Platform &platform)
 
 void SurfaceRotation::update(float delta_time)
 {
-	handle_no_resize_rotations();
-
-	// Process GUI input
+	// Process GUI input, recreating the swapchain if pre-rotate mode was
+	// enabled/disabled by the user. Otherwise it might still be recreated if
+	// a 180 degree change in orientation is detected
 	if (pre_rotate != last_pre_rotate)
 	{
 		recreate_swapchain();
 
 		last_pre_rotate = pre_rotate;
 	}
+	else
+	{
+		handle_no_resize_rotations();
+	}
 
-	glm::mat4 pre_rotate_mat = glm::mat4(1.0f);
-
-	// In pre-rotate mode, the application has to handle the rotation
-	glm::vec3 rotation_axis = glm::vec3(0.0f, 0.0f, -1.0f);
-
-	const auto &swapchain = get_render_context().get_swapchain();
+	// In pre-rotate mode, the application has to handle the rotation.
+	// The swapchain preTransform attribute will now be something other than
+	// identity only if pre-rotate mode is enabled
+	glm::mat4   pre_rotate_mat = glm::mat4(1.0f);
+	glm::vec3   rotation_axis  = glm::vec3(0.0f, 0.0f, -1.0f);
+	const auto &swapchain      = get_render_context().get_swapchain();
 
 	if (swapchain.get_transform() & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
 	{
@@ -111,33 +115,30 @@ void SurfaceRotation::update(float delta_time)
 		pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(180.0f), rotation_axis);
 	}
 
-	// Ensure that the camera uses the swapchain dimensions, since in pre-rotate
-	// mode the aspect ratio never changes
+	// Ensure that the camera uses the swapchain dimensions, which never change if
+	// pre-rotate mode is enabled, and not the window dimensions set by the framework
 	VkExtent2D extent = swapchain.get_extent();
 	camera->set_aspect_ratio(static_cast<float>(extent.width) / extent.height);
 	camera->set_pre_rotation(pre_rotate_mat);
-
-	get_render_context().set_pre_transform(select_pre_transform());
 
 	VulkanSample::update(delta_time);
 }
 
 void SurfaceRotation::draw_gui()
 {
+	auto              extent          = get_render_context().get_swapchain().get_extent();
 	std::string       rotation_by_str = pre_rotate ? "application" : "compositor";
 	auto              prerotate_str   = "Pre-rotate (" + rotation_by_str + " rotates)";
-	uint32_t          a_width         = get_render_context().get_swapchain().get_extent().width;
-	uint32_t          a_height        = get_render_context().get_swapchain().get_extent().height;
-	float             aspect_ratio    = static_cast<float>(a_width) / static_cast<float>(a_height);
 	auto              transform       = SurfaceRotation::transform_to_string(get_render_context().get_swapchain().get_transform());
-	auto              resolution_str  = "Res: " + std::to_string(a_width) + "x" + std::to_string(a_height);
+	auto              resolution_str  = "Res: " + std::to_string(extent.width) + "x" + std::to_string(extent.height);
 	std::stringstream fov_stream;
 	fov_stream << "FOV: " << std::fixed << std::setprecision(2) << camera->get_field_of_view() * 180.0f / glm::pi<float>();
 	auto fov_str = fov_stream.str();
 
 	// If pre-rotate is enabled, the aspect ratio will not change, therefore need to check if the
-	// scene has been rotated
-	auto rotated = get_render_context().get_swapchain().get_transform() & (VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR | VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR);
+	// scene has been rotated using the swapchain preTransform attribute
+	auto  rotated      = get_render_context().get_swapchain().get_transform() & (VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR | VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR);
+	float aspect_ratio = static_cast<float>(extent.width) / extent.height;
 	if (aspect_ratio > 1.0f || (aspect_ratio < 1.0f && rotated))
 	{
 		// GUI landscape layout
@@ -165,15 +166,15 @@ void SurfaceRotation::draw_gui()
 
 VkSurfaceTransformFlagBitsKHR SurfaceRotation::select_pre_transform()
 {
-	VkSurfaceCapabilitiesKHR surface_properties;
-	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_physical_device(),
-	                                                   get_surface(),
-	                                                   &surface_properties));
-
 	VkSurfaceTransformFlagBitsKHR pre_transform;
 
 	if (pre_rotate)
 	{
+		VkSurfaceCapabilitiesKHR surface_properties;
+		VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_physical_device(),
+		                                                   get_surface(),
+		                                                   &surface_properties));
+
 		// Best practice: adjust the preTransform attribute in the swapchain properties
 		// so that it matches the value in the surface properties. This is to
 		// communicate to the presentation engine that the application is pre-rotating
@@ -190,6 +191,10 @@ VkSurfaceTransformFlagBitsKHR SurfaceRotation::select_pre_transform()
 
 void SurfaceRotation::handle_no_resize_rotations()
 {
+	// The render context recreates the swapchain if it detects a change of dimensions or an
+	// out-of-date swapchain. However 180 degree rotations do not currently trigger a resize.
+	// If pre-rotate mode is enabled, the sample will detect a 180 degree change in orientation
+	// and re-create the swapchain
 	VkSurfaceCapabilitiesKHR surface_properties;
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_physical_device(),
 	                                                   get_surface(),
@@ -205,8 +210,6 @@ void SurfaceRotation::handle_no_resize_rotations()
 
 void SurfaceRotation::recreate_swapchain()
 {
-	LOGI("Recreating swapchain");
-
 	get_device().wait_idle();
 
 	auto surface_extent = get_render_context().get_surface_extent();

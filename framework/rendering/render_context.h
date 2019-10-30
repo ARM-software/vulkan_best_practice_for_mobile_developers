@@ -185,8 +185,6 @@ class RenderContext
 
 	std::vector<RenderFrame> &get_render_frames();
 
-	void set_pre_transform(VkSurfaceTransformFlagBitsKHR pre_transform);
-
   protected:
 	VkExtent2D surface_extent;
 

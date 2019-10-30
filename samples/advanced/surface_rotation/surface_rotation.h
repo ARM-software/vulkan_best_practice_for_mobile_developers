@@ -49,8 +49,6 @@ class SurfaceRotation : public vkb::VulkanSample
 
 	virtual void draw_gui() override;
 
-	void trigger_swapchain_recreation();
-
 	void recreate_swapchain();
 
 	bool pre_rotate = false;
