@@ -204,7 +204,7 @@ cmake --build build/linux --config Release --target vulkan_best_practice -- -j4
 ./build/linux/vulkan_best_practice/bin/Release/x86_64/vulkan_best_practice --help
 ```
 
-# Mac
+# macOS
 
 ## Dependencies
 
