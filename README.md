@@ -24,6 +24,14 @@
 
 ![Vulkan Best Practice for Mobile Developers banner](banner.jpg)
 
+***
+> :warning: Development has now moved to:
+>
+> - [Vulkan-Samples](https://github.com/khronosGroup/Vulkan-samples)
+>
+> Please open issues and pull requests there.
+***
+
 ## Contents <!-- omit in toc -->
 
 - [Introduction](#introduction)
