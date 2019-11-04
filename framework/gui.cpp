@@ -199,8 +199,8 @@ Gui::Gui(VulkanSample &sample_, const float dpi_factor) :
 	sampler_info.addressModeW  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_info.borderColor   = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 
-	vkb::ShaderSource vert_shader(vkb::fs::read_shader("imgui.vert"));
-	vkb::ShaderSource frag_shader(vkb::fs::read_shader("imgui.frag"));
+	vkb::ShaderSource vert_shader("imgui.vert");
+	vkb::ShaderSource frag_shader("imgui.frag");
 
 	std::vector<vkb::ShaderModule *> shader_modules;
 	shader_modules.push_back(&device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vert_shader, {}));

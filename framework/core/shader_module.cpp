@@ -23,6 +23,7 @@
 #include "common/logging.h"
 #include "device.h"
 #include "glsl_compiler.h"
+#include "platform/filesystem.h"
 #include "spirv_reflection.h"
 
 namespace vkb
@@ -49,7 +50,14 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
 	// Compile the GLSL source
 	if (!glsl_compiler.compile_to_spirv(stage, glsl_source.get_data(), entry_point, shader_variant, spirv, info_log))
 	{
-		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED, "Shader not compiled: " + info_log};
+		if (glsl_source.get_filename().empty())
+		{
+			throw VulkanException{VK_ERROR_INITIALIZATION_FAILED, "Shader compilation failed:\n" + info_log};
+		}
+		else
+		{
+			throw VulkanException{VK_ERROR_INITIALIZATION_FAILED, "Compilation failed for shader \"" + glsl_source.get_filename() + "\":\n" + info_log};
+		}
 	}
 
 	SPIRVReflection spirv_reflection;
@@ -220,9 +228,22 @@ ShaderSource::ShaderSource(std::vector<uint8_t> &&data) :
 	id = hasher(std::string{this->data.cbegin(), this->data.cend()});
 }
 
+ShaderSource::ShaderSource(const std::string &filename) :
+    filename{filename},
+    data{fs::read_shader(filename)}
+{
+	std::hash<std::string> hasher{};
+	id = hasher(std::string{this->data.cbegin(), this->data.cend()});
+}
+
 size_t ShaderSource::get_id() const
 {
 	return id;
+}
+
+const std::string &ShaderSource::get_filename() const
+{
+	return filename;
 }
 
 const std::vector<uint8_t> &ShaderSource::get_data() const

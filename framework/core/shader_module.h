@@ -136,14 +136,20 @@ class ShaderSource
   public:
 	ShaderSource() = default;
 
+	ShaderSource(const std::string &filename);
+
 	ShaderSource(std::vector<uint8_t> &&data);
 
 	size_t get_id() const;
+
+	const std::string &get_filename() const;
 
 	const std::vector<uint8_t> &get_data() const;
 
   private:
 	size_t id;
+
+	std::string filename;
 
 	std::vector<uint8_t> data;
 };
