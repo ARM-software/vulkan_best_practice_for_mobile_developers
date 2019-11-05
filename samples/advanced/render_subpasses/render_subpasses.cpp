@@ -148,7 +148,7 @@ bool RenderSubpasses::prepare(vkb::Platform &platform)
 		}
 	}
 
-	auto &camera_node = vkb::add_free_camera(*scene, "main_camera");
+	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
 	render_pipeline = create_one_renderpass_two_subpasses();

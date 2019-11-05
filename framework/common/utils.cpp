@@ -317,7 +317,7 @@ sg::Light &add_directional_light(sg::Scene &scene, const glm::quat &rotation, co
 	return add_light(scene, sg::LightType::Directional, {}, rotation, props, parent_node);
 }
 
-sg::Node &add_free_camera(sg::Scene &scene, const std::string &node_name)
+sg::Node &add_free_camera(sg::Scene &scene, const std::string &node_name, VkExtent2D extent)
 {
 	auto camera_node = scene.find_node(node_name);
 
@@ -339,6 +339,8 @@ sg::Node &add_free_camera(sg::Scene &scene, const std::string &node_name)
 	}
 
 	auto free_camera_script = std::make_unique<sg::FreeCamera>(*camera_node);
+
+	free_camera_script->resize(extent.width, extent.height);
 
 	scene.add_component(std::move(free_camera_script), *camera_node);
 

@@ -90,8 +90,9 @@ sg::Light &add_directional_light(sg::Scene &scene, const glm::quat &rotation, co
  *        Fallback to the default_camera if node not found.
  * @param scene The scene to add the camera to
  * @param node_name The scene node name
+ * @param extent The initial resolution of the camera
  * @return Node where the script was attached as component
  */
-sg::Node &add_free_camera(sg::Scene &scene, const std::string &node_name);
+sg::Node &add_free_camera(sg::Scene &scene, const std::string &node_name, VkExtent2D extent);
 
 }        // namespace vkb

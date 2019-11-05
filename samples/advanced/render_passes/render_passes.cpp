@@ -120,7 +120,7 @@ bool RenderPassesSample::prepare(vkb::Platform &platform)
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
-	auto &camera_node = vkb::add_free_camera(*scene, "main_camera");
+	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
 	vkb::ShaderSource vert_shader("base.vert");
