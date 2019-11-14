@@ -49,7 +49,7 @@ void ForwardSubpass::prepare()
 		{
 			auto &variant = sub_mesh->get_mut_shader_variant();
 
-			// Same as Geometry accept adds lighting definitions to sub mesh variants.
+			// Same as Geometry except adds lighting definitions to sub mesh variants.
 			add_definitions(variant, {"MAX_FORWARD_LIGHT_COUNT " + std::to_string(MAX_FORWARD_LIGHT_COUNT)});
 			add_definitions(variant, light_type_definitions);
 
