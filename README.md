@@ -61,21 +61,21 @@ The Vulkan Best Practice for Mobile Developers is collection of resources to hel
 - **Vulkan Essentials**  
   - [How does Vulkan compare to OpenGL ES? What should you expect when targeting Vulkan?](./samples/vulkan_basics.md)
 - **Vulkan Swapchains**  
-  - [Appropriate use of N-buffering](./samples/advanced/swapchain_images/swapchain_images_tutorial.md)
-  - [Appropriate use of surface rotation](./samples/advanced/surface_rotation/surface_rotation_tutorial.md)
+  - [Appropriate use of N-buffering](./samples/performance/swapchain_images/swapchain_images_tutorial.md)
+  - [Appropriate use of surface rotation](./samples/performance/surface_rotation/surface_rotation_tutorial.md)
 - **Pipelines**
-  - [Use of pipeline caches to avoid startup latency](./samples/advanced/pipeline_cache/pipeline_cache_tutorial.md)
+  - [Use of pipeline caches to avoid startup latency](./samples/performance/pipeline_cache/pipeline_cache_tutorial.md)
 - **Descriptors**
-  - [Descriptor and buffer management](./samples/advanced/descriptor_management/descriptor_management_tutorial.md)
+  - [Descriptor and buffer management](./samples/performance/descriptor_management/descriptor_management_tutorial.md)
 - **Render Passes**
-  - [Appropriate use of load/store operations, and use of transient attachments](./samples/advanced/render_passes/render_passes_tutorial.md)
+  - [Appropriate use of load/store operations, and use of transient attachments](./samples/performance/render_passes/render_passes_tutorial.md)
 - **Render Subpasses**
-  - [Benefits of subpasses over multiple render passes, use of transient attachments, and G-buffer recommended size](./samples/advanced/render_subpasses/render_subpasses_tutorial.md)
+  - [Benefits of subpasses over multiple render passes, use of transient attachments, and G-buffer recommended size](./samples/performance/render_subpasses/render_subpasses_tutorial.md)
 - **Command Buffers**
-  - [Allocation and management of command buffers](./samples/advanced/command_buffer_usage/command_buffer_usage_tutorial.md#Recycling-strategies)
-  - [Multi-threaded recording with secondary command buffers](./samples/advanced/command_buffer_usage/command_buffer_usage_tutorial.md#Multi-threaded-recording)
+  - [Allocation and management of command buffers](./samples/performance/command_buffer_usage/command_buffer_usage_tutorial.md#Recycling-strategies)
+  - [Multi-threaded recording with secondary command buffers](./samples/performance/command_buffer_usage/command_buffer_usage_tutorial.md#Multi-threaded-recording)
 - **AFBC**
-  - [Appropriate use of AFBC](./samples/advanced/afbc/afbc_tutorial.md)
+  - [Appropriate use of AFBC](./samples/performance/afbc/afbc_tutorial.md)
 
 ## Setup
 
@@ -110,8 +110,8 @@ vulkan_best_practice --sample afbc --benchmark 5000
 # Run bonza test offscreen
 vulkan_best_practice --test bonza --hide
 
-# Run all the advanced samples
-vulkan_best_practice --batch advanced
+# Run all the performance samples
+vulkan_best_practice --batch performance
 ```
 
 
