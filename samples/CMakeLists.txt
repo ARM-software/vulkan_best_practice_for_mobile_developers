@@ -49,6 +49,7 @@ set(ORDER_LIST
     "render_passes"
     "render_subpasses"
     "pipeline_cache"
+    "specialization_constants"
     "command_buffer_usage"
     "afbc")
 

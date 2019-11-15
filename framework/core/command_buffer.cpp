@@ -230,6 +230,14 @@ void CommandBuffer::set_push_constants(const std::vector<uint8_t> &values)
 	stored_push_constants.insert(stored_push_constants.end(), values.begin(), values.end());
 }
 
+void CommandBuffer::push_constants_accumulated(const std::vector<uint8_t> &values, uint32_t offset)
+{
+	auto accumulated_values = stored_push_constants;
+	accumulated_values.insert(accumulated_values.end(), values.begin(), values.end());
+
+	push_constants(offset, accumulated_values);
+}
+
 void CommandBuffer::push_constants(uint32_t offset, const std::vector<uint8_t> &values)
 {
 	auto accumulated_values = stored_push_constants;

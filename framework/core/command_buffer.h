@@ -128,13 +128,23 @@ class CommandBuffer
 
 	/**
 	 * @brief Stores additional data which is prepended to the
-	 *        values passed to the push_constant() function
+	 *        values passed to the push_constants_accumulated() function
 	 * @param data Data to be stored
 	 */
 	template <class T>
 	void set_push_constants(const T &data);
 
 	void set_push_constants(const std::vector<uint8_t> &values);
+
+	void push_constants_accumulated(const std::vector<uint8_t> &values, uint32_t offset = 0);
+
+	template <typename T>
+	void push_constants_accumulated(const T &value, uint32_t offset = 0)
+	{
+		push_constants_accumulated(std::vector<uint8_t>{reinterpret_cast<const uint8_t *>(&value),
+		                                                reinterpret_cast<const uint8_t *>(&value) + sizeof(T)},
+		                           offset);
+	}
 
 	void push_constants(uint32_t offset, const std::vector<uint8_t> &values);
 

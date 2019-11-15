@@ -185,7 +185,7 @@ void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &s
 	pbr_material_uniform.metallic_factor   = pbr_material->metallic_factor;
 	pbr_material_uniform.roughness_factor  = pbr_material->roughness_factor;
 
-	command_buffer.push_constants(0, pbr_material_uniform);
+	command_buffer.push_constants_accumulated(pbr_material_uniform);
 
 	DescriptorSetLayout &descriptor_set_layout = pipeline_layout.get_set_layout(0);
 
