@@ -65,6 +65,7 @@ The Vulkan Best Practice for Mobile Developers is collection of resources to hel
   - [Appropriate use of surface rotation](./samples/performance/surface_rotation/surface_rotation_tutorial.md)
 - **Pipelines**
   - [Use of pipeline caches to avoid startup latency](./samples/performance/pipeline_cache/pipeline_cache_tutorial.md)
+  - [Utilizing Specialization Constants](./samples/performance/specialization_constants/specialization_constants_tutorial.md)
 - **Descriptors**
   - [Descriptor and buffer management](./samples/performance/descriptor_management/descriptor_management_tutorial.md)
 - **Render Passes**
