@@ -47,9 +47,9 @@ bool AFBCSample::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	// We want AFBC disabled by default, hence we create swapchain with 'VK_IMAGE_USAGE_STORAGE_BIT'
-	std::set<VkImageUsageFlagBits> image_usage = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_STORAGE_BIT};
-	get_render_context().update_swapchain(image_usage);
+	// We want AFBC disabled at start-up
+	afbc_enabled = false;
+	recreate_swapchain();
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
@@ -75,21 +75,27 @@ void AFBCSample::update(float delta_time)
 {
 	if (afbc_enabled != afbc_enabled_last_value)
 	{
-		std::set<VkImageUsageFlagBits> image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT};
-
-		if (!afbc_enabled)
-		{
-			image_usage_flags.insert(VK_IMAGE_USAGE_STORAGE_BIT);
-		}
-
-		get_device().wait_idle();
-
-		get_render_context().update_swapchain(image_usage_flags);
+		recreate_swapchain();
 
 		afbc_enabled_last_value = afbc_enabled;
 	}
 
 	VulkanSample::update(delta_time);
+}
+
+void AFBCSample::recreate_swapchain()
+{
+	std::set<VkImageUsageFlagBits> image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT};
+
+	if (!afbc_enabled)
+	{
+		// To force-disable AFBC, set an invalid image usage flag
+		image_usage_flags.insert(VK_IMAGE_USAGE_STORAGE_BIT);
+	}
+
+	get_device().wait_idle();
+
+	get_render_context().update_swapchain(image_usage_flags);
 }
 
 void AFBCSample::draw_gui()

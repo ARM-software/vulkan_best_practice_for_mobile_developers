@@ -30,9 +30,9 @@ The sample is geared towards demonstrating the bandwidth that you can save by to
 
 The Vulkan API allows the developer a level of control around how the `VkSwapchainKHR` is created and formatted. It is here where we want to ensure that it is created and formatted in the right way so that the subsequent `VkImage`'s that we query from it have AFBC appropriately applied.
 
-It is important to note that from a device perspective to have AFBC enabled on Vulkan, you will need at least driver version `r16p0` and a `Mali G-51` or higher. To find out your GPU and driver version, open Google Chrome on your device and type in `chrome://gpu` and look under the `GL_RENDERER` and `GL_VERSION` information.
+It is important to note that from a device perspective to have AFBC enabled on Vulkan, you will need at least driver version `r16p0` and a `Mali G-51` or higher. To find out your GPU and driver version, open the [debug window](../../../docs/misc.md#Debug-Window) or follow the steps in this [article](../../../docs/misc.md#Driver-Version).
 
-> Tested on: Samsung Galaxy S10
+> Tested on: Samsung Galaxy S10, Huawei P30
 
 ## Enabling AFBC
 
@@ -53,6 +53,7 @@ In addition to this, your `VkImage` needs to adhere to the following flags:
 * `VkImageUsageFlags` must not contain:
   * `VK_IMAGE_USAGE_STORAGE_BIT`
   * `VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT`
+  * (Only for some devices with driver version `r16p0`) `VK_IMAGE_USAGE_TRANSFER_DST_BIT`
 * `VkImageCreateFlags` must not contain:
   * `VK_IMAGE_CREATE_ALIAS_BIT`
   * `VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT`
