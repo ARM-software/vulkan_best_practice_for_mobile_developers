@@ -163,7 +163,14 @@ Instance::Instance(const std::string &              application_name,
 	active_instance_layers.push_back("VK_LAYER_KHRONOS_validation");
 #endif
 
-	if (!validate_layers(active_instance_layers, instance_layers))
+	if (validate_layers(active_instance_layers, instance_layers))
+	{
+		for (const auto &layer : active_instance_layers)
+		{
+			LOGI("Enabled Validation Layer {}", layer);
+		}
+	}
+	else
 	{
 		throw std::runtime_error("Required validation layers are missing.");
 	}
