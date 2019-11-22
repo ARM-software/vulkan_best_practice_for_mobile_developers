@@ -53,10 +53,9 @@ The Vulkan Best Practice for Mobile Developers is collection of resources to hel
 > - [Get Started in Vulkan](https://vulkan-tutorial.com/)
 
 ## Tutorials
-- **General**
+- **Project Basics**
   - [Controls](./docs/misc.md#controls)
   - [Debug window](./docs/misc.md#debug-window)
-  - [Driver version](./docs/misc.md#driver-version)
   - [Create a Sample](./docs/create_sample.md)
 - **Vulkan Essentials**  
   - [How does Vulkan compare to OpenGL ES? What should you expect when targeting Vulkan?](./samples/vulkan_basics.md)
@@ -77,6 +76,9 @@ The Vulkan Best Practice for Mobile Developers is collection of resources to hel
   - [Multi-threaded recording with secondary command buffers](./samples/performance/command_buffer_usage/command_buffer_usage_tutorial.md#Multi-threaded-recording)
 - **AFBC**
   - [Appropriate use of AFBC](./samples/performance/afbc/afbc_tutorial.md)
+- **Misc**
+  - [Driver version](./docs/misc.md#driver-version)
+  - [Vulkan FAQ](./docs/faq.md)
 
 ## Setup
 
