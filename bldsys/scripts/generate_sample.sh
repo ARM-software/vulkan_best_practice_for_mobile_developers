@@ -29,7 +29,7 @@ else
 fi
 
 if [ "$#" -lt 2 ]; then
-    CATEGORY=basic
+    CATEGORY=api
 else
     CATEGORY="$2"
 fi

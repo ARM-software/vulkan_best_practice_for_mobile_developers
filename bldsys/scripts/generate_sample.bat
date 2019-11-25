@@ -31,7 +31,7 @@ if [%1] == [] (
 )
 
 if [%2] == [] (
-    set CATEGORY=basic
+    set CATEGORY=api
 ) else (
     set CATEGORY=%2
 )
