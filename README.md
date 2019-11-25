@@ -78,6 +78,7 @@ The Vulkan Best Practice for Mobile Developers is collection of resources to hel
   - [Appropriate use of AFBC](./samples/performance/afbc/afbc_tutorial.md)
 - **Misc**
   - [Driver version](./docs/misc.md#driver-version)
+  - [Memory limits](./docs/memory_limits.md)
   - [Vulkan FAQ](./docs/faq.md)
 
 ## Setup
