@@ -133,7 +133,6 @@ SystemTest:
    - windows
    - shell
  script:
-   - python bldsys/scripts/download_assets.py
    - cd tests/system_test
    - python system_test.py -Bbuild/windows -Crelease -D -P
 

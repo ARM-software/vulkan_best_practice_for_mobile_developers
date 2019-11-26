@@ -105,7 +105,7 @@ Treat all warnings as errors
 
 # 3D models
 
-Before you build the project make sure you download the 3D models this project uses. Run the helper script `bldsys/scripts/download_assets.py`. You should now have a `scenes` folder containing all the 3D scenes the project uses.
+Most of the samples require 3D models downloaded from https://github.com/KhronosGroup/Vulkan-Samples-Assets as git submodule.
 
 On Android, Gradle will run CMake which will sync assets to the device if there has been a change.
 
