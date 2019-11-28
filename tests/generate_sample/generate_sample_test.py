@@ -86,7 +86,7 @@ if __name__ == "__main__":
     if(add_sample() and build()):
         result = True
 
-    sample_path = os.path.join(root_path, "samples/basic/sample_test")
+    sample_path = os.path.join(root_path, "samples/api/sample_test")
     if os.listdir(sample_path):
         shutil.rmtree(sample_path)
 
