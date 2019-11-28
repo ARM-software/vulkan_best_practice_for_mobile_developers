@@ -48,6 +48,7 @@ set(ORDER_LIST
     "surface_rotation"
     "render_passes"
     "render_subpasses"
+    "wait_idle"
     "pipeline_cache"
     "specialization_constants"
     "command_buffer_usage"

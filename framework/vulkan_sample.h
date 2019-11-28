@@ -167,6 +167,11 @@ class VulkanSample : public Application
 	std::unique_ptr<Stats> stats{nullptr};
 
 	/**
+	 * @brief Context used for rendering, it is responsible for managing the frames and their underlying images
+	 */
+	std::unique_ptr<RenderContext> render_context{nullptr};
+
+	/**
 	 * @brief Update scene
 	 * @param delta_time
 	 */
@@ -259,11 +264,6 @@ class VulkanSample : public Application
 	 * @brief The Vulkan surface
 	 */
 	VkSurfaceKHR surface{VK_NULL_HANDLE};
-
-	/**
-	 * @brief Context used for rendering, it is responsible for managing the frames and their underlying images
-	 */
-	std::unique_ptr<RenderContext> render_context{nullptr};
 
 	/**
 	 * @brief The configuration of the sample

@@ -73,7 +73,7 @@ class RenderFrame
 
 	RenderFrame &operator=(RenderFrame &&) = delete;
 
-	void reset();
+	void reset(bool wait_with_fence = true);
 
 	Device &get_device();
 
