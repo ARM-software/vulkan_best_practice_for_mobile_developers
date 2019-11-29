@@ -20,6 +20,7 @@
 
 #include "render_subpasses.h"
 
+#include "common/vk_common.h"
 #include "platform/platform.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_context.h"
@@ -282,75 +283,6 @@ void RenderSubpasses::draw_gui()
 	    /* lines = */ vkb::to_u32(lines));
 }
 
-/**
- * @return Load store info to load all and store only the swapchain
- */
-std::vector<vkb::LoadStoreInfo> get_load_all_store_swapchain()
-{
-	// Load every attachment and store only swapchain
-	std::vector<vkb::LoadStoreInfo> load_store{4};
-
-	// Swapchain
-	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	load_store[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-
-	// Depth
-	load_store[1].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
-	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-	// Albedo
-	load_store[2].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
-	load_store[2].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-	// Normal
-	load_store[3].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
-	load_store[3].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-	return load_store;
-}
-
-/**
- * @return Load store info to clear all and store only the swapchain
- */
-std::vector<vkb::LoadStoreInfo> get_clear_all_store_swapchain()
-{
-	// Clear every attachment and store only swapchain
-	std::vector<vkb::LoadStoreInfo> load_store{4};
-
-	// Swapchain
-	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-
-	// Depth
-	load_store[1].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-	// Albedo
-	load_store[2].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[2].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-	// Normal
-	load_store[3].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[3].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-	return load_store;
-}
-
-/**
- * @return Clear values common to all pipelines
- */
-std::vector<VkClearValue> get_clear_value()
-{
-	// Clear values
-	std::vector<VkClearValue> clear_value{4};
-	clear_value[0].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
-	clear_value[1].depthStencil = {1.0f, ~0U};
-	clear_value[2].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
-	clear_value[3].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
-
-	return clear_value;
-}
-
 std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_one_renderpass_two_subpasses()
 {
 	// Geometry subpass
@@ -376,38 +308,11 @@ std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_one_renderpass_two_
 
 	auto render_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(subpasses));
 
-	render_pipeline->set_load_store(get_clear_all_store_swapchain());
+	render_pipeline->set_load_store(vkb::gbuffer::get_clear_all_store_swapchain());
 
-	render_pipeline->set_clear_value(get_clear_value());
+	render_pipeline->set_clear_value(vkb::gbuffer::get_clear_value());
 
 	return render_pipeline;
-}
-
-/**
- * @return Load store info to clear and store only the swapchain
- */
-std::vector<vkb::LoadStoreInfo> get_clear_store_all()
-{
-	// Clear and store every attachment
-	std::vector<vkb::LoadStoreInfo> load_store{4};
-
-	// Swapchain
-	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-
-	// Depth
-	load_store[1].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-
-	// Albedo
-	load_store[2].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[2].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-
-	// Normal
-	load_store[3].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[3].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-
-	return load_store;
 }
 
 std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_geometry_renderpass()
@@ -426,9 +331,9 @@ std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_geometry_renderpass
 
 	auto geometry_render_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(scene_subpasses));
 
-	geometry_render_pipeline->set_load_store(get_clear_store_all());
+	geometry_render_pipeline->set_load_store(vkb::gbuffer::get_clear_store_all());
 
-	geometry_render_pipeline->set_clear_value(get_clear_value());
+	geometry_render_pipeline->set_clear_value(vkb::gbuffer::get_clear_value());
 
 	return geometry_render_pipeline;
 }
@@ -448,9 +353,9 @@ std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_lighting_renderpass
 
 	auto lighting_render_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(lighting_subpasses));
 
-	lighting_render_pipeline->set_load_store(get_load_all_store_swapchain());
+	lighting_render_pipeline->set_load_store(vkb::gbuffer::get_load_all_store_swapchain());
 
-	lighting_render_pipeline->set_clear_value(get_clear_value());
+	lighting_render_pipeline->set_clear_value(vkb::gbuffer::get_clear_value());
 
 	return lighting_render_pipeline;
 }

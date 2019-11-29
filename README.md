@@ -69,6 +69,7 @@ The Vulkan Best Practice for Mobile Developers is collection of resources to hel
   - [Descriptor and buffer management](./samples/performance/descriptor_management/descriptor_management_tutorial.md)
 - **Render Passes**
   - [Appropriate use of load/store operations, and use of transient attachments](./samples/performance/render_passes/render_passes_tutorial.md)
+  - [Choosing the correct layout when transitioning images](./samples/performance/layout_transitions/layout_transitions_tutorial.md)
 - **Render Subpasses**
   - [Benefits of subpasses over multiple render passes, use of transient attachments, and G-buffer recommended size](./samples/performance/render_subpasses/render_subpasses_tutorial.md)
 - **Command Buffers**

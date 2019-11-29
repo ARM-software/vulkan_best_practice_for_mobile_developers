@@ -50,6 +50,7 @@ enum class StatIndex
 	gpu_cycles,
 	vertex_compute_cycles,
 	tiles,
+	killed_tiles,
 	fragment_jobs,
 	fragment_cycles,
 	l2_reads_lookups,

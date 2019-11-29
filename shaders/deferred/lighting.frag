@@ -51,6 +51,32 @@ layout(set = 0, binding = 4) uniform LightsInfo
 }
 lights;
 
+vec3 apply_directional_light(uint index, vec3 normal)
+{
+	vec3 world_to_light = -lights.lights[index].direction.xyz;
+
+	world_to_light = normalize(world_to_light);
+
+	float ndotl = clamp(dot(normal, world_to_light), 0.0, 1.0);
+
+	return ndotl * lights.lights[index].color.w * lights.lights[index].color.rgb;
+}
+
+vec3 apply_point_light(uint index, vec3 pos, vec3 normal)
+{
+	vec3 world_to_light = lights.lights[index].position.xyz - pos;
+
+	float dist = length(world_to_light);
+
+	float atten = 1.0 / (dist * dist);
+
+	world_to_light = normalize(world_to_light);
+
+	float ndotl = clamp(dot(normal, world_to_light), 0.0, 1.0);
+
+	return ndotl * lights.lights[index].color.w * atten * lights.lights[index].color.rgb;
+}
+
 void main()
 {
 	// Retrieve position from depth
@@ -64,24 +90,21 @@ void main()
 	normal      = normalize(2.0 * normal - 1.0);
 
 	// Calculate lighting
-	vec4 L = vec4(0.0);
+	vec3 L = vec3(0.0);
 
 	for (uint i = 0U; i < lights.count; i++)
 	{
-		vec3 world_to_light = lights.lights[i].position.rgb - pos;
-
-		float dist = length(world_to_light) * 0.005;
-
-		// +0.00001 stop zero division
-		float attenuation = 1.0 / (0.00001 + (1.0 / lights.lights[i].color.a + 0.00001) * dist * dist);
-
-		float ndotl = clamp(dot(normal, normalize(world_to_light)), 0.0, 1.0);
-
-		L += ndotl * attenuation * lights.lights[i].color;
+		if (lights.lights[i].position.w == DIRECTIONAL_LIGHT)
+		{
+			L += apply_directional_light(i, normal);
+		}
+		if (lights.lights[i].position.w == POINT_LIGHT)
+		{
+			L += apply_point_light(i, pos, normal);
+		}
 	}
 
-	vec4 ambient_color = vec4(0.2, 0.2, 0.2, 1.0) * albedo;
+	vec3 ambient_color = vec3(0.2) * albedo.xyz;
 
-	o_color   = L * ambient_color;
-	o_color.a = 1.0;
+	o_color = vec4(ambient_color + L * albedo.xyz, 1.0);
 }

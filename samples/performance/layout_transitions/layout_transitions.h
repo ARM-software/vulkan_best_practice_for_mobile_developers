@@ -20,55 +20,47 @@
 
 #pragma once
 
-#include "common/helpers.h"
-#include "common/vk_common.h"
+#include "common/utils.h"
+#include "rendering/render_pipeline.h"
+#include "scene_graph/components/camera.h"
+#include "vulkan_sample.h"
 
-namespace vkb
-{
-struct Attachment;
-class Device;
-
-struct SubpassInfo
-{
-	std::vector<uint32_t> input_attachments;
-
-	std::vector<uint32_t> output_attachments;
-};
-
-class RenderPass
+/**
+ * @brief Transitioning images from UNDEFINED vs last known layout
+ */
+class LayoutTransitions : public vkb::VulkanSample
 {
   public:
-	VkRenderPass get_handle() const;
+	LayoutTransitions();
 
-	RenderPass(Device &                          device,
-	           const std::vector<Attachment> &   attachemnts,
-	           const std::vector<LoadStoreInfo> &load_store_infos,
-	           const std::vector<SubpassInfo> &  subpasses);
+	virtual ~LayoutTransitions() = default;
 
-	RenderPass(const RenderPass &) = delete;
-
-	RenderPass(RenderPass &&other);
-
-	~RenderPass();
-
-	RenderPass &operator=(const RenderPass &) = delete;
-
-	RenderPass &operator=(RenderPass &&) = delete;
-
-	const uint32_t get_color_output_count(uint32_t subpass_index) const;
+	virtual bool prepare(vkb::Platform &platform) override;
 
   private:
-	Device &device;
+	enum LayoutTransitionType : int
+	{
+		UNDEFINED,
+		LAST_LAYOUT
+	};
 
-	VkRenderPass handle{VK_NULL_HANDLE};
+	vkb::sg::Camera *camera{nullptr};
 
-	size_t subpass_count;
+	vkb::RenderTarget create_render_target(vkb::core::Image &&swapchain_image);
 
-	// Store attachments for every subpass
-	std::vector<std::vector<VkAttachmentReference>> input_attachments;
+	virtual void prepare_render_context() override;
 
-	std::vector<std::vector<VkAttachmentReference>> color_attachments;
+	void draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
 
-	std::vector<std::vector<VkAttachmentReference>> depth_stencil_attachments;
+	virtual void draw_gui() override;
+
+	VkImageLayout pick_old_layout(VkImageLayout last_layout);
+
+	vkb::RenderPipeline gbuffer_pipeline;
+
+	vkb::RenderPipeline lighting_pipeline;
+
+	LayoutTransitionType layout_transition_type{LayoutTransitionType::UNDEFINED};
 };
-}        // namespace vkb
+
+std::unique_ptr<vkb::VulkanSample> create_layout_transitions();
