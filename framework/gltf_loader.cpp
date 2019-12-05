@@ -27,7 +27,8 @@
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
-#include <glm/glm.hpp>
+#include "common/glm_common.h"
+#include <glm/gtc/type_ptr.hpp>
 VKBP_ENABLE_WARNINGS()
 
 #include "common/logging.h"
@@ -785,7 +786,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 	if (!scene.has_component<vkb::sg::Light>())
 	{
 		// Add a default light if none are present
-		vkb::add_directional_light(scene, {0.132f, 0.278f, 0.278f, -0.910f});
+		vkb::add_directional_light(scene, glm::quat({glm::radians(-90.0f), 0.0f, glm::radians(30.0f)}));
 	}
 
 	return scene;

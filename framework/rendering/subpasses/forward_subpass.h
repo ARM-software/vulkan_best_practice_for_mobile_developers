@@ -22,10 +22,6 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS()
-#include <glm/glm.hpp>
-VKBP_ENABLE_WARNINGS()
-
 #include "buffer_pool.h"
 #include "rendering/subpasses/geometry_subpass.h"
 

@@ -25,7 +25,6 @@
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
-#include <glm/glm.hpp>
 #if defined(_WIN32) || defined(_WIN64)
 // Windows.h defines IGNORE, so we must #undef it to avoid clashes with astc header
 #	undef IGNORE

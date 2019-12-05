@@ -27,7 +27,9 @@
 
 #include "common/error.h"
 
-#include <glm/glm.hpp>
+VKBP_DISABLE_WARNINGS()
+#include "common/glm_common.h"
+VKBP_ENABLE_WARNINGS()
 
 #include "core/shader_module.h"
 #include "scene_graph/component.h"
@@ -45,7 +47,7 @@ enum LightType
 
 struct LightProperties
 {
-	glm::vec3 direction{0.0f, 0.0f, 0.0f};
+	glm::vec3 direction{0.0f, 0.0f, -1.0f};
 
 	glm::vec3 color{1.0f, 1.0f, 1.0f};
 

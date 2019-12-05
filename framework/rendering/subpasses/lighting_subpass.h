@@ -23,6 +23,10 @@
 #include "buffer_pool.h"
 #include "rendering/subpass.h"
 
+VKBP_DISABLE_WARNINGS()
+#include "common/glm_common.h"
+VKBP_ENABLE_WARNINGS()
+
 #define MAX_DEFERRED_LIGHT_COUNT 100
 
 namespace vkb

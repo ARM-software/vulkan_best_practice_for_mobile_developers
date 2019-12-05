@@ -29,6 +29,10 @@
 #include "scene_graph/components/light.h"
 #include "scene_graph/node.h"
 
+VKBP_DISABLE_WARNINGS()
+#include "common/glm_common.h"
+VKBP_ENABLE_WARNINGS()
+
 namespace vkb
 {
 class CommandBuffer;

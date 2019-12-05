@@ -30,6 +30,11 @@
 #	include "platform/android/android_platform.h"
 #endif
 
+VKBP_DISABLE_WARNINGS()
+#include "common/glm_common.h"
+#include <glm/gtx/quaternion.hpp>
+VKBP_ENABLE_WARNINGS()
+
 namespace vkbtest
 {
 GLTFLoaderTest::GLTFLoaderTest(const std::string &scene_path) :
@@ -48,7 +53,7 @@ bool GLTFLoaderTest::prepare(vkb::Platform &platform)
 
 	scene->clear_components<vkb::sg::Light>();
 
-	vkb::add_point_light(get_scene(), {500.0f, 1550.0f, 0.0f});
+	vkb::add_directional_light(get_scene(), glm::quat({glm::radians(-90.0f), 0.0f, glm::radians(30.0f)}));
 
 	auto camera_node = scene->find_node("main_camera");
 

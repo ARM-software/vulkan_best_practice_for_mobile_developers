@@ -66,7 +66,7 @@ vec3 apply_point_light(uint index, vec3 pos, vec3 normal)
 {
 	vec3 world_to_light = lights.lights[index].position.xyz - pos;
 
-	float dist = length(world_to_light);
+	float dist = length(world_to_light) * 0.005;
 
 	float atten = 1.0 / (dist * dist);
 

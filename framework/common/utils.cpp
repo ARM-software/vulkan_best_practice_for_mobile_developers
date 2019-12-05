@@ -289,7 +289,7 @@ sg::Light &add_light(sg::Scene &scene, sg::LightType type, const glm::vec3 &posi
 	}
 
 	light_ptr->set_node(*node);
-	light_ptr->set_light_type(sg::LightType::Point);
+	light_ptr->set_light_type(type);
 	light_ptr->set_properties(props);
 
 	auto &t = node->get_transform();

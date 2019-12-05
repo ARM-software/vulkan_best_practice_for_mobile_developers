@@ -185,7 +185,7 @@ vec3 apply_point_light(uint index, vec3 normal)
 
 	float dist = length(world_to_light);
 
-	float atten = 1.0 / dist * dist;
+	float atten = 1.0 / (dist * dist);
 
 	world_to_light = normalize(world_to_light);
 

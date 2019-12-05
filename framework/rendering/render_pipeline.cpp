@@ -42,7 +42,7 @@ RenderPipeline::RenderPipeline(std::vector<std::unique_ptr<Subpass>> &&subpasses
 
 	// Default clear values
 	clear_value[0].color        = {0.0f, 0.0f, 0.0f, 1.0f};
-	clear_value[1].depthStencil = {1.0f, ~0U};
+	clear_value[1].depthStencil = {0.0f, ~0U};
 
 	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 }

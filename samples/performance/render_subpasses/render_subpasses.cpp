@@ -142,7 +142,7 @@ bool RenderSubpasses::prepare(vkb::Platform &platform)
 
 				vkb::sg::LightProperties props;
 				props.color     = light_color;
-				props.intensity = 1.0f;
+				props.intensity = 0.2f;
 
 				vkb::add_point_light(*scene, pos, props);
 			}
