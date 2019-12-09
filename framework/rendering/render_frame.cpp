@@ -71,9 +71,9 @@ void RenderFrame::reset(bool wait_with_fence)
 	if (wait_with_fence)
 	{
 		VK_CHECK(fence_pool.wait());
-	}
 
-	fence_pool.reset();
+		fence_pool.reset();
+	}
 
 	for (auto &command_pools_per_queue : command_pools)
 	{
