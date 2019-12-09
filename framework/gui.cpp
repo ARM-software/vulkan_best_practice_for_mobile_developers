@@ -207,7 +207,7 @@ Gui::Gui(VulkanSample &sample_, const float dpi_factor) :
 	shader_modules.push_back(&device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vert_shader, {}));
 	shader_modules.push_back(&device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, frag_shader, {}));
 
-	pipeline_layout = &device.get_resource_cache().request_pipeline_layout(shader_modules);
+	pipeline_layout = &device.get_resource_cache().request_pipeline_layout(shader_modules, false);
 
 	sampler = std::make_unique<core::Sampler>(device, sampler_info);
 }

@@ -93,6 +93,8 @@ class RenderPipeline
 	 */
 	std::unique_ptr<Subpass> &get_active_subpass();
 
+	void set_use_dynamic_resources(bool dynamic);
+
   private:
 	std::vector<std::unique_ptr<Subpass>> subpasses;
 

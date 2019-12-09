@@ -57,7 +57,7 @@ void LightingSubpass::draw(CommandBuffer &command_buffer)
 	std::vector<ShaderModule *> shader_modules{&vert_shader_module, &frag_shader_module};
 
 	// Create pipeline layout and bind it
-	auto &pipeline_layout = resource_cache.request_pipeline_layout(shader_modules);
+	auto &pipeline_layout = resource_cache.request_pipeline_layout(shader_modules, use_dynamic_resources);
 	command_buffer.bind_pipeline_layout(pipeline_layout);
 
 	// Get image views of the attachments

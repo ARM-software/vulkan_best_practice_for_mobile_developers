@@ -105,6 +105,8 @@ class Subpass
 
 	void set_output_attachments(std::vector<uint32_t> output);
 
+	void set_use_dynamic_resources(bool dynamic);
+
 	/**
 	 * @brief Add definitions to shader variant within a subpass
 	 * 
@@ -185,6 +187,8 @@ class Subpass
 
   protected:
 	RenderContext &render_context;
+
+	bool use_dynamic_resources{false};
 
   private:
 	ShaderSource vertex_shader;

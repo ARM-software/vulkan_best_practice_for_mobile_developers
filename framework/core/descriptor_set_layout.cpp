@@ -73,10 +73,10 @@ inline VkDescriptorType find_descriptor_type(ShaderResourceType resource_type, b
 }
 }        // namespace
 
-DescriptorSetLayout::DescriptorSetLayout(Device &device, const std::vector<ShaderResource> &set_resources) :
+DescriptorSetLayout::DescriptorSetLayout(Device &device, const std::vector<ShaderResource> &resource_set, bool use_dynamic_resources) :
     device{device}
 {
-	for (auto &resource : set_resources)
+	for (auto &resource : resource_set)
 	{
 		// Skip shader resources whitout a binding point
 		if (resource.type == ShaderResourceType::Input ||
@@ -88,7 +88,7 @@ DescriptorSetLayout::DescriptorSetLayout(Device &device, const std::vector<Shade
 		}
 
 		// Convert from ShaderResourceType to VkDescriptorType.
-		auto descriptor_type = find_descriptor_type(resource.type, resource.dynamic);
+		auto descriptor_type = find_descriptor_type(resource.type, use_dynamic_resources);
 
 		// Convert ShaderResource to VkDescriptorSetLayoutBinding
 		VkDescriptorSetLayoutBinding layout_binding{};
@@ -149,29 +149,27 @@ const std::vector<VkDescriptorSetLayoutBinding> &DescriptorSetLayout::get_bindin
 	return bindings;
 }
 
-bool DescriptorSetLayout::get_layout_binding(uint32_t binding_index, VkDescriptorSetLayoutBinding &binding) const
+std::unique_ptr<VkDescriptorSetLayoutBinding> DescriptorSetLayout::get_layout_binding(uint32_t binding_index) const
 {
 	auto it = bindings_lookup.find(binding_index);
 
 	if (it == bindings_lookup.end())
 	{
-		return false;
+		return nullptr;
 	}
 
-	binding = it->second;
-
-	return true;
+	return std::make_unique<VkDescriptorSetLayoutBinding>(it->second);
 }
 
-bool DescriptorSetLayout::has_layout_binding(const std::string &name, VkDescriptorSetLayoutBinding &binding) const
+std::unique_ptr<VkDescriptorSetLayoutBinding> DescriptorSetLayout::get_layout_binding(const std::string &name) const
 {
 	auto it = resources_lookup.find(name);
 
 	if (it == resources_lookup.end())
 	{
-		return false;
+		return nullptr;
 	}
 
-	return get_layout_binding(it->second, binding);
+	return get_layout_binding(it->second);
 }
 }        // namespace vkb

@@ -111,6 +111,14 @@ void RenderPipeline::draw(CommandBuffer &command_buffer, RenderTarget &render_ta
 	active_subpass_index = 0;
 }
 
+void RenderPipeline::set_use_dynamic_resources(bool dynamic)
+{
+	for (auto &subpass : subpasses)
+	{
+		subpass->set_use_dynamic_resources(dynamic);
+	}
+}
+
 std::unique_ptr<Subpass> &RenderPipeline::get_active_subpass()
 {
 	return subpasses[active_subpass_index];

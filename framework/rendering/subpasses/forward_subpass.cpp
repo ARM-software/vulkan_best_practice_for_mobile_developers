@@ -42,6 +42,9 @@ ForwardSubpass::ForwardSubpass(RenderContext &render_context, ShaderSource &&ver
 
 void ForwardSubpass::prepare()
 {
+	// By default use dynamic resources
+	use_dynamic_resources = true;
+
 	auto &device = render_context.get_device();
 	for (auto &mesh : meshes)
 	{
@@ -55,9 +58,6 @@ void ForwardSubpass::prepare()
 
 			auto &vert_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), variant);
 			auto &frag_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), variant);
-
-			vert_module.set_resource_dynamic("GlobalUniform");
-			frag_module.set_resource_dynamic("GlobalUniform");
 		}
 	}
 }

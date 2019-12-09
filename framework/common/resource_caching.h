@@ -408,7 +408,7 @@ struct hash<vkb::PipelineState>
 
 		vkb::hash_combine(result, pipeline_state.get_subpass_index());
 
-		for (auto stage : pipeline_state.get_pipeline_layout().get_stages())
+		for (auto stage : pipeline_state.get_pipeline_layout().get_shader_program().get_shader_modules())
 		{
 			vkb::hash_combine(result, stage->get_id());
 		}

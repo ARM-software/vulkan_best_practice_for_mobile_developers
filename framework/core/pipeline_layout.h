@@ -24,6 +24,7 @@
 #include "common/vk_common.h"
 #include "core/descriptor_set_layout.h"
 #include "core/shader_module.h"
+#include "rendering/shader_program.h"
 
 namespace vkb
 {
@@ -34,7 +35,7 @@ class DescriptorSetLayout;
 class PipelineLayout
 {
   public:
-	PipelineLayout(Device &device, const std::vector<ShaderModule *> &shader_modules);
+	PipelineLayout(Device &device, const std::vector<ShaderModule *> &shader_modules, bool use_dynamic_resources);
 
 	PipelineLayout(const PipelineLayout &) = delete;
 
@@ -48,35 +49,21 @@ class PipelineLayout
 
 	VkPipelineLayout get_handle() const;
 
-	const std::vector<ShaderModule *> &get_stages() const;
+	const ShaderProgram &get_shader_program() const;
 
-	const std::unordered_map<uint32_t, std::vector<ShaderResource>> &get_bindings() const;
+	bool has_descriptor_set_layout(uint32_t set_index) const;
 
-	const std::vector<ShaderResource> &get_set_bindings(uint32_t set_index) const;
-
-	bool has_set_layout(uint32_t set_index) const;
-
-	DescriptorSetLayout &get_set_layout(uint32_t set_index);
-
-	std::vector<ShaderResource> get_vertex_input_attributes() const;
-
-	std::vector<ShaderResource> get_fragment_output_attachments() const;
-
-	std::vector<ShaderResource> get_fragment_input_attachments() const;
+	DescriptorSetLayout &get_descriptor_set_layout(uint32_t set_index) const;
 
 	VkShaderStageFlags get_push_constant_range_stage(uint32_t offset, uint32_t size) const;
 
   private:
 	Device &device;
 
-	std::vector<ShaderModule *> shader_modules;
-
 	VkPipelineLayout handle{VK_NULL_HANDLE};
 
-	std::map<std::string, ShaderResource> resources;
+	ShaderProgram shader_program;
 
-	std::unordered_map<uint32_t, std::vector<ShaderResource>> set_bindings;
-
-	std::unordered_map<uint32_t, DescriptorSetLayout *> set_layouts;
+	std::unordered_map<uint32_t, DescriptorSetLayout *> descriptor_set_layouts;
 };
 }        // namespace vkb

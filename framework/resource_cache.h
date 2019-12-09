@@ -99,9 +99,9 @@ class ResourceCache
 
 	ShaderModule &request_shader_module(VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const ShaderVariant &shader_variant = {});
 
-	PipelineLayout &request_pipeline_layout(const std::vector<ShaderModule *> &shader_modules);
+	PipelineLayout &request_pipeline_layout(const std::vector<ShaderModule *> &shader_modules, bool use_dynamic_resources);
 
-	DescriptorSetLayout &request_descriptor_set_layout(const std::vector<ShaderResource> &set_resources);
+	DescriptorSetLayout &request_descriptor_set_layout(const std::vector<ShaderResource> &set_resources, bool use_dynamic_resources);
 
 	GraphicsPipeline &request_graphics_pipeline(PipelineState &pipeline_state);
 

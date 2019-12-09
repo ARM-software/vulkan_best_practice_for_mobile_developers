@@ -239,7 +239,7 @@ class CommandBuffer
 
 	ResourceBindingState resource_binding_state;
 
-	std::unordered_map<uint32_t, DescriptorSetLayout *> descriptor_set_layout_state;
+	std::unordered_map<uint32_t, DescriptorSetLayout *> descriptor_set_layout_binding_state;
 
 	const RenderPassBinding &get_current_render_pass() const;
 

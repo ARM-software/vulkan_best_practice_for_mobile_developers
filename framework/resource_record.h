@@ -53,7 +53,8 @@ class ResourceRecord
 
 	size_t register_shader_module(VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const std::string &entry_point, const ShaderVariant &shader_variant);
 
-	size_t register_pipeline_layout(const std::vector<ShaderModule *> &shader_modules);
+	size_t register_pipeline_layout(const std::vector<ShaderModule *> &shader_modules,
+	                                bool                               use_dynamic_resources);
 
 	size_t register_render_pass(const std::vector<Attachment> &   attachments,
 	                            const std::vector<LoadStoreInfo> &load_store_infos,
