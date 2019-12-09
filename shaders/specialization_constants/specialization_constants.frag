@@ -91,7 +91,7 @@ void main(void)
 	base_color = pbr_material_uniform.base_color_factor;
 #endif
 
-	vec4 ambient_color = vec4(0.2, 0.2, 0.2, 1.0) * base_color;
+	vec3 ambient_color = vec3(0.2) * base_color.xyz;
 
-	o_color = ambient_color + vec4(light_contribution, 1.0) * base_color;
+	o_color = vec4(ambient_color + light_contribution * base_color.xyz, base_color.w);
 }
