@@ -17,7 +17,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
- 
+
 get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
 get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
@@ -26,8 +26,8 @@ add_project(
     TYPE "Sample"
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
-    NAME "Descriptor Management"
-    DESCRIPTION "Descriptor set management and buffer allocation strategies."
+    NAME "Pipeline Barriers"
+    DESCRIPTION "Using pipeline barriers efficiently."
     FILES
         ${FOLDER_NAME}.h
         ${FOLDER_NAME}.cpp)
