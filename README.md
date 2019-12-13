@@ -73,6 +73,7 @@ The Vulkan Best Practice for Mobile Developers is collection of resources to hel
 - **Render Subpasses**
   - [Benefits of subpasses over multiple render passes, use of transient attachments, and G-buffer recommended size](./samples/performance/render_subpasses/render_subpasses_tutorial.md)
 - **Workload Synchronization**
+  - [Using pipeline barriers efficiently](./samples/performance/pipeline_barriers/pipeline_barriers_tutorial.md)
   - [How to synchronize back to the CPU and avoid stalling](./samples/performance/wait_idle/wait_idle_tutorial.md)
 - **Command Buffers**
   - [Allocation and management of command buffers](./samples/performance/command_buffer_usage/command_buffer_usage_tutorial.md#Recycling-strategies)
