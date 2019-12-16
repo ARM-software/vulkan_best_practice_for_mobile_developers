@@ -105,7 +105,7 @@ Treat all warnings as errors
 
 # 3D models
 
-Before you build the project make sure you download the 3D models this project uses. Run the helper script `bldsys/scripts/download_assets.py`. You should now have a `scenes` folder containing all the 3D scenes the project uses.
+Most of the samples require 3D models downloaded from https://github.com/KhronosGroup/Vulkan-Samples-Assets as git submodule.
 
 On Android, Gradle will run CMake which will sync assets to the device if there has been a change.
 
@@ -204,7 +204,7 @@ cmake --build build/linux --config Release --target vulkan_best_practice -- -j4
 ./build/linux/vulkan_best_practice/bin/Release/x86_64/vulkan_best_practice --help
 ```
 
-# Mac
+# macOS
 
 ## Dependencies
 
@@ -257,7 +257,7 @@ For all dependencies set the following environment variables.
 ##### Windows <!-- omit in toc -->
 
 ```
-bldsys/scripts/generate_android_gradle.bat
+bldsys\scripts\generate_android_gradle.bat
 ```
 
 ##### Linux <!-- omit in toc -->
@@ -282,29 +282,6 @@ adb install build/outputs/apk/debug/vulkan_best_practice-debug.apk
 ```
 
 > Alternatively, you may open the `build/android_gradle` folder in Android Studio and run the project from here
-
-## Build with CMake
-
-`Step 1.` Select a generator which supports custom compiler like `Unix Makefiles` or `Ninja`.
-
-`Step 2.` Run the command below in the root directory of the project.
-
-```
-cmake -G "Unix Makefiles" -H. -Bbuild/android -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake
-```
-
-`Step 3.` Build the project using the command below
-
-```
-cmake --build build/android --config Release --target vulkan_best_practice_package
-```
-
-`Step 4.` You can now run the apk on a connected device
-
-```
-cd build/android/vulkan_best_practice/vulkan_best_practice_package
-adb install build/outputs/apk/debug/vulkan_best_practice-debug.apk
-```
 
 # Building Individual Samples
 

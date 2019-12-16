@@ -128,7 +128,7 @@ class BufferPool
 	Device &device;
 
 	/// List of blocks requested
-	std::vector<BufferBlock> buffer_blocks;
+	std::vector<std::unique_ptr<BufferBlock>> buffer_blocks;
 
 	/// Minimum size of the blocks
 	VkDeviceSize block_size{0};

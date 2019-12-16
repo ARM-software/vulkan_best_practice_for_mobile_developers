@@ -28,11 +28,17 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeSet;
 
 public class ViewPagerAdapter extends FragmentPagerAdapter {
+
+    private static final List<String> defined_category_order = Collections.unmodifiableList(
+        Arrays.asList("api", "performance"));
 
     private TabFragment currentFragment;
 
@@ -44,8 +50,29 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
 
     ViewPagerAdapter(FragmentManager manager, @NonNull HashMap<String, List<Sample>> categorizedSampleMap, AdapterView.OnItemClickListener clickListener) {
         super(manager);
-        this.categories = new ArrayList<>(categorizedSampleMap.keySet());
-        Collections.reverse(this.categories);
+        // Define order of category tabs
+        TreeSet<String> category_set = new TreeSet<String>(new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                int ret;
+                int o1_defined_order = defined_category_order.indexOf(o1);
+                int o2_defined_order = defined_category_order.indexOf(o2);
+                if (o1_defined_order > -1 && o2_defined_order > -1) {
+                    // If in the pre-defined list, sort in the order they appear there
+                    ret =  o1_defined_order > o2_defined_order ? 1 : -1;
+                } else if (o1_defined_order > -1 || o2_defined_order > -1) {
+                    // If not in the pre-defined list, sort after those that are
+                    ret = 1;
+                } else {
+                    // Sort alphabetically
+                    ret =  o1.compareTo(o2);
+                }
+                return ret;
+            }
+        });
+        category_set.addAll(categorizedSampleMap.keySet());
+        this.categories = new ArrayList<>();
+        this.categories.addAll(category_set);
         this.sampleMap = categorizedSampleMap;
         this.clickListener = clickListener;
     }

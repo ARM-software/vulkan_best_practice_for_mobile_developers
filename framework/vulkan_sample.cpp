@@ -23,7 +23,7 @@
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
-#include <glm/glm.hpp>
+#include "common/glm_common.h"
 #include <imgui.h>
 VKBP_ENABLE_WARNINGS()
 
@@ -34,8 +34,6 @@ VKBP_ENABLE_WARNINGS()
 #include "platform/platform.h"
 #include "platform/window.h"
 #include "scene_graph/components/camera.h"
-#include "scene_graph/script.h"
-#include "scene_graph/scripts/free_camera.h"
 #include "utils/graphs.h"
 #include "utils/strings.h"
 
@@ -184,9 +182,11 @@ void VulkanSample::draw(CommandBuffer &command_buffer, RenderTarget &render_targ
 	auto &views = render_target.get_views();
 
 	{
+		// Image 0 is the swapchain
 		ImageMemoryBarrier memory_barrier{};
+		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
 		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		memory_barrier.src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		memory_barrier.src_access_mask = 0;
 		memory_barrier.dst_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -202,11 +202,12 @@ void VulkanSample::draw(CommandBuffer &command_buffer, RenderTarget &render_targ
 
 	{
 		ImageMemoryBarrier memory_barrier{};
+		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
 		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		memory_barrier.src_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		memory_barrier.dst_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+		memory_barrier.src_access_mask = 0;
+		memory_barrier.dst_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
 		command_buffer.image_memory_barrier(views.at(1), memory_barrier);
 	}
@@ -367,36 +368,6 @@ void VulkanSample::update_debug_window()
 			get_debug_info().insert<field::Vector, float>("camera_pos", pos.x, pos.y, pos.z);
 		}
 	}
-}
-
-sg::Node &VulkanSample::add_free_camera(const std::string &node_name)
-{
-	auto camera_node = scene->find_node(node_name);
-
-	if (!camera_node)
-	{
-		LOGW("Camera node `{}` not found. Looking for `default_camera` node.", node_name.c_str());
-
-		camera_node = scene->find_node("default_camera");
-	}
-
-	if (!camera_node)
-	{
-		throw std::runtime_error("Camera node with name `" + node_name + "` not found.");
-	}
-
-	if (!camera_node->has_component<sg::Camera>())
-	{
-		throw std::runtime_error("No camera component found for `" + node_name + "` node.");
-	}
-
-	auto free_camera_script = std::make_unique<sg::FreeCamera>(*camera_node);
-
-	free_camera_script->resize(render_context->get_surface_extent().width, render_context->get_surface_extent().height);
-
-	scene->add_component(std::move(free_camera_script), *camera_node);
-
-	return *camera_node;
 }
 
 void VulkanSample::load_scene(const std::string &path)

@@ -21,6 +21,7 @@
 #include "sub_mesh.h"
 
 #include "material.h"
+#include "rendering/subpass.h"
 
 namespace vkb
 {
@@ -90,6 +91,11 @@ void SubMesh::compute_shader_variant()
 		std::transform(attrib_name.begin(), attrib_name.end(), attrib_name.begin(), ::toupper);
 		shader_variant.add_define("HAS_" + attrib_name);
 	}
+}
+
+ShaderVariant &SubMesh::get_mut_shader_variant()
+{
+	return shader_variant;
 }
 }        // namespace sg
 }        // namespace vkb

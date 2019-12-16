@@ -29,11 +29,14 @@
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/pbr_material.h"
+#include "scene_graph/components/perspective_camera.h"
 #include "scene_graph/components/sampler.h"
 #include "scene_graph/components/sub_mesh.h"
 #include "scene_graph/components/texture.h"
 #include "scene_graph/components/transform.h"
 #include "scene_graph/node.h"
+#include "scene_graph/script.h"
+#include "scene_graph/scripts/free_camera.h"
 
 namespace vkb
 {
@@ -274,4 +277,74 @@ std::string to_snake_case(const std::string &text)
 
 	return result.str();
 }
+
+sg::Light &add_light(sg::Scene &scene, sg::LightType type, const glm::vec3 &position, const glm::quat &rotation, const sg::LightProperties &props, sg::Node *parent_node)
+{
+	auto light_ptr = std::make_unique<sg::Light>("light");
+	auto node      = std::make_unique<sg::Node>("light node");
+
+	if (parent_node)
+	{
+		node->set_parent(*parent_node);
+	}
+
+	light_ptr->set_node(*node);
+	light_ptr->set_light_type(type);
+	light_ptr->set_properties(props);
+
+	auto &t = node->get_transform();
+	t.set_translation(position);
+	t.set_rotation(rotation);
+
+	// Storing the light component because the unique_ptr will be moved to the scene
+	auto &light = *light_ptr;
+
+	node->set_component(light);
+	scene.add_child(*node);
+	scene.add_component(std::move(light_ptr));
+	scene.add_node(std::move(node));
+
+	return light;
+}
+
+sg::Light &add_point_light(sg::Scene &scene, const glm::vec3 &position, const sg::LightProperties &props, sg::Node *parent_node)
+{
+	return add_light(scene, sg::LightType::Point, position, {}, props, parent_node);
+}
+
+sg::Light &add_directional_light(sg::Scene &scene, const glm::quat &rotation, const sg::LightProperties &props, sg::Node *parent_node)
+{
+	return add_light(scene, sg::LightType::Directional, {}, rotation, props, parent_node);
+}
+
+sg::Node &add_free_camera(sg::Scene &scene, const std::string &node_name, VkExtent2D extent)
+{
+	auto camera_node = scene.find_node(node_name);
+
+	if (!camera_node)
+	{
+		LOGW("Camera node `{}` not found. Looking for `default_camera` node.", node_name.c_str());
+
+		camera_node = scene.find_node("default_camera");
+	}
+
+	if (!camera_node)
+	{
+		throw std::runtime_error("Camera node with name `" + node_name + "` not found.");
+	}
+
+	if (!camera_node->has_component<sg::Camera>())
+	{
+		throw std::runtime_error("No camera component found for `" + node_name + "` node.");
+	}
+
+	auto free_camera_script = std::make_unique<sg::FreeCamera>(*camera_node);
+
+	free_camera_script->resize(extent.width, extent.height);
+
+	scene.add_component(std::move(free_camera_script), *camera_node);
+
+	return *camera_node;
+}
+
 }        // namespace vkb

@@ -125,9 +125,9 @@ class VulkanSample : public Application
 
 	virtual void finish() override;
 
-	/** 
+	/**
 	 * @brief Loads the scene
-	 * 
+	 *
 	 * @param path The path of the glTF file
 	 */
 	void load_scene(const std::string &path);
@@ -167,6 +167,11 @@ class VulkanSample : public Application
 	std::unique_ptr<Stats> stats{nullptr};
 
 	/**
+	 * @brief Context used for rendering, it is responsible for managing the frames and their underlying images
+	 */
+	std::unique_ptr<RenderContext> render_context{nullptr};
+
+	/**
 	 * @brief Update scene
 	 * @param delta_time
 	 */
@@ -189,7 +194,7 @@ class VulkanSample : public Application
 	 * @param command_buffer The command buffer to record the commands to
 	 * @param render_target The render target that is being drawn to
 	 */
-	void draw(CommandBuffer &command_buffer, RenderTarget &render_target);
+	virtual void draw(CommandBuffer &command_buffer, RenderTarget &render_target);
 
 	/**
 	 * @brief Starts the render pass, executes the render pipeline, and then ends the render pass
@@ -206,7 +211,7 @@ class VulkanSample : public Application
 
 	/**
 	 * @brief Get sample-specific validation layers.
-	 * 
+	 *
 	 * @return Vector of additional validation layers. Default is empty vector.
 	 */
 	virtual std::vector<const char *> get_validation_layers();
@@ -247,16 +252,6 @@ class VulkanSample : public Application
 	 */
 	virtual void update_debug_window();
 
-	/**
-	 * @brief Add free camera script to a node with a camera object.
-	 *        Fallback to the default_camera if node not found.
-	 *
-	 * @param node_name The scene node name
-	 *
-	 * @return Node where the script was attached as component
-	 */
-	sg::Node &add_free_camera(const std::string &node_name);
-
   private:
 	static constexpr float STATS_VIEW_RESET_TIME{10.0f};        // 10 seconds
 
@@ -269,11 +264,6 @@ class VulkanSample : public Application
 	 * @brief The Vulkan surface
 	 */
 	VkSurfaceKHR surface{VK_NULL_HANDLE};
-
-	/**
-	 * @brief Context used for rendering, it is responsible for managing the frames and their underlying images
-	 */
-	std::unique_ptr<RenderContext> render_context{nullptr};
 
 	/**
 	 * @brief The configuration of the sample

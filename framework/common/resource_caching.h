@@ -408,7 +408,7 @@ struct hash<vkb::PipelineState>
 
 		vkb::hash_combine(result, pipeline_state.get_subpass_index());
 
-		for (auto stage : pipeline_state.get_pipeline_layout().get_stages())
+		for (auto stage : pipeline_state.get_pipeline_layout().get_shader_program().get_shader_modules())
 		{
 			vkb::hash_combine(result, stage->get_id());
 		}
@@ -682,8 +682,11 @@ T &request_resource(Device &device, ResourceRecord *recorder, std::unordered_map
 
 	LOGD("Building #{} cache object ({})", res_id, res_type);
 
+// Only error handle in release
+#ifndef DEBUG
 	try
 	{
+#endif
 		T resource(device, args...);
 
 		auto res_ins_it = resources.emplace(hash, std::move(resource));
@@ -700,12 +703,14 @@ T &request_resource(Device &device, ResourceRecord *recorder, std::unordered_map
 			size_t index = record_helper.record(*recorder, args...);
 			record_helper.index(*recorder, index, res_it->second);
 		}
+#ifndef DEBUG
 	}
 	catch (const std::exception &e)
 	{
 		LOGE("Creation error for #{} cache object ({})", res_id, res_type);
 		throw e;
 	}
+#endif
 
 	return res_it->second;
 }

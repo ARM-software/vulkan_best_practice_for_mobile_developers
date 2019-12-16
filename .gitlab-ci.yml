@@ -4,14 +4,6 @@ stages:
   - Test
   - Package
 
-cache:
-  key: ${CI_PIPELINE_ID}
-  paths:
-    - build/windows
-    - build/linux
-    - build/android
-    - output
-
 Doxygen:
   stage: Check
   image: $DOCKER_REGISTRY/docker/doxygen/linux:latest
@@ -63,7 +55,7 @@ ClangTidy:
     - docker
   script:
     - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -H. -Bbuild/clang
-    - python3 /usr/local/bin/run-clang-tidy.py -j $(($(nproc)/2+1)) -p build/clang -clang-tidy-binary=clang-tidy-8 -header-filter=framework,samples,vulkan_best_practice -checks=-*,google-*,-google-runtime-references -quiet framework/* samples/* vulkan_best_practice/*
+    - python3 /usr/local/bin/run-clang-tidy.py -j $(($(nproc)/2+1)) -p build/clang -clang-tidy-binary=clang-tidy-8 -header-filter=framework,samples,vulkan_best_practice -checks=-*,google-*,-google-runtime-references -quiet framework/* samples/* vulkan_best_practice/* tests/*
 
 Linux:
   stage: Build
@@ -73,6 +65,10 @@ Linux:
   tags:
     - linux
     - docker
+  artifacts:
+    paths:
+      - build/linux
+    expire_in: 2h
   script:
     - cmake -G "Unix Makefiles" -H. -Bbuild/linux -DCMAKE_BUILD_TYPE=Release -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
     - cmake --build build/linux --target vulkan_best_practice --config Release -- -j$(($(nproc)/2+1))
@@ -84,6 +80,10 @@ Windows:
   tags:
     - windows
     - shell
+  artifacts:
+    paths:
+      - build/windows
+    expire_in: 2h
   script:
     - cmake -G"Visual Studio 15 2017 Win64" -H. -Bbuild/windows -DVKB_BUILD_TESTS:BOOL=ON -DVKB_BUILD_SAMPLES:BOOL=ON
     - cmake --build build/windows --target vulkan_best_practice --config Release
@@ -96,6 +96,10 @@ Android:
   tags:
     - linux
     - docker
+  artifacts:
+    paths:
+      - build/android
+    expire_in: 2h
   script:
     - cmake -G "Unix Makefiles" -H. -Bbuild/android -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
     - cmake --build build/android --config Release --target vulkan_best_practice_package -- -j$(($(nproc)/2+1))
@@ -104,23 +108,30 @@ GenerateSample:
   stage: Test
   variables:
    GIT_SUBMODULE_STRATEGY: recursive
+  dependencies:
+    - Windows
   tags:
    - windows
    - shell
   script:
    - cd tests/generate_sample
    - python generate_sample_test.py
-  allow_failure: true
 
 SystemTest:
  stage: Test
  variables:
    GIT_SUBMODULE_STRATEGY: recursive
+ artifacts:
+   paths:
+     - tests/system_test/artifacts
+   expire_in: 1d
+   when: on_failure
+ dependencies:
+  - Windows
  tags:
    - windows
    - shell
  script:
-   - python bldsys/scripts/download_assets.py
    - cd tests/system_test
    - python system_test.py -Bbuild/windows -Crelease -D -P
 

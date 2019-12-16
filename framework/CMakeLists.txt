@@ -76,21 +76,25 @@ set(RENDERING_FILES
     rendering/render_pipeline.h
     rendering/render_target.h
     rendering/subpass.h
+    rendering/shader_program.h
     # Source files
     rendering/pipeline_state.cpp
     rendering/render_context.cpp
     rendering/render_frame.cpp
     rendering/render_pipeline.cpp
     rendering/render_target.cpp
-    rendering/subpass.cpp)
+    rendering/subpass.cpp
+    rendering/shader_program.cpp)
 
 set(RENDERING_SUBPASSES_FILES
     # Header files
-    rendering/subpasses/scene_subpass.h
+    rendering/subpasses/forward_subpass.h
     rendering/subpasses/lighting_subpass.h
+    rendering/subpasses/geometry_subpass.h
     # Source files
-    rendering/subpasses/scene_subpass.cpp
-    rendering/subpasses/lighting_subpass.cpp)
+    rendering/subpasses/forward_subpass.cpp
+    rendering/subpasses/lighting_subpass.cpp
+    rendering/subpasses/geometry_subpass.cpp)
 
 set(SCENE_GRAPH_FILES
     # Header Files

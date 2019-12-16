@@ -66,11 +66,14 @@ void RenderFrame::update_render_target(RenderTarget &&render_target)
 	swapchain_render_target = std::move(render_target);
 }
 
-void RenderFrame::reset()
+void RenderFrame::reset(bool wait_with_fence)
 {
-	VK_CHECK(fence_pool.wait());
+	if (wait_with_fence)
+	{
+		VK_CHECK(fence_pool.wait());
 
-	fence_pool.reset();
+		fence_pool.reset();
+	}
 
 	for (auto &command_pools_per_queue : command_pools)
 	{

@@ -37,7 +37,13 @@ struct ShaderResource;
 class DescriptorSetLayout
 {
   public:
-	DescriptorSetLayout(Device &device, const std::vector<ShaderResource> &set_resources);
+	/**
+	 * @brief Creates a descriptor set layout from a set of resources
+	 * @param device A valid Vulkan device
+	 * @param resource_set A grouping of shader resources belonging to the same set
+	 * @param use_dynamic_resources Whether to set the resources to dynamic (where applicable)
+	 */
+	DescriptorSetLayout(Device &device, const std::vector<ShaderResource> &resource_set, bool use_dynamic_resources);
 
 	DescriptorSetLayout(const DescriptorSetLayout &) = delete;
 
@@ -53,9 +59,9 @@ class DescriptorSetLayout
 
 	const std::vector<VkDescriptorSetLayoutBinding> &get_bindings() const;
 
-	bool get_layout_binding(uint32_t binding_index, VkDescriptorSetLayoutBinding &binding) const;
+	std::unique_ptr<VkDescriptorSetLayoutBinding> get_layout_binding(uint32_t binding_index) const;
 
-	bool has_layout_binding(const std::string &name, VkDescriptorSetLayoutBinding &binding) const;
+	std::unique_ptr<VkDescriptorSetLayoutBinding> get_layout_binding(const std::string &name) const;
 
   private:
 	Device &device;

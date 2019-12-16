@@ -126,7 +126,7 @@ void WindowsPlatform::terminate(ExitCode code)
 {
 	Platform::terminate(code);
 
-	if (code != ExitCode::Success)
+	if (code != ExitCode::Success || benchmark_mode)
 	{
 		std::cout << "Press enter to close...\n";
 		std::cin.get();

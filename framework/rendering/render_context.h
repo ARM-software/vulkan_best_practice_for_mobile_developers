@@ -148,7 +148,7 @@ class RenderContext
 	/**
 	 * @brief Waits a frame to finish its rendering
 	 */
-	void wait_frame();
+	virtual void wait_frame();
 
 	void end_frame(VkSemaphore semaphore);
 
@@ -184,8 +184,6 @@ class RenderContext
 	uint32_t get_active_frame_index() const;
 
 	std::vector<RenderFrame> &get_render_frames();
-
-	void set_pre_transform(VkSurfaceTransformFlagBitsKHR pre_transform);
 
   protected:
 	VkExtent2D surface_extent;

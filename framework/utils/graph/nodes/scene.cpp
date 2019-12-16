@@ -26,9 +26,13 @@
 #include <stdexcept>
 #include <type_traits>
 
-#include <glm/gtx/string_cast.hpp>
 #include <json.hpp>
 #include <spdlog/fmt/fmt.h>
+
+VKBP_DISABLE_WARNINGS()
+#include "common/glm_common.h"
+#include <glm/gtx/string_cast.hpp>
+VKBP_ENABLE_WARNINGS()
 
 #include "utils/strings.h"
 
@@ -84,10 +88,7 @@ SceneNode::SceneNode(size_t id, const sg::Scene &scene)
 	attributes["id"]    = id;
 	attributes["type"]  = SceneNode::get_type_str(SceneNodeType::Scene);
 	attributes["label"] = label(SceneNodeType::Scene, scene);
-
-	attributes["data"] = nlohmann::json{
-	    {"children_count", scene.get_children().size()}};
-
+	attributes["data"]  = nlohmann::json{};
 	attributes["group"] = "Scene";
 }
 

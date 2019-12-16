@@ -26,7 +26,8 @@
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
-#include <glm/glm.hpp>
+#include "common/glm_common.h"
+#include <glm/gtc/matrix_transform.hpp>
 VKBP_ENABLE_WARNINGS()
 
 #include "buffer_pool.h"
@@ -199,14 +200,14 @@ Gui::Gui(VulkanSample &sample_, const float dpi_factor) :
 	sampler_info.addressModeW  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	sampler_info.borderColor   = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 
-	vkb::ShaderSource vert_shader(vkb::fs::read_shader("imgui.vert"));
-	vkb::ShaderSource frag_shader(vkb::fs::read_shader("imgui.frag"));
+	vkb::ShaderSource vert_shader("imgui.vert");
+	vkb::ShaderSource frag_shader("imgui.frag");
 
 	std::vector<vkb::ShaderModule *> shader_modules;
 	shader_modules.push_back(&device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vert_shader, {}));
 	shader_modules.push_back(&device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, frag_shader, {}));
 
-	pipeline_layout = &device.get_resource_cache().request_pipeline_layout(shader_modules);
+	pipeline_layout = &device.get_resource_cache().request_pipeline_layout(shader_modules, false);
 
 	sampler = std::make_unique<core::Sampler>(device, sampler_info);
 }

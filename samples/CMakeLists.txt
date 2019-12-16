@@ -48,7 +48,11 @@ set(ORDER_LIST
     "surface_rotation"
     "render_passes"
     "render_subpasses"
+    "pipeline_barriers"
+    "wait_idle"
+    "layout_transitions"
     "pipeline_cache"
+    "specialization_constants"
     "command_buffer_usage"
     "afbc")
 

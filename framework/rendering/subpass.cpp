@@ -24,6 +24,11 @@
 
 namespace vkb
 {
+const std::vector<std::string> light_type_definitions = {
+    "DIRECTIONAL_LIGHT " + std::to_string(static_cast<float>(sg::LightType::Directional)),
+    "POINT_LIGHT " + std::to_string(static_cast<float>(sg::LightType::Point)),
+    "SPOT_LIGHT " + std::to_string(static_cast<float>(sg::LightType::Spot))};
+
 glm::mat4 vulkan_style_projection(const glm::mat4 &proj)
 {
 	// Flip Y in clipspace. X = -1, Y = -1 is topLeft in Vulkan.
@@ -86,5 +91,18 @@ const std::vector<uint32_t> &Subpass::get_output_attachments() const
 void Subpass::set_output_attachments(std::vector<uint32_t> output)
 {
 	output_attachments = output;
+}
+
+void Subpass::set_use_dynamic_resources(bool b)
+{
+	use_dynamic_resources = b;
+}
+
+void Subpass::add_definitions(ShaderVariant &variant, const std::vector<std::string> &definitions)
+{
+	for (auto &definition : definitions)
+	{
+		variant.add_define(definition);
+	}
 }
 }        // namespace vkb

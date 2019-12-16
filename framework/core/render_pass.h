@@ -28,13 +28,6 @@ namespace vkb
 struct Attachment;
 class Device;
 
-struct LoadStoreInfo
-{
-	VkAttachmentLoadOp load_op = VK_ATTACHMENT_LOAD_OP_CLEAR;
-
-	VkAttachmentStoreOp store_op = VK_ATTACHMENT_STORE_OP_STORE;
-};
-
 struct SubpassInfo
 {
 	std::vector<uint32_t> input_attachments;
