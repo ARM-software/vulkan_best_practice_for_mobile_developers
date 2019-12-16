@@ -87,9 +87,13 @@ The streamline trace shows us a more in-depth analysis of what is going on in th
 
 ![Streamline](images/render_passes_streamline.png)
 
-As a side note, bear in mind that calling `vkCmdClear*` to clear the attachments is not needed as you can get the same result by using `LOAD_OP_CLEAR`. The following screenshot shows that by using that command the GPU will need `~6` million more fragment cycles per second.
+## `vkCmdClear*` functions
+
+Using the `vkCmdClear*` to clear the attachments is not needed as you can get the same result by using `LOAD_OP_CLEAR`. The following screenshot shows that by using that command the GPU will need ~6 million more fragment cycles per second.
 
 ![vkCmdClear](images/vk_cmd_clear.png)
+
+While the `vkCmdClear*` functions can be used to clear images explicitly, on certain mobile devices this will result in a per-fragment clear shader which results in the additional workload demonstrated in the above screenshot. Despite this, the `vkCmdClear*` functions do have uses which are not covered by the loadOp operations, for example the `vkCmdClearAttachments` function can be used to clear a specific region within an attachment during a render pass.
 
 ## Depth image usage
 
