@@ -190,5 +190,5 @@ All contributions are accepted under the same [LICENSE](LICENSE).
 
 ## Related resources
 
-- [Mali GPU Best Practices](https://developer.arm.com/solutions/graphics/developer-guides/mali-gpu-best-practices): A document with recommendations for efficient API usage
+- [Mali GPU Best Practices](https://developer.arm.com/solutions/graphics/developer-guides/advanced-guides/mali-gpu-best-practices): A document with recommendations for efficient API usage
 - [PerfDoc](https://github.com/ARM-software/perfdoc): A Vulkan layer which aims to validate applications against Mali GPU Best Practices
