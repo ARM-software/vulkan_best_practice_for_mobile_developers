@@ -30,7 +30,7 @@ This sample compares two methods for synchronizing between the CPU and GPU, ``Wa
 
 The simplest way to synchronize the CPU and GPU is to use either ``vkQueueWaitIdle`` or ``vkDeviceWaitIdle``, these commands wait until the device or queue has finished executing all work dispatched to it. Note that when using a single ``VkQueue``, ``vkQueueWaitIdle`` is functionally equivalent to ``vkDeviceWaitIdle``. While this method works reliably, it is far more coarse than is actually required to synchronize between the CPU and GPU. This results in bubbles within the GPU that prevent it from maintaining a full pipeline, therefore stopping it from parallelizing vertex and fragment work from separate frames which results in higher frame times and lower efficiency.
 
-The alternative to ``WaitIdle`` is to use a Vulkan ``Fence`` object, these are designed to allow the GPU to inform the CPU when it has finished with a single frame's workload allowing the CPU to safely re-use the resources for that frame. This method avoids stalling while waiting for the GPU to finish executing, as the CPU can continue to submit the following frames without having to wait for the GPU which in turn avoids the GPU pipeline draining of work.
+The alternative to ``WaitIdle`` is to use a ``Fence`` object, these are designed to allow the GPU to inform the CPU when it has finished with a single frame's workload allowing the CPU to safely re-use the resources for that frame. This method avoids stalling while waiting for the GPU to finish executing, as the CPU can continue to submit the following frames without having to wait for the GPU which in turn avoids the GPU pipeline draining of work.
 
 ## The Wait Idle Sample
 
